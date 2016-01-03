@@ -13,10 +13,12 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <ostream>
 
+#include "namespace.h"
 #include "expr_util.h"
 #include "invariant.h"
 #include "simplify_utils.h"
 #include "std_expr.h"
+#include "symbol_table.h"
 
 void guardt::guard_expr(exprt &dest) const
 {
@@ -117,7 +119,11 @@ guardt &operator |= (guardt &g1, const guardt &g2)
     else
       g1.expr = or_exprt(g1.as_expr(), g2.as_expr());
 
-    // TODO: make simplify more capable and apply here
+    symbol_tablet symbol_table;
+    namespacet ns(symbol_table);
+    bdd_exprt t(ns);
+    t.from_expr(g1.as_expr());
+    g1.expr=t.as_expr();
 
     return g1;
   }
@@ -173,8 +179,15 @@ guardt &operator |= (guardt &g1, const guardt &g2)
     {
     }
     else
-      // TODO: make simplify more capable and apply here
+    {
       g1.add(or_exprt(and_expr1, and_expr2));
+
+      symbol_tablet symbol_table;
+      namespacet ns(symbol_table);
+      bdd_exprt t(ns);
+      t.from_expr(g1);
+      g1.expr=t.as_expr();
+    }
   }
 
   return g1;
