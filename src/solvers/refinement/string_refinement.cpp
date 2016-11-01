@@ -73,8 +73,7 @@ void string_refinementt::add_instantiations()
       for (size_t k = 0; k < universal_axioms.size(); ++k) {
 	assert(universal_axioms[k].is_univ_quant());
 	string_constraintt lemma = instantiate(universal_axioms[k], s, val);
-	assert(lemma.is_simple());
-	add_lemma(lemma);
+	add_lemma(lemma.get_simple_formula());
       }
     }
   }
@@ -170,13 +169,14 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   print_time("string_refinementt::dec_solve");
   for(unsigned i = 0; i < generator.axioms.size(); i++)
     if(generator.axioms[i].is_simple())
-      add_lemma(generator.axioms[i]);
-    else if(generator.axioms[i].is_string_constant())
-      add_lemma(generator.axioms[i]); //,false);
-    else if(generator.axioms[i].is_univ_quant()) {
-      debug() << "universaly quantified : " << pretty_short(generator.axioms[i]) << eom;
-      universal_axioms.push_back(generator.axioms[i]);
-    }
+      add_lemma(generator.axioms[i].get_simple_formula());
+    else if(generator.axioms[i].is_univ_quant())
+      {
+	debug() << "universaly quantified : " << pretty_short(generator.axioms[i].character_formula) << eom;
+	universal_axioms.push_back(generator.axioms[i]);
+      }
+    else assert(false);
+  /*
     else {
       assert(generator.axioms[i].is_not_contains());
       generator.axioms[i].witness = string_exprt::fresh_symbol
@@ -184,10 +184,8 @@ decision_proceduret::resultt string_refinementt::dec_solve()
 	 array_typet(refined_string_typet::index_type(),
 		     infinity_exprt(refined_string_typet::index_type())));
       not_contains_axioms.push_back(generator.axioms[i]);
-    }
+      }*/
 
-  //string_axioms.clear(); should not be necessary
-  
   initial_index_set(universal_axioms);
   debug() << "string_refinementt::dec_solve: warning update_index_set has to be checked" << eom;
   update_index_set(cur); 
@@ -399,81 +397,84 @@ bool string_refinementt::check_axioms()
   std::vector< std::pair<size_t, exprt> > violated;
 
   debug() << "there are " << universal_axioms.size() << " universal axioms" << eom;
-  for (size_t i = 0; i < universal_axioms.size(); ++i) {
-    const string_constraintt &axiom = universal_axioms[i];
+  for (size_t i = 0; i < universal_axioms.size(); ++i)
+    {
+      const string_constraintt &axiom = universal_axioms[i];
 
-    exprt negaxiom = and_exprt(axiom.premise(), not_exprt(axiom.body()));
-    replace_expr(fmodel, negaxiom);
-
-    debug() << "negaxiom: " << pretty_short(negaxiom) << eom;
-
-    satcheck_no_simplifiert sat_check;
-    SUB solver(ns, sat_check);
-    solver << negaxiom;
-
-    switch (solver()) {
-    case decision_proceduret::D_SATISFIABLE: {
-      exprt val = solver.get(axiom.get_univ_var());
-      violated.push_back(std::make_pair(i, val));
-    } break;
-    case decision_proceduret::D_UNSATISFIABLE:
-      break;
-    default:
-      throw "failure in checking axiom";
+      exprt negaxiom = and_exprt(axiom.index_guard.to_expr(), not_exprt(axiom.character_formula));
+      replace_expr(fmodel, negaxiom);
+      
+      debug() << "negaxiom: " << pretty_short(negaxiom) << eom;
+      
+      satcheck_no_simplifiert sat_check;
+      SUB solver(ns, sat_check);
+      solver << negaxiom;
+      
+      switch (solver())
+	{
+	case decision_proceduret::D_SATISFIABLE:
+	  {
+	    // Warning only considering one quantified variable
+	    exprt val = solver.get(axiom.quantified_variables[0]);
+	    violated.push_back(std::make_pair(i, val));
+	  } break;
+	case decision_proceduret::D_UNSATISFIABLE:
+	  break;
+	default:
+	  throw "failure in checking axiom";
+	}
     }
-  }
 
 
+  /*
   debug() << "there are " << not_contains_axioms.size() << " not_contains axioms" << eom;
-  for (size_t i = 0; i < not_contains_axioms.size(); ++i) {
-    exprt val = get(not_contains_axioms[i].witness_of(refined_string_typet::index_zero()));
-    violated.push_back(std::make_pair(i, val));
-  }
-
-
-  if (violated.empty()) {
-    debug() << "no violated property" << eom;
-    return true;
-  }
-  else {
-    debug() << violated.size() << " string axioms can be violated" << eom;
-
-    if(use_counter_example) {
-      
-      std::vector<string_constraintt> new_axioms(violated.size());
-      
-      // Checking if the current solution satisfies the constraints
-      for (size_t i = 0; i < violated.size(); ++i) {
-	
-	new_axioms[i] = universal_axioms[violated[i].first];
-
-	const exprt &val = violated[i].second;
-	const string_constraintt &axiom = universal_axioms[violated[i].first];
-	
-	exprt premise(axiom.premise());
-	exprt body(axiom.body());
-	implies_exprt instance(premise, body);
-	debug() << "warning: we don't eliminate the existential quantifier" << eom;
-	replace_expr(axiom.get_univ_var(), val, instance);
-	if (seen_instances.insert(instance).second) {
-	  add_lemma(instance);
-	} else debug() << "instance already seen" << eom;
-      }
+  for (size_t i = 0; i < not_contains_axioms.size(); ++i)
+    {
+      exprt val = get(not_contains_axioms[i].witness_of(refined_string_typet::index_zero()));
+      violated.push_back(std::make_pair(i, val));
     }
+  */
 
-    return false;
-  }
-  
+  if (violated.empty())
+    {
+      debug() << "no violated property" << eom;
+      return true;
+    }
+  else
+    {
+      debug() << violated.size() << " string axioms can be violated" << eom;
+      if(use_counter_example)
+	{
+	  std::vector<string_constraintt> new_axioms(violated.size());
+      
+	  // Checking if the current solution satisfies the constraints
+	  for (size_t i = 0; i < violated.size(); ++i)
+	    {
+	      new_axioms[i] = universal_axioms[violated[i].first];
+
+	      const exprt &val = violated[i].second;
+	      const string_constraintt &axiom = universal_axioms[violated[i].first];
+	      exprt premise(axiom.index_guard.to_expr());
+	      exprt body(axiom.character_formula);
+	      implies_exprt instance(premise, body);
+	      debug() << "warning: we don't eliminate the existential quantifier" << eom;
+	      for(int i=0; i< axiom.quantified_variables.size(); i++)
+		replace_expr(axiom.quantified_variables[i], val, instance);
+	      if (seen_instances.insert(instance).second) 
+		add_lemma(instance);
+	      else debug() << "instance already seen" << eom;
+	    }
+	}
+      return false;
+    }
 }
 
 
 std::map< exprt, int> string_refinementt::map_of_sum(const exprt &f) {
   // number of time the element should be added (can be negative)
   std::map< exprt, int> elems;
-
   std::vector< std::pair<exprt, bool> > to_process;
   to_process.push_back(std::make_pair(f, true));
-
   while (!to_process.empty()) {
     exprt cur = to_process.back().first;
     bool positive = to_process.back().second;
@@ -539,11 +540,15 @@ exprt string_refinementt::sum_of_map(std::map<exprt,int> & m, bool negated) {
 	  }
       }
   }
-  
-  return plus_exprt(sum,constant_exprt(integer2binary(constants, STRING_SOLVER_INDEX_WIDTH), refined_string_typet::index_type()));
+
+  constant_exprt c(integer2binary(constants, STRING_SOLVER_INDEX_WIDTH),
+		   refined_string_typet::index_type());
+  return plus_exprt(sum,c);
+                    
 }
 
-exprt string_refinementt::simplify_sum(const exprt &f) {
+exprt string_refinementt::simplify_sum(const exprt &f)
+{
   std::map<exprt,int> map = map_of_sum(f);
   return sum_of_map(map);
 }
@@ -575,15 +580,8 @@ exprt string_refinementt::compute_subst(const exprt &qvar, const exprt &val, con
       elems.erase(it);
     }
   }
-  
-  if (!found) { 
-    debug() << "string_refinementt::compute_subst: qvar not found" << eom;
-    debug() << "qvar = " << qvar.pretty() << eom
-	    << "val = " << val.pretty() << eom
-	    << "f = " << f.pretty() << eom;
-    assert(false);
-  }
 
+  assert(found);
   return sum_of_map(elems,neg);
 }
   
@@ -628,9 +626,10 @@ void string_refinementt::update_index_set(const std::vector<exprt> & cur) {
 void string_refinementt::initial_index_set(const string_constraintt &axiom)
 {
   assert(axiom.is_univ_quant());
-  symbol_exprt qvar = axiom.get_univ_var();
+  debug() << "WARNING: consider only one quantified variable" << eom;
+  symbol_exprt qvar = axiom.quantified_variables[0];
   std::vector<exprt> to_process;
-  to_process.push_back(axiom.body());
+  to_process.push_back(axiom.character_formula);
 
   while (!to_process.empty())
     {
@@ -651,11 +650,14 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
 	    }
 	  else
 	    {
-	      // otherwise we add k-1
-	      exprt e(i);
-	      replace_expr(qvar,minus_exprt(axiom.univ_bound_sup(),refined_string_typet::index_of_int(1)),e);
-	      current_index_set[s].insert(e);
-	      index_set[s].insert(e);
+	      std::vector<exprt> bounds = axiom.index_guard.index_bounds(qvar);
+	      for(int j = 0; j < bounds.size(); j++)
+		{
+		  exprt e(i);
+		  replace_expr(qvar,bounds[j],e);
+		  current_index_set[s].insert(e);
+		  index_set[s].insert(e);
+		}
 	    }
 	
 	} 
@@ -728,20 +730,23 @@ string_constraintt string_refinementt::instantiate(const string_constraintt &axi
 				     const exprt &str, const exprt &val)
 {
   assert(axiom.is_univ_quant());
-  exprt idx = find_index(axiom.body(),str);
+  exprt idx = find_index(axiom.character_formula,str);
   if(idx.is_nil()) return string_constraintt();
-  if(!find_qvar(idx,axiom.get_univ_var())) return string_constraintt();
+  // Warning we only consider one quantified variable
+  symbol_exprt univ_var = axiom.quantified_variables[0];
+  if(!find_qvar(idx,univ_var)) return string_constraintt();
   
-  exprt r = compute_subst(axiom.get_univ_var(), val, idx);
-  exprt instance(axiom);
-  replace_expr(axiom.get_univ_var(), r, instance);
-  // We are not sure the index set contains only positive numbers
-  exprt bounds = and_exprt(axiom.univ_within_bounds(),binary_relation_exprt(refined_string_typet::index_zero(),ID_le,val));
-  replace_expr(axiom.get_univ_var(), r, bounds);
-  return string_constraintt(bounds,instance);     
+  exprt r = compute_subst(univ_var, val, idx);
+  exprt chform(axiom.character_formula);
+  replace_expr(univ_var, r, chform);
+  debug() << "Warning : We are not sure the index set contains only positive numbers " << eom;
+  //&& index_guardt(val,ID_ge,refined_string_typet::index_zero())).to_expr();
+  exprt iguard = axiom.index_guard.to_expr();		  
+  replace_expr(univ_var, r, iguard);
+  return string_constraintt(implies_exprt(iguard,chform));
 }
 
-
+/*
 void string_refinementt::instantiate_not_contains(const string_constraintt & axiom, std::vector<exprt> & new_lemmas){
   assert(axiom.is_not_contains());
   exprt s0 = axiom.s0();
@@ -768,3 +773,4 @@ void string_refinementt::instantiate_not_contains(const string_constraintt & axi
 	new_lemmas.push_back(witness_bounds);
       }
 }
+*/

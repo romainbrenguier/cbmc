@@ -10,46 +10,80 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <solvers/refinement/string_constraint.h>
 
 
-exprt string_constraintt::premise() const {
-  if(form == SIMPLE || form == UNIV_QUANT) {
-    if(id() == ID_implies)
-      return op0();
-    else 
-      return true_exprt();
+index_guardt index_guardt::operator&&(const index_guardt & ig)
+{
+  index_guardt conj;
+  conj.guard = and_exprt(guard,ig.guard);
+  return conj;
   }
-  else {
-    return(*this);
-  }
+
+index_guardt index_guardt::operator||(const index_guardt & ig)
+{
+  index_guardt disj;
+  disj.guard = or_exprt(guard,ig.guard);
+  return disj;
 }
 
-exprt string_constraintt::body() const {
-  if(form == SIMPLE || form == UNIV_QUANT) {
-    if(id() == ID_implies)
-      return op1();
-    else
-      return(*this);
-  } else throw "string_constraintt::body() should not be applied to NOT_CONTAINS expression";
+
+std::vector<exprt> index_guardt::index_bounds(const symbol_exprt & index) const
+{
+  std::vector<exprt> bounds;
+  std::vector<exprt> to_process;
+  to_process.push_back(guard);
+  while (!to_process.empty())
+    {
+      exprt cur = to_process.back();
+      to_process.pop_back();
+      if (cur.id() == ID_and || cur.id() == ID_or)
+	for(int i; i < cur.operands().size(); i++)
+	  to_process.push_back(cur.operands()[i]);
+      else
+	if(cur.op0() == index)
+	  bounds.push_back(cur.op1());
+
+    }
+  return bounds;
 }
 
-string_constraintt string_constraintt::forall(const symbol_exprt & univ, const exprt & bound_inf, const exprt & bound_sup)
+index_guardt::index_guardt
+(const symbol_exprt & index, const exprt & bound_inf, const exprt & bound_sup)
+{
+  binary_relation_exprt inf(index,ID_ge,bound_inf);
+  binary_relation_exprt sup(index,ID_lt,bound_sup);
+  guard = and_exprt(inf,sup);
+}
+
+
+
+string_constraintt string_constraintt::exists
+(const symbol_exprt & exist, const exprt & bound_inf, const exprt & bound_sup)
 {
   string_constraintt sc(*this);
-  sc.form = UNIV_QUANT;
-  sc.quantified_variable = univ;
-  sc.bounds.push_back(bound_inf);
-  sc.bounds.push_back(bound_sup);
+  sc.character_formula = and_exprt(sc.character_formula, index_guardt(exist,bound_inf,bound_sup).to_expr());
   return sc;
 }
 
-string_constraintt string_constraintt::forall(const symbol_exprt & univ, const exprt & bound_sup)
+string_forallt::string_forallt(const symbol_exprt & univ, const exprt & bound_inf, const exprt & bound_sup, const index_guardt & prem, const exprt & bod):string_constraintt(prem,bod)
 {
-  return forall(univ,refined_string_typet::index_zero(),bound_sup);
+  quantified_variables.push_back(univ);
+  index_guard = index_guard && index_guardt(univ,bound_inf,bound_sup);
 }
 
+string_forallt::string_forallt
+(const symbol_exprt & univ, const exprt & bound_sup, const index_guardt & prem, const exprt & bod)
+  : string_forallt(univ,refined_string_typet::index_zero(),bound_sup,index_guardt(),bod) {}
+
+
+string_forallt::string_forallt(const symbol_exprt & univ, const exprt & bound_sup, const exprt & bod)
+  : string_forallt(univ,bound_sup,index_guardt(),bod) {}
+
+
+/*
 string_constraintt string_constraintt::not_contains(exprt univ_bound_inf, exprt univ_bound_sup, 
 				 exprt premise, exprt exists_bound_inf, 
 				 exprt exists_bound_sup, exprt s0, exprt s1)
-{ 
+{
+
   string_constraintt sc(premise);
   sc.form = NOT_CONTAINS;
   sc.bounds.push_back(univ_bound_inf);
@@ -61,17 +95,4 @@ string_constraintt string_constraintt::not_contains(exprt univ_bound_inf, exprt 
   sc.compared_strings.push_back(s1);
   return sc;
 }
-
-string_constraintt string_constraintt::exists(const symbol_exprt & exist, const exprt & bound_inf, const exprt & bound_sup)
-{
-  assert(is_simple() || is_string_constant());
-  return string_constraintt
-    (and_exprt(*this, 
-	       and_exprt(binary_relation_exprt(exist, ID_ge, bound_inf),
-			 binary_relation_exprt(exist, ID_lt, bound_sup))));
-}
-
-string_constraintt string_constraintt::exists(const symbol_exprt & univ, const exprt & bound_sup)
-{
-  return exists(univ,refined_string_typet::index_zero(),bound_sup);
-}
+*/

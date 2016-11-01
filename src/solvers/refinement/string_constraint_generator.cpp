@@ -131,14 +131,17 @@ string_exprt string_constraint_generatort::string_if(const if_exprt &expr)
 
   axioms.emplace_back(expr.cond(),res.same_length(t));
   symbol_exprt qvar = fresh_univ_index("QA_string_if_true");
-  axioms.push_back(string_constraintt(expr.cond(),equal_exprt(res[qvar],t[qvar])
-				      ).forall(qvar,t.length()));
+  axioms.push_back
+    (string_forallt
+     (qvar,t.length(),implies_exprt(expr.cond(),equal_exprt(res[qvar],t[qvar]))));
   
   axioms.emplace_back(not_exprt(expr.cond()),res.same_length(f));
   symbol_exprt qvar2 = fresh_univ_index("QA_string_if_false");
-  axioms.push_back(string_constraintt(not_exprt(expr.cond()),
-				      equal_exprt(res[qvar2],f[qvar2])
-				      ).forall(qvar2,f.length()));
+  axioms.push_back
+    (string_forallt
+     (qvar2,f.length(),implies_exprt(not_exprt(expr.cond()),
+				     equal_exprt(res[qvar2],f[qvar2]))));
+
   return res;
 }
 
@@ -312,7 +315,7 @@ string_exprt string_constraint_generatort::string_constant(irep_idt sval, int ch
     std::string sval_binary=integer2binary((unsigned)utf16[i], char_width);
     constant_exprt c(sval_binary,char_type);
     equal_exprt lemma(res[idx], c);
-    axioms.emplace_back(lemma,true);
+    axioms.emplace_back(lemma); 
   }
   
   std::string s_length_binary = integer2binary(unsigned(utf16.size()),STRING_SOLVER_INDEX_WIDTH);
@@ -381,13 +384,11 @@ string_exprt string_constraint_generatort::string_concat(const string_exprt & s1
 
   // forall i<|s1|. res[i] = s1[i]
   symbol_exprt idx = fresh_univ_index("QA_index_concat");
-  string_constraintt a1(equal_exprt(s1[idx],res[idx]));
-  axioms.push_back(a1.forall(idx, s1.length()));
+  axioms.push_back(string_forallt(idx, s1.length(),equal_exprt(s1[idx],res[idx])));
 
   // forall i<|s2|. res[i+|s1|] = s2[i]
   symbol_exprt idx2 = fresh_univ_index("QA_index_concat2");
-  string_constraintt a2(equal_exprt(s2[idx2],res[plus_exprt(idx2,s1.length())]));
-  axioms.push_back(a2.forall(idx2, s2.length()));
+  axioms.push_back(string_forallt(idx2, s2.length(),equal_exprt(s2[idx2],res[plus_exprt(idx2,s1.length())])));
 
   return res;
 }
@@ -411,8 +412,8 @@ string_exprt string_constraint_generatort::string_copy(const function_applicatio
   string_exprt res(get_char_type());
   axioms.emplace_back(res.same_length(s1));
   symbol_exprt idx = fresh_univ_index("QA_index_copy");
-  string_constraintt a1(equal_exprt(s1[idx],res[idx]));
-  axioms.push_back(a1.forall(idx, s1.length()));  
+  string_forallt a1(idx, s1.length(),equal_exprt(s1[idx],res[idx]));
+  axioms.push_back(a1);  
   return res;
 }
 
@@ -427,10 +428,10 @@ string_exprt string_constraint_generatort::string_set_length(const function_appl
 
   axioms.emplace_back(res.has_length(k));
   symbol_exprt idx = fresh_univ_index("QA_index_set_length");
-  string_constraintt a1
-    (and_exprt(implies_exprt(s1.strictly_longer(idx), equal_exprt(s1[idx],res[idx])),
-	       implies_exprt(s1.shorter(idx), equal_exprt(s1[idx],constant_char(0)))));
-  axioms.push_back(a1.forall(idx, k));  
+  and_exprt a1
+    (implies_exprt(s1.strictly_longer(idx), equal_exprt(s1[idx],res[idx])),
+     implies_exprt(s1.shorter(idx), equal_exprt(s1[idx],constant_char(0))));
+  axioms.push_back(string_forallt(idx, k,a1));  
 
   return res;
 }
@@ -460,8 +461,8 @@ string_exprt string_constraint_generatort::string_value_of(const function_applic
       string_exprt str = java_char_array(char_array);
       axioms.emplace_back(res.has_length(count));
       symbol_exprt idx = fresh_univ_index("QA_index_value_of");
-      string_constraintt a1(equal_exprt(str[plus_exprt(idx,offset)],res[idx]));
-      axioms.push_back(a1.forall(idx, count));
+      equal_exprt a1(str[plus_exprt(idx,offset)],res[idx]);
+      axioms.push_back(string_forallt(idx,count,a1));
       return res;
     }
   else
@@ -497,8 +498,8 @@ string_exprt string_constraint_generatort::string_substring
   axioms.emplace_back(str.longer(end));
 
   // forall idx < str.length, str[idx] = arg_str[idx+i]
-  string_constraintt a(equal_exprt(res[idx], str[plus_exprt(start, idx)]));
-  axioms.push_back(a.forall(idx,res.length()));
+  equal_exprt a(res[idx], str[plus_exprt(start, idx)]);
+  axioms.push_back(string_forallt(idx,res.length(),a));
   return res;
 }
 
@@ -519,18 +520,16 @@ string_exprt string_constraint_generatort::string_trim
 
   symbol_exprt n = fresh_univ_index("QA_index_trim");
   // forall n < m, str[n] = ' '
-  string_constraintt a(equal_exprt(str[n], space_char));
-  axioms.push_back(a.forall(n,idx));
-
+  axioms.push_back(string_forallt(n,idx,equal_exprt(str[n], space_char)));
+  
   symbol_exprt n2 = fresh_univ_index("QA_index_trim2");
   // forall n < |str|-m-|s1|, str[m+|s1|+n] = ' '
-  string_constraintt a1(equal_exprt(str[plus_exprt(idx,plus_exprt(res.length(),n2))], space_char));
-  axioms.push_back(a1.forall(n2,minus_exprt(str.length(),plus_exprt(idx,res.length()))));
+  equal_exprt a1(str[plus_exprt(idx,plus_exprt(res.length(),n2))], space_char);
+  axioms.push_back(string_forallt(n2,minus_exprt(str.length(),plus_exprt(idx,res.length())),a1));
 
   symbol_exprt n3 = fresh_univ_index("QA_index_trim3");
   // forall n < |s1|, s[idx+n] = s1[n]
-  string_constraintt a2(equal_exprt(res[n3], str[plus_exprt(n3, idx)]));
-  axioms.push_back(a2.forall(n3,res.length()));
+  axioms.push_back(string_forallt(n3,res.length(),equal_exprt(res[n3], str[plus_exprt(n3, idx)])));
   // (s[m] != ' ' && s[m+|s1|-1] != ' ') || m = |s|
   or_exprt m_index_condition(equal_exprt(idx,str.length()),
 			     and_exprt
@@ -558,8 +557,8 @@ string_exprt string_constraint_generatort::string_to_lower_case
 				  binary_relation_exprt(str[idx],ID_le,char_Z));
   equal_exprt convert(res[idx],plus_exprt(str[idx],minus_exprt(char_a,char_A)));
   equal_exprt eq(res[idx], str[idx]);
-  string_constraintt a(and_exprt(implies_exprt(is_upper_case,convert),implies_exprt(not_exprt(is_upper_case),eq)));
-  axioms.push_back(a.forall(idx,res.length()));
+  and_exprt a(implies_exprt(is_upper_case,convert),implies_exprt(not_exprt(is_upper_case),eq));
+  axioms.push_back(string_forallt(idx,res.length(),a));
   return res;
 }
 
@@ -582,8 +581,8 @@ string_exprt string_constraint_generatort::string_to_upper_case
 				  binary_relation_exprt(str[idx],ID_le,char_z));
   equal_exprt convert(res[idx],plus_exprt(str[idx],minus_exprt(char_A,char_a)));
   equal_exprt eq(res[idx], str[idx]);
-  string_constraintt a(and_exprt(implies_exprt(is_lower_case,convert),implies_exprt(not_exprt(is_lower_case),eq)));
-  axioms.push_back(a.forall(idx,res.length()));
+  and_exprt a(implies_exprt(is_lower_case,convert),implies_exprt(not_exprt(is_lower_case),eq));
+  axioms.push_back(string_forallt(idx,res.length(),a));
   return res;
 }
 
@@ -627,8 +626,8 @@ string_exprt string_constraint_generatort::of_float
   axioms.emplace_back(isnan, magnitude.same_length(nan_string));
   symbol_exprt qvar = fresh_univ_index("QA_equal_nan");
   axioms.push_back
-    (string_constraintt(isnan,equal_exprt(magnitude[qvar],nan_string[qvar])
-			).forall(qvar,nan_string.length()));
+    (string_forallt(qvar,nan_string.length(),
+		    implies_exprt(isnan,equal_exprt(magnitude[qvar],nan_string[qvar]))));
 
   // If the argument is not NaN, the result is a string that represents the sign and magnitude (absolute value) of the argument. If the sign is negative, the first character of the result is '-' ('\u002D'); if the sign is positive, no sign character appears in the result. 
 
@@ -648,8 +647,8 @@ string_exprt string_constraint_generatort::of_float
   axioms.emplace_back(isinf, magnitude.same_length(infinity_string));
   symbol_exprt qvar_inf = fresh_univ_index("QA_equal_infinity");
   axioms.push_back
-    (string_constraintt(isinf,equal_exprt(magnitude[qvar_inf],infinity_string[qvar_inf])
-			).forall(qvar_inf,infinity_string.length()));
+    (string_forallt(qvar_inf,infinity_string.length(),
+	    implies_exprt(isinf,equal_exprt(magnitude[qvar_inf],infinity_string[qvar_inf]))));
 
   //If m is zero, it is represented by the characters "0.0"; thus, negative zero produces the result "-0.0" and positive zero produces the result "0.0".
 
@@ -658,8 +657,7 @@ string_exprt string_constraint_generatort::of_float
   axioms.emplace_back(iszero, magnitude.same_length(zero_string));
   symbol_exprt qvar_zero = fresh_univ_index("QA_equal_zero");
   axioms.push_back
-    (string_constraintt(iszero,equal_exprt(magnitude[qvar_zero],zero_string[qvar_zero])
-			).forall(qvar_zero,zero_string.length()));
+    (string_forallt(qvar_zero,zero_string.length(),implies_exprt(iszero,equal_exprt(magnitude[qvar_zero],zero_string[qvar_zero]))));
 
   return string_concat(sign_string,magnitude);
 }
@@ -686,14 +684,15 @@ string_exprt string_constraint_generatort::of_bool(const exprt &i)
   axioms.emplace_back(eq, res.same_length(true_string));
   symbol_exprt qvar = fresh_univ_index("QA_equal_true");
   axioms.push_back
-    (string_constraintt(eq,equal_exprt(res[qvar],true_string[qvar])
-			).forall(qvar,true_string.length()));
+    (string_forallt(qvar,true_string.length(),
+		    implies_exprt(eq,equal_exprt(res[qvar],true_string[qvar]))));
 
   axioms.emplace_back(not_exprt(eq), res.same_length(false_string));
   symbol_exprt qvar1 = fresh_univ_index("QA_equal_false");
   axioms.push_back
-    (string_constraintt(not_exprt(eq),equal_exprt(res[qvar1],false_string[qvar1])
-			).forall(qvar,false_string.length()));
+    (string_forallt(qvar,false_string.length(),
+		    implies_exprt(not_exprt(eq),
+				  equal_exprt(res[qvar1],false_string[qvar1]))));
 
   return res;
 }
@@ -895,13 +894,11 @@ string_exprt string_constraint_generatort::string_replace
   axioms.emplace_back(res.same_length(str));
   symbol_exprt qvar = fresh_univ_index("QA_replace");
   axioms.push_back
-    (string_constraintt
-     (and_exprt
-      (implies_exprt(equal_exprt(str[qvar],oldChar),equal_exprt(res[qvar],newChar)),
-       implies_exprt(not_exprt(equal_exprt(str[qvar],oldChar)),
-		     equal_exprt(res[qvar],str[qvar]))
-       )
-      ).forall(qvar,res.length()));
+    (string_forallt(qvar,res.length(),
+		    (and_exprt
+		     (implies_exprt(equal_exprt(str[qvar],oldChar),equal_exprt(res[qvar],newChar)),
+		      implies_exprt(not_exprt(equal_exprt(str[qvar],oldChar)),
+				    equal_exprt(res[qvar],str[qvar]))))));
   return res;
 }
 
@@ -1077,13 +1074,14 @@ exprt string_constraint_generatort::string_equal
 
   axioms.emplace_back(eq, s1.same_length(s2));
   axioms.push_back
-    (string_constraintt(eq,equal_exprt(s1[qvar],s2[qvar])
-			).forall(qvar,s1.length()));
+    (string_forallt(qvar,s1.length(), implies_exprt(eq,equal_exprt(s1[qvar],s2[qvar]))));
 
   axioms.emplace_back
-    (not_exprt(eq),
-     or_exprt(notequal_exprt(s1.length(), s2.length()),
-	      string_constraintt(notequal_exprt(s1[witness],s2[witness])).exists(witness,s1.length())));
+    (implies_exprt
+     (not_exprt(eq),
+      or_exprt(notequal_exprt(s1.length(), s2.length()),
+	       and_exprt(notequal_exprt(s1[witness],s2[witness]),
+			 index_guardt(witness,s1.length()).to_expr()))));
 
   return tc_eq;
 }
@@ -1121,13 +1119,12 @@ exprt string_constraint_generatort::string_equals_ignore_case
   axioms.emplace_back(eq, s1.same_length(s2));
 
   axioms.push_back
-    (string_constraintt(eq,character_equals_ignore_case(s1[qvar],s2[qvar],char_a,char_A,char_Z)
-			).forall(qvar,s1.length()));
+    (string_forallt(qvar,s1.length(), implies_exprt(eq,character_equals_ignore_case(s1[qvar],s2[qvar],char_a,char_A,char_Z))));
 
   axioms.emplace_back
-    (not_exprt(eq),
-     or_exprt(notequal_exprt(s1.length(), s2.length()),
-	      string_constraintt(not_exprt(character_equals_ignore_case(s1[witness],s2[witness],char_a,char_A,char_Z))).exists(witness,s1.length())));
+    (implies_exprt(not_exprt(eq),
+		   or_exprt(notequal_exprt(s1.length(), s2.length()),
+			    and_exprt(not_exprt(character_equals_ignore_case(s1[witness],s2[witness],char_a,char_A,char_Z)),index_guardt(witness,s1.length()).to_expr()))));
   
   return tc_eq;
 }
@@ -1159,8 +1156,8 @@ exprt string_constraint_generatort::string_data
 					 ,constant_signed(0,64),pointer_typet(unsignedbv_typet(16))))),unsignedbv_typet(16)),
      get_char_type());
 
-  string_constraintt eq(equal_exprt(str[qvar],char_in_tab));
-  axioms.push_back(eq.forall(qvar,str.length()));
+  equal_exprt eq(str[qvar],char_in_tab);
+  axioms.push_back(string_forallt(qvar,str.length(),eq));
 
   exprt void_expr;
   void_expr.type() = void_typet();
@@ -1176,8 +1173,8 @@ string_exprt string_constraint_generatort::of_char_array
   assert(char_in_tab.id() == ID_index);
   char_in_tab.op1() = plus_exprt(qvar,offset);
   
-  string_constraintt eq(equal_exprt(str[qvar],char_in_tab));
-  axioms.push_back(eq.forall(qvar,count));
+  equal_exprt eq(str[qvar],char_in_tab);
+  axioms.push_back(string_forallt(qvar,count,eq));
   axioms.emplace_back(equal_exprt(str.length(),count));
   
   return str;
@@ -1242,8 +1239,7 @@ exprt string_constraint_generatort::string_is_prefix(const string_exprt &prefix,
   // forall 0 <= witness < prefix.length. isprefix => s0[witness+offset] = s2[witness]
   symbol_exprt qvar = fresh_univ_index("QA_isprefix");
   axioms.push_back
-    (string_constraintt(isprefix, equal_exprt(str[plus_exprt(qvar,offset)],prefix[qvar])
-			).forall(qvar,prefix.length()));
+    (string_forall(qvar,prefix.length(),implies_exprt(isprefix, equal_exprt(str[plus_exprt(qvar,offset)],prefix[qvar]))));
 	     
   symbol_exprt witness = fresh_exist_index("witness_not_isprefix");
 
@@ -1307,8 +1303,7 @@ exprt string_constraint_generatort::string_is_suffix
   exprt qvar_shifted = plus_exprt(qvar, 
 				  minus_exprt(s1.length(), s0.length()));
   axioms.push_back
-    (string_constraintt(issuffix, equal_exprt(s0[qvar],s1[qvar_shifted])
-			).forall(qvar,s0.length()));
+    (string_forallt(qvar,s0.length(),issuffix, equal_exprt(s0[qvar],s1[qvar_shifted])));
 
   symbol_exprt witness = fresh_exist_index("witness_not_suffix");
 
@@ -1346,15 +1341,17 @@ exprt string_constraint_generatort::string_contains
 
   axioms.emplace_back(implies_exprt(contains, s0.longer(s1)));
   symbol_exprt startpos = fresh_exist_index("startpos_contains");
-  axioms.emplace_back(
-		      and_exprt(is_positive(startpos),binary_relation_exprt(startpos, ID_le, minus_exprt(s0.length(),s1.length()))));
+  axioms.emplace_back
+    (and_exprt(is_positive(startpos),binary_relation_exprt(startpos, ID_le, minus_exprt(s0.length(),s1.length()))));
 
   symbol_exprt qvar = fresh_univ_index("QA_contains");
   exprt qvar_shifted = plus_exprt(qvar, startpos);
   axioms.push_back
-    (string_constraintt(contains,equal_exprt(s1[qvar],s0[qvar_shifted])
-			).forall(qvar,s1.length()));
+    (string_forallt(qvar,s1.length(),contains,equal_exprt(s1[qvar],s0[qvar_shifted])));
+		
 
+  throw " string_constraint_generatort::string_contains unsupported";
+  /*
   // We rewrite the axiom for !contains as:
   // forall startpos <= |s0| - |s1|.  (!contains && |s0| >= |s1| )
   //      ==> exists witness < |s1|. s1[witness] != s0[startpos+witness]
@@ -1363,7 +1360,7 @@ exprt string_constraint_generatort::string_contains
      (refined_string_typet::index_zero(),plus_exprt(refined_string_typet::index_of_int(1),minus_exprt(s0.length(),s1.length())), 
       and_exprt(not_exprt(contains),s0.longer(s1)),refined_string_typet::index_zero(),s1.length(),s0,s1));
 
-  return tc_contains;
+      return tc_contains;*/
 }
 
 
@@ -1415,14 +1412,12 @@ exprt string_constraint_generatort::string_index_of
   axioms.emplace_back(contains,and_exprt(binary_relation_exprt(from_index,ID_le,index),equal_exprt(str[index],c)));
 
   symbol_exprt n = fresh_univ_index("QA_index_of");
-  axioms.push_back(string_constraintt
-		   (contains,not_exprt(equal_exprt(str[n],c))).forall(n,from_index,index));
+  axioms.push_back(string_forallt(n,from_index,index,implies_exprt(contains,not_exprt(equal_exprt(str[n],c)))));
 
   symbol_exprt m = fresh_univ_index("QA_index_of");
 
-  axioms.push_back(string_constraintt
-		   (not_exprt(contains),not_exprt(equal_exprt(str[m],c))
-		    ).forall(m,from_index,str.length()));
+  axioms.push_back(string_forallt(m,from_index,str.length(),
+				  implies_exprt(not_exprt(contains),not_exprt(equal_exprt(str[m],c)))));
 
   return index;
 }
@@ -1439,8 +1434,7 @@ exprt string_constraint_generatort::string_index_of_string(const string_exprt &s
   // forall 0 <= witness < substring.length. contains => str[witness+offset] = substring[witness]
   symbol_exprt qvar = fresh_univ_index("QA_index_of_string");
   axioms.push_back
-    (string_constraintt(contains, equal_exprt(str[plus_exprt(qvar,offset)],substring[qvar])
-			).forall(qvar,substring.length()));
+    (string_forallt(qvar,substring.length(),implies_exprt(contains, equal_exprt(str[plus_exprt(qvar,offset)],substring[qvar]))));
 	     
   return offset; 
 }
@@ -1457,8 +1451,7 @@ exprt string_constraint_generatort::string_last_index_of_string(const string_exp
   // forall 0 <= witness < substring.length. contains => str[witness+offset] = substring[witness]
   symbol_exprt qvar = fresh_univ_index("QA_index_of_string");
   axioms.push_back
-    (string_constraintt(contains, equal_exprt(str[plus_exprt(qvar,offset)],substring[qvar])
-			).forall(qvar,substring.length()));
+    (string_forall(qvar,substring.length(),contains, equal_exprt(str[plus_exprt(qvar,offset)],substring[qvar])));
   
   return offset; 
 }
@@ -1501,10 +1494,10 @@ exprt string_constraint_generatort::string_last_index_of
   axioms.emplace_back(contains,and_exprt(is_positive(index),and_exprt(binary_relation_exprt(from_index,ID_ge,index),equal_exprt(str[index],c))));
   
   symbol_exprt n = fresh_univ_index("QA_last_index_of");
-  axioms.push_back(string_constraintt(contains,not_exprt(equal_exprt(str[n],c))).forall(n,plus_exprt(index,refined_string_typet::index_of_int(1)),from_index_plus_one));
+  axioms.push_back(string_forallt(n,plus_exprt(index,refined_string_typet::index_of_int(1)),from_index_plus_one,implies_exprt(contains,not_exprt(equal_exprt(str[n],c)))));
 
   symbol_exprt m = fresh_univ_index("QA_last_index_of");
-  axioms.push_back(string_constraintt(not_exprt(contains),not_exprt(equal_exprt(str[m],c))).forall(m,from_index_plus_one));
+  axioms.push_back(string_forallt(m,from_index_plus_one,implies_exprt(not_exprt(contains),not_exprt(equal_exprt(str[m],c)))));
 
   return index;
 }
@@ -1758,8 +1751,8 @@ exprt string_constraint_generatort::string_compare_to
   symbol_exprt i = fresh_univ_index("QA_compare_to");
   equal_exprt res_null = equal_exprt(res,constant_signed(0,width));
   axioms.emplace_back(res_null, s1.same_length(s2));
-  axioms.push_back(string_constraintt
-		   (res_null,equal_exprt(s1[i],s2[i])).forall(i,s1.length()));
+  axioms.push_back(string_forallt(i,s1.length(),
+				  implies_exprt(res_null,equal_exprt(s1[i],s2[i]))));
 
   symbol_exprt x = fresh_exist_index("index_compare_to");
   axioms.push_back
@@ -1780,8 +1773,8 @@ exprt string_constraint_generatort::string_compare_to
 	 (and_exprt(s2.strictly_longer(s1),s1.has_length(x)), 
 	  and_exprt(s1.strictly_longer(s2),s2.has_length(x))))))));
 
-  axioms.push_back(string_constraintt
-		   (not_exprt(res_null),equal_exprt(s1[i],s2[i])).forall(i,x));
+  axioms.push_back(string_forallt(i,x,
+				  implies_exprt(not_exprt(res_null),equal_exprt(s1[i],s2[i]))));
 
   return res;
 }
