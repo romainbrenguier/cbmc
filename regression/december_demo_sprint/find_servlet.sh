@@ -9,7 +9,18 @@ echo "############################################################"
 #echo "------ Interesting function calls in java file ------"
 for i in $(find $DIR -name *.java)
 do
-    grep -n -H -e "extends HttpServlet" $i;
+    grep -n -H -e "HttpServlet" $i;
     #grep -H -n -e addIntHeader -e addHeader -e addDateHeader -e addCookie -e setHeader -e getWriter -e getOutputStream $i;
 done
+
+echo "############################################################"
+echo "------ Looking into jar files ------"
+
+for i in $(find $DIR -name *.jar)
+do
+    java -cp java-analysis/target/java-analysis-1.0-SNAPSHOT.jar com.DiffBlue.app.ListInterfaces $i HttpServlet
+    cat classes.txt >>$DIR/classes_implementing_servlet.txt
+    rm classes.txt
+done
+
 

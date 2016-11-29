@@ -3,6 +3,13 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.jar.*;
 import java.net.*;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.PrintWriter;
+
 
 /**
  * Look for methods in a class or a jar file
@@ -11,12 +18,16 @@ import java.net.*;
 public class ListInterfaces
 {
 
-    public static void methodsOfClass (Class c) throws ClassNotFoundException 
+    public static void methodsOfClass (PrintWriter class_writer, Class c, String interface_name) throws ClassNotFoundException 
     {
 	
 	Class[] interfaces =  c.getInterfaces();
 	for(int i = 0; i < Array.getLength(interfaces); i++)
-	    System.out.println( "class "+c.getName() + "implements : "+interfaces[i].getName());
+	    if(interfaces[i].getName().equals(interface_name))
+		{
+		    System.out.println( "class "+c.getName() + " implements : "+interfaces[i].getName());
+		    class_writer.println(c.getName());
+		}
     }
     
     public static void main( String[] args )
@@ -24,7 +35,17 @@ public class ListInterfaces
 
 	try
 	    {
-		System.out.println( "usage: java -cp target/java-analysis-1.0-SNAPSHOT.jar com.DiffBlue.app.ListInterfaces my.project.prefix");
+		if(args.length == 0)
+		    System.out.println( "usage: java -cp target/java-analysis-1.0-SNAPSHOT.jar com.DiffBlue.app.ListInterfaces my.project.prefix");
+
+		String interface_name = "";
+		if(args.length>1)
+		    interface_name = args[1];
+
+		PrintWriter class_writer = new PrintWriter("classes.txt", "UTF-8");
+		System.out.println("Writing list of candidate classes to classes.txt");
+		
+		
 		if(args[0].endsWith(".jar"))
 		    {
 			String pathToJar = args[0];
@@ -37,9 +58,7 @@ public class ListInterfaces
 
 			while (e.hasMoreElements())
 			    {
-				
-			try
-			    {
+
 				JarEntry je = e.nextElement();
 				if(je.isDirectory() || !je.getName().endsWith(".class")){
 				    continue;
@@ -48,13 +67,20 @@ public class ListInterfaces
 				String className = je.getName().substring(0,je.getName().length()-6);
 				className = className.replace('/', '.');
 				
-				Class c = cl.loadClass(className);
-				methodsOfClass(c);
-							    }
-			catch (Throwable exc)
-			    {
-				System.err.println(exc);
-			    }
+				try
+				    {
+					Class c = cl.loadClass(className);
+					methodsOfClass(class_writer,c,interface_name);
+				    }
+				catch (Throwable exc)
+				    {
+					String failed_class_name = exc.toString();
+					if(failed_class_name.contains(interface_name))
+					    {
+						System.out.println("class " + className + " may implement " + interface_name + "("+exc+")");
+						class_writer.println(className);
+					    }
+				    }
 			    }
 
 
@@ -64,9 +90,10 @@ public class ListInterfaces
 		    {
 			System.out.println( "Looking into class: "+args[0]);
 			Class c = Class.forName(args[0]);
-			methodsOfClass(c);
+			methodsOfClass(class_writer,c,interface_name);
 			
 		    }
+		class_writer.close();
 	    }
 	catch (Throwable e1)
 	    {
