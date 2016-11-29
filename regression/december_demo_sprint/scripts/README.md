@@ -17,11 +17,12 @@ Finding sources
 
 Calls to methods of the class javax.servlet.http.HttpServletRequest
 are possible sources
+The script find_request.sh helps you find such calls
 
 
 Finding sinks
 =============
 
 Calls to methods of the class javax.servlet.http.HttpServletResponse are possible sinks
-
+The script find_response.sh helps you find such calls
 

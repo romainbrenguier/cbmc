@@ -10,6 +10,7 @@ echo "############################################################"
 for i in $(find $DIR -name *.java)
 do
     grep -n -H -e "Controller" $i;
+     #| grep "extends";
     #grep -H -n -e addIntHeader -e addHeader -e addDateHeader -e addCookie -e setHeader -e getWriter -e getOutputStream $i;
 done
 

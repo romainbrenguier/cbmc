@@ -20,15 +20,18 @@ public class ListInterfaces
 	
 	Class[] interfaces =  c.getInterfaces();
 	for(int i = 0; i < Array.getLength(interfaces); i++)
-	    if(interfaces[i].getName() == interface_name)
+	    /*if(interfaces[i].getName() == interface_name)
 		{
 		    System.out.println( "class "+c.getName() + " implements : "+interfaces[i].getName());
 		    class_writer.println(c.getName());
+		    ListMethods.methodsOfClass(c);
 		}
-	    else if(interfaces[i].getName().contains(interface_name))
+		else*/ if(interfaces[i].getName().contains(interface_name))
 		{
 		    System.out.println("class "+c.getName() + " implements : "+interfaces[i].getName());
-		    System.out.println("(this is not an exact match so we do not include it in the class list)");
+		    class_writer.println(c.getName());
+		    //System.out.println("(this is not an exact match so we do not include it in the class list)");
+		    ListMethods.containsMethod(c,"getWriter");
 		}
 		    
     }
@@ -57,7 +60,12 @@ public class ListInterfaces
 			JarFile jarFile = new JarFile(pathToJar);
 			Enumeration<JarEntry> e = jarFile.entries();
 
-			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") , new URL("file:///usr/share/maven-repo/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar")}; 
+
+			
+			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") ,
+				       new URL("file:///usr/share/maven-repo/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar"),
+				       new URL("file:///usr/share/maven-repo/")}; 
+
 			URLClassLoader cl = URLClassLoader.newInstance(urls);
 			cl.loadClass("javax.servlet.http.HttpServlet");
 			//cl.loadClass("HttpServlet");
@@ -87,6 +95,11 @@ public class ListInterfaces
 						System.out.println("class " + className + " may implement " + interface_name + "("+exc+")");
 						additional_class_writer.println(className);
 					    }
+					else
+					    {
+						//	System.out.println(exc);
+					    }
+						
 				    }
 			    }
 

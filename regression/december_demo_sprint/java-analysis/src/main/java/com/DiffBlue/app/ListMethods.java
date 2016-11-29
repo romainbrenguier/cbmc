@@ -13,19 +13,22 @@ public class ListMethods
 
     public static void methodsOfClass (Class c) throws ClassNotFoundException 
     {
-	//Class c = Class.forName(className);
-	Class[] interfaces =  c.getInterfaces();
-	if(Array.getLength(interfaces) > 0)
-	    System.out.println("Implements interfaces : ");
-	for(int i = 0; i < Array.getLength(interfaces); i++)
-	    System.out.println(interfaces[i].getName());
-	
-	
 	Method m[] = c.getDeclaredMethods();
 	for (int i = 0; i < m.length; i++)
 	    System.out.println(m[i].toString());
 	
     }
+
+    public static void containsMethod (Class c, String method_name) throws ClassNotFoundException 
+    {
+	Method m[] = c.getDeclaredMethods();
+	for (int i = 0; i < m.length; i++)
+	    if(m[i].toString().contains(method_name))
+		System.out.println("class "+c.getName()+" contains "+method_name);
+	
+    }
+
+    
     
     public static void main( String[] args )
     {
