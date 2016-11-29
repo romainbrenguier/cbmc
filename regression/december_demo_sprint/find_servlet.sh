@@ -16,6 +16,8 @@ done
 echo "############################################################"
 echo "------ Looking into jar files ------"
 
+rm $DIR/classes_implementing_servlet.txt
+
 for i in $(find $DIR -name *.jar)
 do
     java -cp java-analysis/target/java-analysis-1.0-SNAPSHOT.jar com.DiffBlue.app.ListInterfaces $i HttpServlet

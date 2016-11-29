@@ -4,10 +4,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.net.*;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import javax.servlet.http.*;
 import java.io.PrintWriter;
 
 
@@ -23,11 +20,17 @@ public class ListInterfaces
 	
 	Class[] interfaces =  c.getInterfaces();
 	for(int i = 0; i < Array.getLength(interfaces); i++)
-	    if(interfaces[i].getName().equals(interface_name))
+	    if(interfaces[i].getName() == interface_name)
 		{
 		    System.out.println( "class "+c.getName() + " implements : "+interfaces[i].getName());
 		    class_writer.println(c.getName());
 		}
+	    else if(interfaces[i].getName().contains(interface_name))
+		{
+		    System.out.println("class "+c.getName() + " implements : "+interfaces[i].getName());
+		    System.out.println("(this is not an exact match so we do not include it in the class list)");
+		}
+		    
     }
     
     public static void main( String[] args )
@@ -43,7 +46,8 @@ public class ListInterfaces
 		    interface_name = args[1];
 
 		PrintWriter class_writer = new PrintWriter("classes.txt", "UTF-8");
-		System.out.println("Writing list of candidate classes to classes.txt");
+		PrintWriter additional_class_writer = new PrintWriter("classes2.txt", "UTF-8");
+		System.out.println("Writing list of classes to classes.txt and candidates to classes2.txt");
 		
 		
 		if(args[0].endsWith(".jar"))
@@ -53,9 +57,12 @@ public class ListInterfaces
 			JarFile jarFile = new JarFile(pathToJar);
 			Enumeration<JarEntry> e = jarFile.entries();
 
-			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
+			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") , new URL("file:///usr/share/maven-repo/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar")}; 
 			URLClassLoader cl = URLClassLoader.newInstance(urls);
+			cl.loadClass("javax.servlet.http.HttpServlet");
+			//cl.loadClass("HttpServlet");
 
+			    
 			while (e.hasMoreElements())
 			    {
 
@@ -78,7 +85,7 @@ public class ListInterfaces
 					if(failed_class_name.contains(interface_name))
 					    {
 						System.out.println("class " + className + " may implement " + interface_name + "("+exc+")");
-						class_writer.println(className);
+						additional_class_writer.println(className);
 					    }
 				    }
 			    }
@@ -94,6 +101,7 @@ public class ListInterfaces
 			
 		    }
 		class_writer.close();
+		additional_class_writer.close();
 	    }
 	catch (Throwable e1)
 	    {
