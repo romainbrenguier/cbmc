@@ -8,23 +8,15 @@ import java.net.*;
  * Look for methods in a class or a jar file
  *
  */
-public class ListMethods
+public class ListInterfaces
 {
 
     public static void methodsOfClass (Class c) throws ClassNotFoundException 
     {
-	//Class c = Class.forName(className);
+	
 	Class[] interfaces =  c.getInterfaces();
-	if(Array.getLength(interfaces) > 0)
-	    System.out.println("Implements interfaces : ");
 	for(int i = 0; i < Array.getLength(interfaces); i++)
-	    System.out.println(interfaces[i].getName());
-	
-	
-	Method m[] = c.getDeclaredMethods();
-	for (int i = 0; i < m.length; i++)
-	    System.out.println(m[i].toString());
-	
+	    System.out.println( "class "+c.getName() + "implements : "+interfaces[i].getName());
     }
     
     public static void main( String[] args )
@@ -32,7 +24,7 @@ public class ListMethods
 
 	try
 	    {
-		System.out.println( "usage: java -cp target/java-analysis-1.0-SNAPSHOT.jar com.DiffBlue.app.ListMethods my.project.prefix");
+		System.out.println( "usage: java -cp target/java-analysis-1.0-SNAPSHOT.jar com.DiffBlue.app.ListInterfaces my.project.prefix");
 		if(args[0].endsWith(".jar"))
 		    {
 			String pathToJar = args[0];
@@ -55,7 +47,6 @@ public class ListMethods
 				// -6 because of .class
 				String className = je.getName().substring(0,je.getName().length()-6);
 				className = className.replace('/', '.');
-				System.out.println( "class "+className);
 				
 				Class c = cl.loadClass(className);
 				methodsOfClass(c);
