@@ -4,8 +4,6 @@ DIR=$1
 echo "############################################################"
 echo "------ Looking into jar files ------"
 
-rm $DIR/classes_implementing_servlet.txt
-
 for i in $(find $DIR -name *.jar)
 do
 

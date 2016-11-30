@@ -99,6 +99,14 @@ libzip-download:
 	@mv libzip-1.1.2 ../libzip
 	@rm libzip-1.1.2.tar.gz
 
+boost-download:
+	@echo "Downloading boost 1.62"
+	@lwp-download http://downloads.sourceforge.net/project/boost/boost/1.62.0/boost_1_62_0.tar.bz2
+	@tar --bzip2 -xf boost_1_62_0.tar.bz2
+	@rm -Rf ../boost
+	@mv boost_1_62_0 ../boost
+	@rm boost_1_62_0.tar.bz2
+
 libzip-build:
 	@echo "Building zlib"
 	@(cd ../zlib; ./configure; make)
