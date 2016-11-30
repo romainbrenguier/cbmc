@@ -428,7 +428,7 @@ int goto_analyzer_parse_optionst::doit()
   }
   */
 
-  if(goto_model(cmdline.args))
+  if(goto_model(cmdline))
     return 6;
     
   if(process_goto_program(options))
@@ -601,9 +601,9 @@ int goto_analyzer_parse_optionst::doit()
             taint_object_numbering,
             object_numbers_by_field,
 	    formals_to_actuals,
-            cmdline.isset("taint-dump-log") ? &log : nullptr
-            );
-
+	    cmdline.isset("taint-stop-after-one-trace"),
+	    get_message_handler(),
+            cmdline.isset("taint-dump-log") ? &log : nullptr);
       if (error_traces.empty())
         status() << "The program is free of taint-related issues."
                  << eom;

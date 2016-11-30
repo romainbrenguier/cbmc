@@ -14,14 +14,13 @@ Repository: https://github.com/Libresonic/libresonic
 
 
 1. Open a terminal in the directory of this readme file and clone:
-git clone https://github.com/Libresonic/libresonic
-2. Enter the directory and build with maven:
-cd libresonic/
-git checkout 46a282900f636dc884cb157d156cf33fbae9182f
-mvn clean package
-
-3. Copy the resulting files to ../BENCHMARK (relative path to this README.txt file):
-mkdir ../../BENCHMARK
-mv */target/* ../../BENCHMARK/
-
+      git clone https://github.com/Libresonic/libresonic
+2. Rename the created directory "libresonic" to "Libresonic"
+3. Enter the directory "Libresonic" and type there the following:
+      git checkout 46a282900f636dc884cb157d156cf33fbae9182f .
+      mvn clean package
+4. Copy the resulting files to ../BENCHMARK (relative path to this README.txt
+   file):
+      cd .. 
+      python ./copy_binaries.py
 
