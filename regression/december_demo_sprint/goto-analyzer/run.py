@@ -60,10 +60,10 @@ def parse_cmd_line():
                         help="If specified, then the analysed program is dumped in HTML format.")
     parser.add_argument("--verbosity", type=int, default=9,
                         help="If specified, then debugging messages will be printed to the standard output stream.")
-    parser.add_argument("--use-pruned-rt", action="store_true",
-                        help="If specified, then directory '../data/openjdk-8-rt.jar-unpacked-PRUNED' is put "
-                             "into classpath for the goto-analyser instead of default ''../data/openjdk-8-rt.jar-"
-                             "unpacked' directory.")
+    parser.add_argument("--use-full-rt", action="store_true",
+                        help="If specified, then directory '../data/openjdk-8-rt.jar-unpacked' is put into "
+                             "classpath for the goto-analyser instead of default ''../data/openjdk-8-rt.jar-"
+                             "unpacked-PRUNED' directory.")
     parser.add_argument("--debug", action="store_true",
                         help="If specified, then debugging messages will be printed to the standard output stream.")
     return parser.parse_args()
@@ -177,7 +177,7 @@ def  evaluate_one_directory(cmdline):
                                             cmdline.dump_program,
                                             cmdline.verbosity,
                                             results_dir,
-                                            cmdline.use_pruned_rt,
+                                            cmdline.use_full_rt,
                                             cmdline.debug
                                             )
         root_fn_prof["duration"] = time.time() - root_fn_prof["duration"]

@@ -58,7 +58,7 @@ def run_goto_analyser(
         dump_program,
         verbosity,
         results_dir,
-        use_pruned_rt,
+        use_full_rt,
         debug_logs_enabled
         ):
     prof = { "duration": time.time() }
@@ -68,10 +68,10 @@ def run_goto_analyser(
     root_jar_copy = os.path.abspath(os.path.join(results_dir, os.path.basename(root_jar)))
     shutil.copyfile(root_jar, root_jar_copy)
 
-    if use_pruned_rt:
-        rt_dir = "../data/openjdk-8-rt.jar-unpacked-PRUNED"
-    else:
+    if use_full_rt:
         rt_dir = "../data/openjdk-8-rt.jar-unpacked"
+    else:
+        rt_dir = "../data/openjdk-8-rt.jar-unpacked-PRUNED"
 
     classpath = os.path.relpath(os.path.abspath(os.path.join(__get_my_dir(),rt_dir)),results_dir)
 
@@ -116,7 +116,6 @@ def run_goto_analyser(
         + dump_html_program + " "
         "--taint-summaries-timeout-seconds " + str(timeout) + " "
         "--verbosity " + str(verbosity) + " "
-        #"--taint-use-fast-analyser "
         "--classpath '" + classpath + "'"
         )
     if debug_logs_enabled:
