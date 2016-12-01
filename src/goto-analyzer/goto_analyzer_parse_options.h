@@ -54,7 +54,7 @@ class optionst;
   "(taint-summaries-timeout-seconds):" \
   "(taint-dump-log)" \
   "(taint-stop-after-one-trace)" \
-  "(class-info):"
+  "(taint-use-fast-analyser)"
 
 class goto_analyzer_parse_optionst:
   public parse_options_baset,

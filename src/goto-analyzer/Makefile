@@ -12,7 +12,7 @@ SRC = goto_analyzer_main.cpp goto_analyzer_parse_options.cpp \
       taint_statistics_dump_html.cpp \
       taint_statistics_dump_json.cpp \
       taint_summary_libmodels.cpp \
-      class_info.cpp
+      taint_fast_analyser.cpp
 
 OBJ += ../ansi-c/ansi-c$(LIBEXT) \
       ../cpp/cpp$(LIBEXT) \

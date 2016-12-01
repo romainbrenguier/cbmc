@@ -62,7 +62,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <goto-analyzer/taint_summary_json.h>
 #include <goto-analyzer/taint_trace_recogniser.h>
 #include <goto-analyzer/taint_trace_dump.h>
-#include <goto-analyzer/class_info.h>
+#include <goto-analyzer/taint_fast_analyser.h>
 
 #include "goto_analyzer_parse_options.h"
 #include "taint_analysis.h"
@@ -434,14 +434,6 @@ int goto_analyzer_parse_optionst::doit()
   if(process_goto_program(options))
     return 6;
 
-  if (cmdline.isset("class-info"))
-  {
-    dump_class_info_in_json(
-      cmdline.get_value("class-info")
-      );
-    return 0;
-  }
-
   taint_statisticst::instance().end_goto_program_building();
 
   if (cmdline.isset("run-pointsto-temp-analyser"))
@@ -591,19 +583,36 @@ int goto_analyzer_parse_optionst::doit()
                << eom; std::cout.flush();
 
       std::vector<taint_tracet>  error_traces;
-      taint_recognise_error_traces(
-            error_traces,
-            goto_model,
-            call_graph,
-            summaries,
-            taint_sources,
-            taint_sinks,
-            taint_object_numbering,
-            object_numbers_by_field,
-	    formals_to_actuals,
-	    cmdline.isset("taint-stop-after-one-trace"),
-	    get_message_handler(),
-            cmdline.isset("taint-dump-log") ? &log : nullptr);
+
+      if (cmdline.isset("taint-use-fast-analyser"))
+      {
+        taint_fast_analyser(
+              error_traces,
+              goto_model,
+              call_graph,
+              cmdline.isset("function") ?
+                  std::string("java::")+cmdline.get_value("function") :
+                  "",
+              taint_sources,
+              taint_sinks
+              );
+      }
+      else
+      {
+          taint_recognise_error_traces(
+                error_traces,
+                goto_model,
+                call_graph,
+                summaries,
+                taint_sources,
+                taint_sinks,
+                taint_object_numbering,
+                object_numbers_by_field,
+          formals_to_actuals,
+          cmdline.isset("taint-stop-after-one-trace"),
+          get_message_handler(),
+                cmdline.isset("taint-dump-log") ? &log : nullptr);
+      }
       if (error_traces.empty())
         status() << "The program is free of taint-related issues."
                  << eom;
