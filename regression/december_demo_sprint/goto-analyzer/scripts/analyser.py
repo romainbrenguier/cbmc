@@ -116,7 +116,7 @@ def run_goto_analyser(
         + dump_html_program + " "
         "--taint-summaries-timeout-seconds " + str(timeout) + " "
         "--verbosity " + str(verbosity) + " "
-        "--taint-use-fast-analyser "
+        #"--taint-use-fast-analyser "
         "--classpath '" + classpath + "'"
         )
     if debug_logs_enabled:
