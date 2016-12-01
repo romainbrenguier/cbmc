@@ -27,8 +27,8 @@ OBJ += ../ansi-c/ansi-c$(LIBEXT) \
       ../util/util$(LIBEXT) \
       ../summaries/summary$(LIBEXT)
 
-INCLUDES= -I ..
-
+INCLUDES= -I .. \
+         -I ../../boost
 LIBS =
 
 include ../config.inc
