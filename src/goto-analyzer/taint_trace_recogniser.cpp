@@ -1065,7 +1065,7 @@ void taint_recognise_error_traces(
 	  else
 	  {
 	    // First try bypassing the function:
-	    bt_trace.add_pending_backtrack(new_element,true);
+      //bt_trace.add_pending_backtrack(new_element,true);
 	    trace.stack_pop();
 	    // TODO: factor this.
 	    std::vector<taint_trace_elementt>  successors;
