@@ -58,6 +58,10 @@ def parse_cmd_line():
                              "with in JSON format (which is always saved).")
     parser.add_argument("--verbosity", type=int, default=9,
                         help="If specified, then debugging messages will be printed to the standard output stream.")
+    parser.add_argument("--use-pruned-rt", action="store_true",
+                        help="If specified, then directory '../data/openjdk-8-rt.jar-unpacked-PRUNED' is put "
+                             "into classpath for the goto-analyser instead of default ''../data/openjdk-8-rt.jar-"
+                             "unpacked' directory.")
     parser.add_argument("--debug", action="store_true",
                         help="If specified, then debugging messages will be printed to the standard output stream.")
     return parser.parse_args()
@@ -104,9 +108,10 @@ def  evaluate_one_directory(cmdline):
         if os.path.exists(cmdline.temp_dir):
             print("Deleting " + cmdline.temp_dir)
             shutil.rmtree(cmdline.temp_dir)
-        if os.path.exists(cmdline.results_dir):
-            print("Deleting " + cmdline.results_dir)
-            shutil.rmtree(cmdline.results_dir)
+
+    if os.path.exists(cmdline.results_dir):
+        print("Deleting " + cmdline.results_dir)
+        shutil.rmtree(cmdline.results_dir)
 
     if not scripts.analyser.exists_java_script():
         print("Building parser of Java class files.")
@@ -169,6 +174,7 @@ def  evaluate_one_directory(cmdline):
                                             cmdline.dump_html_traces,
                                             cmdline.verbosity,
                                             results_dir,
+                                            cmdline.use_pruned_rt,
                                             cmdline.debug
                                             )
         root_fn_prof["duration"] = time.time() - root_fn_prof["duration"]

@@ -57,6 +57,7 @@ def run_goto_analyser(
         dump_html_traces,
         verbosity,
         results_dir,
+        use_pruned_rt,
         debug_logs_enabled
         ):
     prof = { "duration": time.time() }
@@ -65,8 +66,14 @@ def run_goto_analyser(
         os.makedirs(results_dir)
     root_jar_copy = os.path.abspath(os.path.join(results_dir, os.path.basename(root_jar)))
     shutil.copyfile(root_jar, root_jar_copy)
-    classpath = os.path.relpath(os.path.abspath(os.path.join(__get_my_dir(),"../data/openjdk-8-rt.jar-unpacked-PRUNED")),
-                                results_dir)
+
+    if use_pruned_rt:
+        rt_dir = "../data/openjdk-8-rt.jar-unpacked-PRUNED"
+    else:
+        rt_dir = "../data/openjdk-8-rt.jar-unpacked"
+
+    classpath = os.path.relpath(os.path.abspath(os.path.join(__get_my_dir(),rt_dir)),results_dir)
+
     for jar in jars_cfg["jars"]:
         if not (jar == root_jar):
             classpath += ":" + os.path.relpath(jar, results_dir)
