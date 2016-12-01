@@ -55,6 +55,7 @@ def run_goto_analyser(
         dump_html_summaries,
         dump_html_statistics,
         dump_html_traces,
+        dump_program,
         verbosity,
         results_dir,
         use_pruned_rt,
@@ -95,6 +96,12 @@ def run_goto_analyser(
     else:
         dump_html_traces = ""
 
+    if dump_program:
+        dump_html_program = "--taint-dump-program"
+    else:
+        dump_html_program = ""
+
+
     old_cwd = os.getcwd()
     os.chdir(results_dir)
     command = (
@@ -106,8 +113,10 @@ def run_goto_analyser(
         + dump_html_summaries_option + " "
         + dump_html_statistics_option + " "
         + dump_html_traces + " "
+        + dump_html_program + " "
         "--taint-summaries-timeout-seconds " + str(timeout) + " "
         "--verbosity " + str(verbosity) + " "
+        "--taint-use-fast-analyser "
         "--classpath '" + classpath + "'"
         )
     if debug_logs_enabled:

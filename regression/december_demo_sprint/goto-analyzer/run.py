@@ -56,6 +56,8 @@ def parse_cmd_line():
     parser.add_argument("--dump-html-traces", action="store_true",
                         help="If specified, then the analyser will save error traces in HTML format together "
                              "with in JSON format (which is always saved).")
+    parser.add_argument("--dump-program", action="store_true",
+                        help="If specified, then the analysed program is dumped in HTML format.")
     parser.add_argument("--verbosity", type=int, default=9,
                         help="If specified, then debugging messages will be printed to the standard output stream.")
     parser.add_argument("--use-pruned-rt", action="store_true",
@@ -172,6 +174,7 @@ def  evaluate_one_directory(cmdline):
                                             cmdline.dump_html_summaries,
                                             cmdline.dump_html_statistics,
                                             cmdline.dump_html_traces,
+                                            cmdline.dump_program,
                                             cmdline.verbosity,
                                             results_dir,
                                             cmdline.use_pruned_rt,
