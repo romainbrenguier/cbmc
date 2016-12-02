@@ -1082,7 +1082,7 @@ static void  taint_per_file_stats_table(
             ;
     ostr << "    <td align=\"right\">"
          << std::fixed << std::setprecision(1)
-         << (S.get_map_from_functions_to_files().size() == 0UL ? 0.0 :
+         << 100.0 * (S.get_map_from_functions_to_files().size() == 0UL ? 0.0 :
                 (double)file_fns.second.size()
                 / (double)S.get_map_from_functions_to_files().size())
          << "</td>\n"

@@ -58,6 +58,11 @@ def parse_cmd_line():
                              "with in JSON format (which is always saved).")
     parser.add_argument("--dump-program", action="store_true",
                         help="If specified, then the analysed program is dumped in HTML format.")
+    parser.add_argument("--statistics", action="store_true",
+                        help="If specified, then the analyser will produce tables and plots with statistical data "
+                             "about run of the analyser on specified benchmarks. Also, this option automatically "
+                             "switches on options 'dump-html-summaries', 'dump-html-statistics', and "
+                             "'dump-html-traces'.")
     parser.add_argument("--verbosity", type=int, default=9,
                         help="If specified, then debugging messages will be printed to the standard output stream.")
     parser.add_argument("--use-full-rt", action="store_true",
@@ -154,6 +159,24 @@ def  evaluate_one_directory(cmdline):
     prof["loading_root_functions"]["duration"] = time.time() - prof["loading_root_functions"]["duration"]
 
     taint_json_fname = os.path.abspath(os.path.join(cmdline.spec_dir,"taint.json"))
+    if not os.path.exists(taint_json_fname):
+        print("ERROR: Cannot find JSON file: " + taint_json_fname)
+        print("ERROR: Terminating the analysis of the Java web application with FAILURE.")
+        return
+    if not os.path.isfile(taint_json_fname):
+        print("ERROR: The JSON file '" + taint_json_fname + "' is not a regular file.")
+        print("ERROR: Terminating the analysis of the Java web application with FAILURE.")
+        return
+    try:
+        taint_json_file = open(taint_json_fname, "r")
+        json.load(taint_json_file)
+        taint_json_file.close()
+    except:
+        taint_json_file.close()
+        print("ERROR: Incorrect format of JSON file: " + taint_json_fname)
+        print("ERROR: Terminating the analysis of the Java web application with FAILURE.")
+        return
+
     dirs_counter = 0
     for root_fn in roots_fn_list:
         root_fn_prof = { "duration": time.time(), "function": root_fn }
@@ -188,11 +211,17 @@ def  evaluate_one_directory(cmdline):
         os.makedirs(cmdline.results_dir)
 
     overall_perf_fname = os.path.abspath(os.path.join(cmdline.results_dir,"overall_performance.json"))
-    print("  Saving overall performance statistics to: " + overall_perf_fname)
+    print("  Saving overall performance statistics in JSON format to: " + overall_perf_fname)
     overall_perf_file = open(overall_perf_fname,"w")
     prof["duration"] = time.time() - prof["duration"]
     overall_perf_file.write(json.dumps(prof,sort_keys=True,indent=4))
     overall_perf_file.close()
+
+    if cmdline.statistics:
+        print("Building statistical HTML pages and plots from the evaluation.")
+        print("  TODO!")
+        print("Done.")
+
     print("Done. [Time=" + str(prof["duration"]) + "s]")
 
 
@@ -202,6 +231,11 @@ def __main():
     if cmdline.version:
         print("This is goto-analyzer version 0.1.0.")
         return
+
+    if cmdline.statistics:
+        cmdline.dump_html_summaries = True
+        cmdline.dump_html_statistics = True
+        cmdline.dump_html_traces = True
 
     if len(cmdline.evaluation_dirs) > 0:
         set_sepc = cmdline.spec_dir is None
@@ -221,6 +255,10 @@ def __main():
             if set_results:
                 cmdline.results_dir = os.path.abspath(os.path.join(evaluation_dir, "RESULTS.aux"))
             evaluate_one_directory(cmdline)
+        if cmdline.statistics:
+            print("Building root statistical HTML page resulting from the evaluation.")
+            print("  TODO!")
+            print("Done.")
     else:
         evaluate_one_directory(cmdline)
 
