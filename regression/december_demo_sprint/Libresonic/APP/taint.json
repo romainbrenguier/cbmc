@@ -1,2 +1,19 @@
 [
+    {
+	"id": "source_0_X1",
+	"kind": "source",
+	"where": "return_value",
+	"taint": "X1",
+      	"immediate": true,
+	"function": "org.libresonic.player.service.PlayerService.fakeTaintSource"
+    },
+  {
+    "id": "sink_1_X1",
+    "kind": "sink",
+    "where": "parameter1",
+      "taint": "X1",
+      "immediate": true,
+      "function": "org.libresonic.player.dao.PlayerDao.fakeTaintSink",
+    "message": "sink(X1)"
+  }
 ]
