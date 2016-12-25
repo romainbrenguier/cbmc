@@ -86,8 +86,6 @@ public:
     string_constraintt(univ, bound_sup, true_exprt(), body)
   {}
 
-  bool is_simple() const { return (operands().size()==2); }
-  bool is_univ_quant() const { return (operands().size()==5); }
   bool is_not_contains() const { return false; }
 
   inline symbol_exprt get_univ_var() const

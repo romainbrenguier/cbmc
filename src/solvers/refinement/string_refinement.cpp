@@ -68,7 +68,6 @@ void string_refinementt::add_instantiations()
 
       for(std::size_t k=0; k<universal_axioms.size(); k++)
       {
-        assert(universal_axioms[k].is_univ_quant());
         exprt lemma=instantiate(universal_axioms[k], s, val);
         add_lemma(lemma);
       }
@@ -672,7 +671,6 @@ void string_refinementt::update_index_set(const std::vector<exprt> & cur)
 
 void string_refinementt::initial_index_set(const string_constraintt &axiom)
 {
-  assert(axiom.is_univ_quant());
   symbol_exprt qvar=axiom.get_univ_var();
   std::vector<exprt> to_process;
   to_process.push_back(axiom.body());
@@ -782,7 +780,6 @@ exprt find_index(const exprt & expr, const exprt & str)
 exprt string_refinementt::instantiate
 (const string_constraintt &axiom, const exprt &str, const exprt &val)
 {
-  assert(axiom.is_univ_quant());
   exprt idx=find_index(axiom.body(), str);
   if(idx.is_nil()) return true_exprt();
   if(!find_qvar(idx, axiom.get_univ_var())) return true_exprt();
