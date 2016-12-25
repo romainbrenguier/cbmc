@@ -51,13 +51,11 @@ public:
     return operands()[4];
   }
 
-  // Trivial constraint
-  string_constraintt() : exprt(ID_string_constraint)
-  {
-    assert(false); // string constraints should not be initialized directly
-    copy_to_operands(true_exprt(), true_exprt());
-  }
 
+ private:
+  string_constraintt();
+
+ public:
   string_constraintt(
     const symbol_exprt &univ,
     const exprt &bound_inf,

@@ -451,12 +451,12 @@ bool string_refinementt::check_axioms()
 
     if(use_counter_example)
     {
-      std::vector<string_constraintt> new_axioms(violated.size());
+      std::vector<string_constraintt*> new_axioms(violated.size());
 
       // Checking if the current solution satisfies the constraints
       for(size_t i=0; i<violated.size(); i++)
       {
-        new_axioms[i]=universal_axioms[violated[i].first];
+        new_axioms[i]=&universal_axioms[violated[i].first];
 
         const exprt &val=violated[i].second;
         const string_constraintt &axiom=universal_axioms[violated[i].first];
