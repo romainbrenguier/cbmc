@@ -415,7 +415,7 @@ bool string_refinementt::check_axioms()
     {
     case decision_proceduret::D_SATISFIABLE:
       {
-        exprt val=solver.get(axiom.get_univ_var());
+        exprt val=solver.get(axiom.univ_var());
         violated.push_back(std::make_pair(i, val));
       }
       break;
@@ -465,7 +465,7 @@ bool string_refinementt::check_axioms()
         implies_exprt instance(premise, body);
         debug() << "warning: we don't eliminate the existential quantifier"
                 << eom;
-        replace_expr(axiom.get_univ_var(), val, instance);
+        replace_expr(axiom.univ_var(), val, instance);
         if(seen_instances.insert(instance).second)
           add_lemma(instance);
         else
@@ -671,7 +671,7 @@ void string_refinementt::update_index_set(const std::vector<exprt> & cur)
 
 void string_refinementt::initial_index_set(const string_constraintt &axiom)
 {
-  symbol_exprt qvar=axiom.get_univ_var();
+  symbol_exprt qvar=axiom.univ_var();
   std::vector<exprt> to_process;
   to_process.push_back(axiom.body());
 
@@ -782,16 +782,16 @@ exprt string_refinementt::instantiate
 {
   exprt idx=find_index(axiom.body(), str);
   if(idx.is_nil()) return true_exprt();
-  if(!find_qvar(idx, axiom.get_univ_var())) return true_exprt();
+  if(!find_qvar(idx, axiom.univ_var())) return true_exprt();
 
-  exprt r=compute_subst(axiom.get_univ_var(), val, idx);
+  exprt r=compute_subst(axiom.univ_var(), val, idx);
   implies_exprt instance(axiom.premise(), axiom.body());
-  replace_expr(axiom.get_univ_var(), r, instance);
+  replace_expr(axiom.univ_var(), r, instance);
   // We are not sure the index set contains only positive numbers
   exprt bounds=and_exprt(axiom.univ_within_bounds(),
                          binary_relation_exprt
                          (refined_string_typet::index_zero(), ID_le, val));
-  replace_expr(axiom.get_univ_var(), r, bounds);
+  replace_expr(axiom.univ_var(), r, bounds);
   return implies_exprt(bounds, instance);
 }
 

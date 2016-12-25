@@ -36,10 +36,8 @@ public:
     return op1();
   }
 
-  inline const exprt &univ_var() const
-  {
-    return op2();
-  }
+  inline const symbol_exprt &univ_var() const
+  { return to_symbol_expr(op2()); }
 
   inline const exprt &upper_bound() const
   {
@@ -88,14 +86,11 @@ public:
 
   bool is_not_contains() const { return false; }
 
-  inline symbol_exprt get_univ_var() const
-  { return to_symbol_expr(univ_var()); }
-
   inline exprt univ_within_bounds() const
   {
     return and_exprt
-      (binary_relation_exprt(lower_bound(), ID_le, get_univ_var()),
-       binary_relation_exprt(upper_bound(), ID_gt, get_univ_var()));
+      (binary_relation_exprt(lower_bound(), ID_le, univ_var()),
+       binary_relation_exprt(upper_bound(), ID_gt, univ_var()));
   }
 };
 
