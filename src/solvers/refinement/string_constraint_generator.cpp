@@ -322,7 +322,7 @@ string_exprt string_constraint_generatort::add_axioms_for_constant
   string_exprt res(char_type);
   std::string str=sval.c_str();
   // should only do this for java
-  std::wstring utf16=utf8_to_utf16le(str);
+  std::wstring utf16=utf8_to_utf16_little_endian(str);
 
   for(std::size_t i=0; i<utf16.size(); i++)
   {
