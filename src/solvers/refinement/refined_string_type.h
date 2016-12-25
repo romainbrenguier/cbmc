@@ -1,9 +1,9 @@
 /********************************************************************\
 
 Module: Type for string expressions used by the string solver.
-        These string expressions contains a field `length`, of type
+        These string expressions contain a field `length`, of type
         `index_type`, a field `content` of type `content_type`.
-        This module also defines function to recognise the C and java
+        This module also defines functions to recognise the C and java
         string types.
 
 Author: Romain Brenguier, romain.brenguier@diffblue.com
@@ -16,6 +16,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/std_types.h>
 #include <util/std_expr.h>
 #include <util/arith_tools.h>
+#include <util/expr_util.h>
 
 #define STRING_SOLVER_INDEX_WIDTH 32
 #define STRING_SOLVER_C_CHAR_WIDTH 8
@@ -28,8 +29,8 @@ public:
   explicit refined_string_typet(unsignedbv_typet char_type);
 
   // Type for the content (list of characters) of a string
-  inline array_typet get_content_type()
-  { return to_array_type((to_struct_type(*this)).components()[1].type());}
+  inline const array_typet & get_content_type()
+  { return to_array_type(components()[1].type());}
 
   // Types used in this refinement
   static inline unsignedbv_typet char_type()
@@ -41,11 +42,7 @@ public:
   static inline signedbv_typet index_type()
   { return signedbv_typet(STRING_SOLVER_INDEX_WIDTH);}
 
-  static inline exprt index_zero()
-  {
-    return constant_exprt(integer2binary(0, STRING_SOLVER_INDEX_WIDTH),
-                          index_type());
-  }
+  static inline exprt index_zero() { return gen_zero(index_type());}
 
   // For C the unrefined string type is __CPROVER_string, for java it is a
   // pointer to a strict with tag java.lang.String
@@ -70,10 +67,10 @@ public:
 
   static inline bool is_unrefined_string_type(const typet & type)
   {
-    return (is_c_string_type(type)
-            || is_java_string_pointer_type(type)
-            || is_java_string_builder_type(type)
-            || is_java_char_sequence_type(type));
+    return (is_c_string_type(type) ||
+            is_java_string_pointer_type(type) ||
+            is_java_string_builder_type(type) ||
+            is_java_char_sequence_type(type));
   }
 
   static inline bool is_unrefined_string(const exprt & expr)
