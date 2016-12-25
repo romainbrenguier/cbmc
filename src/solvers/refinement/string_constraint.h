@@ -127,22 +127,22 @@ public:
 
   inline const exprt &univ_lower_bound() const
   {
-    return operands()[0];
+    return op0();
   }
 
   inline const exprt &univ_upper_bound() const
   {
-    return operands()[1];
+    return op1();
   }
 
   inline const exprt &premise() const
   {
-    return operands()[2];
+    return op2();
   }
 
   inline const exprt &exists_lower_bound() const
   {
-    return operands()[3];
+    return op3();
   }
 
   inline const exprt &exists_upper_bound() const
