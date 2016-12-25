@@ -1,8 +1,10 @@
 /*******************************************************************\
 
 Module: Generates string constraints to link results from string functions
-        with their arguments. This is inspired by the PASS paper at HVC'13
-	which gives examples of constraints for several functions.
+        with their arguments. This is inspired by the PASS paper at HVC'13:
+        "PASS: String Solving with Parameterized Array and Interval Automaton"
+        by Guodong Li and Indradeep Ghosh, which gives examples of constraints
+        for several functions.
 
 Author: Romain Brenguier, romain.brenguier@diffblue.com
 
@@ -76,9 +78,9 @@ symbol_exprt string_constraint_generatort::fresh_boolean
 
 Function: string_constraint_generatort::add_axioms_for_string_expr
 
-  Inputs: an expression of type string 
+  Inputs: an expression of type string
 
- Outputs: a string expression that is link to the argument through 
+ Outputs: a string expression that is link to the argument through
           axioms that are added to the list
 
  Purpose: obtain a refined string expression corresponding to string
@@ -166,7 +168,7 @@ Function: string_constraint_generatort::add_axioms_for_function_application
 
  Outputs: expression corresponding to the result of the function application
 
- Purpose: strings contained in this call are converted to objects of type 
+ Purpose: strings contained in this call are converted to objects of type
           `string_exprt`, through adding axioms. Axioms are then added to
           enforce that the result corresponds to the function application.
 

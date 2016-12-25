@@ -1,8 +1,10 @@
 /*******************************************************************\
 
 Module: Generates string constraints to link results from string functions
-        with their arguments. This is inspired by the PASS paper at HVC'13
-	which gives examples of constraints for several functions.
+        with their arguments. This is inspired by the PASS paper at HVC'13:
+        "PASS: String Solving with Parameterized Array and Interval Automaton"
+        by Guodong Li and Indradeep Ghosh, which gives examples of constraints
+        for several functions.
 
 Author: Romain Brenguier, romain.brenguier@diffblue.com
 
