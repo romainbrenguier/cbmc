@@ -61,29 +61,30 @@ public:
     const exprt &bound_inf,
     const exprt &bound_sup,
     const exprt &prem,
-    const exprt &body)
-    : exprt(ID_string_constraint)
+    const exprt &body):
+    exprt(ID_string_constraint)
   {
     copy_to_operands(prem, body);
     copy_to_operands(univ, bound_sup, bound_inf);
-  };
+  }
 
   // Default bound inferior is 0
   string_constraintt(
     const symbol_exprt &univ,
     const exprt &bound_sup,
     const exprt &prem,
-    const exprt &body)
-    : string_constraintt(univ, refined_string_typet::index_zero(),
-                         bound_sup, prem, body)
-  {};
+    const exprt &body):
+    string_constraintt(
+      univ, refined_string_typet::index_zero(), bound_sup, prem, body)
+  {}
 
   // Default premise is true
-  string_constraintt
-  (const symbol_exprt &univ, const exprt &bound_sup, const exprt &body)
-    : string_constraintt
-      (univ, refined_string_typet::index_zero(), bound_sup, true_exprt(), body)
-  {};
+  string_constraintt(
+    const symbol_exprt &univ,
+    const exprt &bound_sup,
+    const exprt &body):
+    string_constraintt(univ, bound_sup, true_exprt(), body)
+  {}
 
   bool is_simple() const { return (operands().size()==2); }
   bool is_univ_quant() const { return (operands().size()==5); }
