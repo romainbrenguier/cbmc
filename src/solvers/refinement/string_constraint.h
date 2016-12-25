@@ -84,8 +84,6 @@ public:
     string_constraintt(univ, bound_sup, true_exprt(), body)
   {}
 
-  bool is_not_contains() const { return false; }
-
   inline exprt univ_within_bounds() const
   {
     return and_exprt
@@ -127,8 +125,6 @@ public:
     copy_to_operands(s1);
   };
 
-  bool is_not_contains() const { return true; }
-
   inline const exprt &univ_lower_bound() const
   {
     return operands()[0];
@@ -165,7 +161,7 @@ public:
   }
 };
 
-extern inline const string_not_contains_constraintt
+inline const string_not_contains_constraintt
 &to_string_not_contains_constraint(const exprt &expr)
 {
   assert(expr.id()==ID_string_not_contains_constraint
@@ -173,7 +169,7 @@ extern inline const string_not_contains_constraintt
   return static_cast<const string_not_contains_constraintt &>(expr);
 }
 
-extern inline string_not_contains_constraintt
+inline string_not_contains_constraintt
 &to_string_not_contains_constraint(exprt &expr)
 {
   assert(expr.id()==ID_string_not_contains_constraint
