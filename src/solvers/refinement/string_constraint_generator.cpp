@@ -808,7 +808,7 @@ string_exprt string_constraint_generatort::add_axioms_from_bool(
 }
 
 // Gives the smallest integer with `nb` digits
-int smallest_by_digit(int nb)
+static int smallest_by_digit(int nb)
 {
   int res=1;
   for(int i=1; i<nb; i++)
