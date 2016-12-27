@@ -310,23 +310,26 @@ static irep_idt extract_java_string(const symbol_exprt & s)
   return irep_idt(value);
 }
 
-string_exprt string_constraint_generatort::add_axioms_for_constant
-(irep_idt sval, int char_width, unsignedbv_typet char_type)
+string_exprt string_constraint_generatort::add_axioms_for_constant(
+  irep_idt sval, int char_width, unsignedbv_typet char_type)
 {
   string_exprt res(char_type);
-  std::string str=sval.c_str();
-  // should only do this for java
-  std::wstring utf16=utf8_to_utf16_little_endian(str);
+  std::string c_str=sval.c_str();
+  std::wstring str;
+  if(mode==ID_java)
+    str=utf8_to_utf16_little_endian(c_str);
+  else
+    str=widen(c_str);
 
-  for(std::size_t i=0; i<utf16.size(); i++)
+  for(std::size_t i=0; i<str.size(); i++)
   {
     exprt idx=from_integer(i, refined_string_typet::index_type());
-    exprt c=from_integer((unsigned)utf16[i], char_type);
+    exprt c=from_integer((unsigned)str[i], char_type);
     equal_exprt lemma(res[idx], c);
     axioms.push_back(lemma);
   }
 
-  exprt s_length=from_integer(unsigned(utf16.size()),
+  exprt s_length=from_integer(unsigned(str.size()),
                               refined_string_typet::index_type());
 
   axioms.push_back(res.has_length(s_length));
