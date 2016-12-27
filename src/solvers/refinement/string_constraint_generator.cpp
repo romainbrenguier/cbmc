@@ -147,12 +147,9 @@ string_exprt string_constraint_generatort::find_or_add_string_of_symbol(
   const symbol_exprt & sym)
 {
   irep_idt id=sym.get_identifier();
-  std::map<irep_idt, string_exprt>::iterator f=symbol_to_string.find(id);
-  if(f!=symbol_to_string.end())
-    return f->second;
-
-  symbol_to_string[id]= string_exprt(get_char_type());
-  return symbol_to_string[id];
+  std::pair<std::map<irep_idt, string_exprt>::iterator, bool> entry=
+    symbol_to_string.insert(std::make_pair(id, string_exprt(get_char_type())));
+  return entry.first->second;
 }
 
 /*******************************************************************\
