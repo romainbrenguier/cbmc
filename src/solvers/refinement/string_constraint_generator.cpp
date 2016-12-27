@@ -22,12 +22,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 constant_exprt string_constraint_generatort::constant_char(int i) const
 {
-  if(mode==ID_C)
-    return from_integer(i, refined_string_typet::char_type());
-  else if(mode==ID_java)
-    return from_integer(i, refined_string_typet::java_char_type());
-  else
-    assert(false); // only C and java modes supported
+  return from_integer(i, get_char_type());
 }
 
 unsignedbv_typet string_constraint_generatort::get_char_type() const
@@ -50,14 +45,14 @@ size_t string_constraint_generatort::get_char_width() const
     assert(false); // only C and java modes supported
 }
 
-symbol_exprt string_constraint_generatort::fresh_univ_index
-(const irep_idt &prefix)
+symbol_exprt string_constraint_generatort::fresh_univ_index(
+  const irep_idt &prefix)
 {
   return string_exprt::fresh_symbol(prefix, refined_string_typet::index_type());
 }
 
-symbol_exprt string_constraint_generatort::fresh_exist_index
-(const irep_idt &prefix)
+symbol_exprt string_constraint_generatort::fresh_exist_index(
+  const irep_idt &prefix)
 {
   symbol_exprt s=string_exprt::fresh_symbol
     (prefix, refined_string_typet::index_type());
@@ -65,8 +60,8 @@ symbol_exprt string_constraint_generatort::fresh_exist_index
   return s;
 }
 
-symbol_exprt string_constraint_generatort::fresh_boolean
-(const irep_idt &prefix)
+symbol_exprt string_constraint_generatort::fresh_boolean(
+  const irep_idt &prefix)
 {
   symbol_exprt b=string_exprt::fresh_symbol(prefix, bool_typet());
   boolean_symbols.push_back(b);
