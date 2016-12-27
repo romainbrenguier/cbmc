@@ -503,17 +503,18 @@ string_exprt string_constraint_generatort::add_axioms_for_value_of(
 string_exprt string_constraint_generatort::add_axioms_for_substring(
   const function_application_exprt &f)
 {
-  assert(f.arguments().size()>=2);
-  string_exprt str=add_axioms_for_string_expr(f.arguments()[0]);
-  exprt i(f.arguments()[1]);
+  const function_application_exprt::argumentst &args=f.arguments();
+  assert(args.size()>=2);
+  string_exprt str=add_axioms_for_string_expr(args[0]);
+  exprt i(args[1]);
   exprt j;
-  if(f.arguments().size()==3)
+  if(args.size()==3)
   {
-    j=f.arguments()[2];
+    j=args[2];
   }
   else
   {
-    assert(f.arguments().size()==2);
+    assert(args.size()==2);
     j=str.length();
   }
   return add_axioms_for_substring(str, i, j);
