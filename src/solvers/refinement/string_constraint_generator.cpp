@@ -362,9 +362,10 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
   irep_idt sval;
   int char_width;
   unsignedbv_typet char_type;
-  if(arg.operands().size()==1 &&
-      arg.op0().operands().size()==2 &&
-      arg.op0().op0().id()==ID_string_constant)
+  
+  assert(arg.operands().size()==1);
+  if(arg.op0().operands().size()==2 &&
+     arg.op0().op0().id()==ID_string_constant)
   {
     // C string constant
     const exprt &s=arg.op0().op0();
@@ -375,7 +376,6 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
   else
   {
     // Java string constant
-    assert(arg.operands().size()==1);
     assert(refined_string_typet::is_unrefined_string_type(arg.type()));
     const exprt &s=arg.op0();
 
