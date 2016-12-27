@@ -917,7 +917,7 @@ exprt string_constraint_generatort::int_of_hex_char(
   exprt nine_char=constant_char('9');
   exprt a_char=constant_char('a');
   return if_exprt(binary_relation_exprt(chr, ID_gt, nine_char),
-                  minus_exprt(chr, constant_char(0x61-10)),
+                  plus_exprt(constant_char(10), minus_exprt(chr, a_char)),
                   minus_exprt(chr, zero_char));
 }
 
