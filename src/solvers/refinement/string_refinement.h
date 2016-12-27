@@ -22,7 +22,6 @@ class string_refinementt: public bv_refinementt
 {
 public:
   string_refinementt(const namespacet &_ns, propt &_prop);
-  ~string_refinementt() {}
 
   // Determine which language should be used
   void set_mode();
