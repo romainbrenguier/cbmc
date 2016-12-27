@@ -134,7 +134,7 @@ string_exprt string_constraint_generatort::add_axioms_for_if
   symbol_exprt qvar=fresh_univ_index("QA_string_if_true");
   equal_exprt qequal(res[qvar], t[qvar]);
   axioms.push_back(string_constraintt(qvar, t.length(), expr.cond(), qequal));
-  axioms.push_back(implies_exprt(expr.cond(), res.same_length(f)));
+  axioms.push_back(implies_exprt(not_exprt(expr.cond()), res.same_length(f)));
   symbol_exprt qvar2=fresh_univ_index("QA_string_if_false");
   equal_exprt qequal2(res[qvar2], f[qvar2]);
   string_constraintt sc2(qvar2, f.length(), not_exprt(expr.cond()), qequal2);
