@@ -345,7 +345,7 @@ string_exprt string_constraint_generatort::add_axioms_for_constant(
 string_exprt string_constraint_generatort::add_axioms_for_empty_string
 (const function_application_exprt &f)
 {
-  assert(f.arguments().size()==0);
+  assert(f.arguments().empty());
   string_exprt res(get_char_type());
   axioms.push_back(res.has_length(0));
   return res;
