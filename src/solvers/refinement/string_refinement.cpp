@@ -591,39 +591,23 @@ exprt string_refinementt::compute_subst
   // in f. So we start by computing val - f(0).
   std::map<exprt, int> elems=map_of_sum(minus_exprt(val, f));
 
-  bool found=false;
-  bool neg=false; // true if qvar appears negatively in f (pos in elems)
+  // true if qvar appears negatively in f (positively in elems):
+  bool neg=false;
 
-  for(std::map<exprt, int>::iterator it=elems.begin(), end=elems.end();
-      it!=end; it++)
+  auto it=elems.find(qvar);
+  assert(it!=elems.end());
+  if(it->second==1 || it->second==-1)
   {
-    const exprt &t=it->first;
-    if(t==qvar)
-    {
-      if(it->second==1 || it->second==-1)
-      {
-        found=true;
-        neg=(it->second==1);
-      }
-      else
-      {
-        debug() << "in string_refinementt::compute_subst:"
-                << " warning: occurences of qvar canceled out " << eom;
-        assert(it->second==0);
-      }
-      elems.erase(it);
-    }
+    neg=(it->second==1);
+  }
+  else
+  {
+    assert(it->second==0);
+    debug() << "in string_refinementt::compute_subst:"
+	    << " warning: occurences of qvar canceled out " << eom;
   }
 
-  if(!found)
-  {
-    debug() << "string_refinementt::compute_subst: qvar not found" << eom;
-    debug() << "qvar=" << qvar.pretty() << eom
-            << "val=" << val.pretty() << eom
-            << "f=" << f.pretty() << eom;
-    assert(false);
-  }
-
+  elems.erase(it);
   return sum_of_map(elems, neg);
 }
 
