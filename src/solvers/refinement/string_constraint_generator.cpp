@@ -680,7 +680,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
 
 string_exprt string_constraint_generatort::add_axioms_from_long(
   const function_application_exprt &expr)
-{ return add_axioms_from_int(args(expr, 1)[0], 30); }
+{ return add_axioms_from_int(args(expr, 1)[0], 20); }
 
 string_exprt string_constraint_generatort::add_axioms_from_float(
   const function_application_exprt &f)
