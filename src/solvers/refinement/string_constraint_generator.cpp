@@ -880,7 +880,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
                      equal_exprt(i, unary_minus_exprt(sum)));
     axioms.push_back(a4);
 
-    // disallow 0s at the beggining
+    // disallow 0s at the beginning
     if(size>1)
     {
       equal_exprt r0_zero(res[zero], zero_char);
