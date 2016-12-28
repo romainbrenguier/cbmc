@@ -362,7 +362,7 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
   irep_idt sval;
   int char_width;
   unsignedbv_typet char_type;
-  
+
   assert(arg.operands().size()==1);
   if(arg.op0().operands().size()==2 &&
      arg.op0().op0().id()==ID_string_constant)
@@ -559,10 +559,10 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
   // a4 : |res|>= 0
   // a5 : |res|<=|str|
   //        (this is necessary to prevent exceeding the biggest integer)
-  // a6 : forall n<m, str[n]=' '
-  // a7 : forall n<|str|-m-|s1|, str[m+|s1|+n]=' '
+  // a6 : forall n<m, str[n]<=' '
+  // a7 : forall n<|str|-m-|s1|, str[m+|s1|+n]<=' '
   // a8 : forall n<|s1|, s[idx+n]=s1[n]
-  // a9 : (s[m]!=' ' && s[m+|s1|-1]!=' ') || m=|s|
+  // a9 : (s[m]>' ' && s[m+|s1|-1]>' ') || m=|s|
   //
 
   exprt a1=str.longer(plus_exprt(idx, res.length()));
@@ -581,13 +581,14 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
   axioms.push_back(a5);
 
   symbol_exprt n=fresh_univ_index("QA_index_trim");
-  string_constraintt a6(n, idx, equal_exprt(str[n], space_char));
+  string_constraintt a6(n, idx, binary_relation_exprt(str[n], ID_le, space_char));
   axioms.push_back(a6);
 
   symbol_exprt n2=fresh_univ_index("QA_index_trim2");
   minus_exprt bound(str.length(), plus_exprt(idx, res.length()));
-  equal_exprt eqn2(str[plus_exprt(idx, plus_exprt(res.length(), n2))],
-                   space_char);
+  binary_relation_exprt eqn2(
+    str[plus_exprt(idx, plus_exprt(res.length(), n2))], ID_le, space_char);
+
   string_constraintt a7(n2, bound, eqn2);
   axioms.push_back(a7);
 
@@ -596,13 +597,13 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
   string_constraintt a8(n3, res.length(), eqn3);
   axioms.push_back(a8);
 
-  equal_exprt space_before
-    (str[minus_exprt(plus_exprt(idx, res.length()),
-                     refined_string_typet::index_of_int(1))], space_char);
+  minus_exprt index_before(
+    plus_exprt(idx, res.length()), refined_string_typet::index_of_int(1));
+  binary_relation_exprt no_space_before(str[index_before], ID_gt, space_char);
   or_exprt a9
     (equal_exprt(idx, str.length()),
-     and_exprt(not_exprt(equal_exprt(str[idx], space_char)),
-               not_exprt(space_before)));
+     and_exprt(binary_relation_exprt(str[idx], ID_gt, space_char),
+	       no_space_before));
   axioms.push_back(a9);
   return res;
 }
