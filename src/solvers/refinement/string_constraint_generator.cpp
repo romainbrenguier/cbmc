@@ -324,7 +324,7 @@ string_exprt string_constraint_generatort::add_axioms_for_constant(
   for(std::size_t i=0; i<str.size(); i++)
   {
     exprt idx=from_integer(i, refined_string_typet::index_type());
-    exprt c=from_integer((unsigned)str[i], char_type);
+    exprt c=from_integer(str[i], char_type);
     equal_exprt lemma(res[idx], c);
     axioms.push_back(lemma);
   }
