@@ -2064,9 +2064,13 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
 
   symbol_exprt x=fresh_exist_index("index_compare_to");
   equal_exprt ret_char_diff
-    (res, typecast_exprt(minus_exprt(s1[x], s2[x]), return_type));
+    (res, minus_exprt(
+      typecast_exprt(s1[x], return_type),
+      typecast_exprt(s2[x], return_type)));
   equal_exprt ret_length_diff
-    (res, typecast_exprt(minus_exprt(s1.length(), s2.length()), return_type));
+    (res, minus_exprt(
+      typecast_exprt(s1.length(), return_type),
+      typecast_exprt(s2.length(), return_type)));
   or_exprt guard1(and_exprt(s1.shorter(s2), s1.strictly_longer(x)),
                   and_exprt(s1.longer(s2), s2.strictly_longer(x)));
   and_exprt cond1(ret_char_diff, guard1);
