@@ -9,7 +9,6 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 \*******************************************************************/
 
 #include <ansi-c/string_constant.h>
-#include <util/i2string.h>
 #include <util/replace_expr.h>
 #include <solvers/sat/satcheck.h>
 #include <sstream>
