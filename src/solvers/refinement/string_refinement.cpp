@@ -268,10 +268,7 @@ bvt string_refinementt::convert_bool_bv(const exprt &boole, const exprt &orig)
 void string_refinementt::add_lemma(const exprt &lemma, bool add_to_index_set)
 {
   if(!seen_instances.insert(lemma).second)
-  {
-    debug() << "string_refinementt::add_lemma : already seen" << eom;
     return;
-  }
 
   if(lemma==true_exprt())
   {
