@@ -108,6 +108,15 @@ string_exprt string_constraint_generatort::add_axioms_for_string_expr(
   {
     // We ignore non deterministic symbols and struct
   }
+  else if(unrefined_string.id()==ID_typecast)
+  {
+    exprt arg=to_typecast_expr(unrefined_string).op();
+    assert(refined_string_typet::is_unrefined_string_type(
+      unrefined_string.type()));
+    exprt res=add_axioms_for_string_expr(arg);
+    assert(res.type()==refined_string_typet(get_char_type()));
+    s=to_string_expr(res);
+  }
   else
   {
     throw "add_axioms_for_string_expr:\n"+unrefined_string.pretty()+
