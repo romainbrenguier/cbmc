@@ -136,6 +136,19 @@ bool string_refinementt::boolbv_set_equality_to_true(const equal_exprt &expr)
     debug() << "string_refinementt " << from_expr(expr.lhs()) << " <- "
             << from_expr(expr.rhs()) << eom;
 
+
+    if(expr.rhs().id()==ID_typecast)
+    {
+      exprt uncast=to_typecast_expr(expr.rhs()).op();
+      if(refined_string_typet::is_unrefined_string_type(uncast.type()))
+      {
+	debug() << "(sr) detected casted string" << eom;
+	symbol_exprt sym=to_symbol_expr(expr.lhs());
+	generator.set_string_symbol_equal_to_expr(sym, uncast);
+	return false;
+      }
+    }
+
     if(refined_string_typet::is_unrefined_string_type(type))
     {
       symbol_exprt sym=to_symbol_expr(expr.lhs());

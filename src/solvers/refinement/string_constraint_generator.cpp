@@ -111,8 +111,8 @@ string_exprt string_constraint_generatort::add_axioms_for_string_expr(
   else if(unrefined_string.id()==ID_typecast)
   {
     exprt arg=to_typecast_expr(unrefined_string).op();
-    assert(refined_string_typet::is_unrefined_string_type(
-      unrefined_string.type()));
+    //assert(refined_string_typet::is_unrefined_string_type(
+    //  unrefined_string.type())); // its type could be simply Object
     exprt res=add_axioms_for_string_expr(arg);
     assert(res.type()==refined_string_typet(get_char_type()));
     s=to_string_expr(res);
