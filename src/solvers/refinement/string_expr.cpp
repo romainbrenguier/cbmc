@@ -8,14 +8,14 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 #include <solvers/refinement/string_expr.h>
 
-unsigned string_exprt::next_symbol_id = 1;
+unsigned string_exprt::next_symbol_id=1;
 
 symbol_exprt string_exprt::fresh_symbol
 (const irep_idt &prefix, const typet &tp)
 {
   std::ostringstream buf;
   buf << "string_refinement#" << prefix << "#" << (next_symbol_id++);
-  std::string s = buf.str();
+  std::string s=buf.str();
   irep_idt name(s.c_str());
   return symbol_exprt(name, tp);
 }
