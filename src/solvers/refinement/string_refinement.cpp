@@ -119,7 +119,8 @@ bvt string_refinementt::convert_function_application
 
 bool string_refinementt::boolbv_set_equality_to_true(const equal_exprt &expr)
 {
-  if(!equality_propagation) return true;
+  if(!equality_propagation)
+    return true;
 
   // We should not do that everytime, but I cannot find
   // another good entry point
@@ -144,12 +145,14 @@ bool string_refinementt::boolbv_set_equality_to_true(const equal_exprt &expr)
     }
     else if(type==ns.follow(expr.rhs().type()))
     {
-      if(is_unbounded_array(type)) return true;
+      if(is_unbounded_array(type))
+        return true;
       const bvt &bv1=convert_bv(expr.rhs());
       const irep_idt &identifier=
         to_symbol_expr(expr.lhs()).get_identifier();
       map.set_literals(identifier, type, bv1);
-      if(freeze_all) set_frozen(bv1);
+      if(freeze_all)
+        set_frozen(bv1);
       return false;
     }
   }
@@ -163,7 +166,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   for(std::size_t i=0; i<generator.axioms.size(); i++)
     if(generator.axioms[i].id()==ID_string_constraint)
     {
-      string_constraintt c= to_string_constraint(generator.axioms[i]);
+      string_constraintt c=to_string_constraint(generator.axioms[i]);
       universal_axioms.push_back(c);
     }
     else if(generator.axioms[i].id()==ID_string_not_contains_constraint)
@@ -285,10 +288,13 @@ unsigned integer_of_expr(const constant_exprt & expr)
 std::string string_refinementt::string_of_array
 (const exprt &arr, const exprt &size)
 {
-  if(size.id()!=ID_constant) return "string of unknown size";
+  if(size.id()!=ID_constant)
+    return "string of unknown size";
   unsigned n=integer_of_expr(to_constant_expr(size));
-  if(n>500) return "very long string";
-  if(n==0) return "\"\"";
+  if(n>500)
+    return "very long string";
+  if(n==0)
+    return "\"\"";
 
   std::ostringstream buf;
   buf << "\"";
@@ -366,7 +372,7 @@ bool string_refinementt::check_axioms()
   {
     string_exprt refined=it.second;
     const exprt &econtent=refined.content();
-    const exprt &elength =refined.length();
+    const exprt &elength=refined.length();
 
     exprt len=get(elength);
     exprt arr=get_array(econtent, len);
@@ -394,7 +400,7 @@ bool string_refinementt::check_axioms()
   }
 
   debug() << "in check axiom, the model may be incomplete" << eom;
-  std::vector< std::pair<size_t, exprt> > violated;
+  std::vector<std::pair<size_t, exprt> > violated;
 
   debug() << "there are " << universal_axioms.size()
           << " universal axioms" << eom;
@@ -604,7 +610,7 @@ exprt string_refinementt::compute_subst
   {
     assert(it->second==0);
     debug() << "in string_refinementt::compute_subst:"
-	    << " warning: occurences of qvar canceled out " << eom;
+            << " warning: occurences of qvar canceled out " << eom;
   }
 
   elems.erase(it);
@@ -623,7 +629,8 @@ public:
 
   void operator()(const exprt &expr)
   {
-    if(expr==qvar_) throw true;
+    if(expr==qvar_)
+      throw true;
   }
 };
 
@@ -680,8 +687,9 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
       {
         // otherwise we add k-1
         exprt e(i);
-        minus_exprt kminus1(axiom.upper_bound(),
-                            refined_string_typet::index_of_int(1));
+        minus_exprt kminus1(
+          axiom.upper_bound(),
+          refined_string_typet::index_of_int(1));
         replace_expr(qvar, kminus1, e);
         current_index_set[s].insert(e);
         index_set[s].insert(e);
@@ -765,16 +773,19 @@ exprt string_refinementt::instantiate
 (const string_constraintt &axiom, const exprt &str, const exprt &val)
 {
   exprt idx=find_index(axiom.body(), str);
-  if(idx.is_nil()) return true_exprt();
-  if(!find_qvar(idx, axiom.univ_var())) return true_exprt();
+  if(idx.is_nil())
+    return true_exprt();
+  if(!find_qvar(idx, axiom.univ_var()))
+    return true_exprt();
 
   exprt r=compute_subst(axiom.univ_var(), val, idx);
   implies_exprt instance(axiom.premise(), axiom.body());
   replace_expr(axiom.univ_var(), r, instance);
   // We are not sure the index set contains only positive numbers
-  exprt bounds=and_exprt(axiom.univ_within_bounds(),
-                         binary_relation_exprt
-                         (refined_string_typet::index_zero(), ID_le, val));
+  exprt bounds=and_exprt(
+    axiom.univ_within_bounds(),
+    binary_relation_exprt(
+      refined_string_typet::index_zero(), ID_le, val));
   replace_expr(axiom.univ_var(), r, bounds);
   return implies_exprt(bounds, instance);
 }
@@ -797,11 +808,14 @@ void string_refinementt::instantiate_not_contains
       debug() << from_expr(it0) << " : " << from_expr(it1) << eom;
       exprt val=minus_exprt(it0, it1);
       exprt witness=generator.get_witness_of(axiom, val);
-      and_exprt prem_and_is_witness(axiom.premise(),
-                                    equal_exprt(witness, it1));
+      and_exprt prem_and_is_witness(
+        axiom.premise(),
+        equal_exprt(witness, it1));
 
-      not_exprt differ(equal_exprt(to_string_expr(s0)[it0],
-                                   to_string_expr(s1)[it1]));
+      not_exprt differ(
+        equal_exprt(
+          to_string_expr(s0)[it0],
+          to_string_expr(s1)[it1]));
       exprt lemma=implies_exprt(prem_and_is_witness, differ);
 
       new_lemmas.push_back(lemma);
@@ -814,13 +828,16 @@ void string_refinementt::instantiate_not_contains
       binary_relation_exprt c3(to_string_expr(s1).length(), ID_gt, witness);
       binary_relation_exprt c4(zero, ID_le, witness);
 
-      minus_exprt diff(to_string_expr(s0).length(),
-                       to_string_expr(s1).length());
+      minus_exprt diff(
+        to_string_expr(s0).length(),
+        to_string_expr(s1).length());
 
-      and_exprt premise(binary_relation_exprt(zero, ID_le, val),
-                        binary_relation_exprt(diff, ID_ge, val));
-      exprt witness_bounds=implies_exprt
-        (premise, and_exprt(and_exprt(c1, c2), and_exprt(c3, c4)));
+      and_exprt premise(
+        binary_relation_exprt(zero, ID_le, val),
+        binary_relation_exprt(diff, ID_ge, val));
+      exprt witness_bounds=implies_exprt(
+        premise,
+        and_exprt(and_exprt(c1, c2), and_exprt(c3, c4)));
       new_lemmas.push_back(witness_bounds);
     }
 }
