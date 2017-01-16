@@ -71,7 +71,7 @@ public:
 
   inline void assign_to_symbol
   (const symbol_exprt & sym, const string_exprt & expr)
-  { symbol_to_string[sym.get_identifier()]= expr; }
+  { symbol_to_string[sym.get_identifier()]=expr; }
 
 
   // Add to the list of axioms, lemmas which should hold for the string to be
@@ -354,7 +354,7 @@ private:
   inline static function_application_exprt::argumentst args
   (const function_application_exprt &expr, size_t nb)
   {
-    function_application_exprt::argumentst args = expr.arguments();
+    function_application_exprt::argumentst args=expr.arguments();
     assert(args.size()==nb);
     return args;
   }
