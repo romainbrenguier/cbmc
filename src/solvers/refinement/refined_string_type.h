@@ -67,10 +67,11 @@ public:
 
   static inline bool is_unrefined_string_type(const typet & type)
   {
-    return (is_c_string_type(type) ||
-            is_java_string_pointer_type(type) ||
-            is_java_string_builder_type(type) ||
-            is_java_char_sequence_type(type));
+    return (
+      is_c_string_type(type) ||
+      is_java_string_pointer_type(type) ||
+      is_java_string_builder_type(type) ||
+      is_java_char_sequence_type(type));
   }
 
   static inline bool is_unrefined_string(const exprt & expr)
