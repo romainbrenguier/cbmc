@@ -73,7 +73,11 @@ public:
     const exprt &prem,
     const exprt &body):
     string_constraintt(
-      univ, refined_string_typet::index_zero(), bound_sup, prem, body)
+      univ,
+      refined_string_typet::index_zero(),
+      bound_sup,
+      prem,
+      body)
   {}
 
   // Default premise is true
@@ -164,16 +168,16 @@ public:
 inline const string_not_contains_constraintt
 &to_string_not_contains_constraint(const exprt &expr)
 {
-  assert(expr.id()==ID_string_not_contains_constraint
-         && expr.operands().size()==7);
+  assert(expr.id()==ID_string_not_contains_constraint);
+  assert(expr.operands().size()==7);
   return static_cast<const string_not_contains_constraintt &>(expr);
 }
 
 inline string_not_contains_constraintt
 &to_string_not_contains_constraint(exprt &expr)
 {
-  assert(expr.id()==ID_string_not_contains_constraint
-         && expr.operands().size()==7);
+  assert(expr.id()==ID_string_not_contains_constraint);
+  assert(expr.operands().size()==7);
   return static_cast<string_not_contains_constraintt &>(expr);
 }
 
