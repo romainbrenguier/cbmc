@@ -498,10 +498,21 @@ bool string_refinementt::check_axioms()
   }
 }
 
+/*******************************************************************\
 
-std::map<exprt, int> string_refinementt::map_of_sum(const exprt &f)
+Function: string_refinementt::map_representation_of_sum
+
+  Inputs: an expression with only addition and substraction
+
+ Outputs: a map where each leaf of the input is mapped to the number of times
+          it is added. For instance, expression $x + x - y$ would give the map
+          x -> 2, y -> -1.
+
+\*******************************************************************/
+
+std::map<exprt, int> string_refinementt::map_representation_of_sum(const exprt &f)
 {
-  // number of time the element should be added (can be negative)
+  // number of time the leaf should be added (can be negative)
   std::map<exprt, int> elems;
 
   std::vector<std::pair<exprt, bool> > to_process;
@@ -538,7 +549,7 @@ std::map<exprt, int> string_refinementt::map_of_sum(const exprt &f)
 }
 
 
-exprt string_refinementt::sum_of_map(std::map<exprt, int> & m, bool negated)
+exprt string_refinementt::sum_over_map(std::map<exprt, int> & m, bool negated)
 {
   exprt sum=refined_string_typet::index_of_int(0);
   mp_integer constants=0;
@@ -598,8 +609,8 @@ exprt string_refinementt::sum_of_map(std::map<exprt, int> & m, bool negated)
 
 exprt string_refinementt::simplify_sum(const exprt &f)
 {
-  std::map<exprt, int> map=map_of_sum(f);
-  return sum_of_map(map);
+  std::map<exprt, int> map=map_representation_of_sum(f);
+  return sum_over_map(map);
 }
 
 exprt string_refinementt::compute_subst
@@ -610,7 +621,7 @@ exprt string_refinementt::compute_subst
   // qvar has to be equal to val - f(0) if it appears positively in f
   // (ie if f(qvar)=f(0) + qvar) and f(0) - val if it appears negatively
   // in f. So we start by computing val - f(0).
-  std::map<exprt, int> elems=map_of_sum(minus_exprt(val, f));
+  std::map<exprt, int> elems=map_representation_of_sum(minus_exprt(val, f));
 
   // true if qvar appears negatively in f (positively in elems):
   bool neg=false;
@@ -629,7 +640,7 @@ exprt string_refinementt::compute_subst
   }
 
   elems.erase(it);
-  return sum_of_map(elems, neg);
+  return sum_over_map(elems, neg);
 }
 
 
