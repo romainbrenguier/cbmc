@@ -415,7 +415,6 @@ bool string_refinementt::check_axioms()
     fmodel[it]=get(it);
   }
 
-  debug() << "in check axiom, the model may be incomplete" << eom;
   std::vector<std::pair<size_t, exprt> > violated;
 
   debug() << "there are " << universal_axioms.size()
