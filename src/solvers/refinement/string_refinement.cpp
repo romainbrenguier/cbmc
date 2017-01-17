@@ -290,7 +290,7 @@ void string_refinementt::add_lemma(const exprt &lemma, bool add_to_index_set)
     cur.push_back(lemma);
 }
 
-unsigned integer_of_expr(const constant_exprt & expr)
+unsigned to_unsigned_integer(const constant_exprt & expr)
 {
   mp_integer i;
   if(to_integer(expr, i))
@@ -306,7 +306,7 @@ std::string string_refinementt::string_of_array
 {
   if(size.id()!=ID_constant)
     return "string of unknown size";
-  unsigned n=integer_of_expr(to_constant_expr(size));
+  unsigned n=to_unsigned_integer(to_constant_expr(size));
   if(n>500)
     return "very long string";
   if(n==0)
@@ -321,11 +321,11 @@ std::string string_refinementt::string_of_array
     for(size_t i=0; i<val.operands().size()/2; i++)
     {
       exprt index=val.operands()[i*2];
-      unsigned idx=integer_of_expr(to_constant_expr(index));
+      unsigned idx=to_unsigned_integer(to_constant_expr(index));
       if(idx<n)
       {
         exprt value=val.operands()[i*2+1];
-        char c=static_cast<char>(integer_of_expr(to_constant_expr(value)));
+        char c=static_cast<char>(to_unsigned_integer(to_constant_expr(value)));
         if(31<c)
           buf << c;
         else
