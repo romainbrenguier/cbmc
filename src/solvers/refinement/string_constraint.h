@@ -24,7 +24,6 @@ class string_constraintt: public exprt
 public:
   // String constraints are of the form
   // forall univ_var in [lower_bound,upper_bound[. premise => body
-  // or premise => body
 
   inline const exprt &premise() const
   {
