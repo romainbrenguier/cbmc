@@ -42,7 +42,7 @@ public:
   static inline signedbv_typet index_type()
   { return signedbv_typet(STRING_SOLVER_INDEX_WIDTH);}
 
-  static inline exprt index_zero() { return gen_zero(index_type());}
+  static inline exprt index_zero() { return from_integer(0, index_type()); }
 
   // For C the unrefined string type is __CPROVER_string, for java it is a
   // pointer to a strict with tag java.lang.String
