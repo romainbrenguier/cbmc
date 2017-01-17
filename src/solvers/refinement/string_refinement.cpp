@@ -219,13 +219,20 @@ decision_proceduret::resultt string_refinementt::dec_solve()
         return D_SATISFIABLE;
       }
 
-      debug() <<  "refining.." << eom;
+      debug() <<  "refining..." << eom;
+      // Since the model is not correct although we got SAT, we need to refine
+      // the property we are checking by adding more indices to the index set,
+      // and instantiating universal formulas with this indices.
+      // We will then relaunch the solver with these added lemmas.
       current_index_set.clear();
       update_index_set(cur);
       cur.clear();
       add_instantiations();
 
       if(variable_with_multiple_occurence_in_index)
+        // This can happen depending on the universal properties that were
+        // given to the solver, however we can give a guarantee about the
+        // termination of the solver.
         debug() << "WARNING: some variable appears multiple times" << eom;
 
       if(current_index_set.empty())
