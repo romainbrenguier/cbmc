@@ -597,9 +597,6 @@ exprt string_refinementt::sum_over_map(std::map<exprt, int> & m, bool negated)
       }
       else
       {
-        debug() << "in string_refinementt::sum_of_map:"
-                << " warning: several occurences of the same variable: "
-                << t.pretty() << eom;
         variable_with_multiple_occurence_in_index=true;
         if(second>1)
         {
