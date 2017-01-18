@@ -102,13 +102,6 @@ private:
   void initial_index_set(const string_constraintt &axiom);
   void initial_index_set(const std::vector<string_constraintt> &string_axioms);
 
-  // Takes an universaly quantified formula [axiom],
-  // an array of char variable [s], and an index expression [val].
-  // Computes one index [v1] in which [axiom.idx] appears, takes the
-  // corresponding substitition [r] (obtained with [compute_subst]).
-  // Then substitutes [axiom.idx] with [r] in [axiom].
-  // axiom is not constant because we may record some information about
-  // instantiation of existential variables.
   exprt instantiate
   (const string_constraintt &axiom, const exprt &str, const exprt &val);
 

@@ -819,6 +819,20 @@ exprt find_index(const exprt & expr, const exprt & str)
 }
 
 
+/*******************************************************************\
+
+Function: string_refinementt::instantiate
+
+  Inputs: an universaly quantified formula `axiom`, an array of char 
+          variable `str`, and an index expression `val`.
+
+ Outputs: substitute `qvar` the universaly quantified variable of `axiom`, by 
+          an index `val`, in `axiom`, so that the index used for `str` equals 
+          `val`. For instance, if `axiom` corresponds to 
+          $\forall q. s[q+x]='a' && t[q]='b'$, `instantiate(axom,s,v)` would return
+          an expression for $s[v]='a' && t[v-x]='b'$.
+
+\*******************************************************************/
 
 exprt string_refinementt::instantiate
 (const string_constraintt &axiom, const exprt &str, const exprt &val)
