@@ -126,7 +126,7 @@ private:
 
   // Rewrite a sum in a simple form: sum m_i * expr_i
   std::map<exprt, int> map_representation_of_sum(const exprt &f);
-  exprt sum_of_map(std::map<exprt, int> &m, bool negated=false);
+  exprt sum_over_map(std::map<exprt, int> &m, bool negated=false);
 
   // Simplify a sum (an expression with only plus and minus expr)
   exprt simplify_sum(const exprt &f);
