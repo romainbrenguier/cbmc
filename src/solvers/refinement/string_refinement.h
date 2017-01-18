@@ -122,7 +122,7 @@ private:
   // Takes an expression containing + and − operations in which qvar appears
   // exactly once. Rewrites it as a sum of qvar and elements in list elems
   // different from qvar. Takes e minus the sum of the element in elems.
-  exprt compute_subst(const exprt &qvar, const exprt &val, const exprt &f);
+  exprt compute_inverse_function(const exprt &qvar, const exprt &val, const exprt &f);
 
   // Rewrite a sum in a simple form: sum m_i * expr_i
   std::map<exprt, int> map_representation_of_sum(const exprt &f);

@@ -622,7 +622,7 @@ exprt string_refinementt::simplify_sum(const exprt &f)
   return sum_over_map(map);
 }
 
-exprt string_refinementt::compute_subst
+exprt string_refinementt::compute_inverse_function
 (const exprt &qvar, const exprt &val, const exprt &f)
 {
   exprt positive, negative;
@@ -644,7 +644,7 @@ exprt string_refinementt::compute_subst
   else
   {
     assert(it->second==0);
-    debug() << "in string_refinementt::compute_subst:"
+    debug() << "in string_refinementt::compute_inverse_function:"
             << " warning: occurences of qvar canceled out " << eom;
   }
 
@@ -813,7 +813,7 @@ exprt string_refinementt::instantiate
   if(!find_qvar(idx, axiom.univ_var()))
     return true_exprt();
 
-  exprt r=compute_subst(axiom.univ_var(), val, idx);
+  exprt r=compute_inverse_function(axiom.univ_var(), val, idx);
   implies_exprt instance(axiom.premise(), axiom.body());
   replace_expr(axiom.univ_var(), r, instance);
   // We are not sure the index set contains only positive numbers
