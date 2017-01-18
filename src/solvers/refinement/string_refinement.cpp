@@ -484,8 +484,6 @@ bool string_refinementt::check_axioms()
         exprt premise(axiom.premise());
         exprt body(axiom.body());
         implies_exprt instance(premise, body);
-        debug() << "warning: we don't eliminate the existential quantifier"
-                << eom;
         replace_expr(axiom.univ_var(), val, instance);
         if(seen_instances.insert(instance).second)
           add_lemma(instance);
