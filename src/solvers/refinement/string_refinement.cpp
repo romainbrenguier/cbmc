@@ -622,6 +622,22 @@ exprt string_refinementt::simplify_sum(const exprt &f)
   return sum_over_map(map);
 }
 
+
+/*******************************************************************\
+
+Function: string_refinementt::compute_inverse_function
+
+  Inputs: a symbol qvar, an expression val, an expression f containing + and − 
+          operations in which qvar should appear exactly once.
+
+ Outputs: an expression corresponding of $f^{−1}(val)$ where $f$ is seen as a 
+          function of $qvar$, i.e. the value that is necessary for qvar for f 
+          to be equal to val. For instance, if `f` corresponds to the expression
+          $q + x$, `compute_inverse_function(q,v,f)` returns an expression for 
+          $v - x$.
+
+\*******************************************************************/
+
 exprt string_refinementt::compute_inverse_function
 (const exprt &qvar, const exprt &val, const exprt &f)
 {
