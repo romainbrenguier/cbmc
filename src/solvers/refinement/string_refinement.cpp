@@ -548,6 +548,18 @@ std::map<exprt, int> string_refinementt::map_representation_of_sum(const exprt &
   return elems;
 }
 
+/*******************************************************************\
+
+Function: string_refinementt::sum_over_map
+
+  Inputs: a map from expressions to integers
+
+ Outputs: a expression for the sum of each element in the map multiplied by
+          the corresponding integer in the map.
+          For a map x -> 2, y -> -1 would give an expression $2 * x - y$.
+
+
+\*******************************************************************/
 
 exprt string_refinementt::sum_over_map(std::map<exprt, int> & m, bool negated)
 {
