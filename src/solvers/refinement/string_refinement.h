@@ -121,7 +121,8 @@ private:
   // Gets a model of an array and put it in a certain form
   exprt get_array(const exprt &arr, const exprt &size);
 
-  // Convert the content of a string to a more readable representation
+  // Convert the content of a string to a more readable representation.
+  // This should only be used for debbuging.
   std::string string_of_array(const exprt &arr, const exprt &size);
 };
 
