@@ -13,6 +13,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #ifndef CPROVER_SOLVERS_REFINEMENT_STRING_CONSTRAINT_GENERATOR_H
 #define CPROVER_SOLVERS_REFINEMENT_STRING_CONSTRAINT_GENERATOR_H
 
+#include <solvers/refinement/refined_string_type.h>
 #include <solvers/refinement/string_expr.h>
 #include <solvers/refinement/string_constraint.h>
 
@@ -23,13 +24,14 @@ public:
   // string constraints for different string funcitons and add them
   // to the axiom list.
 
-  string_constraint_generatort(): mode(ID_unknown) { }
+  string_constraint_generatort(): mode(ID_unknown), refined_string_type(refined_string_typet::char_type()) { }
 
   void set_mode(irep_idt _mode)
   {
     // only C and java modes supported
     assert((_mode==ID_java) || (_mode==ID_C));
     mode=_mode;
+    refined_string_type=refined_string_typet(get_char_type());
   }
 
   inline irep_idt &get_mode() { return mode; }
@@ -43,6 +45,11 @@ public:
     return refined_string_typet::index_type();
   }
 
+  const refined_string_typet &get_refined_string_type() const
+  {
+    return refined_string_type;
+  }
+  
   // Axioms are of three kinds: universally quantified string constraint,
   // not contains string constraints and simple formulas.
   std::vector<exprt> axioms;
@@ -92,6 +99,8 @@ public:
   exprt add_axioms_for_function_application
   (const function_application_exprt &expr);
 
+  
+  constant_exprt constant_char(int i) const;
 
 private:
   // The following functions add axioms for the returned value
@@ -355,6 +364,9 @@ private:
   // Tells which language is used. C and Java are supported
   irep_idt mode;
 
+  // Type of strings used in the refinement
+  refined_string_typet refined_string_type;
+
   // assert that the number of argument is equal to nb and extract them
   inline static function_application_exprt::argumentst args
   (const function_application_exprt &expr, size_t nb)
@@ -364,7 +376,6 @@ private:
     return args;
   }
 
-  constant_exprt constant_char(int i) const;
   size_t get_char_width() const;
   exprt int_of_hex_char(exprt chr, unsigned char_width, typet char_type) const;
   exprt is_high_surrogate(const exprt & chr) const;
