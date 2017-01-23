@@ -345,7 +345,7 @@ std::string string_refinementt::string_of_array
 exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
 {
   exprt val=get(arr);
-  unsignedbv_typet chart;
+  typet chart;
   if(arr.type().subtype()==generator.get_char_type())
     chart=generator.get_char_type();
   else
@@ -354,7 +354,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
   if(val.id()=="array-list")
   {
     array_typet ret_type(chart, infinity_exprt(generator.get_index_type()));
-    exprt ret=array_of_exprt(chart.zero_expr(), ret_type);
+    exprt ret=array_of_exprt(generator.constant_char(0), ret_type);
 
     for(size_t i=0; i<val.operands().size()/2; i++)
     {
@@ -451,7 +451,7 @@ bool string_refinementt::check_axioms()
   debug() << "there are " << not_contains_axioms.size()
           << " not_contains axioms" << eom;
 
-  exprt zero=refined_string_typet::index_zero();
+  exprt zero=from_integer(0, generator.get_index_type());
 
   for(size_t i=0; i<not_contains_axioms.size(); i++)
   {
@@ -561,7 +561,7 @@ Function: string_refinementt::sum_over_map
 
 exprt string_refinementt::sum_over_map(std::map<exprt, int> & m, bool negated)
 {
-  exprt sum=refined_string_typet::index_of_int(0);
+  exprt sum=from_integer(0, generator.get_index_type());
   mp_integer constants=0;
 
   for(auto it : m)
@@ -580,14 +580,14 @@ exprt string_refinementt::sum_over_map(std::map<exprt, int> & m, bool negated)
       {
         if(second==-1)
         {
-          if(sum==refined_string_typet::index_of_int(0))
+          if(sum==from_integer(0, generator.get_index_type()))
             sum=unary_minus_exprt(t);
           else
             sum=minus_exprt(sum, t);
         }
         else if(second==1)
         {
-          if(sum==refined_string_typet::index_of_int(0))
+          if(sum==from_integer(0, generator.get_index_type()))
             sum=t;
           else
             sum=plus_exprt(sum, t);
@@ -610,7 +610,7 @@ exprt string_refinementt::sum_over_map(std::map<exprt, int> & m, bool negated)
     }
   }
 
-  exprt index_const=from_integer(constants, refined_string_typet::index_type());
+  exprt index_const=from_integer(constants, generator.get_index_type());
   return plus_exprt(sum, index_const);
 }
 
@@ -738,7 +738,7 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
         exprt e(i);
         minus_exprt kminus1(
           axiom.upper_bound(),
-          refined_string_typet::index_of_int(1));
+          from_integer(1, generator.get_index_type()));
         replace_expr(qvar, kminus1, e);
         current_index_set[s].insert(e);
         index_set[s].insert(e);
@@ -848,7 +848,7 @@ exprt string_refinementt::instantiate
   exprt bounds=and_exprt(
     axiom.univ_within_bounds(),
     binary_relation_exprt(
-      refined_string_typet::index_zero(), ID_le, val));
+      from_integer(0, generator.get_index_type()), ID_le, val));
   replace_expr(axiom.univ_var(), r, bounds);
   return implies_exprt(bounds, instance);
 }
@@ -884,7 +884,7 @@ void string_refinementt::instantiate_not_contains
       new_lemmas.push_back(lemma);
       // we put bounds on the witnesses:
       // 0 <= v <= |s0| - |s1| ==> 0 <= v+w[v] < |s0| && 0 <= w[v] < |s1|
-      exprt zero=refined_string_typet::index_zero();
+      exprt zero=from_integer(0, generator.get_index_type());
       binary_relation_exprt c1(zero, ID_le, plus_exprt(val, witness));
       binary_relation_exprt c2
         (to_string_expr(s0).length(), ID_gt, plus_exprt(val, witness));
