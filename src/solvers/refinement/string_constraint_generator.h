@@ -189,8 +189,7 @@ private:
   (const function_application_exprt &f);
 
   // Add axioms from a string constant
-  string_exprt add_axioms_for_constant
-  (irep_idt sval, unsignedbv_typet char_type);
+  string_exprt add_axioms_for_constant(irep_idt sval, typet char_type);
   string_exprt add_axioms_for_constant(irep_idt sval);
 
   // Add axioms corresponding to the StringBuilder.delete java function
