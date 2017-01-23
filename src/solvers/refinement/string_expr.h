@@ -20,7 +20,7 @@ class string_exprt: public struct_exprt
 {
 public:
   // Initialize string from the type of characters
-  explicit string_exprt(unsignedbv_typet char_type);
+  explicit string_exprt(typet char_type);
 
   // Default uses C character type
   string_exprt() : string_exprt(refined_string_typet::char_type()) {}
@@ -37,13 +37,24 @@ public:
   inline const exprt & content() const
   { return op1(); }
 
+  // Type of the expression as a refined string type
+  const refined_string_typet & refined_type() const
+  {
+    return to_refined_string_type(type());
+  }
+
   static exprt within_bounds(const exprt & idx, const exprt & bound);
 
   // Expression of the character at position idx in the string
-  inline index_exprt operator[] (const exprt & idx) const
-  { return index_exprt(content(), idx);}
-  inline index_exprt operator[] (int i) const
-  { return index_exprt(content(), refined_string_typet::index_of_int(i));}
+  index_exprt operator[] (const exprt & idx) const
+  {
+    return index_exprt(content(), idx);
+  }
+
+  index_exprt operator[] (int i) const
+  {
+    return index_exprt(content(), refined_type().index_of_int(i));
+  }
 
   // Comparison on the length of the strings
   inline binary_relation_exprt axiom_for_is_longer_than(const string_exprt & rhs) const
@@ -57,7 +68,7 @@ public:
     const string_exprt & rhs) const
   { return binary_relation_exprt(rhs.length(), ID_lt, length()); }
   inline binary_relation_exprt axiom_for_is_strictly_longer_than(int i) const
-  { return axiom_for_is_strictly_longer_than(refined_string_typet::index_of_int(i)); }
+  { return axiom_for_is_strictly_longer_than(refined_type().index_of_int(i)); }
   inline binary_relation_exprt axiom_for_is_shorter_than(
     const string_exprt & rhs) const
   { return binary_relation_exprt(length(), ID_le, rhs.length()); }
@@ -65,7 +76,7 @@ public:
     const exprt & rhs) const
   { return binary_relation_exprt(length(), ID_le, rhs); }
   inline binary_relation_exprt axiom_for_is_shorter_than(int i) const
-  { return axiom_for_is_shorter_than(refined_string_typet::index_of_int(i)); }
+  { return axiom_for_is_shorter_than(refined_type().index_of_int(i)); }
   inline binary_relation_exprt axiom_for_is_strictly_shorter_than(
     const string_exprt & rhs) const
   { return binary_relation_exprt(length(), ID_lt, rhs.length()); }
@@ -77,7 +88,7 @@ public:
   inline equal_exprt axiom_for_has_length(const exprt & rhs) const
   { return equal_exprt(length(), rhs); }
   inline equal_exprt axiom_for_has_length(int i) const
-  { return axiom_for_has_length(refined_string_typet::index_of_int(i)); }
+  { return axiom_for_has_length(refined_type().index_of_int(i)); }
 
   static irep_idt extract_java_string(const symbol_exprt & s);
 
