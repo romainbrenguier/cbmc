@@ -114,7 +114,8 @@ string_exprt string_constraint_generatort::add_axioms_for_string_expr(
       "a symbol or an if expression";
   }
 
-  axioms.push_back(s.axiom_for_is_longer_than(refined_string_typet::index_zero()));
+  axioms.push_back(
+    s.axiom_for_is_longer_than(from_integer(0, get_index_type())));
   return s;
 }
 
@@ -450,9 +451,13 @@ string_exprt string_constraint_generatort::add_axioms_for_set_length(
   axioms.push_back(res.axiom_for_has_length(k));
   symbol_exprt idx=fresh_univ_index("QA_index_set_length");
   string_constraintt a1
-    (idx, k, and_exprt
-      (implies_exprt(s1.is_strictly_longer_than(idx), equal_exprt(s1[idx], res[idx])),
-       implies_exprt(s1.axiom_for_is_shorter_than(idx), equal_exprt(s1[idx], constant_char(0)))));
+    (idx, k, and_exprt(
+      implies_exprt(
+        s1.axiom_for_is_strictly_longer_than(idx),
+        equal_exprt(s1[idx], res[idx])),
+      implies_exprt(
+        s1.axiom_for_is_shorter_than(idx),
+        equal_exprt(s1[idx], constant_char(0)))));
   axioms.push_back(a1);
 
   return res;
@@ -851,7 +856,8 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   // a1 : 0 <|res|<=max_size
   // a2 : (res[0]='-')||('0'<=res[0]<='9')
 
-  and_exprt a1(res.is_strictly_longer_than(zero), res.axiom_for_is_shorter_than(max));
+  and_exprt a1(res.axiom_for_is_strictly_longer_than(zero),
+               res.axiom_for_is_shorter_than(max));
   axioms.push_back(a1);
 
   exprt chr=res[0];
@@ -962,7 +968,8 @@ string_exprt string_constraint_generatort::add_axioms_from_int_hex(
 
   size_t max_size=8;
   axioms.push_back(
-    and_exprt(res.is_strictly_longer_than(0), res.axiom_for_is_shorter_than(max_size)));
+    and_exprt(res.axiom_for_is_strictly_longer_than(0),
+              res.axiom_for_is_shorter_than(max_size)));
 
   for(size_t size=1; size<=max_size; size++)
   {
@@ -1008,7 +1015,7 @@ string_exprt string_constraint_generatort::add_axioms_from_char(
 string_exprt string_constraint_generatort::add_axioms_from_char(const exprt &c)
 {
   string_exprt res(get_char_type());
-  and_exprt lemma(equal_exprt(res[0], c), res.has_length(1));
+  and_exprt lemma(equal_exprt(res[0], c), res.axiom_for_has_length(1));
   axioms.push_back(lemma);
   return res;
 }
@@ -1036,10 +1043,10 @@ string_exprt string_constraint_generatort::add_axioms_for_code_point(
   exprt hex0400=from_integer(0x0400, type);
 
   binary_relation_exprt small(code_point, ID_lt, hex010000);
-  implies_exprt a1(small, res.has_length(1));
+  implies_exprt a1(small, res.axiom_for_has_length(1));
   axioms.push_back(a1);
 
-  implies_exprt a2(not_exprt(small), res.has_length(2));
+  implies_exprt a2(not_exprt(small), res.axiom_for_has_length(2));
   axioms.push_back(a2);
 
   typecast_exprt code_point_as_char(code_point, get_char_type());
@@ -1507,7 +1514,7 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
   and_exprt witness_diff(
     is_positive(witness),
     and_exprt(
-      prefix.is_strictly_longer_than(witness),
+      prefix.axiom_for_is_strictly_longer_than(witness),
       notequal_exprt(str[plus_exprt(witness, offset)], prefix[witness])));
   or_exprt s0_notpref_s1(
     not_exprt(str.axiom_for_is_longer_than(plus_exprt(prefix.length(), offset))),
@@ -1577,11 +1584,11 @@ exprt string_constraint_generatort::add_axioms_for_is_suffix(
   symbol_exprt witness=fresh_exist_index("witness_not_suffix");
   exprt shifted=plus_exprt(witness, minus_exprt(s1.length(), s0.length()));
   or_exprt constr3(
-    s0.is_strictly_longer_than(s1),
+    s0.axiom_for_is_strictly_longer_than(s1),
     and_exprt(
       notequal_exprt(s0[witness], s1[shifted]),
       and_exprt(
-        s0.is_strictly_longer_than(witness),
+        s0.axiom_for_is_strictly_longer_than(witness),
         is_positive(witness))));
   implies_exprt a3(not_exprt(issuffix), constr3);
 
@@ -1663,7 +1670,7 @@ exprt string_constraint_generatort::add_axioms_for_hash_code(
       equal_exprt(it->second.length(), str.length()),
       and_exprt(
         not_exprt(equal_exprt(str[i], it->second[i])),
-        and_exprt(str.is_strictly_longer_than(i), is_positive(i))));
+        and_exprt(str.axiom_for_is_strictly_longer_than(i), is_positive(i))));
     axioms.push_back(or_exprt(c1, or_exprt(c2, c3)));
   }
   return hash[str];
@@ -2143,12 +2150,16 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
       typecast_exprt(s1.length(), return_type),
       typecast_exprt(s2.length(), return_type)));
   or_exprt guard1(
-    and_exprt(s1.axiom_for_is_shorter_than(s2), s1.is_strictly_longer_than(x)),
-    and_exprt(s1.axiom_for_is_longer_than(s2), s2.is_strictly_longer_than(x)));
+    and_exprt(s1.axiom_for_is_shorter_than(s2),
+              s1.axiom_for_is_strictly_longer_than(x)),
+    and_exprt(s1.axiom_for_is_longer_than(s2),
+              s2.axiom_for_is_strictly_longer_than(x)));
   and_exprt cond1(ret_char_diff, guard1);
   or_exprt guard2(
-    and_exprt(s2.is_strictly_longer_than(s1), s1.axiom_for_has_length(x)),
-    and_exprt(s1.is_strictly_longer_than(s2), s2.axiom_for_has_length(x)));
+    and_exprt(s2.axiom_for_is_strictly_longer_than(s1),
+              s1.axiom_for_has_length(x)),
+    and_exprt(s1.axiom_for_is_strictly_longer_than(s2),
+              s2.axiom_for_has_length(x)));
   and_exprt cond2(ret_length_diff, guard2);
 
   implies_exprt a3(
@@ -2205,7 +2216,8 @@ symbol_exprt string_constraint_generatort::add_axioms_for_intern(
               str.axiom_for_has_same_length_as(it->second),
               and_exprt(
                 not_exprt(equal_exprt(str[i], it->second[i])),
-                and_exprt(str.is_strictly_longer_than(i), is_positive(i)))))));
+                and_exprt(str.axiom_for_is_strictly_longer_than(i),
+                          is_positive(i)))))));
     }
 
 
