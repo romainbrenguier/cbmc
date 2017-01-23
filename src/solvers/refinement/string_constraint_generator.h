@@ -34,9 +34,14 @@ public:
 
   inline irep_idt &get_mode() { return mode; }
 
-  unsignedbv_typet get_char_type() const;
-  inline signedbv_typet get_index_type() const
-  { return refined_string_typet::index_type(); }
+  typet get_char_type() const;
+  inline typet get_index_type() const
+  {
+    if(mode==ID_java)
+      return refined_string_typet::java_index_type();
+    assert(mode==ID_C);
+    return refined_string_typet::index_type();
+  }
 
   // Axioms are of three kinds: universally quantified string constraint,
   // not contains string constraints and simple formulas.
