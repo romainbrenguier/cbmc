@@ -20,7 +20,7 @@ symbol_exprt string_exprt::fresh_symbol
   return symbol_exprt(name, tp);
 }
 
-string_exprt::string_exprt(unsignedbv_typet char_type)
+string_exprt::string_exprt(typet char_type)
   : struct_exprt(refined_string_typet(char_type))
 {
   refined_string_typet t(char_type);
