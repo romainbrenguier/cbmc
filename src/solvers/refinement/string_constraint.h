@@ -73,7 +73,7 @@ public:
     const exprt &body):
     string_constraintt(
       univ,
-      refined_string_typet::index_zero(),
+      from_integer(0, univ.type()),
       bound_sup,
       prem,
       body)
