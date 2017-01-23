@@ -25,22 +25,12 @@ constant_exprt string_constraint_generatort::constant_char(int i) const
   return from_integer(i, get_char_type());
 }
 
-unsignedbv_typet string_constraint_generatort::get_char_type() const
+typet string_constraint_generatort::get_char_type() const
 {
   if(mode==ID_C)
     return refined_string_typet::char_type();
   else if(mode==ID_java)
     return refined_string_typet::java_char_type();
-  else
-    assert(false); // only C and java modes supported
-}
-
-size_t string_constraint_generatort::get_char_width() const
-{
-  if(mode==ID_C)
-    return STRING_SOLVER_C_CHAR_WIDTH;
-  else if(mode==ID_java)
-    return STRING_SOLVER_JAVA_CHAR_WIDTH;
   else
     assert(false); // only C and java modes supported
 }
@@ -91,7 +81,7 @@ string_exprt string_constraint_generatort::add_axioms_for_string_expr(
   {
     exprt res=add_axioms_for_function_application
       (to_function_application_expr(unrefined_string));
-    assert(res.type()==refined_string_typet(get_char_type()));
+    assert(res.type()==refined_string_type);
     s=to_string_expr(res);
   }
   else if(unrefined_string.id()==ID_symbol)
@@ -320,7 +310,7 @@ static irep_idt extract_java_string(const symbol_exprt & s)
 }
 
 string_exprt string_constraint_generatort::add_axioms_for_constant(
-  irep_idt sval, int char_width, unsignedbv_typet char_type)
+  irep_idt sval, unsignedbv_typet char_type)
 {
   string_exprt res(char_type);
   std::string c_str=sval.c_str();
@@ -349,7 +339,7 @@ string_exprt string_constraint_generatort::add_axioms_for_constant(
 string_exprt string_constraint_generatort::add_axioms_for_constant(
   irep_idt sval)
 {
-  return add_axioms_for_constant(sval, get_char_width(), get_char_type());
+  return add_axioms_for_constant(sval, get_char_type());
 }
 
 string_exprt string_constraint_generatort::add_axioms_for_empty_string
@@ -370,7 +360,6 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
   const exprt &arg=args[0];
 
   irep_idt sval;
-  int char_width;
   unsignedbv_typet char_type;
 
   assert(arg.operands().size()==1);
@@ -380,7 +369,6 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
     // C string constant
     const exprt &s=arg.op0().op0();
     sval=to_string_constant(s).get_value();
-    char_width=STRING_SOLVER_C_CHAR_WIDTH;
     char_type=refined_string_typet::char_type();
   }
   else
@@ -392,11 +380,10 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
     // It seems the value of the string is lost,
     // we need to recover it from the identifier
     sval=extract_java_string(to_symbol_expr(s));
-    char_width=STRING_SOLVER_JAVA_CHAR_WIDTH;
     char_type=refined_string_typet::java_char_type();
   }
 
-  return add_axioms_for_constant(sval, char_width, char_type);
+  return add_axioms_for_constant(sval, char_type);
 }
 
 
@@ -948,7 +935,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
 
 
 exprt string_constraint_generatort::int_of_hex_char(
-  exprt chr, unsigned char_width, typet char_type) const
+  exprt chr, typet char_type) const
 {
   exprt zero_char=constant_char('0');
   exprt nine_char=constant_char('9');
@@ -986,7 +973,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int_hex(
     for(size_t j=0; j<size; j++)
     {
       chr=res[j];
-      exprt i=int_of_hex_char(chr, get_char_width(), get_char_type());
+      exprt i=int_of_hex_char(chr, get_char_type());
       sum=plus_exprt(mult_exprt(sum, sixteen), typecast_exprt(i, type));
       or_exprt is_number(
         and_exprt(

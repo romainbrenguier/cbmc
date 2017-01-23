@@ -190,7 +190,7 @@ private:
 
   // Add axioms from a string constant
   string_exprt add_axioms_for_constant
-  (irep_idt sval, int char_width, unsignedbv_typet char_type);
+  (irep_idt sval, unsignedbv_typet char_type);
   string_exprt add_axioms_for_constant(irep_idt sval);
 
   // Add axioms corresponding to the StringBuilder.delete java function
@@ -376,8 +376,7 @@ private:
     return args;
   }
 
-  size_t get_char_width() const;
-  exprt int_of_hex_char(exprt chr, unsigned char_width, typet char_type) const;
+  exprt int_of_hex_char(exprt chr, typet char_type) const;
   exprt is_high_surrogate(const exprt & chr) const;
   exprt is_low_surrogate(const exprt & chr) const;
 
