@@ -29,20 +29,31 @@ public:
   explicit refined_string_typet(unsignedbv_typet char_type);
 
   // Type for the content (list of characters) of a string
-  inline const array_typet & get_content_type()
-  { return to_array_type(components()[1].type());}
+  const array_typet & get_content_type()
+  {
+    return to_array_type(components()[1].type());
+  }
 
   // Types used in this refinement
   static inline unsignedbv_typet char_type()
-  { return unsignedbv_typet(STRING_SOLVER_C_CHAR_WIDTH); }
+  {
+    return unsignedbv_typet(STRING_SOLVER_C_CHAR_WIDTH);
+  }
 
   static inline unsignedbv_typet java_char_type()
-  { return unsignedbv_typet(STRING_SOLVER_JAVA_CHAR_WIDTH);}
+  {
+    return unsignedbv_typet(STRING_SOLVER_JAVA_CHAR_WIDTH);
+  }
 
   static inline signedbv_typet index_type()
-  { return signedbv_typet(STRING_SOLVER_INDEX_WIDTH);}
+  {
+    return signedbv_typet(STRING_SOLVER_INDEX_WIDTH);
+  }
 
-  static inline exprt index_zero() { return from_integer(0, index_type()); }
+  static inline exprt index_zero()
+  {
+    return from_integer(0, index_type());
+  }
 
   // For C the unrefined string type is __CPROVER_string, for java it is a
   // pointer to a strict with tag java.lang.String
