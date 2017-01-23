@@ -112,4 +112,10 @@ public:
   }
 };
 
+const refined_string_typet &to_refined_string_type(const typet &type)
+{
+  assert(type.id()==ID_struct);
+  return static_cast<const refined_string_typet &>(type);
+}
+
 #endif
