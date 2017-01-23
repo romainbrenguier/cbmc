@@ -56,7 +56,7 @@ public:
   }
 
   // For C the unrefined string type is __CPROVER_string, for java it is a
-  // pointer to a strict with tag java.lang.String
+  // pointer to a struct with tag java.lang.String
 
   static bool is_c_string_type(const typet & type);
 
