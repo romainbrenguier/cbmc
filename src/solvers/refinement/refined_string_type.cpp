@@ -111,7 +111,7 @@ bool refined_string_typet::is_java_string_builder_type(const typet &type)
     if(subtype.id()==ID_struct)
     {
       irep_idt tag=to_struct_type(subtype).get_tag();
-      return (tag==irep_idt("java.lang.StringBuilder"));
+      return (tag=="java.lang.StringBuilder");
     }
   }
   return false;
