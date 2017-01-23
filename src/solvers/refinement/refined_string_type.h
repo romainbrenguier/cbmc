@@ -35,22 +35,22 @@ public:
   }
 
   // Types used in this refinement
-  static inline unsignedbv_typet char_type()
+  static unsignedbv_typet char_type()
   {
     return unsignedbv_typet(STRING_SOLVER_C_CHAR_WIDTH);
   }
 
-  static inline unsignedbv_typet java_char_type()
+  static unsignedbv_typet java_char_type()
   {
     return unsignedbv_typet(STRING_SOLVER_JAVA_CHAR_WIDTH);
   }
 
-  static inline signedbv_typet index_type()
+  static signedbv_typet index_type()
   {
     return signedbv_typet(STRING_SOLVER_INDEX_WIDTH);
   }
 
-  static inline exprt index_zero()
+  static exprt index_zero()
   {
     return from_integer(0, index_type());
   }
@@ -68,7 +68,7 @@ public:
 
   static bool is_java_char_sequence_type(const typet & type);
 
-  static inline unsignedbv_typet get_char_type(const exprt & expr)
+  static unsignedbv_typet get_char_type(const exprt & expr)
   {
     if(is_c_string_type(expr.type()))
       return char_type();
@@ -76,7 +76,7 @@ public:
       return java_char_type();
   }
 
-  static inline bool is_unrefined_string_type(const typet & type)
+  static bool is_unrefined_string_type(const typet & type)
   {
     return (
       is_c_string_type(type) ||
@@ -85,11 +85,15 @@ public:
       is_java_char_sequence_type(type));
   }
 
-  static inline bool is_unrefined_string(const exprt & expr)
-  { return (is_unrefined_string_type(expr.type())); }
+  static bool is_unrefined_string(const exprt & expr)
+  {
+    return (is_unrefined_string_type(expr.type()));
+  }
 
-  static inline constant_exprt index_of_int(int i)
-  { return from_integer(i, index_type()); }
+  static constant_exprt index_of_int(int i)
+  {
+    return from_integer(i, index_type());
+  }
 };
 
 
