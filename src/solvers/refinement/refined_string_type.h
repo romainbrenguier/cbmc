@@ -27,7 +27,7 @@ public:
   explicit refined_string_typet(typet char_type);
 
   // Type for the content (list of characters) of a string
-  const array_typet & get_content_type()
+  const array_typet & get_content_type() const
   {
     return to_array_type(components()[1].type());
   }
@@ -37,7 +37,7 @@ public:
     return components()[0].type();
   }
 
-  const typet & get_index_type()
+  const typet & get_index_type() const
   {
     return get_content_type().size().type();
   }
@@ -106,7 +106,7 @@ public:
     return (is_unrefined_string_type(expr.type()));
   }
 
-  constant_exprt index_of_int(int i)
+  constant_exprt index_of_int(int i) const
   {
     return from_integer(i, get_index_type());
   }
