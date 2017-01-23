@@ -21,7 +21,7 @@ Constructor: refined_string_typet::refined_string_typet
 
 \*******************************************************************/
 
-refined_string_typet::refined_string_typet(unsignedbv_typet char_type)
+refined_string_typet::refined_string_typet(typet char_type)
 {
   infinity_exprt infinite_index(refined_string_typet::index_type());
   array_typet char_array(char_type, infinite_index);

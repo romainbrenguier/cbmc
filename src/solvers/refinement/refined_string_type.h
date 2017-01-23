@@ -17,16 +17,14 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/std_expr.h>
 #include <util/arith_tools.h>
 #include <util/expr_util.h>
-
-#define STRING_SOLVER_INDEX_WIDTH 32
-#define STRING_SOLVER_C_CHAR_WIDTH 8
-#define STRING_SOLVER_JAVA_CHAR_WIDTH 16
+#include <ansi-c/c_types.h>
+#include <java_bytecode/java_types.h>
 
 // Internal type used for string refinement
 class refined_string_typet: public struct_typet
 {
 public:
-  explicit refined_string_typet(unsignedbv_typet char_type);
+  explicit refined_string_typet(typet char_type);
 
   // Type for the content (list of characters) of a string
   const array_typet & get_content_type()
@@ -34,25 +32,35 @@ public:
     return to_array_type(components()[1].type());
   }
 
+  const typet & get_char_type()
+  {
+    return components()[0].type();
+  }
+
+  const typet & get_index_type()
+  {
+    return get_content_type().size().type();
+  }
+
   // Types used in this refinement
-  static unsignedbv_typet char_type()
+  static typet char_type()
   {
-    return unsignedbv_typet(STRING_SOLVER_C_CHAR_WIDTH);
+    return char_type();
   }
 
-  static unsignedbv_typet java_char_type()
+  static typet java_char_type()
   {
-    return unsignedbv_typet(STRING_SOLVER_JAVA_CHAR_WIDTH);
+    return java_char_type();
   }
 
-  static signedbv_typet index_type()
+  static typet index_type()
   {
-    return signedbv_typet(STRING_SOLVER_INDEX_WIDTH);
+    return signed_int_type();
   }
 
-  static exprt index_zero()
+  static typet java_index_type()
   {
-    return from_integer(0, index_type());
+    return java_int_type();
   }
 
   // For C the unrefined string type is __CPROVER_string, for java it is a
@@ -68,12 +76,20 @@ public:
 
   static bool is_java_char_sequence_type(const typet & type);
 
-  static unsignedbv_typet get_char_type(const exprt & expr)
+  static typet get_char_type(const exprt & expr)
   {
     if(is_c_string_type(expr.type()))
       return char_type();
     else
       return java_char_type();
+  }
+
+  static typet get_index_type(const exprt & expr)
+  {
+    if(is_c_string_type(expr.type()))
+      return index_type();
+    else
+      return java_index_type();
   }
 
   static bool is_unrefined_string_type(const typet & type)
@@ -90,9 +106,9 @@ public:
     return (is_unrefined_string_type(expr.type()));
   }
 
-  static constant_exprt index_of_int(int i)
+  constant_exprt index_of_int(int i)
   {
-    return from_integer(i, index_type());
+    return from_integer(i, get_index_type());
   }
 };
 
