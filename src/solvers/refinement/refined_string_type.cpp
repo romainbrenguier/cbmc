@@ -60,8 +60,8 @@ bool refined_string_typet::is_java_string_pointer_type(const typet &type)
 {
   if(type.id()==ID_pointer)
   {
-    const pointer_typet & pt=to_pointer_type(type);
-    const typet & subtype=pt.subtype();
+    const pointer_typet &pt=to_pointer_type(type);
+    const typet &subtype=pt.subtype();
     return is_java_string_type(subtype);
   }
   return false;
