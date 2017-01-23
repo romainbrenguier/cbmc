@@ -49,7 +49,7 @@ public:
   {
     return refined_string_type;
   }
-  
+
   // Axioms are of three kinds: universally quantified string constraint,
   // not contains string constraints and simple formulas.
   std::vector<exprt> axioms;
@@ -99,10 +99,13 @@ public:
   exprt add_axioms_for_function_application
   (const function_application_exprt &expr);
 
-  
+
   constant_exprt constant_char(int i) const;
 
 private:
+
+  exprt axiom_for_is_positive_index(const exprt & x);
+
   // The following functions add axioms for the returned value
   // to be equal to the result of the function given as argument.
   // They are not accessed directly from other classes: they call

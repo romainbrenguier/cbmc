@@ -311,7 +311,7 @@ static irep_idt extract_java_string(const symbol_exprt & s)
 }
 
 string_exprt string_constraint_generatort::add_axioms_for_constant(
-  irep_idt sval, unsignedbv_typet char_type)
+  irep_idt sval, typet char_type)
 {
   string_exprt res(char_type);
   std::string c_str=sval.c_str();
@@ -361,7 +361,7 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
   const exprt &arg=args[0];
 
   irep_idt sval;
-  unsignedbv_typet char_type;
+  typet char_type;
 
   assert(arg.operands().size()==1);
   if(arg.op0().operands().size()==2 &&
@@ -530,7 +530,7 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
   assert(end.type()==refined_string_typet::index_type());
   string_exprt res(get_char_type());
 
-  exprt is_empty=res.axiom_for_has_length(refined_string_typet::index_zero());
+  exprt is_empty=res.axiom_for_has_length(from_integer(0, get_index_type()));
   axioms.push_back(
     implies_exprt(
       binary_relation_exprt(start, ID_lt, end),
@@ -576,13 +576,13 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
   exprt a1=str.axiom_for_is_longer_than(plus_exprt(idx, res.length()));
   axioms.push_back(a1);
 
-  binary_relation_exprt a2(idx, ID_ge, refined_string_typet::index_zero());
+  binary_relation_exprt a2(idx, ID_ge, from_integer(0, get_index_type()));
   axioms.push_back(a2);
 
   exprt a3=str.axiom_for_is_longer_than(idx);
   axioms.push_back(a3);
 
-  exprt a4=res.axiom_for_is_longer_than(refined_string_typet::index_zero());
+  exprt a4=res.axiom_for_is_longer_than(from_integer(0, get_index_type()));
   axioms.push_back(a4);
 
   exprt a5=res.axiom_for_is_shorter_than(str);
@@ -609,7 +609,7 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
   axioms.push_back(a8);
 
   minus_exprt index_before(
-    plus_exprt(idx, res.length()), refined_string_typet::index_of_int(1));
+    plus_exprt(idx, res.length()), from_integer(1, get_index_type()));
   binary_relation_exprt no_space_before(str[index_before], ID_gt, space_char);
   or_exprt a9(
     equal_exprt(idx, str.length()),
@@ -709,9 +709,10 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
   const exprt &f, bool double_precision)
 {
   // Warning: we currently only have partial specification
-  unsignedbv_typet char_type=get_char_type();
+  typet char_type=get_char_type();
   string_exprt res(char_type);
-  axioms.push_back(res.axiom_for_is_shorter_than(refined_string_typet::index_of_int(24)));
+  exprt index24=from_integer(24, get_index_type());
+  axioms.push_back(res.axiom_for_is_shorter_than(index24));
 
   string_exprt magnitude(char_type);
   string_exprt sign_string(char_type);
@@ -800,7 +801,7 @@ string_exprt string_constraint_generatort::add_axioms_from_bool(
 string_exprt string_constraint_generatort::add_axioms_from_bool(
   const exprt &i)
 {
-  unsignedbv_typet char_type=get_char_type();
+  typet char_type=get_char_type();
   string_exprt res(char_type);
 
   assert(i.type()==bool_typet() || i.type().id()==ID_c_bool);
@@ -850,8 +851,8 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   exprt zero_char=constant_char('0');
   exprt nine_char=constant_char('9');
   exprt minus_char=constant_char('-');
-  exprt zero=refined_string_typet::index_zero();
-  exprt max=refined_string_typet::index_of_int(max_size);
+  exprt zero=from_integer(0, get_index_type());
+  exprt max=from_integer(max_size, get_index_type());
   // We add axioms:
   // a1 : 0 <|res|<=max_size
   // a2 : (res[0]='-')||('0'<=res[0]<='9')
@@ -917,7 +918,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
         not_exprt(r0_zero));
       axioms.push_back(a5);
 
-      exprt one=refined_string_typet::index_of_int(1);
+      exprt one=from_integer(1, get_index_type());
       equal_exprt r1_zero(res[one], zero_char);
       implies_exprt a6(
         and_exprt(premise, starts_with_minus),
@@ -1117,7 +1118,7 @@ string_exprt string_constraint_generatort::add_axioms_for_delete_char_at(
   const function_application_exprt &f)
 {
   string_exprt str=add_axioms_for_string_expr(args(f, 2)[0]);
-  exprt index_one=refined_string_typet::index_of_int(1);
+  exprt index_one=from_integer(1, get_index_type());
   return add_axioms_for_delete(
     str, args(f, 2)[1], plus_exprt(args(f, 2)[1], index_one));
 }
@@ -1128,7 +1129,7 @@ string_exprt string_constraint_generatort::add_axioms_for_delete(
   assert(start.type()==refined_string_typet::index_type());
   assert(end.type()==refined_string_typet::index_type());
   string_exprt str1=add_axioms_for_substring(
-    str, refined_string_typet::index_zero(), start);
+    str, from_integer(0, get_index_type()), start);
   string_exprt str2=add_axioms_for_substring(str, end, str.length());
   return add_axioms_for_concat(str1, str2);
 }
@@ -1202,7 +1203,7 @@ string_exprt string_constraint_generatort::add_axioms_for_insert(
 {
   assert(offset.type()==refined_string_typet::index_type());
   string_exprt pref=add_axioms_for_substring
-    (s1, refined_string_typet::index_zero(), offset);
+    (s1, from_integer(0, get_index_type()), offset);
   string_exprt suf=add_axioms_for_substring(s1, offset, s1.length());
   string_exprt concat1=add_axioms_for_concat(pref, s2);
   return add_axioms_for_concat(concat1, suf);
@@ -1291,7 +1292,7 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   axioms.push_back(a2);
 
   symbol_exprt witness=fresh_exist_index("witness_unequal");
-  exprt zero=refined_string_typet::index_zero();
+  exprt zero=from_integer(0, get_index_type());
   and_exprt bound_witness(
     binary_relation_exprt(witness, ID_lt, s1.length()),
     binary_relation_exprt(witness, ID_ge, zero));
@@ -1354,7 +1355,7 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   axioms.push_back(a2);
 
   symbol_exprt witness=fresh_exist_index("witness_unequal_ignore_case");
-  exprt zero=refined_string_typet::index_zero();
+  exprt zero=from_integer(0, get_index_type());
   and_exprt bound_witness(
     binary_relation_exprt(witness, ID_lt, s1.length()),
     binary_relation_exprt(witness, ID_ge, zero));
@@ -1480,10 +1481,10 @@ string_exprt string_constraint_generatort::add_axioms_for_insert_char_array(
 
 
 
-exprt is_positive(const exprt & x)
+exprt string_constraint_generatort::axiom_for_is_positive_index(const exprt & x)
 {
-  return binary_relation_exprt
-    (x, ID_ge, refined_string_typet::index_of_int(0));
+  return binary_relation_exprt(
+    x, ID_ge, from_integer(0, get_index_type()));
 }
 
 
@@ -1512,7 +1513,7 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
 
   symbol_exprt witness=fresh_exist_index("witness_not_isprefix");
   and_exprt witness_diff(
-    is_positive(witness),
+    axiom_for_is_positive_index(witness),
     and_exprt(
       prefix.axiom_for_is_strictly_longer_than(witness),
       notequal_exprt(str[plus_exprt(witness, offset)], prefix[witness])));
@@ -1534,7 +1535,7 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
   string_exprt s1=add_axioms_for_string_expr(args[swap_arguments?0:1]);
   exprt offset;
   if(args.size()==2)
-    offset=refined_string_typet::index_zero();
+    offset=from_integer(0, get_index_type());
   else if(args.size()==3)
     offset=args[2];
   return typecast_exprt(add_axioms_for_is_prefix(s0, s1, offset), f.type());
@@ -1589,7 +1590,7 @@ exprt string_constraint_generatort::add_axioms_for_is_suffix(
       notequal_exprt(s0[witness], s1[shifted]),
       and_exprt(
         s0.axiom_for_is_strictly_longer_than(witness),
-        is_positive(witness))));
+        axiom_for_is_positive_index(witness))));
   implies_exprt a3(not_exprt(issuffix), constr3);
 
   axioms.push_back(a3);
@@ -1620,7 +1621,7 @@ exprt string_constraint_generatort::add_axioms_for_contains(
   symbol_exprt startpos=fresh_exist_index("startpos_contains");
   minus_exprt length_diff(s0.length(), s1.length());
   and_exprt a2(
-    is_positive(startpos), binary_relation_exprt(startpos, ID_le, length_diff));
+    axiom_for_is_positive_index(startpos), binary_relation_exprt(startpos, ID_le, length_diff));
   axioms.push_back(a2);
 
   symbol_exprt qvar=fresh_univ_index("QA_contains");
@@ -1633,10 +1634,10 @@ exprt string_constraint_generatort::add_axioms_for_contains(
   // forall startpos <= |s0|-|s1|.  (!contains && |s0| >= |s1| )
   //      ==> exists witness<|s1|. s1[witness]!=s0[startpos+witness]
   string_not_contains_constraintt a4
-    (refined_string_typet::index_zero(),
-     plus_exprt(refined_string_typet::index_of_int(1), length_diff),
+    (from_integer(0, get_index_type()),
+     plus_exprt(from_integer(1, get_index_type()), length_diff),
      and_exprt(not_exprt(contains), s0.axiom_for_is_longer_than(s1)),
-     refined_string_typet::index_zero(), s1.length(), s0, s1);
+     from_integer(0, get_index_type()), s1.length(), s0, s1);
   axioms.push_back(a4);
 
   return tc_contains;
@@ -1670,7 +1671,7 @@ exprt string_constraint_generatort::add_axioms_for_hash_code(
       equal_exprt(it->second.length(), str.length()),
       and_exprt(
         not_exprt(equal_exprt(str[i], it->second[i])),
-        and_exprt(str.axiom_for_is_strictly_longer_than(i), is_positive(i))));
+        and_exprt(str.axiom_for_is_strictly_longer_than(i), axiom_for_is_positive_index(i))));
     axioms.push_back(or_exprt(c1, or_exprt(c2, c3)));
   }
   return hash[str];
@@ -1689,7 +1690,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   // a4 : forall n, from_index<=n<index. contains => str[n]!=c
   // a5 : forall m, from_index<=n<|str|. !contains => str[m]!=c
 
-  exprt minus1=refined_string_typet::index_of_int(-1);
+  exprt minus1=from_integer(-1, get_index_type());
   and_exprt a1(
     binary_relation_exprt(index, ID_ge, minus1),
     binary_relation_exprt(index, ID_lt, str.length()));
@@ -1745,7 +1746,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
 
   implies_exprt a2(
     not_exprt(contains),
-    equal_exprt(offset, refined_string_typet::index_of_int(-1)));
+    equal_exprt(offset, from_integer(-1, get_index_type())));
   axioms.push_back(a2);
 
   symbol_exprt qvar=fresh_univ_index("QA_index_of_string");
@@ -1782,7 +1783,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
 
   implies_exprt a2(
     not_exprt(contains),
-    equal_exprt(offset, refined_string_typet::index_of_int(-1)));
+    equal_exprt(offset, from_integer(-1, get_index_type())));
   axioms.push_back(a2);
 
   symbol_exprt qvar=fresh_univ_index("QA_index_of_string");
@@ -1804,7 +1805,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   exprt from_index;
 
   if(args.size()==2)
-    from_index=refined_string_typet::index_zero();
+    from_index=from_integer(0, get_index_type());
   else if(args.size()==3)
     from_index=args[2];
   else
@@ -1833,8 +1834,8 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   // a4 : forall n. i+1 <= n < from_index +1 && contains => s[n]!=c
   // a5 : forall m. 0 <= m < from_index +1 && !contains => s[m]!=c
 
-  exprt index1=refined_string_typet::index_of_int(1);
-  exprt minus1=refined_string_typet::index_of_int(-1);
+  exprt index1=from_integer(1, get_index_type());
+  exprt minus1=from_integer(-1, get_index_type());
   exprt from_index_plus_one=plus_exprt(from_index, index1);
   and_exprt a1(
     binary_relation_exprt(index, ID_ge, minus1),
@@ -1881,7 +1882,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   exprt from_index;
 
   if(args.size()==2)
-    from_index=minus_exprt(str.length(), refined_string_typet::index_of_int(1));
+    from_index=minus_exprt(str.length(), from_integer(1, get_index_type()));
   else if(args.size()==3)
     from_index=args[2];
   else
@@ -2022,7 +2023,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_at(
   exprt pos=args(f, 2)[1];
 
   symbol_exprt result=string_exprt::fresh_symbol("char", return_type);
-  exprt index1=refined_string_typet::index_of_int(1);
+  exprt index1=from_integer(1, get_index_type());
   exprt char1=str[pos];
   exprt char2=str[plus_exprt(pos, index1)];
   exprt char1_as_int=typecast_exprt(char1, return_type);
@@ -2047,8 +2048,8 @@ exprt string_constraint_generatort::add_axioms_for_code_point_before(
   symbol_exprt result=string_exprt::fresh_symbol("char", return_type);
   string_exprt str=add_axioms_for_string_expr(args[0]);
 
-  exprt char1=str[minus_exprt(args[1], refined_string_typet::index_of_int(2))];
-  exprt char2=str[minus_exprt(args[1], refined_string_typet::index_of_int(1))];
+  exprt char1=str[minus_exprt(args[1], from_integer(2, get_index_type()))];
+  exprt char2=str[minus_exprt(args[1], from_integer(1, get_index_type()))];
   exprt char1_as_int=typecast_exprt(char1, return_type);
   exprt char2_as_int=typecast_exprt(char2, return_type);
 
@@ -2073,7 +2074,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_count(
     string_exprt::fresh_symbol("code_point_count", return_type);
 
   exprt length=minus_exprt(end, begin);
-  exprt minimum=div_exprt(length, refined_string_typet::index_of_int(2));
+  exprt minimum=div_exprt(length, from_integer(2, get_index_type()));
   axioms.push_back(binary_relation_exprt(result, ID_le, length));
   axioms.push_back(binary_relation_exprt(result, ID_ge, minimum));
 
@@ -2217,7 +2218,7 @@ symbol_exprt string_constraint_generatort::add_axioms_for_intern(
               and_exprt(
                 not_exprt(equal_exprt(str[i], it->second[i])),
                 and_exprt(str.axiom_for_is_strictly_longer_than(i),
-                          is_positive(i)))))));
+                          axiom_for_is_positive_index(i)))))));
     }
 
 
