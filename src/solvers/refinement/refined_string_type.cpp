@@ -41,12 +41,9 @@ Function: refined_string_typet::is_c_string_type
 
 bool refined_string_typet::is_c_string_type(const typet &type)
 {
-  if(type.id()==ID_struct)
-  {
-    irep_idt tag=to_struct_type(type).get_tag();
-    return (tag=="__CPROVER_string");
-  }
-  return false;
+  return
+    type.id()==ID_struct &&
+    to_struct_type(type).get_tag()=="__CPROVER_string";
 }
 
 /*******************************************************************\
