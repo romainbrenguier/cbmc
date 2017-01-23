@@ -316,9 +316,11 @@ string_exprt string_constraint_generatort::add_axioms_for_constant(
   string_exprt res(char_type);
   std::string c_str=sval.c_str();
   std::wstring str;
-  if(mode==ID_java)
-    str=utf8_to_utf16_little_endian(c_str);
-  else
+  // We should have a special treatment for java strings when the conversion
+  // function is available:
+  // if(mode==ID_java)
+  //   str=utf8_to_utf16_little_endian(c_str);
+  // else
     str=widen(c_str);
 
   for(std::size_t i=0; i<str.size(); i++)
