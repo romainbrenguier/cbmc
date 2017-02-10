@@ -24,4 +24,6 @@ std::string utf16_to_utf8(const std::basic_string<unsigned short int> &s);
 
 const char **narrow_argv(int argc, const wchar_t **argv_wide);
 
+std::u16string utf8_to_utf16_little_endian(const std::string& utf8);
+
 #endif // CPROVER_UTIL_UNICODE_H

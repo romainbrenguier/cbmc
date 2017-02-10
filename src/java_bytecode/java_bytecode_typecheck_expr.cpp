@@ -101,7 +101,7 @@ static void escape_non_alnum(std::string &toescape)
       ch='_';
 }
 
-static array_exprt utf16_to_array(const std::wstring& in)
+static array_exprt utf16_to_array(const std::u16string& in)
 {
   const auto jchar=java_char_type();
   array_exprt ret(array_typet(jchar, infinity_exprt(java_int_type())));
