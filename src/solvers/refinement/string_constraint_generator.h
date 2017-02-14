@@ -13,9 +13,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #ifndef CPROVER_SOLVERS_REFINEMENT_STRING_CONSTRAINT_GENERATOR_H
 #define CPROVER_SOLVERS_REFINEMENT_STRING_CONSTRAINT_GENERATOR_H
 
-#include <ansi-c/c_types.h>
+#include <util/string_expr.h>
 #include <solvers/refinement/refined_string_type.h>
-#include <solvers/refinement/string_expr.h>
 #include <solvers/refinement/string_constraint.h>
 
 class string_constraint_generatort
@@ -26,32 +25,19 @@ public:
   // to the axiom list.
 
   string_constraint_generatort():
-    mode(ID_unknown), refined_string_type(char_type())
-  { }
+    mode(ID_unknown)
+  {
+    next_symbol_id=1;
+  }
 
   void set_mode(irep_idt _mode)
   {
     // only C and java modes supported
     assert((_mode==ID_java) || (_mode==ID_C));
     mode=_mode;
-    refined_string_type=refined_string_typet(get_char_type());
   }
 
   irep_idt &get_mode() { return mode; }
-
-  typet get_char_type() const;
-  typet get_index_type() const
-  {
-    if(mode==ID_java)
-      return refined_string_typet::java_index_type();
-    assert(mode==ID_C);
-    return refined_string_typet::index_type();
-  }
-
-  const refined_string_typet &get_refined_string_type() const
-  {
-    return refined_string_type;
-  }
 
   // Axioms are of three kinds: universally quantified string constraint,
   // not contains string constraints and simple formulas.
@@ -73,9 +59,14 @@ public:
     return index_exprt(witness.at(c), univ_val);
   }
 
-  symbol_exprt fresh_exist_index(const irep_idt &prefix);
-  symbol_exprt fresh_univ_index(const irep_idt &prefix);
+  static unsigned next_symbol_id;
+
+  static symbol_exprt fresh_symbol(
+    const irep_idt &prefix, const typet &type=bool_typet());
+  symbol_exprt fresh_exist_index(const irep_idt &prefix, typet type);
+  symbol_exprt fresh_univ_index(const irep_idt &prefix, typet type);
   symbol_exprt fresh_boolean(const irep_idt &prefix);
+  string_exprt fresh_string(const refined_string_typet &type);
 
   // We maintain a map from symbols to strings.
   std::map<irep_idt, string_exprt> symbol_to_string;
@@ -95,7 +86,7 @@ public:
   exprt add_axioms_for_function_application(
     const function_application_exprt &expr);
 
-  constant_exprt constant_char(int i) const;
+  static constant_exprt constant_char(int i, typet char_type);
 
 private:
   // The integer with the longest string is Integer.MIN_VALUE which is -2^31,
@@ -107,7 +98,7 @@ private:
   const std::size_t MAX_FLOAT_LENGTH=15;
   const std::size_t MAX_DOUBLE_LENGTH=30;
 
-  irep_idt extract_java_string(const symbol_exprt &s) const;
+  static irep_idt extract_java_string(const symbol_exprt &s);
 
   exprt axiom_for_is_positive_index(const exprt &x);
 
@@ -123,7 +114,6 @@ private:
   exprt add_axioms_for_contains(const function_application_exprt &f);
   exprt add_axioms_for_equals(const function_application_exprt &f);
   exprt add_axioms_for_equals_ignore_case(const function_application_exprt &f);
-  exprt add_axioms_for_data(const function_application_exprt &f);
 
   // Add axioms corresponding to the String.hashCode java function
   // The specification is partial: the actual value is not actually computed
@@ -153,7 +143,8 @@ private:
   string_exprt add_axioms_for_concat_float(const function_application_exprt &f);
   string_exprt add_axioms_for_concat_code_point(
     const function_application_exprt &f);
-  string_exprt add_axioms_for_constant(irep_idt sval);
+  string_exprt add_axioms_for_constant(
+    irep_idt sval, refined_string_typet ref_type);
   string_exprt add_axioms_for_delete(
     const string_exprt &str, const exprt &start, const exprt &end);
   string_exprt add_axioms_for_delete(const function_application_exprt &expr);
@@ -173,15 +164,17 @@ private:
     const function_application_exprt &f);
   string_exprt add_axioms_from_literal(const function_application_exprt &f);
   string_exprt add_axioms_from_int(const function_application_exprt &f);
-  string_exprt add_axioms_from_int(const exprt &i, size_t max_size);
-  string_exprt add_axioms_from_int_hex(const exprt &i);
+  string_exprt add_axioms_from_int(
+    const exprt &i, size_t max_size, const refined_string_typet &ref_type);
+  string_exprt add_axioms_from_int_hex(
+    const exprt &i, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_int_hex(const function_application_exprt &f);
   string_exprt add_axioms_from_long(const function_application_exprt &f);
   string_exprt add_axioms_from_long(const exprt &i, size_t max_size);
   string_exprt add_axioms_from_bool(const function_application_exprt &f);
-  string_exprt add_axioms_from_bool(const exprt &i);
+  string_exprt add_axioms_from_bool(const exprt &i, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_char(const function_application_exprt &f);
-  string_exprt add_axioms_from_char(const exprt &i);
+  string_exprt add_axioms_from_char(const exprt &i, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_char_array(const function_application_exprt &f);
   string_exprt add_axioms_from_char_array(
     const exprt &length,
@@ -257,7 +250,8 @@ private:
   // TODO: not working correctly at the moment
   string_exprt add_axioms_for_value_of(const function_application_exprt &f);
 
-  string_exprt add_axioms_for_code_point(const exprt &code_point);
+  string_exprt add_axioms_for_code_point(
+    const exprt &code_point, const refined_string_typet &ref_type);
   string_exprt add_axioms_for_java_char_array(const exprt &char_array);
   string_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);
@@ -286,9 +280,6 @@ private:
 
   // Tells which language is used. C and Java are supported
   irep_idt mode;
-
-  // Type of strings used in the refinement
-  refined_string_typet refined_string_type;
 
   // assert that the number of argument is equal to nb and extract them
   static const function_application_exprt::argumentst &args(
