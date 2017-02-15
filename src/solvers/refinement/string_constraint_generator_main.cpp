@@ -256,7 +256,7 @@ string_exprt string_constraint_generatort::find_or_add_string_of_symbol(
   const symbol_exprt &sym)
 {
   irep_idt id=sym.get_identifier();
-  refined_string_typet ref_type=to_refined_string_type(sym.type());
+  const refined_string_typet &ref_type=to_refined_string_type(sym.type());
   string_exprt str=fresh_string(ref_type);
   auto entry=symbol_to_string.insert(std::make_pair(id, str));
   return entry.first->second;
@@ -430,7 +430,7 @@ string_exprt string_constraint_generatort::add_axioms_for_copy(
   const function_application_exprt &f)
 {
   string_exprt s1=add_axioms_for_string_expr(args(f, 1)[0]);
-  refined_string_typet ref_type=to_refined_string_type(s1.type());
+  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
   string_exprt res=fresh_string(ref_type);
 
   // We add axioms:
@@ -512,7 +512,7 @@ string_exprt string_constraint_generatort::add_axioms_from_char_array(
 {
   const typet &char_type=to_array_type(data.type()).subtype();
   const typet &index_type=length.type();
-  refined_string_typet ref_type(index_type, char_type);
+  const refined_string_typet &ref_type(index_type, char_type);
   string_exprt str=fresh_string(ref_type);
 
   // We add axioms:
@@ -638,7 +638,7 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
   const function_application_exprt &f)
 {
   string_exprt str=add_axioms_for_string_expr(args(f, 2)[0]);
-  refined_string_typet ref_type=to_refined_string_type(str.type());
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
   symbol_exprt char_sym=fresh_symbol("char", ref_type.get_char_type());
   axioms.push_back(equal_exprt(char_sym, str[args(f, 2)[1]]));
   return char_sym;
