@@ -22,7 +22,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 class refined_string_typet: public struct_typet
 {
 public:
-  explicit refined_string_typet(typet index_type, typet char_type);
+  refined_string_typet(typet index_type, typet char_type);
 
   // Type for the content (list of characters) of a string
   const array_typet &get_content_type() const

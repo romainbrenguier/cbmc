@@ -141,7 +141,6 @@ string_exprt string_constraint_generatort::fresh_string(
   return string_exprt(length, content, type);
 }
 
-
 /*******************************************************************\
 
 Function: string_constraint_generatort::add_axioms_for_string_expr

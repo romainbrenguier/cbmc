@@ -25,10 +25,8 @@ public:
   // to the axiom list.
 
   string_constraint_generatort():
-    mode(ID_unknown)
-  {
-    next_symbol_id=1;
-  }
+    mode(ID_unknown), next_symbol_id(1)
+  { }
 
   void set_mode(irep_idt _mode)
   {

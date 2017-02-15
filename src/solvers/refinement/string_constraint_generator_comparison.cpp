@@ -139,7 +139,6 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   string_constraintt a2(qvar, s1.length(), eq, constr2);
   axioms.push_back(a2);
 
-  // TODO: we should have to give the type of witness
   symbol_exprt witness=fresh_exist_index(
     "witness_unequal_ignore_case", index_type);
   exprt zero=from_integer(0, witness.type());

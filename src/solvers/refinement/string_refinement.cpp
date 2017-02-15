@@ -707,7 +707,7 @@ exprt string_refinementt::sum_over_map(
       switch(second)
       {
       case -1:
-        if(sum==nil_exprt())
+        if(sum.is_nil())
           sum=unary_minus_exprt(t);
         else
           sum=minus_exprt(sum, t);
@@ -736,7 +736,7 @@ exprt string_refinementt::sum_over_map(
   }
 
   exprt index_const=from_integer(constants, index_type);
-  if(sum!=nil_exprt())
+  if(sum.is_not_nil())
     return plus_exprt(sum, index_const);
   else
     return index_const;
