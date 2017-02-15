@@ -25,7 +25,7 @@ Function: string_constraint_generatort::add_axioms_for_concat
 string_exprt string_constraint_generatort::add_axioms_for_concat(
   const string_exprt &s1, const string_exprt &s2)
 {
-  refined_string_typet ref_type=to_refined_string_type(s1.type());
+  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
   string_exprt res=fresh_string(ref_type);
 
   // We add axioms:
@@ -94,7 +94,7 @@ Function: string_constraint_generatort::add_axioms_for_concat_int
 string_exprt string_constraint_generatort::add_axioms_for_concat_int(
   const function_application_exprt &f)
 {
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   string_exprt s1=add_axioms_for_string_expr(args(f, 2)[0]);
   string_exprt s2=add_axioms_from_int(
     args(f, 2)[1], MAX_INTEGER_LENGTH, ref_type);
@@ -117,7 +117,7 @@ Function: string_constraint_generatort::add_axioms_for_long
 string_exprt string_constraint_generatort::add_axioms_for_concat_long(
   const function_application_exprt &f)
 {
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   string_exprt s1=add_axioms_for_string_expr(args(f, 2)[0]);
   string_exprt s2=add_axioms_from_int(args(f, 2)[1], MAX_LONG_LENGTH, ref_type);
   return add_axioms_for_concat(s1, s2);
@@ -139,7 +139,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_bool(
   const function_application_exprt &f)
 {
   string_exprt s1=add_axioms_for_string_expr(args(f, 2)[0]);
-  refined_string_typet ref_type=to_refined_string_type(s1.type());
+  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
   string_exprt s2=add_axioms_from_bool(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }
@@ -160,7 +160,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_char(
   const function_application_exprt &f)
 {
   string_exprt s1=add_axioms_for_string_expr(args(f, 2)[0]);
-  refined_string_typet ref_type=to_refined_string_type(s1.type());
+  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
   string_exprt s2=add_axioms_from_char(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }
@@ -223,7 +223,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_code_point(
   const function_application_exprt &f)
 {
   string_exprt s1=add_axioms_for_string_expr(args(f, 2)[0]);
-  refined_string_typet ref_type=to_refined_string_type(s1.type());
+  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
   string_exprt s2=add_axioms_for_code_point(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }

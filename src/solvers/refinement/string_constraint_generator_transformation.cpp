@@ -31,7 +31,7 @@ string_exprt string_constraint_generatort::add_axioms_for_set_length(
 {
   string_exprt s1=add_axioms_for_string_expr(args(f, 2)[0]);
   exprt k=args(f, 2)[1];
-  refined_string_typet ref_type=to_refined_string_type(s1.type());
+  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
   string_exprt res=fresh_string(ref_type);
 
   // We add axioms:
@@ -108,8 +108,8 @@ Function: string_constraint_generatort::add_axioms_for_substring
 string_exprt string_constraint_generatort::add_axioms_for_substring(
   const string_exprt &str, const exprt &start, const exprt &end)
 {
-  refined_string_typet ref_type=to_refined_string_type(str.type());
-  typet index_type=ref_type.get_index_type();
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  const typet &index_type=ref_type.get_index_type();
   symbol_exprt idx=fresh_exist_index("index_substring", index_type);
   assert(start.type()==index_type);
   assert(end.type()==index_type);
@@ -155,8 +155,8 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
   const function_application_exprt &expr)
 {
   string_exprt str=add_axioms_for_string_expr(args(expr, 1)[0]);
-  refined_string_typet ref_type=to_refined_string_type(str.type());
-  typet index_type=ref_type.get_index_type();
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  const typet &index_type=ref_type.get_index_type();
   string_exprt res=fresh_string(ref_type);
   symbol_exprt idx=fresh_exist_index("index_trim", index_type);
   exprt space_char=constant_char(' ', ref_type.get_char_type());
@@ -237,9 +237,9 @@ string_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
   const function_application_exprt &expr)
 {
   string_exprt str=add_axioms_for_string_expr(args(expr, 1)[0]);
-  refined_string_typet ref_type=to_refined_string_type(str.type());
-  typet char_type=ref_type.get_char_type();
-  typet index_type=ref_type.get_index_type();
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  const typet &char_type=ref_type.get_char_type();
+  const typet &index_type=ref_type.get_index_type();
   string_exprt res=fresh_string(ref_type);
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
@@ -290,9 +290,9 @@ string_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
   const function_application_exprt &expr)
 {
   string_exprt str=add_axioms_for_string_expr(args(expr, 1)[0]);
-  refined_string_typet ref_type=to_refined_string_type(str.type());
-  typet char_type=ref_type.get_char_type();
-  typet index_type=ref_type.get_index_type();
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  const typet &char_type=ref_type.get_char_type();
+  const typet &index_type=ref_type.get_index_type();
   string_exprt res=fresh_string(ref_type);
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
@@ -346,7 +346,7 @@ string_exprt string_constraint_generatort::add_axioms_for_char_set(
   const function_application_exprt &f)
 {
   string_exprt str=add_axioms_for_string_expr(args(f, 3)[0]);
-  refined_string_typet ref_type=to_refined_string_type(str.type());
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
   string_exprt res=fresh_string(ref_type);
   with_exprt sarrnew(str.content(), args(f, 3)[1], args(f, 3)[2]);
 
@@ -379,7 +379,7 @@ string_exprt string_constraint_generatort::add_axioms_for_replace(
   const function_application_exprt &f)
 {
   string_exprt str=add_axioms_for_string_expr(args(f, 3)[0]);
-  refined_string_typet ref_type=to_refined_string_type(str.type());
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const exprt &old_char=args(f, 3)[1];
   const exprt &new_char=args(f, 3)[2];
   string_exprt res=fresh_string(ref_type);

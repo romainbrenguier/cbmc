@@ -142,7 +142,7 @@ private:
   string_exprt add_axioms_for_concat_code_point(
     const function_application_exprt &f);
   string_exprt add_axioms_for_constant(
-    irep_idt sval, refined_string_typet ref_type);
+    irep_idt sval, const refined_string_typet &ref_type);
   string_exprt add_axioms_for_delete(
     const string_exprt &str, const exprt &start, const exprt &end);
   string_exprt add_axioms_for_delete(const function_application_exprt &expr);

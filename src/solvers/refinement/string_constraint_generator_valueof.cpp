@@ -25,7 +25,7 @@ Function: string_constraint_generatort::add_axioms_from_int
 string_exprt string_constraint_generatort::add_axioms_from_int(
   const function_application_exprt &expr)
 {
-  refined_string_typet ref_type=to_refined_string_type(expr.type());
+  const refined_string_typet &ref_type=to_refined_string_type(expr.type());
   return add_axioms_from_int(args(expr, 1)[0], MAX_INTEGER_LENGTH, ref_type);
 }
 
@@ -44,7 +44,7 @@ Function: string_constraint_generatort::add_axioms_from_long
 string_exprt string_constraint_generatort::add_axioms_from_long(
   const function_application_exprt &expr)
 {
-  refined_string_typet ref_type=to_refined_string_type(expr.type());
+  const refined_string_typet &ref_type=to_refined_string_type(expr.type());
   return add_axioms_from_int(args(expr, 1)[0], MAX_LONG_LENGTH, ref_type);
 }
 
@@ -101,9 +101,9 @@ Function: string_constraint_generatort::add_axioms_from_float
 string_exprt string_constraint_generatort::add_axioms_from_float(
   const exprt &f, bool double_precision)
 {
-  refined_string_typet ref_type=to_refined_string_type(f.type());
-  typet index_type=ref_type.get_index_type();
-  typet char_type=ref_type.get_char_type();
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
+  const typet &index_type=ref_type.get_index_type();
+  const typet &char_type=ref_type.get_char_type();
   string_exprt res=fresh_string(ref_type);
   const exprt &index24=from_integer(24, ref_type.get_index_type());
   axioms.push_back(res.axiom_for_is_shorter_than(index24));
@@ -205,7 +205,7 @@ Function: string_constraint_generatort::add_axioms_from_bool
 string_exprt string_constraint_generatort::add_axioms_from_bool(
   const function_application_exprt &f)
 {
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   return add_axioms_from_bool(args(f, 1)[0], ref_type);
 }
 
@@ -227,7 +227,7 @@ string_exprt string_constraint_generatort::add_axioms_from_bool(
   const exprt &b, const refined_string_typet &ref_type)
 {
   string_exprt res=fresh_string(ref_type);
-  typet index_type=ref_type.get_index_type();
+  const typet &index_type=ref_type.get_index_type();
 
   assert(b.type()==bool_typet() || b.type().id()==ID_c_bool);
 
@@ -504,7 +504,7 @@ Function: string_constraint_generatort::add_axioms_for_int_hex
 string_exprt string_constraint_generatort::add_axioms_from_int_hex(
   const function_application_exprt &f)
 {
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   return add_axioms_from_int_hex(args(f, 1)[0], ref_type);
 }
 
@@ -523,7 +523,7 @@ Function: string_constraint_generatort::add_axioms_from_char
 string_exprt string_constraint_generatort::add_axioms_from_char(
   const function_application_exprt &f)
 {
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   return add_axioms_from_char(args(f, 1)[0], ref_type);
 }
 
@@ -568,7 +568,7 @@ string_exprt string_constraint_generatort::add_axioms_for_value_of(
   const function_application_exprt::argumentst &args=f.arguments();
   if(args.size()==3)
   {
-    refined_string_typet ref_type=to_refined_string_type(f.type());
+    const refined_string_typet &ref_type=to_refined_string_type(f.type());
     string_exprt res=fresh_string(ref_type);
     exprt char_array=args[0];
     exprt offset=args[1];
@@ -611,7 +611,7 @@ exprt string_constraint_generatort::add_axioms_for_parse_int(
   const function_application_exprt &f)
 {
   string_exprt str=add_axioms_for_string_expr(args(f, 1)[0]);
-  typet type=f.type();
+  const typet &type=f.type();
   symbol_exprt i=fresh_symbol("parsed_int", type);
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &char_type=ref_type.get_char_type();

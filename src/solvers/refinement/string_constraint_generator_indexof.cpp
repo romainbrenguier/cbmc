@@ -25,7 +25,7 @@ Function: string_constraint_generatort::add_axioms_for_index_of
 exprt string_constraint_generatort::add_axioms_for_index_of(
   const string_exprt &str, const exprt &c, const exprt &from_index)
 {
-  typet index_type=str.length().type();
+  const typet &index_type=str.length().type();
   symbol_exprt index=fresh_exist_index("index_of", index_type);
   symbol_exprt contains=fresh_boolean("contains_in_index_of");
 
@@ -87,7 +87,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
   const string_exprt &substring,
   const exprt &from_index)
 {
-  typet index_type=str.length().type();
+  const typet &index_type=str.length().type();
   symbol_exprt offset=fresh_exist_index("index_of", index_type);
   symbol_exprt contains=fresh_boolean("contains_substring");
 
@@ -125,7 +125,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
   const string_exprt &substring,
   const exprt &from_index)
 {
-  typet index_type=str.length().type();
+  const typet &index_type=str.length().type();
   symbol_exprt offset=fresh_exist_index("index_of", index_type);
   symbol_exprt contains=fresh_boolean("contains_substring");
 
@@ -175,7 +175,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   const function_application_exprt::argumentst &args=f.arguments();
   string_exprt str=add_axioms_for_string_expr(args[0]);
   const exprt &c=args[1];
-  refined_string_typet ref_type=to_refined_string_type(str.type());
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
   assert(f.type()==ref_type.get_index_type());
   exprt from_index;
 
@@ -199,8 +199,8 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 exprt string_constraint_generatort::add_axioms_for_last_index_of(
   const string_exprt &str, const exprt &c, const exprt &from_index)
 {
-  refined_string_typet ref_type=to_refined_string_type(str.type());
-  typet index_type=ref_type.get_index_type();
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  const typet &index_type=ref_type.get_index_type();
   symbol_exprt index=fresh_exist_index("last_index_of", index_type);
   symbol_exprt contains=fresh_boolean("contains_in_last_index_of");
 
@@ -269,7 +269,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   const function_application_exprt::argumentst &args=f.arguments();
   string_exprt str=add_axioms_for_string_expr(args[0]);
   exprt c=args[1];
-  refined_string_typet ref_type=to_refined_string_type(str.type());
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
   exprt from_index;
   assert(f.type()==ref_type.get_index_type());
 

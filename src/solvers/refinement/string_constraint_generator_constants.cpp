@@ -48,7 +48,7 @@ Function: string_constraint_generatort::add_axioms_for_constant
 \*******************************************************************/
 
 string_exprt string_constraint_generatort::add_axioms_for_constant(
-  irep_idt sval, refined_string_typet ref_type)
+  irep_idt sval, const refined_string_typet &ref_type)
 {
   string_exprt res=fresh_string(ref_type);
   std::string c_str=id2string(sval);
@@ -93,7 +93,7 @@ string_exprt string_constraint_generatort::add_axioms_for_empty_string(
   const function_application_exprt &f)
 {
   assert(f.arguments().empty());
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   string_exprt res=fresh_string(ref_type);
   axioms.push_back(res.axiom_for_has_length(0));
   return res;
@@ -140,6 +140,6 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
     sval=extract_java_string(to_symbol_expr(s));
   }
 
-  refined_string_typet ref_type=to_refined_string_type(f.type());
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
   return add_axioms_for_constant(sval, ref_type);
 }
