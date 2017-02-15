@@ -17,6 +17,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/pointer_predicates.h>
 #include <util/ssa_expr.h>
 
+unsigned string_constraint_generatort::next_symbol_id=1;
+
 /*******************************************************************\
 
 Function: string_constraint_generatort::constant_char
@@ -512,7 +514,7 @@ string_exprt string_constraint_generatort::add_axioms_from_char_array(
 {
   const typet &char_type=to_array_type(data.type()).subtype();
   const typet &index_type=length.type();
-  const refined_string_typet &ref_type(index_type, char_type);
+  refined_string_typet ref_type(index_type, char_type);
   string_exprt str=fresh_string(ref_type);
 
   // We add axioms:

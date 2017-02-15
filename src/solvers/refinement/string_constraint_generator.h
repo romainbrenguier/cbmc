@@ -25,7 +25,7 @@ public:
   // to the axiom list.
 
   string_constraint_generatort():
-    mode(ID_unknown), next_symbol_id(1)
+    mode(ID_unknown)
   { }
 
   void set_mode(irep_idt _mode)
@@ -57,7 +57,7 @@ public:
     return index_exprt(witness.at(c), univ_val);
   }
 
-  static unsigned next_symbol_id;
+  static unsigned next_symbol_id=1;
 
   static symbol_exprt fresh_symbol(
     const irep_idt &prefix, const typet &type=bool_typet());
