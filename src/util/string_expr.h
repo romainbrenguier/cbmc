@@ -22,10 +22,9 @@ public:
     operands().resize(2);
   }
 
-  string_exprt(exprt _length, exprt _content, typet type): string_exprt(type)
+  string_exprt(const exprt &_length, const exprt &_content, typet type): string_exprt(type)
   {
-    length()=_length;
-    content()=_content;
+    copy_to_operands(_length, _content);
   }
 
   // Expression corresponding to the length of the string
