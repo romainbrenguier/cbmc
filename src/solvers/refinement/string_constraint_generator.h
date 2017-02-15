@@ -172,9 +172,11 @@ private:
   string_exprt add_axioms_from_long(const function_application_exprt &f);
   string_exprt add_axioms_from_long(const exprt &i, size_t max_size);
   string_exprt add_axioms_from_bool(const function_application_exprt &f);
-  string_exprt add_axioms_from_bool(const exprt &i, const refined_string_typet &ref_type);
+  string_exprt add_axioms_from_bool(
+    const exprt &i, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_char(const function_application_exprt &f);
-  string_exprt add_axioms_from_char(const exprt &i, const refined_string_typet &ref_type);
+  string_exprt add_axioms_from_char(
+    const exprt &i, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_char_array(const function_application_exprt &f);
   string_exprt add_axioms_from_char_array(
     const exprt &length,

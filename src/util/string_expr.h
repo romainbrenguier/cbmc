@@ -6,8 +6,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 \*******************************************************************/
 
-#ifndef CPROVER_SOLVERS_REFINEMENT_STRING_EXPR_H
-#define CPROVER_SOLVERS_REFINEMENT_STRING_EXPR_H
+#ifndef CPROVER_UTIL_STRING_EXPR_H
+#define CPROVER_UTIL_STRING_EXPR_H
 
 #include <util/std_expr.h>
 #include <util/arith_tools.h>

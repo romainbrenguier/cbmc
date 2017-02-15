@@ -132,7 +132,8 @@ Function: string_constraint_generatort::fresh_string
 
 \*******************************************************************/
 
-string_exprt string_constraint_generatort::fresh_string(const refined_string_typet &type)
+string_exprt string_constraint_generatort::fresh_string(
+  const refined_string_typet &type)
 {
   symbol_exprt length=
     fresh_symbol("string_length", type.get_index_type());
