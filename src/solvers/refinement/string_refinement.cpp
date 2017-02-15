@@ -714,7 +714,7 @@ exprt string_refinementt::sum_over_map(
         break;
 
       case 1:
-        if(sum==nil_exprt())
+        if(sum.is_nil())
           sum=t;
         else
           sum=plus_exprt(sum, t);
