@@ -23,7 +23,7 @@ public:
   }
 
   string_exprt(const exprt &_length, const exprt &_content, typet type):
-    string_exprt(type)
+    struct_exprt(type)
   {
     copy_to_operands(_length, _content);
   }
