@@ -44,12 +44,16 @@ class string_refine_preprocesst:public messaget
 
   std::unordered_map<irep_idt, std::string, irep_id_hash> signatures;
   expr_mapt hidden_strings;
+#if 0 // We cannot use this map since side effects may modify strings
   expr_mapt java_to_cprover_strings;
+#endif
 
   // unique id for each newly created symbols
   int next_symbol_id;
 
   void initialize_string_function_table();
+
+  static bool check_java_type(const typet &type, const std::string &tag);
 
   static bool is_java_string_pointer_type(const typet &type);
 
@@ -60,6 +64,20 @@ class string_refine_preprocesst:public messaget
   static bool is_java_string_builder_pointer_type(const typet &type);
 
   static bool is_java_char_sequence_type(const typet &type);
+
+  static bool is_java_char_sequence_pointer_type(const typet &type);
+
+  static bool is_java_char_array_type(const typet &type);
+
+  static bool is_java_char_array_pointer_type(const typet &type);
+
+  static bool implements_java_char_sequence(const typet &type)
+  {
+      return
+        is_java_char_sequence_pointer_type(type) ||
+        is_java_string_builder_pointer_type(type) ||
+        is_java_string_pointer_type(type);
+  }
 
   symbol_exprt new_tmp_symbol(const std::string &name, const typet &type);
 
@@ -109,6 +127,9 @@ class string_refine_preprocesst:public messaget
   void declare_function(irep_idt function_name, const typet &type);
 
   void get_data_and_length_type_of_string(
+    const exprt &expr, typet &data_type, typet &length_type);
+
+  void get_data_and_length_type_of_char_array(
     const exprt &expr, typet &data_type, typet &length_type);
 
   function_application_exprt build_function_application(
