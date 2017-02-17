@@ -42,18 +42,9 @@ public:
     return get_content_type().size().type();
   }
 
-  // For C the unrefined string type is __CPROVER_string, for java it is a
-  // pointer to a struct with tag java.lang.String
+  // For C the unrefined string type is __CPROVER_string
 
   static bool is_c_string_type(const typet &type);
-
-  static bool is_java_string_pointer_type(const typet &type);
-
-  static bool is_java_string_type(const typet &type);
-
-  static bool is_java_string_builder_type(const typet &type);
-
-  static bool is_java_char_sequence_type(const typet &type);
 
   static bool is_unrefined_string_type(const typet &type)
   {
