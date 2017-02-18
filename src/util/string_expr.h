@@ -127,7 +127,6 @@ public:
   friend inline string_exprt &to_string_expr(exprt &expr);
 };
 
-
 inline string_exprt &to_string_expr(exprt &expr)
 {
   assert(expr.id()==ID_struct);
