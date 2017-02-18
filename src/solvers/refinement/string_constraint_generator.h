@@ -57,7 +57,7 @@ public:
     return index_exprt(witness.at(c), univ_val);
   }
 
-  static unsigned next_symbol_id=1;
+  static unsigned next_symbol_id;
 
   static symbol_exprt fresh_symbol(
     const irep_idt &prefix, const typet &type=bool_typet());
