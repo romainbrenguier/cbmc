@@ -120,7 +120,7 @@ public:
     exprt exists_bound_inf,
     exprt exists_bound_sup,
     string_exprt s0,
-    string_exprt s1) :
+    string_exprt s1):
   exprt(ID_string_not_contains_constraint)
   {
     copy_to_operands(univ_lower_bound, univ_bound_sup, premise);
