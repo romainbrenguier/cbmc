@@ -15,6 +15,9 @@ Date:   September 2016
 #include <util/prefix.h>
 #include <util/string_expr.h>
 #include <goto-programs/class_identifier.h>
+// TODO: refined_string_type should be moved to util
+#include <solvers/refinement/refined_string_type.h>
+#include <java_bytecode/java_types.h>
 
 #include "string_refine_preprocess.h"
 
@@ -166,20 +169,20 @@ exprt string_refine_preprocesst::make_cprover_string_assign(
 
       dereference_exprt deref(rhs, rhs.type().subtype());
 
-      // string expression for the rhs of the second assignment
-      string_exprt new_rhs(java_char_type());
-
       typet data_type, length_type;
       get_data_and_length_type_of_string(deref, data_type, length_type);
-
+      member_exprt length(deref, "length", length_type);
       symbol_exprt array_lhs=new_symbol(
         "cprover_string_array", data_type.subtype());
+
+      // string expression for the rhs of the second assignment
+      string_exprt new_rhs(
+        length, array_lhs, refined_string_typet(length_type, data_type));
+
       member_exprt data(deref, "data", data_type);
       dereference_exprt deref_data(data, data_type.subtype());
 
       symbol_exprt lhs=new_symbol("cprover_string", new_rhs.type());
-      new_rhs.length()=member_exprt(deref, "length", length_type);
-      new_rhs.content()=array_lhs;
 
       std::list<code_assignt> assignments;
       assignments.emplace_back(array_lhs, deref_data);
