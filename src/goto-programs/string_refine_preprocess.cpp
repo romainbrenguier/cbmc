@@ -360,12 +360,8 @@ exprt string_refine_preprocesst::make_cprover_string_assign(
 {
   if(implements_java_char_sequence(rhs.type()))
   {
-    exprt uncasted=rhs;
-    if(uncasted.id()==ID_typecast)
-      uncasted=to_typecast_expr(uncasted).op();
-
     auto pair=java_to_cprover_strings.insert(
-      std::make_pair(uncasted, nil_exprt()));
+      std::make_pair(rhs, nil_exprt()));
 
     if(pair.second)
     {
@@ -561,8 +557,8 @@ void string_refine_preprocesst::make_string_assign(
   assigns.emplace_back(tmp_length, rhs_length);
   assigns.emplace_back(lhs_length, tmp_length);
   assigns.emplace_back(tmp_array, rhs_data);
-  assigns.emplace_back(lhs_data, address_of_exprt(tmp_array));
   assigns.emplace_back(cprover_string_sym, str);
+  assigns.emplace_back(lhs_data, address_of_exprt(tmp_array));
   insert_assignments(goto_program, i_it, assigns);
 
 
