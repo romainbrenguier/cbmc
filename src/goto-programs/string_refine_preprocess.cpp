@@ -397,7 +397,8 @@ exprt string_refine_preprocesst::make_cprover_string_assign(
 
       insert_assignments(goto_program, i_it, assignments);
       i_it=goto_program.insert_after(i_it);
-      pair.first->second=lhs;
+      //pair.first->second=lhs;
+      pair.first->second=new_rhs;
     }
     return pair.first->second;
   }
@@ -560,8 +561,6 @@ void string_refine_preprocesst::make_string_assign(
   assigns.emplace_back(cprover_string_sym, str);
   assigns.emplace_back(lhs_data, address_of_exprt(tmp_array));
   insert_assignments(goto_program, i_it, assigns);
-
-
 }
 
 /*******************************************************************\
