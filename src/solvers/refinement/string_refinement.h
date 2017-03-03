@@ -63,6 +63,9 @@ private:
 
   unsigned initial_loop_bound;
 
+  // Is the current model correct
+  bool concrete_model;
+
   string_constraint_generatort generator;
 
   // Simple constraints that have been given to the solver
