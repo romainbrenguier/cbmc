@@ -577,19 +577,7 @@ string_exprt string_constraint_generatort::add_axioms_for_copy(
   const function_application_exprt &f)
 {
   string_exprt s1=get_string_expr(args(f, 1)[0]);
-  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
-  string_exprt res=fresh_string(ref_type);
-
-  // We add axioms:
-  // a1 : |res|=|s1|
-  // a2 : forall i<|s1|. s1[i]=res[i]
-
-  axioms.push_back(res.axiom_for_has_same_length_as(s1));
-
-  symbol_exprt idx=fresh_univ_index("QA_index_copy", ref_type.get_index_type());
-  string_constraintt a2(idx, s1.length(), equal_exprt(s1[idx], res[idx]));
-  axioms.push_back(a2);
-  return res;
+  return s1;
 }
 
 /*******************************************************************\
