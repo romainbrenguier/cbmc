@@ -16,6 +16,7 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <util/cprover_prefix.h>
 #include <util/replace_expr.h>
 #include <util/refined_string_type.h>
+#include <util/simplify_expr.h>
 #include <solvers/sat/satcheck.h>
 #include <solvers/refinement/string_refinement.h>
 #include <langapi/language_util.h>
@@ -173,7 +174,10 @@ void string_refinementt::set_char_array_equality(
       // Introduce axioms to map symbolic rhs to its char array.
       index_exprt arraycell(rhs, from_integer(i, index_type));
       equal_exprt arrayeq(arraycell, rhs.operands()[i]);
+      add_lemma(arrayeq, false);
+#if 0
       generator.axioms.push_back(arrayeq);
+#endif
     }
   }
   // At least for Java (as it is currently pre-processed), we need not consider
@@ -523,22 +527,30 @@ Function: string_refinementt::add_lemma
 
 \*******************************************************************/
 
-void string_refinementt::add_lemma(const exprt &lemma, bool add_to_index_set)
+void string_refinementt::add_lemma(
+  const exprt &lemma, bool _simplify, bool add_to_index_set)
 {
   if(!seen_instances.insert(lemma).second)
     return;
 
-  if(lemma.is_true())
+  if(add_to_index_set)
+    cur.push_back(lemma);
+
+  exprt simple_lemma=lemma;
+  if(_simplify)
+    simplify(simple_lemma, ns);
+
+  if(simple_lemma.is_true())
   {
+#if 0
     debug() << "string_refinementt::add_lemma : tautology" << eom;
+#endif
     return;
   }
 
-  debug() << "adding lemma " << from_expr(lemma) << eom;
+  debug() << "adding lemma " << from_expr(simple_lemma) << eom;
 
-  prop.l_set_to_true(convert(lemma));
-  if(add_to_index_set)
-    cur.push_back(lemma);
+  prop.l_set_to_true(convert(simple_lemma));
 }
 
 /*******************************************************************\
@@ -1230,6 +1242,7 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
           axiom.upper_bound(),
           from_integer(1, axiom.upper_bound().type()));
         replace_expr(qvar, kminus1, e);
+        simplify(e, ns);
         current_index_set[s].insert(e);
         index_set[s].insert(e);
       }
