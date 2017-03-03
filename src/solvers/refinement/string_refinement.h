@@ -94,7 +94,7 @@ private:
 
   void display_index_set();
 
-  void add_lemma(const exprt &lemma, bool add_to_index_set=true);
+  void add_lemma(const exprt &lemma, bool simplify=true, bool add_to_index_set=true);
 
   exprt substitute_function_applications(exprt expr);
   typet substitute_java_string_types(typet type);
