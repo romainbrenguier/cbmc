@@ -42,7 +42,8 @@ string_refinementt::string_refinementt(
   supert(_ns, _prop),
   use_counter_example(false),
   do_concretizing(false),
-  initial_loop_bound(refinement_bound)
+  initial_loop_bound(refinement_bound),
+  concrete_model(false)
 { }
 
 /*******************************************************************\
@@ -443,6 +444,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
       else
       {
         debug() << "check_SAT: the model is correct" << eom;
+        concrete_model=true;
         return D_SATISFIABLE;
       }
 
@@ -557,7 +559,7 @@ Function: string_refinementt::get_array
 exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
 {
   exprt arr_val=get_array(arr);
-  exprt size_val=get(size);
+  exprt size_val=supert::get(size);
   typet char_type=arr.type().subtype();
   typet index_type=size.type();
   array_typet empty_ret_type(char_type, from_integer(0, index_type));
@@ -798,6 +800,7 @@ void string_refinementt::add_negation_of_constraint_to_solver(
     if(ub_int<=lb_int)
     {
       debug() << "empty constraint with current model" << eom;
+      solver << false_exprt();
       return;
     }
   }
@@ -1439,6 +1442,8 @@ exprt string_refinementt::get(const exprt &expr) const
 {
   exprt ecopy(expr);
   replace_expr(symbol_resolve, ecopy);
+#if 0
   replace_expr(current_model, ecopy);
+#endif
   return supert::get(ecopy);
 }
