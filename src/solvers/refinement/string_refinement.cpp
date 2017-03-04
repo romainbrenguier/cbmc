@@ -77,10 +77,10 @@ void string_refinementt::display_index_set()
   for(const auto &i : index_set)
   {
     const exprt &s=i.first;
-    debug() << "IS(" << from_expr(s) << ")=={";
+    debug() << "IS(" << from_expr(s) << ")=={" << eom;
 
     for(auto j : i.second)
-      debug() << from_expr(j) << "; ";
+      debug() << "  " << from_expr(j) << ";" << eom;
     debug() << "}"  << eom;
   }
 }
@@ -242,12 +242,14 @@ bool string_refinementt::add_axioms_for_string_assigns(const exprt &lhs,
   if(is_char_array(rhs.type()))
   {
     set_char_array_equality(lhs, rhs);
-    if(rhs.id() != ID_nondet_symbol)
+    if(rhs.id() == ID_symbol || rhs.id() == ID_array)
       add_symbol_to_symbol_map(lhs, rhs);
-    else
+    else if(rhs.id() == ID_nondet_symbol)
       add_symbol_to_symbol_map(
         lhs, generator.fresh_symbol("nondet_array", lhs.type()));
-
+    else
+      debug() << "string_refinement warning: ignoring char_array: "
+              << from_expr(rhs) << eom;
     return false;
   }
   if(refined_string_typet::is_refined_string_type(rhs.type()))
