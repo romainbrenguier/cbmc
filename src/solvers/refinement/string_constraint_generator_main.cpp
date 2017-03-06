@@ -277,7 +277,10 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
   }
   else if(string.id()==ID_struct)
   {
-    return to_string_expr(string);
+    const string_exprt &s=to_string_expr(string);
+    axioms.push_back(
+      s.axiom_for_is_longer_than(from_integer(0, s.length().type())));
+    return s;
   }
   else
   {
