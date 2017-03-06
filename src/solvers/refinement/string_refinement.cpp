@@ -43,8 +43,7 @@ string_refinementt::string_refinementt(
   supert(_ns, _prop),
   use_counter_example(false),
   do_concretizing(false),
-  initial_loop_bound(refinement_bound),
-  concrete_model(false)
+  initial_loop_bound(refinement_bound)
 { }
 
 /*******************************************************************\
@@ -280,6 +279,9 @@ void string_refinementt::concretize_results()
     {
       string_exprt str=to_string_expr(it.second);
       exprt length=current_model[str.length()];
+      exprt content=str.content();
+      replace_expr(symbol_resolve, content);
+      found_length[content]=length;
       mp_integer found_length;
       if(!to_integer(length, found_length))
       {
@@ -450,7 +452,6 @@ decision_proceduret::resultt string_refinementt::dec_solve()
       else
       {
         debug() << "check_SAT: the model is correct" << eom;
-        concrete_model=true;
         return D_SATISFIABLE;
       }
 
@@ -570,7 +571,7 @@ Function: string_refinementt::get_array
 
 \*******************************************************************/
 
-exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
+exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 {
   exprt arr_val=get_array(arr);
   exprt size_val=supert::get(size);
@@ -581,14 +582,18 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
 
   if(size.id()!=ID_constant)
   {
+#if 0
     debug() << "(sr::get_array) string of unknown size" << eom;
+#endif
     return empty_ret;
   }
 
   unsigned n;
   if(to_unsigned_integer(to_constant_expr(size_val), n))
   {
+#if 0
     debug() << "(sr::get_array) size is not a valid";
+#endif
     return empty_ret;
   }
 
@@ -597,13 +602,17 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
 
   if(n>MAX_CONCRETE_STRING_SIZE)
   {
+#if 0
     debug() << "(sr::get_array) long string (size=" << n << ")";
+#endif
     return empty_ret;
   }
 
   if(n==0)
   {
+#if 0
     debug() << "(sr::get_array) empty string" << eom;
+#endif
     return empty_ret;
   }
 
@@ -636,8 +645,10 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size)
   }
   else
   {
+#if 0
     debug() << "unable to get array-list value of " << from_expr(arr)
             << " of size " << n << eom;
+#endif
     return array_of_exprt(from_integer(0, char_type), ret_type);
   }
 
@@ -664,7 +675,7 @@ Function: string_refinementt::get_array
 
 \*******************************************************************/
 
-exprt string_refinementt::get_array(const exprt &arr)
+exprt string_refinementt::get_array(const exprt &arr) const
 {
   exprt arr_model=supert::get(arr);
   if(arr_model.id()==ID_array)
@@ -1457,8 +1468,12 @@ exprt string_refinementt::get(const exprt &expr) const
 {
   exprt ecopy(expr);
   replace_expr(symbol_resolve, ecopy);
-#if 0
-  replace_expr(current_model, ecopy);
-#endif
+  if(is_char_array(ecopy.type()))
+  {
+    auto it=found_length.find(ecopy);
+    if(it!=found_length.end())
+      return get_array(ecopy, it->second);
+  }
+
   return supert::get(ecopy);
 }
