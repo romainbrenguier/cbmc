@@ -874,6 +874,7 @@ Function: string_refine_preprocesst::make_to_char_array_function
   Inputs: a goto program and a position in that goto program
 
  Purpose: at the given position replace `return_tmp0=s.toCharArray()` with:
+          > return_tmp0 = malloc(array[char]);
           > return_tmp0->data=&((s->data)[0])
           > return_tmp0->length=s->length
 
@@ -883,15 +884,35 @@ void string_refine_preprocesst::make_to_char_array_function(
   goto_programt &goto_program, goto_programt::targett &target)
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
+  source_locationt location=function_call.source_location();
 
   assert(function_call.arguments().size()>=1);
   const exprt &string_argument=function_call.arguments()[0];
   assert(is_java_string_pointer_type(string_argument.type()));
 
+  typet deref_type=function_call.lhs().type().subtype();
+  const exprt &lhs=function_call.lhs();
+  dereference_exprt deref_lhs(lhs, deref_type);
+
   dereference_exprt deref(string_argument, string_argument.type().subtype());
   typet length_type, data_type;
   get_data_and_length_type_of_string(deref, data_type, length_type);
   std::list<code_assignt> assignments;
+
+  // lhs=malloc(array[char])
+  typet object_type=ns.follow(deref_type);
+  exprt object_size=size_of_expr(object_type, ns);
+
+  if(object_size.is_nil())
+    debug() << "string_refine_preprocesst::make_to_char_array_function "
+            << "got nil object_size" << eom;
+
+  side_effect_exprt malloc_expr(ID_malloc);
+  malloc_expr.copy_to_operands(object_size);
+  malloc_expr.type()=pointer_typet(object_type);
+  malloc_expr.add_source_location()=location;
+  assignments.emplace_back(lhs, malloc_expr);
+
 
   // &((s->data)[0])
   exprt rhs_data=get_data(deref, data_type);
@@ -901,8 +922,6 @@ void string_refine_preprocesst::make_to_char_array_function(
   address_of_exprt rhs_pointer(first_element);
 
   // return_tmp0->data=&((s->data)[0])
-  typet deref_type=function_call.lhs().type().subtype();
-  dereference_exprt deref_lhs(function_call.lhs(), deref_type);
   exprt lhs_data=get_data(deref_lhs, data_type);
   assignments.emplace_back(lhs_data, rhs_pointer);
 
@@ -937,7 +956,7 @@ exprt string_refine_preprocesst::make_cprover_char_array_assign(
 {
   typet type=ns.follow(rhs.type());
   // TODO: use check_java_type
-  assert(type.id()==ID_struct && 
+  assert(type.id()==ID_struct &&
          to_struct_type(type).get_tag()=="java::array[char]");
 
   // We do the following assignments:
@@ -1089,7 +1108,7 @@ void string_refine_preprocesst::make_char_array_function_call(
   const std::string &signature)
 {
   make_char_array_function(
-    goto_program, target, function_name, signature, 1, true, true);
+    goto_program, target, function_name, signature, true, true);
 }
 
 /*******************************************************************\
