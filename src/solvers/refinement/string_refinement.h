@@ -137,8 +137,8 @@ private:
   // Length of char arrays found during concretization
   std::map<exprt, exprt> found_length;
 
-  exprt get_array(const exprt &arr, const exprt &size);
-  exprt get_array(const exprt &arr);
+  exprt get_array(const exprt &arr, const exprt &size) const;
+  exprt get_array(const exprt &arr) const;
 
   std::string string_of_array(const array_exprt &arr);
 };
