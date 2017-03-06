@@ -267,7 +267,7 @@ Function: string_refinementt::concretize_results
 
  Purpose: For each string whose length has been solved, add constants
           to the index set to force the solver to pick concrete values
-          for each character
+          for each character, and fill the map `found_length`
 
 \*******************************************************************/
 
@@ -302,6 +302,30 @@ void string_refinementt::concretize_results()
     }
   }
   add_instantiations();
+}
+
+/*******************************************************************\
+
+Function: string_refinementt::concretize_lengths
+
+ Purpose: For each string whose length has been solved, add constants
+          to the map `found_length`
+
+\*******************************************************************/
+
+void string_refinementt::concretize_lengths()
+{
+  for(const auto& it : symbol_resolve)
+  {
+    if(refined_string_typet::is_refined_string_type(it.second.type()))
+    {
+      string_exprt str=to_string_expr(it.second);
+      exprt length=current_model[str.length()];
+      exprt content=str.content();
+      replace_expr(symbol_resolve, content);
+      found_length[content]=length;
+     }
+  }
 }
 
 /*******************************************************************\
@@ -452,6 +476,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
       else
       {
         debug() << "check_SAT: the model is correct" << eom;
+        concretize_lengths();
         return D_SATISFIABLE;
       }
 

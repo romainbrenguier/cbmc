@@ -133,6 +133,9 @@ private:
   exprt simplify_sum(const exprt &f) const;
 
   void concretize_results();
+  void concretize_lengths();
+  // Length of char arrays found during concretization
+  std::map<exprt, exprt> found_length;
 
   exprt get_array(const exprt &arr, const exprt &size);
   exprt get_array(const exprt &arr);
