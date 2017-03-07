@@ -73,15 +73,26 @@ Function: string_refinementt::display_index_set
 
 void string_refinementt::display_index_set()
 {
+  std::size_t count=0;
+  std::size_t count_current=0;
   for(const auto &i : index_set)
   {
     const exprt &s=i.first;
     debug() << "IS(" << from_expr(s) << ")=={" << eom;
 
     for(auto j : i.second)
+    {
+      if(current_index_set[i.first].find(j)!=current_index_set[i.first].end())
+      {
+        count_current++;
+        debug() << "**";
+      }
       debug() << "  " << from_expr(j) << ";" << eom;
+      count++;
+    }
     debug() << "}"  << eom;
   }
+  debug() << count << " elements in index set (" << count_current << " newly added)" << eom;
 }
 
 /*******************************************************************\
@@ -791,7 +802,7 @@ void string_refinementt::fill_model()
         debug() << " = \"" << string_of_array(to_array_expr(arr))
                 << "\" (size:" << from_expr(len) << ")"<< eom;
       else
-          debug() << " = " << from_expr(arr) << "" << eom;
+        debug() << " = " << from_expr(arr) << "" << eom;
     }
     else
     {
@@ -917,6 +928,9 @@ bool string_refinementt::check_axioms()
     case decision_proceduret::D_SATISFIABLE:
       {
         exprt val=solver.get(axiom_in_model.univ_var());
+        debug() << "string constraint can be violated for "
+                << axiom_in_model.univ_var().get_identifier()
+                << " = " << from_expr(val) << eom;
         violated[i]=val;
       }
       break;
@@ -1248,6 +1262,26 @@ Function: string_refinementt::initial_index_set
           and the upper bound minus one
 
 \*******************************************************************/
+void string_refinementt::add_to_index_set(const exprt &s, exprt i)
+{
+  simplify(i, ns);
+  if(i.id()==ID_constant)
+  {
+    mp_integer mpi;
+    to_integer(i, mpi);
+    if(mpi<0)
+    {
+      debug() << "add_to_index_set : ignoring negative number " << mpi << eom;
+      return;
+    }
+  }
+  if(index_set[s].insert(i).second)
+  {
+    debug() << "adding to index set of " << from_expr(s)
+            << ": " << from_expr(i) << eom;
+    current_index_set[s].insert(i);
+  }
+}
 
 void string_refinementt::initial_index_set(const string_constraintt &axiom)
 {
@@ -1269,8 +1303,7 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
       // if cur is of the form s[i] and no quantified variable appears in i
       if(!has_quant_var)
       {
-        current_index_set[s].insert(i);
-        index_set[s].insert(i);
+        add_to_index_set(s,i);
       }
       else
       {
@@ -1280,9 +1313,7 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
           axiom.upper_bound(),
           from_integer(1, axiom.upper_bound().type()));
         replace_expr(qvar, kminus1, e);
-        simplify(e, ns);
-        current_index_set[s].insert(e);
-        index_set[s].insert(e);
+        add_to_index_set(s,e);
       }
     }
     else
@@ -1316,12 +1347,7 @@ void string_refinementt::update_index_set(const exprt &formula)
       const exprt &i=cur.op1();
       assert(s.type().id()==ID_array);
       exprt simplified=simplify_sum(i);
-      if(index_set[s].insert(simplified).second)
-      {
-        debug() << "adding to index set of " << from_expr(s)
-                << ": " << from_expr(simplified) << eom;
-        current_index_set[s].insert(simplified);
-      }
+      add_to_index_set(s, simplified);
     }
     else
     {

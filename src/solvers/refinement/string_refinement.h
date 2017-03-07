@@ -115,6 +115,7 @@ private:
   void update_index_set(const std::vector<exprt> &cur);
   void initial_index_set(const string_constraintt &axiom);
   void initial_index_set(const std::vector<string_constraintt> &string_axioms);
+  void add_to_index_set(const exprt &s, exprt i);
 
   exprt instantiate(
     const string_constraintt &axiom, const exprt &str, const exprt &val);
