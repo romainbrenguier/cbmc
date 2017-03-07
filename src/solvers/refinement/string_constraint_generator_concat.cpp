@@ -44,8 +44,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat(
   axioms.push_back(a4);
 
   symbol_exprt idx2=fresh_univ_index("QA_index_concat2", res.length().type());
-  equal_exprt res_eq(s2[idx2],
-                     res[plus_exprt_with_overflow_check(idx2, s1.length())]);
+  equal_exprt res_eq(s2[idx2], res[plus_exprt(idx2, s1.length())]);
   string_constraintt a5(idx2, s2.length(), res_eq);
   axioms.push_back(a5);
 
