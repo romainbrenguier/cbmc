@@ -159,7 +159,7 @@ exprt string_constraint_generatort::add_axioms_for_is_suffix(
   // a2 : forall witness<s1.length.
   //     issufix => s1[witness]=s0[witness + s0.length-s1.length]
   // a3 : !issuffix =>
-  //   s1.length > s0.length
+  //   (s1.length > s0.length && witness=-1)
   //     || (s1.length > witness>=0
   //       &&s1[witness]!=s0[witness + s0.length-s1.length]
 
@@ -177,7 +177,8 @@ exprt string_constraint_generatort::add_axioms_for_is_suffix(
   exprt shifted=plus_exprt(
     witness, minus_exprt(s1.length(), s0.length()));
   or_exprt constr3(
-    s0.axiom_for_is_strictly_longer_than(s1),
+    and_exprt(s0.axiom_for_is_strictly_longer_than(s1),
+              equal_exprt(witness, from_integer(-1, index_type))),
     and_exprt(
       notequal_exprt(s0[witness], s1[shifted]),
       and_exprt(
