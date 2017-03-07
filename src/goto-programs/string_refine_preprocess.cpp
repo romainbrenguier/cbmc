@@ -371,14 +371,14 @@ exprt string_refine_preprocesst::make_cprover_string_assign(
 
     // 1) cprover_string_length= *(rhs->length)
     symbol_exprt length_lhs=new_symbol(
-    "cprover_string_length", length_type);
+      "cprover_string_length", length_type);
 
     member_exprt deref_length(deref, "length", length_type);
     assignments.emplace_back(length_lhs, deref_length);
 
     // 2) cprover_string_array = *(rhs->data)
     symbol_exprt array_lhs=new_symbol(
-    "cprover_string_array", data_type.subtype());
+      "cprover_string_array", data_type.subtype());
     member_exprt data(deref, "data", data_type);
     dereference_exprt deref_data(data, data_type.subtype());
     assignments.emplace_back(array_lhs, deref_data);
@@ -812,12 +812,10 @@ Function: string_refine_preprocesst::make_string_function_side_effect
   Inputs: a position in a goto program and a function name
 
  Purpose: at the current position, replace `r=s.some_function(x,...)` by
-          > s=function_name(s,x,...)
-          and if `r` is not a nil expression:
+          > tmp=function_name(x,...)
+          > s->data=tmp.data
+          > s->length=tmp.length
           > r=s
-
-          // TODO : the second assignment should be first and should be:
-          > r=function_name(s,x,...)
 
 \*******************************************************************/
 
@@ -827,14 +825,48 @@ void string_refine_preprocesst::make_string_function_side_effect(
   const irep_idt &function_name,
   const std::string &signature)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  code_assignt assign(function_call.lhs(), function_call.arguments()[0]);
-  make_string_function(
-    goto_program, target, function_name, signature, true, false);
-  if(assign.lhs().is_not_nil())
+  code_function_callt &function_call=to_code_function_call(target->code);
+  source_locationt loc=function_call.source_location();
+  std::list<code_assignt> assignments;
+  exprt lhs=function_call.lhs();
+  exprt s=function_call.arguments()[0];
+  code_typet function_type=to_code_type(function_call.type());
+
+  function_type.return_type()=s.type();
+
+  if(lhs.is_not_nil())
   {
-    i_it=goto_program.insert_after(i_it);
-    insert_assignments(goto_program, i_it, {assign});
+    symbol_exprt tmp_string=new_tmp_symbol(
+      "tmp_string_side_effect", lhs.type());
+    function_call.arguments()[0]=tmp_string;
+
+    make_string_assign(
+      goto_program,
+      i_it,
+      tmp_string,
+      function_type,
+      function_name,
+      function_call.arguments(),
+      loc,
+      signature);
+    dereference_exprt deref_lhs(s, s.type().subtype());
+    typet data_type, length_type;
+    get_data_and_length_type_of_string(deref_lhs, data_type, length_type);
+    member_exprt lhs_data(deref_lhs, "data", data_type);
+    member_exprt lhs_length(deref_lhs, "length", length_type);
+    dereference_exprt deref_rhs(tmp_string, s.type().subtype());
+    member_exprt rhs_data(deref_rhs, "data", data_type);
+    member_exprt rhs_length(deref_rhs, "length", length_type);
+    assignments.emplace_back(lhs_length, rhs_length);
+    assignments.emplace_back(lhs_data, rhs_data);
+    assignments.emplace_back(lhs, s);
+    target=goto_program.insert_after(target);
+    insert_assignments(goto_program, target, target->function, location, assignments);
+  }
+  else
+  {
+    make_string_function(
+      goto_program, target, function_name, signature, true, false);
   }
 }
 
