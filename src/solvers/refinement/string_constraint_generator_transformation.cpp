@@ -110,7 +110,6 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
 {
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &index_type=ref_type.get_index_type();
-  symbol_exprt idx=fresh_exist_index("index_substring", index_type);
   assert(start.type()==index_type);
   assert(end.type()==index_type);
   string_exprt res=fresh_string(ref_type);
@@ -133,6 +132,7 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
   // Warning: check what to do if the string is not long enough
   axioms.push_back(str.axiom_for_is_longer_than(end));
 
+  symbol_exprt idx=fresh_univ_index("QA_index_substring", index_type);
   string_constraintt a4(idx,
                         res.length(),
                         equal_exprt(res[idx],
