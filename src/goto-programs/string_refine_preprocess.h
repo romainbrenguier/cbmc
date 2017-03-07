@@ -14,6 +14,7 @@ Date:   September 2016
 
 #include <goto-programs/goto_model.h>
 #include <util/ui_message.h>
+#include <util/string_expr.h>
 
 class string_refine_preprocesst:public messaget
 {
@@ -214,7 +215,7 @@ class string_refine_preprocesst:public messaget
   void make_to_char_array_function(
     goto_programt &goto_program, goto_programt::targett &);
 
-  exprt make_cprover_char_array_assign(
+  string_exprt make_cprover_char_array_assign(
     goto_programt &goto_program,
     goto_programt::targett &target,
     const exprt &rhs,

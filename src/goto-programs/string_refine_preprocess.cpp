@@ -972,14 +972,14 @@ Function: string_refine_preprocesst::make_cprover_char_array_assign
   Inputs: a goto_program, a position in this program, an expression of
           type char array and a location
 
- Outputs: a char array expression (not a pointer)
+ Outputs: a string expression
 
  Purpose: Introduce a temporary variable for cprover strings;
           returns the cprover_string corresponding to rhs
 
 \*******************************************************************/
 
-exprt string_refine_preprocesst::make_cprover_char_array_assign(
+string_exprt string_refine_preprocesst::make_cprover_char_array_assign(
   goto_programt &goto_program,
   goto_programt::targett &target,
   const exprt &rhs,
@@ -1018,7 +1018,7 @@ exprt string_refine_preprocesst::make_cprover_char_array_assign(
   insert_assignments(
     goto_program, target, target->function, location, assignments);
   target=goto_program.insert_after(target);
-  return lhs;
+  return new_rhs;
 }
 
 /*******************************************************************\
@@ -1090,7 +1090,7 @@ void string_refine_preprocesst::make_char_array_function(
     if(is_java_char_array_pointer_type(args[i].type()))
     {
       dereference_exprt char_array(args[i], args[i].type().subtype());
-      exprt string=make_cprover_char_array_assign(
+      string_exprt string=make_cprover_char_array_assign(
         goto_program, i_it, char_array, location);
 
       new_args.push_back(string);
@@ -1150,6 +1150,8 @@ Function: string_refine_preprocesst::make_char_array_side_effect
 
  Purpose: replace `r=s.some_function(i,arr,...)` by
           `s=function_name(s,{arr.length,arr.data})`
+
+TODO: the return value should also be assigned from s
 
 \*******************************************************************/
 
