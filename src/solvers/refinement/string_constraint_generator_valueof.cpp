@@ -388,12 +388,22 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
       axioms.push_back(a6);
     }
 
-    // we have to be careful when exceeding the maximal size of integers
-    if(size==max_size)
+    // when the size is close to the maximum, either the number is very big or negative
+    if(size==max_size-1)
     {
       exprt smallest_with_10_digits=from_integer(
         smallest_by_digit(max_size), type);
       binary_relation_exprt big(i, ID_ge, smallest_with_10_digits);
+      binary_relation_exprt negative(i, ID_lt, from_integer(0, type));
+      implies_exprt a7(premise, or_exprt(big, negative));
+      axioms.push_back(a7);
+    }
+    // when we reach the maximal size the number is very big in the negative
+    if(size==max_size)
+    {
+      exprt smallest_with_10_digits=from_integer(
+        smallest_by_digit(max_size), type);
+      binary_relation_exprt big(i, ID_le, unary_minus_exprt(smallest_with_10_digits));
       implies_exprt a7(premise, big);
       axioms.push_back(a7);
     }
