@@ -838,7 +838,6 @@ void string_refine_preprocesst::make_string_function_side_effect(
   {
     symbol_exprt tmp_string=new_tmp_symbol(
       "tmp_string_side_effect", lhs.type());
-    function_call.arguments()[0]=tmp_string;
 
     make_string_assign(
       goto_program,
@@ -1508,10 +1507,10 @@ void string_refine_preprocesst::initialize_string_function_table()
 
   side_effect_char_array_functions
     ["java::java.lang.StringBuilder.insert:(I[CII)Ljava/lang/StringBuilder;"]=
-    ID_cprover_string_insert_char_array_func;
+    ID_cprover_string_insert_func;
   side_effect_char_array_functions
     ["java::java.lang.StringBuilder.insert:(I[C)Ljava/lang/StringBuilder;"]=
-    ID_cprover_string_insert_char_array_func;
+    ID_cprover_string_insert_func;// TODO clean irep ids from insert_char_array etc...
 
   string_function_calls
     ["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
