@@ -2,8 +2,8 @@ public class test_append_char
 {
    public static void main(/*String[] args*/)
    {
-      char[] diff = {'d', 'i', 'f', 'f'};
-      char[] blue = {'b', 'l', 'u', 'e'};
+      Object diff = "diff";
+      Object blue = "blue";
 
       StringBuilder buffer = new StringBuilder();
 
