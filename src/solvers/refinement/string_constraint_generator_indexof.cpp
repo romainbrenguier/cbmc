@@ -96,6 +96,10 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
   // a2 : !contains => offset=-1
   // a3 : forall 0<=witness<|substring|.
   //        contains => str[witness+offset]=substring[witness]
+  // a4 : forall n:[0,offset[.
+  //        contains => (exists m:[0,|substring|[. str[n+m]!=substring[m]])
+  // a5:  forall n:[0,|str|-|substring|[.
+  //        !contains => (exists m:[0,|substring|[. str[n+m]!=substring[m])
 
   implies_exprt a1(
     contains,
@@ -117,6 +121,26 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
     contains,
     equal_exprt(str[plus_exprt(qvar, offset)], substring[qvar]));
   axioms.push_back(a3);
+
+  string_not_contains_constraintt a4(
+    from_integer(0, index_type),
+    offset,
+    contains,
+    from_integer(0, index_type),
+    substring.length(),
+    str,
+    substring);
+  axioms.push_back(a4);
+
+  string_not_contains_constraintt a5(
+    from_integer(0, index_type),
+    minus_exprt(str.length(), substring.length()),
+    not_exprt(contains),
+    from_integer(0, index_type),
+    substring.length(),
+    str,
+    substring);
+  axioms.push_back(a5);
 
   return offset;
 }
