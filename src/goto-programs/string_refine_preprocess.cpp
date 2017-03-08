@@ -1507,6 +1507,11 @@ void string_refine_preprocesst::initialize_string_function_table()
     ID_cprover_string_set_length_func;
 
 
+
+  side_effect_char_array_functions
+    ["java::java.lang.StringBuilder.append:([C)"
+      "Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_func;
   side_effect_char_array_functions
     ["java::java.lang.StringBuilder.insert:(I[CII)Ljava/lang/StringBuilder;"]=
     ID_cprover_string_insert_func;
