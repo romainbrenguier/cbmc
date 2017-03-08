@@ -155,16 +155,20 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
   symbol_exprt contains=fresh_boolean("contains_substring");
 
   // We add axioms:
-  // a1 : contains => |substring| >= length &&offset <= from_index
+  // a1 : contains => |str|-|substring|>=offset && offset<=from_index
   // a2 : !contains => offset=-1
-  // a3 : forall 0 <= witness<substring.length,
+  // a3 : forall 0<=witness<|substring|,
   //        contains => str[witness+offset]=substring[witness]
+  // a4 : forall n:[offset+1[, |str|-|substring|[.
+  //        contains => (exists m:[0,|substring|[. str[n+m]!=substring[m]])
+  // a5:  forall n:[0,|str|-|substring|[.
+  //        !contains => (exists m:[0,|substring|[. str[n+m]!=substring[m])
 
   implies_exprt a1(
     contains,
     and_exprt(
-      str.axiom_for_is_longer_than(
-        plus_exprt_with_overflow_check(substring.length(), offset)),
+      str.axiom_for_is_longer_than(plus_exprt_with_overflow_check(
+        substring.length(), offset)),
       binary_relation_exprt(offset, ID_le, from_index)));
   axioms.push_back(a1);
 
@@ -174,9 +178,32 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
   axioms.push_back(a2);
 
   symbol_exprt qvar=fresh_univ_index("QA_index_of_string", index_type);
-  equal_exprt constr3(str[plus_exprt(qvar, offset)], substring[qvar]);
-  string_constraintt a3(qvar, substring.length(), contains, constr3);
+  string_constraintt a3(
+    qvar,
+    substring.length(),
+    contains,
+    equal_exprt(str[plus_exprt(qvar, offset)], substring[qvar]));
   axioms.push_back(a3);
+
+  string_not_contains_constraintt a4(
+    plus_exprt_with_overflow_check(offset, from_integer(1, index_type)),
+    minus_exprt(str.length(), substring.length()),
+    contains,
+    from_integer(0, index_type),
+    substring.length(),
+    str,
+    substring);
+  axioms.push_back(a4);
+
+  string_not_contains_constraintt a5(
+    from_integer(0, index_type),
+    minus_exprt(str.length(), substring.length()),
+    not_exprt(contains),
+    from_integer(0, index_type),
+    substring.length(),
+    str,
+    substring);
+  axioms.push_back(a5);
 
   return offset;
 }
