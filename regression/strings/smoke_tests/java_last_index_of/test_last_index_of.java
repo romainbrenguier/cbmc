@@ -5,7 +5,6 @@ public class test_last_index_of
       String s = "abcab";
       String ab = "ab";
       int i = s.lastIndexOf(ab);
-      assert(i <= 3);
       assert(i == 3);
    }
 }

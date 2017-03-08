@@ -3,5 +3,5 @@ test_last_index_of.class
 --string-refine
 ^EXIT=0$
 ^SIGNAL=0$
-^VERIFICATION SUCCESFUL$
+^VERIFICATION SUCCESSFUL$
 --
