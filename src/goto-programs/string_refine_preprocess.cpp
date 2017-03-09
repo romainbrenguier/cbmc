@@ -453,9 +453,9 @@ string_exprt string_refine_preprocesst::make_cprover_char_array_assign(
 
   // TODO: change the id for this function
   // array=convert_pointer_to_char_array(*rhs->data)
-  declare_function(ID_cprover_string_of_char_array_func, content_type);
+  declare_function(ID_cprover_string_array_of_char_pointer_func, content_type);
   function_application_exprt fun_app(symbol_exprt(
-    ID_cprover_string_of_char_array_func), content_type);
+    ID_cprover_string_array_of_char_pointer_func), content_type);
   fun_app.arguments().push_back(deref_array);
   symbol_exprt array=new_symbol("char_array_assign$array", content_type);
   assignments.emplace_back(array, fun_app);
