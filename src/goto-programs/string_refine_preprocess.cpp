@@ -1556,17 +1556,17 @@ void string_refine_preprocesst::initialize_string_function_table()
   string_of_char_array_function_calls["java::java.lang.String.<init>:([C)V"]=
     ID_cprover_string_copy_func;
   string_of_char_array_function_calls["java::java.lang.String.<init>:([CII)V"]=
-    ID_cprover_string_substring_func;
+    ID_cprover_string_copy_func;
 
   string_of_char_array_functions
     ["java::java.lang.String.valueOf:([CII)Ljava/lang/String;"]=
-    ID_cprover_string_substring_func;
+    ID_cprover_string_copy_func;
   string_of_char_array_functions
     ["java::java.lang.String.valueOf:([C)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
   string_of_char_array_functions
     ["java::java.lang.String.copyValueOf:([CII)Ljava/lang/String;"]=
-    ID_cprover_string_substring_func;
+    ID_cprover_string_copy_func;
   string_of_char_array_functions
     ["java::java.lang.String.copyValueOf:([C)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
