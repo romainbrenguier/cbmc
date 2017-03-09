@@ -260,6 +260,7 @@ private:
   string_exprt add_axioms_for_code_point(
     const exprt &code_point, const refined_string_typet &ref_type);
   string_exprt add_axioms_for_java_char_array(const exprt &char_array);
+  exprt add_axioms_for_char_pointer(const function_application_exprt &fun);
   string_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);
 

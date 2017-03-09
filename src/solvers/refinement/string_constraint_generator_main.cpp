@@ -538,10 +538,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_from_bool(expr);
   else if(id==ID_cprover_string_of_char_func)
     res=add_axioms_from_char(expr);
-#if 0
-  else if(id==ID_cprover_string_of_char_array_func)
-    res=add_axioms_from_char_array(expr);
-#endif
   else if(id==ID_cprover_string_set_length_func)
     res=add_axioms_for_set_length(expr);
   else if(id==ID_cprover_string_delete_func)
@@ -552,6 +548,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_replace(expr);
   else if(id==ID_cprover_string_intern_func)
     res=add_axioms_for_intern(expr);
+  else if(id==ID_cprover_string_array_of_char_pointer_func)
+    res=add_axioms_for_char_pointer(expr);
   else
   {
     std::string msg(
@@ -567,7 +565,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 
 Function: string_constraint_generatort::add_axioms_for_copy
 
-  Inputs: function application with one argument, which is a string
+  Inputs: function application with one argument, which is a string,
+          or three arguments: string, integer offset and count
 
  Outputs: a new string expression
 
@@ -579,8 +578,20 @@ Function: string_constraint_generatort::add_axioms_for_copy
 string_exprt string_constraint_generatort::add_axioms_for_copy(
   const function_application_exprt &f)
 {
-  string_exprt s1=get_string_expr(args(f, 1)[0]);
-  return s1;
+  const auto &args=f.arguments();
+  if(args.size()==1)
+  {
+    string_exprt s1=get_string_expr(args[0]);
+    return s1;
+  }
+  else
+  {
+    assert(args.size()==3);
+    string_exprt s1=get_string_expr(args[0]);
+    exprt offset=args[1];
+    exprt count=args[2];
+    return add_axioms_for_substring(s1, offset, plus_exprt(offset, count));
+  }
 }
 
 /*******************************************************************\
@@ -606,6 +617,28 @@ string_exprt string_constraint_generatort::add_axioms_for_java_char_array(
   res.length()=len;
   res.content()=cont;
   return res;
+}
+
+/*******************************************************************\
+
+Function: string_constraint_generatort::add_axioms_for_char_pointer
+
+  Inputs: an expression of type char
+
+ Outputs: an array expression
+
+ Purpose: for an expression of the form `array[0]` returns `array`
+
+\*******************************************************************/
+
+exprt string_constraint_generatort::add_axioms_for_char_pointer(
+  const function_application_exprt &fun)
+{
+  exprt char_pointer=args(fun, 1)[0];
+  if(char_pointer.id()==ID_index)
+    return char_pointer.op0();
+  // TODO: we do not know what to do in the other cases
+  assert(false);
 }
 
 /*******************************************************************\
