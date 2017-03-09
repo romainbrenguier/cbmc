@@ -1,7 +1,7 @@
 FUTURE
 test_init.class
 --string-refine
-^EXIT=10$
+^EXIT=0$
 ^SIGNAL=0$
-^VERIFICATION SUCCESFUL$
+^VERIFICATION SUCCESSFUL$
 --

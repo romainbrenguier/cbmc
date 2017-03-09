@@ -16,6 +16,6 @@ public class test_init {
      System.out.println(s);
      System.out.println(t);
      assert(t.equals("el"));
-     assert(s.equals("Hello"));
+     assert(s.startsWith("Hello"));
    }
 }
