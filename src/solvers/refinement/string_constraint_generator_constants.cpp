@@ -95,8 +95,11 @@ string_exprt string_constraint_generatort::add_axioms_for_empty_string(
   assert(f.arguments().empty());
   assert(refined_string_typet::is_refined_string_type(f.type()));
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  string_exprt res=fresh_string(ref_type);
-  axioms.push_back(res.axiom_for_has_length(0));
+  exprt size=from_integer(0, ref_type.get_index_type());
+  const array_typet &content_type=ref_type.get_content_type();
+  array_of_exprt empty_array(
+    from_integer(0, ref_type.get_content_type().subtype()), content_type);
+  string_exprt res(size, empty_array, ref_type);
   return res;
 }
 
