@@ -97,7 +97,6 @@ class string_refine_preprocesst:public messaget
     return member_exprt(string, "length", length_type);
   }
 
-
   // type of pointers to string
   pointer_typet jls_ptr;
   exprt replace_string(const exprt &in);
@@ -221,6 +220,8 @@ class string_refine_preprocesst:public messaget
     const exprt &rhs,
     const source_locationt &location);
 
+  void replace_string_calls(goto_functionst::function_mapt::iterator f_it);
+#if 0
   void make_char_array_function(
     goto_programt &goto_program,
     goto_programt::targett &target,
@@ -241,8 +242,7 @@ class string_refine_preprocesst:public messaget
     goto_programt::targett &target,
     const irep_idt &function_name,
     const std::string &signature);
-
-  void replace_string_calls(goto_functionst::function_mapt::iterator f_it);
+#endif
 };
 
 #endif
