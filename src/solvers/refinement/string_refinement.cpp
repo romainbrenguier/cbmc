@@ -253,14 +253,22 @@ bool string_refinementt::add_axioms_for_string_assigns(const exprt &lhs,
   {
     set_char_array_equality(lhs, rhs);
     if(rhs.id() == ID_symbol || rhs.id() == ID_array)
+    {
       add_symbol_to_symbol_map(lhs, rhs);
+      return false;
+    }
     else if(rhs.id() == ID_nondet_symbol)
+    {
       add_symbol_to_symbol_map(
         lhs, generator.fresh_symbol("nondet_array", lhs.type()));
+      return false;
+    }
     else
-      debug() << "string_refinement warning: ignoring char_array: "
+    {
+      debug() << "string_refinement warning: not handling char_array: "
               << from_expr(rhs) << eom;
-    return false;
+      return true;
+    }
   }
   if(refined_string_typet::is_refined_string_type(rhs.type()))
   {
@@ -366,7 +374,7 @@ void string_refinementt::set_to(const exprt &expr, bool value)
 
     if(eq_expr.lhs().type()!=eq_expr.rhs().type())
     {
-      debug() << "(sr::set_equality) Warning: ignoring "
+      debug() << "(sr::set_to) WARNING: ignoring "
               << from_expr(expr) << " [inconsistent types]" << eom;
       return;
     }
@@ -380,13 +388,13 @@ void string_refinementt::set_to(const exprt &expr, bool value)
 
     // Preprocessing to remove function applications.
     const exprt &lhs=eq_expr.lhs();
-    debug() << "(sr) set equality to true " << from_expr(lhs)
+    debug() << "(sr::set_to) " << from_expr(lhs)
             << " = " << from_expr(eq_expr.rhs()) << eom;
 
     // TODO: See if this happens at all.
     if(lhs.id()!=ID_symbol)
     {
-      debug() << "(sr::set_equality) Warning: ignoring "
+      debug() << "(sr::set_to) WARNING: ignoring "
               << from_expr(expr) << eom;
       return;
     }
@@ -394,10 +402,20 @@ void string_refinementt::set_to(const exprt &expr, bool value)
     exprt subst_rhs=substitute_function_applications(eq_expr.rhs());
     if(eq_expr.lhs().type()!=subst_rhs.type())
     {
-      debug() << "(sr::set_equality) Warning: ignoring "
-              << from_expr(expr) << " [inconsistent types after substitution]"
-              << eom;
-      return;
+      if(eq_expr.lhs().type().id() != ID_array ||
+         subst_rhs.type().id() != ID_array ||
+         eq_expr.lhs().type().subtype() != subst_rhs.type().subtype())
+      {
+        debug() << "(sr::set_to) WARNING: ignoring "
+                << from_expr(expr) << " [inconsistent types after substitution]"
+                << eom;
+        return;
+      }
+      else
+      {
+        debug() << "(sr::set_to) accepting arrays with "
+                << "same subtype but different sizes" << eom;
+      }
     }
 
     if(value)
@@ -440,6 +458,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   for(std::pair<exprt, bool> &pair : non_string_axioms)
   {
     replace_expr(symbol_resolve, pair.first);
+    debug() << "super::set_to " << from_expr(pair.first) << eom;
     supert::set_to(pair.first, pair.second);
   }
 
@@ -611,15 +630,16 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 {
   exprt arr_val=get_array(arr);
   exprt size_val=supert::get(size);
+  size_val=simplify_expr(size_val, ns);
   typet char_type=arr.type().subtype();
   typet index_type=size.type();
   array_typet empty_ret_type(char_type, from_integer(0, index_type));
   array_of_exprt empty_ret(from_integer(0, char_type), empty_ret_type);
 
-  if(size.id()!=ID_constant)
+  if(size_val.id()!=ID_constant)
   {
 #if 0
-    debug() << "(sr::get_array) string of unknown size" << eom;
+    debug() << "(sr::get_array) string of unknown size: " << from_expr(size_val) << eom;
 #endif
     return empty_ret;
   }
@@ -628,9 +648,9 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
   if(to_unsigned_integer(to_constant_expr(size_val), n))
   {
 #if 0
-    debug() << "(sr::get_array) size is not a valid";
+    debug() << "(sr::get_array) size is not valid" << eom;
 #endif
-    return empty_ret;
+   return empty_ret;
   }
 
   array_typet ret_type(char_type, from_integer(n, index_type));
@@ -639,7 +659,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
   if(n>MAX_CONCRETE_STRING_SIZE)
   {
 #if 0
-    debug() << "(sr::get_array) long string (size=" << n << ")";
+    debug() << "(sr::get_array) long string (size=" << n << ")" << eom;
 #endif
     return empty_ret;
   }
@@ -675,8 +695,12 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
     for(size_t i=0; i<arr_val.operands().size() && i<n; i++)
     {
       unsigned c;
-      to_unsigned_integer(to_constant_expr(arr_val.operands()[i]), c);
-      concrete_array[i]=c;
+      exprt op=arr_val.operands()[i];
+      if(op.id()==ID_constant)
+      {
+        to_unsigned_integer(to_constant_expr(op), c);
+        concrete_array[i]=c;
+      }
     }
   }
   else
@@ -791,6 +815,7 @@ void string_refinementt::fill_model()
       const exprt &elength=refined.length();
 
       exprt len=supert::get(elength);
+      len=simplify_expr(len, ns);
       exprt arr=get_array(econtent, len);
 
       current_model[elength]=len;
@@ -802,7 +827,7 @@ void string_refinementt::fill_model()
         debug() << " = \"" << string_of_array(to_array_expr(arr))
                 << "\" (size:" << from_expr(len) << ")"<< eom;
       else
-        debug() << " = " << from_expr(arr) << "" << eom;
+        debug() << " = " << from_expr(arr) << " (size:" << from_expr(len) << ")" << eom;
     }
     else
     {
@@ -976,10 +1001,8 @@ bool string_refinementt::check_axioms()
         exprt body(axiom.body());
         implies_exprt instance(premise, body);
         replace_expr(axiom.univ_var(), val, instance);
-        if(seen_instances.insert(instance).second)
-          add_lemma(instance);
-        else
-          debug() << "instance already seen" << eom;
+        debug() << "adding counter example " << from_expr(instance) << eom;
+        add_lemma(instance);
       }
     }
 
