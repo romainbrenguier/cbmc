@@ -450,8 +450,6 @@ string_exprt string_refine_preprocesst::make_cprover_char_array_assign(
   symbol_exprt lhs_deref=new_symbol("char_array_assign$deref", data_type.subtype());
   assignments.emplace_back(lhs_deref, deref_array);
 
-
-  // TODO: change the id for this function
   // array=convert_pointer_to_char_array(*rhs->data)
   declare_function(ID_cprover_string_array_of_char_pointer_func, content_type);
   function_application_exprt fun_app(symbol_exprt(
@@ -459,14 +457,6 @@ string_exprt string_refine_preprocesst::make_cprover_char_array_assign(
   fun_app.arguments().push_back(deref_array);
   symbol_exprt array=new_symbol("char_array_assign$array", content_type);
   assignments.emplace_back(array, fun_app);
-
-#if 0
-    // string_array= typecast(&deref);
-  address_of_exprt address(lhs_deref);
-  typecast_exprt tc_array(address, content_type);
-  symbol_exprt array_lhs=new_symbol("char_array_assign$string_array", content_type);
-  assignments.emplace_back(array_lhs, tc_array);
-#endif
 
   // string={ rhs->length; string_array }
   string_exprt new_rhs(get_length(deref, length_type), array, ref_type);
@@ -504,24 +494,19 @@ void string_refine_preprocesst::make_normal_assign(
   const source_locationt &location,
   const std::string &signature)
 {
-#if 0
-  if(function_name==ID_cprover_string_copy_func)
-    assert(false);//make_string_copy(goto_program, target, lhs, arguments[0], location);
-  else
-#endif
   function_application_exprt rhs(
-      symbol_exprt(function_name), function_type.return_type());
-    rhs.add_source_location()=location;
-    declare_function(function_name, function_type);
+    symbol_exprt(function_name), function_type.return_type());
+  rhs.add_source_location()=location;
+  declare_function(function_name, function_type);
 
-    exprt::operandst processed_arguments=process_arguments(
-      goto_program, target, arguments, location, signature);
-    rhs.arguments()=processed_arguments;
+  exprt::operandst processed_arguments=process_arguments(
+    goto_program, target, arguments, location, signature);
+  rhs.arguments()=processed_arguments;
 
-    code_assignt assignment(lhs, rhs);
-    assignment.add_source_location()=location;
-    target->make_assignment();
-    target->code=assignment;
+  code_assignt assignment(lhs, rhs);
+  assignment.add_source_location()=location;
+  target->make_assignment();
+  target->code=assignment;
 }
 
 /*******************************************************************\
@@ -631,84 +616,6 @@ void string_refine_preprocesst::make_string_assign(
   assigns.emplace_back(cprover_string_sym, str);
   assigns.emplace_back(lhs_data, address_of_exprt(tmp_array));
   insert_assignments(goto_program, target, target->function, location, assigns);
-}
-
-/*******************************************************************\
-
-Function: string_refine_preprocesst::make_assign
-
-  Inputs: a goto_program, a position in this program, an expression lhs,
-          a function type, a function name, a vector of arguments, a location
-          and a signature
-
- Purpose: assign the result of the function application to lhs,
-          in case the function type is string, it does a special assignment
-          using `make_string_assign`
-
-\*******************************************************************/
-
-void string_refine_preprocesst::make_assign(
-  goto_programt &goto_program,
-  goto_programt::targett &target,
-  const exprt &lhs,
-  const code_typet &function_type,
-  const irep_idt &function_name,
-  const exprt::operandst &arg,
-  const source_locationt &loc,
-  const std::string &sig)
-{
-  if(implements_java_char_sequence(function_type.return_type()))
-    make_string_assign(
-      goto_program, target, lhs, function_type, function_name, arg, loc, sig);
-  else
-    make_normal_assign(
-      goto_program, target, lhs, function_type, function_name, arg, loc, sig);
-}
-
-/*******************************************************************\
-
-Function: string_refine_preprocesst::make_string_copy
-
-  Inputs: a goto_program, a position in this program, a lhs expression,
-          an argument expression and a location
-
- Outputs: an expression
-
- Purpose: replace the current instruction by:
-          > lhs->length=argument->length
-          > tmp_data=*(argument->data)
-          > lhs->data=&tmp_data
-
-\*******************************************************************/
-
-void string_refine_preprocesst::make_string_copy(
-  goto_programt &goto_program,
-  goto_programt::targett &target,
-  const exprt &lhs,
-  const exprt &argument,
-  const source_locationt &location)
-{
-  assert(implements_java_char_sequence(lhs.type()));
-  exprt deref=dereference_exprt(lhs, lhs.type().subtype());
-
-  typet length_type, data_type;
-  get_data_and_length_type_of_string(deref, data_type, length_type);
-
-  dereference_exprt deref_arg(argument, argument.type().subtype());
-  std::list<code_assignt> assignments;
-
-  exprt lhs_length=get_length(deref, length_type);
-  exprt rhs_length=get_length(deref_arg, length_type);
-  assignments.emplace_back(lhs_length, rhs_length);
-
-  symbol_exprt tmp_data=new_tmp_symbol("tmp_data", data_type.subtype());
-  exprt rhs_data=get_data(deref_arg, data_type);
-  exprt lhs_data=get_data(deref, data_type);
-  assignments.emplace_back(
-    tmp_data, dereference_exprt(rhs_data, data_type.subtype()));
-  assignments.emplace_back(lhs_data, address_of_exprt(tmp_data));
-
-  insert_assignments(goto_program, target, target->function, location, assignments);
 }
 
 /*******************************************************************\
@@ -1036,151 +943,6 @@ void string_refine_preprocesst::make_to_char_array_function(
     goto_program, target, target->function, location, assignments);
 }
 
-#if 0
-/*******************************************************************\
-
-Function: string_refine_preprocesst::make_char_array_function
-
-  Inputs: a position in a goto program, a function name, two Boolean options
-
- Purpose: at the given position replace
-          `lhs=s.some_function(...,char_array,...)` by
-          > cprover_string = { char_array->length, *char_array }
-          > lhs=function_name(s, cprover_string, ...)
-          option `assign_first_arg` uses `s` instead of `lhs` in the second
-          assignment;
-          option `skip_first_arg`, removes `s` from the arguments, ie `x` is
-          the first one;
-          If the function name is ID_cprover_copy_func we simply do
-          > cprover_string = { char_array->length, *char_array }
-          > lhs=cprover_string
-
-
-\*******************************************************************/
-
-void string_refine_preprocesst::make_char_array_function(
-  goto_programt &goto_program,
-  goto_programt::targett &target,
-  const irep_idt &function_name,
-  const std::string &signature,
-  bool assign_first_arg,
-  bool skip_first_arg)
-{
-  code_function_callt &function_call=to_code_function_call(target->code);
-  code_typet function_type=to_code_type(function_call.function().type());
-  code_typet new_function_type;
-  const source_locationt &location=function_call.source_location();
-
-  // We need a copy here because this function call may be overwritten
-  const std::vector<exprt> args=function_call.arguments();
-  std::vector<exprt> new_args;
-
-  exprt lhs;
-  if(assign_first_arg)
-    lhs=function_call.arguments()[0];
-  else
-    lhs=function_call.lhs();
-
-  if(lhs.id()==ID_typecast)
-    lhs=to_typecast_expr(lhs).op();
-
-  std::size_t start_index=skip_first_arg?1:0;
-
-  if(function_name==ID_cprover_string_copy_func)
-  {
-    assert(is_java_char_array_pointer_type(args[start_index].type()));
-    dereference_exprt char_array(
-      args[start_index], args[start_index].type().subtype());
-    exprt string=make_cprover_char_array_assign(
-      goto_program, target, char_array, location);
-
-    std::list<code_assignt> assignments;
-    assignments.emplace_back(lhs, string);
-    insert_assignments(
-      goto_program, target, target->function, location, assignments);
-    return;
-  }
-
-  for(std::size_t i=start_index; i<args.size(); i++)
-  {
-    if(is_java_char_array_pointer_type(args[i].type()))
-    {
-      dereference_exprt char_array(args[i], args[i].type().subtype());
-      string_exprt string=make_cprover_char_array_assign(
-        goto_program, i_it, char_array, location);
-
-      new_args.push_back(string);
-      new_function_type.parameters().push_back(
-        code_typet::parametert(string.type()));
-    }
-    else
-    {
-      new_args.push_back(args[i]);
-      if(i<function_type.parameters().size())
-        new_function_type.parameters().push_back(function_type.parameters()[i]);
-      else
-        debug() << "(string_refine_preprocess) Warning: missing parameter type"
-                << eom;
-    }
-  }
-
-  new_function_type.return_type()=lhs.type();
-
-  make_string_function(
-    goto_program,
-    target,
-    lhs,
-    new_function_type,
-    function_name,
-    new_args,
-    location,
-    signature);
-}
-
-/*******************************************************************\
-
-Function: string_refine_preprocesst::make_char_array_function_call
-
-  Inputs: a position in a goto program and a function name
-
- Purpose: at the given position replace `r.some_function(arr,...)` by
-          `r=function_name({arr.length, arr.data}, ...)`
-
-\*******************************************************************/
-
-void string_refine_preprocesst::make_char_array_function_call(
-  goto_programt &goto_program,
-  goto_programt::targett &target,
-  const irep_idt &function_name,
-  const std::string &signature)
-{
-  make_char_array_function(
-    goto_program, target, function_name, signature, true, true);
-}
-
-/*******************************************************************\
-
-Function: string_refine_preprocesst::make_char_array_side_effect
-
-  Inputs: a position in a goto program and a function name
-
- Purpose: replace `r=s.some_function(i,arr,...)` by
-          `s=function_name(s,{arr.length,arr.data})`
-
-TODO: the return value should also be assigned from s
-
-\*******************************************************************/
-
-void string_refine_preprocesst::make_char_array_side_effect(
-  goto_programt &goto_program,
-  goto_programt::targett &target,
-  const irep_idt &function_name,
-  const std::string &signature)
-{
-  make_char_array_function(
-    goto_program, target, function_name, signature, true, false);
-}
-
 /*******************************************************************\
 
 Function: string_refine_preprocesst::process_arguments
@@ -1292,21 +1054,6 @@ void string_refine_preprocesst::replace_string_calls(
         it=string_function_calls.find(function_id);
         if(it!=string_function_calls.end())
           make_string_function_call(goto_program, target, it->second, signature);
-
-        it=string_of_char_array_functions.find(function_id);
-        if(it!=string_of_char_array_functions.end())
-          make_char_array_function(
-            goto_program, target, it->second, signature, 0);
-
-        it=string_of_char_array_function_calls.find(function_id);
-        if(it!=string_of_char_array_function_calls.end())
-          make_char_array_function_call(
-            goto_program, target, it->second, signature);
-
-        it=side_effect_char_array_functions.find(function_id);
-        if(it!=side_effect_char_array_functions.end())
-          make_char_array_side_effect(
-            goto_program, target, it->second, signature);
 
         if(function_id==irep_idt("java::java.lang.String.toCharArray:()[C"))
           make_to_char_array_function(goto_program, target);
@@ -1528,14 +1275,14 @@ void string_refine_preprocesst::initialize_string_function_table()
 
 
 
-  side_effect_char_array_functions
+  side_effect_functions
     ["java::java.lang.StringBuilder.append:([C)"
       "Ljava/lang/StringBuilder;"]=
     ID_cprover_string_concat_func;
-  side_effect_char_array_functions
+  side_effect_functions
     ["java::java.lang.StringBuilder.insert:(I[CII)Ljava/lang/StringBuilder;"]=
     ID_cprover_string_insert_func;
-  side_effect_char_array_functions
+  side_effect_functions
     ["java::java.lang.StringBuilder.insert:(I[C)Ljava/lang/StringBuilder;"]=
     ID_cprover_string_insert_func;// TODO clean irep ids from insert_char_array etc...
 
@@ -1553,21 +1300,21 @@ void string_refine_preprocesst::initialize_string_function_table()
   string_function_calls["java::java.lang.StringBuilder.<init>:()V"]=
     ID_cprover_string_empty_string_func;
 
-  string_of_char_array_function_calls["java::java.lang.String.<init>:([C)V"]=
+  string_function_calls["java::java.lang.String.<init>:([C)V"]=
     ID_cprover_string_copy_func;
-  string_of_char_array_function_calls["java::java.lang.String.<init>:([CII)V"]=
+  string_function_calls["java::java.lang.String.<init>:([CII)V"]=
     ID_cprover_string_copy_func;
 
-  string_of_char_array_functions
+  string_functions
     ["java::java.lang.String.valueOf:([CII)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
-  string_of_char_array_functions
+  string_functions
     ["java::java.lang.String.valueOf:([C)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
-  string_of_char_array_functions
+  string_functions
     ["java::java.lang.String.copyValueOf:([CII)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
-  string_of_char_array_functions
+  string_functions
     ["java::java.lang.String.copyValueOf:([C)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
 
