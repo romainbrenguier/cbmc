@@ -312,6 +312,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   exprt zero_char=constant_char('0', char_type);
   exprt nine_char=constant_char('9', char_type);
   exprt minus_char=constant_char('-', char_type);
+  exprt plus_char=constant_char('+', char_type);
   exprt zero=from_integer(0, index_type);
   exprt max=from_integer(max_size, index_type);
 
@@ -324,12 +325,22 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   axioms.push_back(a1);
 
   exprt chr=res[0];
-  exprt starts_with_minus=equal_exprt(chr, minus_char);
-  exprt starts_with_digit=and_exprt(
+  equal_exprt starts_with_minus(chr, minus_char);
+  or_exprt starts_with_sign(starts_with_minus, equal_exprt(chr, plus_char));
+  and_exprt starts_with_digit(
     binary_relation_exprt(chr, ID_ge, zero_char),
     binary_relation_exprt(chr, ID_le, nine_char));
   or_exprt a2(starts_with_digit, starts_with_minus);
   axioms.push_back(a2);
+
+  // These are constraints to detect number that requiere the maximum number
+  // of digits
+  exprt smallest_with_max_digits=
+    from_integer(smallest_by_digit(max_size-1), type);
+  binary_relation_exprt big_negative(
+    i, ID_le, unary_minus_exprt(smallest_with_max_digits));
+  binary_relation_exprt big_positive(i, ID_ge, smallest_with_max_digits);
+  or_exprt requieres_max_digits(big_negative, big_positive);
 
   for(size_t size=1; size<=max_size; size++)
   {
@@ -389,23 +400,15 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
     }
 
     // when the size is close to the maximum, either the number is very big or negative
-    // TODO: the number could be positive and have a plus sign at the beginning
     if(size==max_size-1)
     {
-      exprt smallest_with_10_digits=from_integer(
-        smallest_by_digit(max_size), type);
-      binary_relation_exprt big(i, ID_ge, smallest_with_10_digits);
-      binary_relation_exprt negative(i, ID_lt, from_integer(0, type));
-      implies_exprt a7(premise, or_exprt(big, negative));
+      implies_exprt a7(premise, or_exprt(requieres_max_digits, starts_with_sign));
       axioms.push_back(a7);
     }
     // when we reach the maximal size the number is very big in the negative
     if(size==max_size)
     {
-      exprt smallest_with_10_digits=from_integer(
-        smallest_by_digit(max_size), type);
-      binary_relation_exprt big(i, ID_le, unary_minus_exprt(smallest_with_10_digits));
-      implies_exprt a7(premise, big);
+      implies_exprt a7(premise, and_exprt(starts_with_sign, requieres_max_digits));
       axioms.push_back(a7);
     }
   }
