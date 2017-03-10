@@ -304,18 +304,25 @@ void string_refinementt::concretize_results()
       mp_integer found_length;
       if(!to_integer(length, found_length))
       {
-        assert(found_length.is_long() && found_length >= 0);
-        size_t concretize_limit=found_length.to_long();
-        concretize_limit=concretize_limit>MAX_CONCRETE_STRING_SIZE?
-          MAX_CONCRETE_STRING_SIZE:concretize_limit;
-        exprt content_expr=str.content();
-        replace_expr(current_model, content_expr);
-        for(size_t i=0; i<concretize_limit; ++i)
+        assert(found_length.is_long());
+        if(found_length < 0)
         {
-          auto i_expr=from_integer(i, str.length().type());
-          debug() << "Concretizing " << from_expr(content_expr)
-                  << " / " << i << eom;
-          current_index_set[str.content()].insert(i_expr);
+          debug() << "concretize_results: WARNING found length is negative" << eom;
+        }
+        else
+        {
+          size_t concretize_limit=found_length.to_long();
+          concretize_limit=concretize_limit>MAX_CONCRETE_STRING_SIZE?
+                MAX_CONCRETE_STRING_SIZE:concretize_limit;
+          exprt content_expr=str.content();
+          replace_expr(current_model, content_expr);
+          for(size_t i=0; i<concretize_limit; ++i)
+          {
+            auto i_expr=from_integer(i, str.length().type());
+            debug() << "Concretizing " << from_expr(content_expr)
+                    << " / " << i << eom;
+            current_index_set[str.content()].insert(i_expr);
+          }
         }
       }
     }
