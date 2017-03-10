@@ -389,6 +389,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
     }
 
     // when the size is close to the maximum, either the number is very big or negative
+    // TODO: the number could be positive and have a plus sign at the beginning
     if(size==max_size-1)
     {
       exprt smallest_with_10_digits=from_integer(
@@ -608,6 +609,60 @@ string_exprt string_constraint_generatort::add_axioms_for_value_of(
 
 /*******************************************************************\
 
+Function: string_constraint_generatort::add_axioms_for_correct_number_format
+
+  Inputs: function application with one string expression
+
+ Outputs: an boolean expression
+
+ Purpose: add axioms making the return value true if the given string is
+          a correct number
+
+\*******************************************************************/
+
+exprt string_constraint_generatort::add_axioms_for_correct_number_format(
+  const string_exprt &str, std::size_t max_size)
+{
+  symbol_exprt correct=fresh_boolean("correct_number_format");
+  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  const typet &char_type=ref_type.get_char_type();
+  const typet &index_type=ref_type.get_index_type();
+  exprt zero_char=constant_char('0', char_type);
+  exprt nine_char=constant_char('9', char_type);
+  exprt minus_char=constant_char('-', char_type);
+  exprt plus_char=constant_char('+', char_type);
+
+  exprt chr=str[0];
+  equal_exprt starts_with_minus(chr, minus_char);
+  equal_exprt starts_with_plus(chr, plus_char);
+  and_exprt starts_with_digit(
+    binary_relation_exprt(chr, ID_ge, zero_char),
+    binary_relation_exprt(chr, ID_le, nine_char));
+
+  or_exprt correct_first(
+    or_exprt(starts_with_minus, starts_with_plus), starts_with_digit);
+  exprt has_first=str.axiom_for_is_longer_than(from_integer(1, index_type));
+  implies_exprt a1(correct, and_exprt(has_first, correct_first));
+  axioms.push_back(a1);
+
+  exprt not_too_long=str.axiom_for_is_shorter_than(max_size);
+  axioms.push_back(not_too_long);
+
+  symbol_exprt qvar=fresh_univ_index("number_format", index_type);
+
+  and_exprt is_digit(
+    binary_relation_exprt(str[qvar], ID_ge, zero_char),
+    binary_relation_exprt(str[qvar], ID_le, nine_char));
+
+  string_constraintt a2(
+    qvar, from_integer(1, index_type), str.length(), correct, is_digit);
+
+  axioms.push_back(a2);
+  return correct;
+}
+
+/*******************************************************************\
+
 Function: string_constraint_generatort::add_axioms_for_parse_int
 
   Inputs: function application with one string expression
@@ -636,6 +691,10 @@ exprt string_constraint_generatort::add_axioms_for_parse_int(
   exprt starts_with_minus=equal_exprt(chr, minus_char);
   exprt starts_with_plus=equal_exprt(chr, plus_char);
   exprt starts_with_digit=binary_relation_exprt(chr, ID_ge, zero_char);
+
+  // TODO: we should throw an exception when this does not hold:
+  exprt correct=add_axioms_for_correct_number_format(str);
+  axioms.push_back(correct);
 
   for(unsigned size=1; size<=10; size++)
   {
