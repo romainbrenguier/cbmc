@@ -944,12 +944,8 @@ bool string_refinementt::check_axioms()
     exprt prem=axiom.premise();
     exprt body=axiom.body();
 
-    replace_expr(current_model, bound_inf);
-    replace_expr(current_model, bound_sup);
-    replace_expr(current_model, prem);
-    replace_expr(current_model, body);
     string_constraintt axiom_in_model(
-      univ_var, bound_inf, bound_sup, prem, body);
+      univ_var, get(bound_inf), get(bound_sup), get(prem), get(body));
 
     satcheck_no_simplifiert sat_check;
     supert solver(ns, sat_check);
@@ -1535,6 +1531,51 @@ void string_refinementt::instantiate_not_contains(
 
 /*******************************************************************\
 
+Function: string_refinementt::substitute_array_lists()
+
+  Inputs: an expression containing array-list expressions
+
+ Outputs: an epression containing no array-list
+
+ Purpose: replace array-lists by 'with' expressions
+
+\*******************************************************************/
+
+exprt string_refinementt::substitute_array_lists(exprt expr) const
+{
+  for(size_t i=0; i<expr.operands().size(); ++i)
+  {
+    // TODO: only copy when necessary
+    exprt op(expr.operands()[i]);
+    expr.operands()[i]=substitute_array_lists(op);
+  }
+
+  if(expr.id()=="array-list")
+  {
+    assert(expr.operands().size()>=2);
+    typet &char_type=expr.operands()[1].type();
+    array_typet arr_type(char_type, infinity_exprt(char_type));
+    array_of_exprt new_arr(from_integer(0, char_type),
+                           arr_type);
+
+    with_exprt ret_expr(new_arr,
+                        expr.operands()[0],
+                        expr.operands()[1]);
+
+    for(size_t i=2; i<expr.operands().size()/2; i++)
+    {
+      ret_expr=with_exprt(ret_expr,
+                          expr.operands()[i*2],
+                          expr.operands()[i*2+1]);
+    }
+    return ret_expr;
+  }
+
+  return expr;
+}
+
+/*******************************************************************\
+
 Function: string_refinementt::get
 
   Inputs: an expression
@@ -1556,5 +1597,7 @@ exprt string_refinementt::get(const exprt &expr) const
       return get_array(ecopy, it->second);
   }
 
-  return supert::get(ecopy);
+  ecopy=supert::get(ecopy);
+
+  return substitute_array_lists(ecopy);
 }

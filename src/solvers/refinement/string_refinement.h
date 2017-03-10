@@ -124,6 +124,8 @@ private:
     const string_not_contains_constraintt &axiom,
     std::list<exprt> &new_lemmas);
 
+  exprt substitute_array_lists(exprt) const;
+
   exprt compute_inverse_function(
     const exprt &qvar, const exprt &val, const exprt &f);
 
