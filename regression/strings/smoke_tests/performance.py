@@ -1,10 +1,11 @@
 #!/usr/bin/python
+import time
 from subprocess import check_output
 
 git_output=check_output(["git", "show", "HEAD"])
 commit=git_output.split('\n')[0]
 
-commit_id=commit[7:]
+commit_id=time.strftime("%Y_%m_%d__%H_%M_%S")+"__"+commit[7:]
 
 process = check_output(["grep", "^Runtime\ decision\ procedure", "-R"])
 
