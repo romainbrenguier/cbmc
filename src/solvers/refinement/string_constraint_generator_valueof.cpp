@@ -312,7 +312,6 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   exprt zero_char=constant_char('0', char_type);
   exprt nine_char=constant_char('9', char_type);
   exprt minus_char=constant_char('-', char_type);
-  exprt plus_char=constant_char('+', char_type);
   exprt zero=from_integer(0, index_type);
   exprt max=from_integer(max_size, index_type);
 
@@ -326,7 +325,6 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
 
   exprt chr=res[0];
   equal_exprt starts_with_minus(chr, minus_char);
-  or_exprt starts_with_sign(starts_with_minus, equal_exprt(chr, plus_char));
   and_exprt starts_with_digit(
     binary_relation_exprt(chr, ID_ge, zero_char),
     binary_relation_exprt(chr, ID_le, nine_char));
@@ -402,13 +400,13 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
     // when the size is close to the maximum, either the number is very big or negative
     if(size==max_size-1)
     {
-      implies_exprt a7(premise, or_exprt(requieres_max_digits, starts_with_sign));
+      implies_exprt a7(premise, or_exprt(requieres_max_digits, starts_with_minus));
       axioms.push_back(a7);
     }
     // when we reach the maximal size the number is very big in the negative
     if(size==max_size)
     {
-      implies_exprt a7(premise, and_exprt(starts_with_sign, requieres_max_digits));
+      implies_exprt a7(premise, and_exprt(starts_with_minus, big_negative));
       axioms.push_back(a7);
     }
   }
