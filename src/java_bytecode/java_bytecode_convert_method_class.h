@@ -33,13 +33,15 @@ public:
     bool _disable_runtime_checks,
     size_t _max_array_length,
     safe_pointer<std::vector<irep_idt> > _needed_methods,
-    safe_pointer<std::set<irep_idt> > _needed_classes):
+    safe_pointer<std::set<irep_idt> > _needed_classes,
+    const character_refine_preprocesst &_character_preprocess):
     messaget(_message_handler),
     symbol_table(_symbol_table),
     disable_runtime_checks(_disable_runtime_checks),
     max_array_length(_max_array_length),
     needed_methods(_needed_methods),
-    needed_classes(_needed_classes)
+    needed_classes(_needed_classes),
+    character_preprocess(_character_preprocess)
   {
   }
 
@@ -64,6 +66,7 @@ protected:
   irep_idt method_id;
   irep_idt current_method;
   typet method_return_type;
+  character_refine_preprocesst character_preprocess;
 
 public:
   struct holet

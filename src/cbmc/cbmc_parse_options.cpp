@@ -910,7 +910,6 @@ bool cbmc_parse_optionst::process_goto_program(
     status() << "Partial Inlining" << eom;
     goto_partial_inline(goto_functions, ns, ui_message_handler);
 
-
     if(cmdline.isset("refine-strings"))
     {
       status() << "Preprocessing for string refinement" << eom;
