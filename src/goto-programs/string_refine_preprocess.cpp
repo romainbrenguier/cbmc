@@ -939,7 +939,6 @@ void string_refine_preprocesst::make_to_char_array_function(
   exprt rhs_length=get_length(deref, length_type);
   exprt lhs_length=get_length(deref_lhs, length_type);
   assignments.emplace_back(lhs_length, rhs_length);
-  source_locationt location=target->source_location;
   insert_assignments(
     goto_program, target, target->function, location, assignments);
 }
