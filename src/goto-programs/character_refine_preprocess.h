@@ -50,7 +50,7 @@ class character_refine_preprocesst:public messaget
   static void convert_is_alphabetic(conversion_input &target);
   static void convert_is_bmp_code_point(conversion_input &target);
   static void convert_is_defined_char(conversion_input &target);
-  static void convert_is_is_defined_int(conversion_input &target);
+  static void convert_is_defined_int(conversion_input &target);
   static void convert_is_digit_char(conversion_input &target);
   static void convert_is_digit_int(conversion_input &target);
   static void convert_is_high_surrogate(conversion_input &target);
