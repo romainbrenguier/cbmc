@@ -21,7 +21,9 @@ SRC = goto_convert.cpp goto_convert_function_call.cpp \
       show_goto_functions_json.cpp \
       show_goto_functions_xml.cpp \
       remove_static_init_loops.cpp remove_instanceof.cpp \
-      string_refine_preprocess.cpp
+      string_refine_preprocess.cpp \
+      character_refine_preprocess.cpp \
+      # Empty last line
 
 INCLUDES= -I ..
 

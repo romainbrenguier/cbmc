@@ -21,6 +21,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <goto-programs/goto_convert_functions.h>
 #include <goto-programs/string_refine_preprocess.h>
+#include <goto-programs/character_refine_preprocess.h>
 #include <goto-programs/remove_function_pointers.h>
 #include <goto-programs/remove_virtual_functions.h>
 #include <goto-programs/remove_instanceof.h>
@@ -918,6 +919,8 @@ bool cbmc_parse_optionst::process_goto_program(
     if(cmdline.isset("string-refine"))
     {
       status() << "Preprocessing for string refinement" << eom;
+      character_refine_preprocesst(
+            symbol_table, goto_functions, ui_message_handler);
       string_refine_preprocesst(
         symbol_table, goto_functions, ui_message_handler);
     }
