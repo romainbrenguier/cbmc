@@ -392,7 +392,7 @@ exprt string_refine_preprocesst::make_cprover_string_assign(
     symbol_exprt lhs=new_symbol("cprover_string", new_rhs.type());
     assignments.emplace_back(lhs, new_rhs);
 
-    insert_assignments(goto_program, target, assignments);
+    insert_assignments(goto_program, target, target->function, location, assignments);
     target=goto_program.insert_after(target);
     return new_rhs;
   }
@@ -423,7 +423,7 @@ Function: string_refine_preprocesst::make_cprover_char_array_assign
 
 string_exprt string_refine_preprocesst::make_cprover_char_array_assign(
   goto_programt &goto_program,
-  goto_programt::targett &i_it,
+  goto_programt::targett &target,
   const exprt &rhs,
   const source_locationt &location)
 {
@@ -463,8 +463,8 @@ string_exprt string_refine_preprocesst::make_cprover_char_array_assign(
   symbol_exprt lhs=new_symbol("char_array_assign$string", ref_type);
   assignments.emplace_back(lhs, new_rhs);
 
-  insert_assignments(goto_program, i_it, assignments);
-  i_it=goto_program.insert_after(i_it);
+  insert_assignments(goto_program, target, target->function, location, assignments);
+  target=goto_program.insert_after(target);
   return new_rhs;
 }
 
@@ -819,7 +819,7 @@ void string_refine_preprocesst::make_string_function_side_effect(
 
     make_string_assign(
       goto_program,
-      i_it,
+      target,
       tmp_string,
       function_type,
       function_name,
@@ -838,7 +838,8 @@ void string_refine_preprocesst::make_string_function_side_effect(
     assignments.emplace_back(lhs_data, rhs_data);
     assignments.emplace_back(lhs, s);
     target=goto_program.insert_after(target);
-    insert_assignments(goto_program, target, target->function, location, assignments);
+    insert_assignments(
+      goto_program, target, target->function, loc, assignments);
   }
   else
   {
