@@ -803,7 +803,7 @@ void string_refine_preprocesst::make_string_function_side_effect(
   const irep_idt &function_name,
   const std::string &signature)
 {
-  code_function_callt &function_call=to_code_function_call(target->code);
+  code_function_callt function_call=to_code_function_call(target->code);
   source_locationt loc=function_call.source_location();
   std::list<code_assignt> assignments;
   exprt lhs=function_call.lhs();
