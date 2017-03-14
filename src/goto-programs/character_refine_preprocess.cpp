@@ -93,7 +93,27 @@ void character_refine_preprocesst::convert_code_point_at(
 void character_refine_preprocesst::convert_code_point_before(conversion_input &target){  }
 void character_refine_preprocesst::convert_code_point_count_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_code_point_count_int(conversion_input &target){  }
-void character_refine_preprocesst::convert_compare(conversion_input &target){  }
+
+void character_refine_preprocesst::convert_compare(conversion_input &target)
+{
+  const code_function_callt &function_call=to_code_function_call(target->code);
+  assert(function_call.arguments().size()==2);
+  exprt char1=function_call.arguments()[0];
+  exprt char2=function_call.arguments()[1];
+  exprt result=function_call.lhs();
+  target->make_assignment();
+  typet type=result.type();
+  binary_relation_exprt smaller(char1, ID_lt, char2);
+  binary_relation_exprt greater(char1, ID_gt, char2);
+  if_exprt expr(
+    smaller,
+    from_integer(-1, type),
+    if_exprt(greater, from_integer(1, type), from_integer(0, type)));
+
+  code_assignt code(result, expr);
+  target->code=code;
+}
+
 void character_refine_preprocesst::convert_compare_to(conversion_input &target){  }
 
 void character_refine_preprocesst::convert_digit_char(conversion_input &target)
