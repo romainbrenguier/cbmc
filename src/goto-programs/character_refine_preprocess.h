@@ -39,7 +39,9 @@ class character_refine_preprocesst:public messaget
 
   static void convert_constructor(conversion_input &target);
   static void convert_char_count(conversion_input &target);
+  static exprt expr_of_char_count(exprt expr, typet type);
   static void convert_char_value(conversion_input &target);
+  static exprt expr_of_char_value(exprt expr, typet type);
   static void convert_code_point_at(conversion_input &target);
   static void convert_code_point_before(conversion_input &target);
   static void convert_code_point_count_char(conversion_input &target);
@@ -58,11 +60,15 @@ class character_refine_preprocesst:public messaget
   static void convert_get_type_char(conversion_input &target);
   static void convert_get_type_int(conversion_input &target);
   static void convert_hash_code(conversion_input &target);
+  static exprt expr_of_high_surrogate(exprt expr, typet type);
   static void convert_high_surrogate(conversion_input &target);
+  static exprt expr_of_is_alphabetic(exprt expr, typet type);
   static void convert_is_alphabetic(conversion_input &target);
+  static exprt expr_of_is_bmp_code_point(exprt expr, typet type);
   static void convert_is_bmp_code_point(conversion_input &target);
   static void convert_is_defined_char(conversion_input &target);
   static void convert_is_defined_int(conversion_input &target);
+  static exprt expr_of_is_digit(exprt chr, typet type);
   static void convert_is_digit_char(conversion_input &target);
   static void convert_is_digit_int(conversion_input &target);
   static void convert_is_high_surrogate(conversion_input &target);
@@ -79,23 +85,29 @@ class character_refine_preprocesst:public messaget
   static void convert_is_java_identifier_start_int(conversion_input &target);
   static void convert_is_java_letter(conversion_input &target);
   static void convert_is_java_letter_or_digit(conversion_input &target);
+  static exprt expr_of_is_letter(exprt chr, typet type);
   static void convert_is_letter_char(conversion_input &target);
   static void convert_is_letter_int(conversion_input &target);
+  static exprt expr_of_is_letter_or_digit(exprt chr, typet type);
   static void convert_is_letter_or_digit_char(conversion_input &target);
   static void convert_is_letter_or_digit_int(conversion_input &target);
+  static exprt expr_of_is_lower_case(exprt chr, typet type);
   static void convert_is_lower_case_char(conversion_input &target);
   static void convert_is_lower_case_int(conversion_input &target);
   static void convert_is_low_surrogate(conversion_input &target);
+  static exprt expr_of_is_mirrored(exprt chr, typet type);
   static void convert_is_mirrored_char(conversion_input &target);
   static void convert_is_mirrored_int(conversion_input &target);
   static void convert_is_space(conversion_input &target);
   static void convert_is_space_char(conversion_input &target);
   static void convert_is_space_char_int(conversion_input &target);
   static void convert_is_supplementary_code_point(conversion_input &target);
+  static exprt expr_of_is_surrogate(exprt chr, typet type);
   static void convert_is_surrogate(conversion_input &target);
   static void convert_is_surrogate_pair(conversion_input &target);
   static void convert_is_title_case_char(conversion_input &target);
   static void convert_is_title_case_int(conversion_input &target);
+
   static void convert_is_unicode_identifier_part_char(
     conversion_input &target);
   static void convert_is_unicode_identifier_part_int(
@@ -104,6 +116,8 @@ class character_refine_preprocesst:public messaget
     conversion_input &target);
   static void convert_is_unicode_identifier_start_int(
     conversion_input &target);
+
+  static exprt expr_of_is_upper_case(exprt chr, typet type);
   static void convert_is_upper_case_char(conversion_input &target);
   static void convert_is_upper_case_int(conversion_input &target);
   static void convert_is_valid_code_point(conversion_input &target);
@@ -128,11 +142,13 @@ class character_refine_preprocesst:public messaget
 
   // Helper functions
 
+  static void convert_char_function(
+      exprt (*expr_function)(exprt, typet), conversion_input &target);
   static exprt in_interval_expr(
     exprt arg, mp_integer lower_bound, mp_integer upper_bound);
-
-  static exprt is_digit_expr(exprt chr);
+  static exprt in_list_expr(exprt chr, std::list<mp_integer> list);
   static exprt is_letter_expr(exprt chr);
+
 };
 
 #endif // CPROVER_GOTO_PROGRAMS_CHARACTER_REFINE_PREPROCESS_H

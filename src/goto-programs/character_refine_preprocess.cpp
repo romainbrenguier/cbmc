@@ -34,10 +34,17 @@ exprt character_refine_preprocesst::in_interval_expr(
   return res;
 }
 
-void character_refine_preprocesst::convert_constructor(conversion_input &target)
-{  }
+/*******************************************************************\
 
-void character_refine_preprocesst::convert_char_count(conversion_input &target)
+Function: character_refine_preprocesst::convert_char_function
+
+  Inputs: a function on expression and a position in a goto program
+
+ Purpose: converts based on a function on expressions
+
+\*******************************************************************/
+void character_refine_preprocesst::convert_char_function(
+  exprt (*expr_function)(exprt expr, typet type), conversion_input &target)
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
   assert(function_call.arguments().size()==1);
@@ -45,24 +52,36 @@ void character_refine_preprocesst::convert_char_count(conversion_input &target)
   exprt result=function_call.lhs();
   target->make_assignment();
   typet type=result.type();
-  exprt u010000=from_integer(0x010000, type);
-  binary_relation_exprt small(arg, ID_lt, u010000);
-  if_exprt expr(small, from_integer(1, type), from_integer(2, type));
-  code_assignt code(result, expr);
+  code_assignt code(result, expr_function(arg, type));
   target->code=code;
+}
+
+
+void character_refine_preprocesst::convert_constructor(conversion_input &target)
+{  }
+
+exprt character_refine_preprocesst::expr_of_char_count(exprt expr, typet type)
+{
+  exprt u010000=from_integer(0x010000, type);
+  binary_relation_exprt small(expr, ID_lt, u010000);
+  return if_exprt(small, from_integer(1, type), from_integer(2, type));
+}
+
+void character_refine_preprocesst::convert_char_count(conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_char_count, target);
+}
+
+exprt character_refine_preprocesst::expr_of_char_value(exprt expr, typet type)
+{
+  return typecast_exprt(expr, type);
 }
 
 void character_refine_preprocesst::convert_char_value(conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  assert(function_call.arguments().size()==1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  typet type=result.type();
-  typecast_exprt expr(arg, type);
-  code_assignt code(result, expr);
-  target->code=code;
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_char_value, target);
 }
 
 void character_refine_preprocesst::convert_code_point_at(
@@ -201,92 +220,77 @@ void character_refine_preprocesst::convert_hash_code(conversion_input &target)
   convert_char_value(target);
 }
 
-void character_refine_preprocesst::convert_high_surrogate(conversion_input &target)
+exprt character_refine_preprocesst::expr_of_high_surrogate(exprt expr, typet type)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  typet type=result.type();
-
-  exprt u010000=from_integer(0x010000, type);
+  exprt u10000=from_integer(0x010000, type);
   exprt uD800=from_integer(0xD800, type);
-  exprt u0400=from_integer(0x0400, type);
+  exprt u400=from_integer(0x0400, type);
 
-  plus_exprt high_surrogate(
-    uD800, div_exprt(minus_exprt(arg, u010000), u0400));
-  exprt expr;
-  code_assignt code(result, high_surrogate);
-  target->code=code;
+  plus_exprt high_surrogate(uD800, div_exprt(minus_exprt(expr, u10000), u400));
+  return high_surrogate;
+}
+
+void character_refine_preprocesst::convert_high_surrogate(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_high_surrogate, target);
+}
+
+exprt character_refine_preprocesst::expr_of_is_lower_case(exprt chr, typet type)
+{
+  return typecast_exprt(in_interval_expr(chr, 'a', 'z'), type);
+}
+
+exprt character_refine_preprocesst::expr_of_is_upper_case(exprt chr, typet type)
+{
+  return typecast_exprt(in_interval_expr(chr, 'A', 'Z'), type);
 }
 
 // TODO: this is only for ASCII characters, the following are not yet
 // considered: TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
-exprt character_refine_preprocesst::is_letter_expr(exprt chr)
+exprt character_refine_preprocesst::expr_of_is_letter(exprt chr, typet type)
 {
-  exprt upper_case=in_interval_expr(chr, 'A', 'Z');
-  exprt lower_case=in_interval_expr(chr, 'a', 'z');
-  return or_exprt(upper_case, lower_case);
+  return or_exprt(
+    expr_of_is_upper_case(chr, type), expr_of_is_lower_case(chr, type));
+}
+
+exprt character_refine_preprocesst::expr_of_is_alphabetic(exprt expr, typet type)
+{
+  return expr_of_is_letter(expr, type);
 }
 
 void character_refine_preprocesst::convert_is_alphabetic(
   conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  typecast_exprt tc_expr(is_letter_expr(arg), result.type());
-  code_assignt code(result, tc_expr);
-  target->code=code;
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_alphabetic, target);
+}
+
+exprt character_refine_preprocesst::expr_of_is_bmp_code_point(
+  exprt expr, typet type)
+{
+  binary_relation_exprt is_bmp(expr, ID_le, from_integer(0xFFFF, expr.type()));
+  return typecast_exprt(is_bmp, type);
 }
 
 void character_refine_preprocesst::convert_is_bmp_code_point(
   conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  binary_relation_exprt is_bmp(arg, ID_le, from_integer(0xFFFF, arg.type()));
-  code_assignt code(result, typecast_exprt(is_bmp, result.type()));
-  target->code=code;
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_bmp_code_point, target);
 }
 
 void character_refine_preprocesst::convert_is_defined_char(
   conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
   // TODO: unimplemented
-  exprt expr;
-  code_assignt code(result, expr);
-  target->code=code;
 }
 
 void character_refine_preprocesst::convert_is_defined_int(
   conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
   // TODO: unimplemented
-  exprt expr;
-  code_assignt code(result, expr);
-  target->code=code;
 }
 
 /*******************************************************************\
@@ -308,7 +312,7 @@ TODO: for no we only support these ranges of digits
 
 \*******************************************************************/
 
-exprt character_refine_preprocesst::is_digit_expr(exprt chr)
+exprt character_refine_preprocesst::expr_of_is_digit(exprt chr, typet type)
 {
   exprt latin_digit=in_interval_expr(chr, '0', '9');
   exprt arabic_indic_digit=in_interval_expr(chr, 0x660, 0x669);
@@ -321,20 +325,15 @@ exprt character_refine_preprocesst::is_digit_expr(exprt chr)
   return digit;
 }
 
-void character_refine_preprocesst::character_refine_preprocesst::convert_is_digit_char(
+void character_refine_preprocesst::convert_is_digit_char(
   conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()==1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  code_assignt code(result, is_digit_expr(arg));
-  target->code=code;
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_digit, target);
 }
 
-void character_refine_preprocesst::convert_is_digit_int(conversion_input &target)
+void character_refine_preprocesst::convert_is_digit_int(
+  conversion_input &target)
 {
   convert_is_digit_char(target);
 }
@@ -421,14 +420,51 @@ void character_refine_preprocesst::convert_is_java_identifier_start_char(convers
 void character_refine_preprocesst::convert_is_java_identifier_start_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_letter(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_letter_or_digit(conversion_input &target){  }
+
 void character_refine_preprocesst::convert_is_letter_char(
   conversion_input &target)
-{  }
-void character_refine_preprocesst::convert_is_letter_int(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_letter_or_digit_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_letter_or_digit_int(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_lower_case_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_lower_case_int(conversion_input &target){  }
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_letter, target);
+}
+
+void character_refine_preprocesst::convert_is_letter_int(
+  conversion_input &target)
+{
+  convert_is_letter_char(target);
+}
+
+exprt character_refine_preprocesst::expr_of_is_letter_or_digit(
+  exprt chr, typet type)
+{
+  return or_exprt(expr_of_is_letter(chr, type), expr_of_is_digit(chr, type));
+}
+
+void character_refine_preprocesst::convert_is_letter_or_digit_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_digit, target);
+}
+
+void character_refine_preprocesst::convert_is_letter_or_digit_int(
+  conversion_input &target)
+{
+  convert_is_letter_or_digit_char(target);
+}
+
+void character_refine_preprocesst::convert_is_lower_case_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_lower_case, target);
+}
+
+void character_refine_preprocesst::convert_is_lower_case_int(
+  conversion_input &target)
+{
+  convert_is_lower_case_char(target);
+}
 
 void character_refine_preprocesst::convert_is_low_surrogate(
   conversion_input &target)
@@ -444,24 +480,63 @@ void character_refine_preprocesst::convert_is_low_surrogate(
   target->code=code;
 }
 
-void character_refine_preprocesst::convert_is_mirrored_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_mirrored_int(conversion_input &target){  }
+exprt character_refine_preprocesst::in_list_expr(
+  exprt chr, std::list<mp_integer> list)
+{
+  exprt res=false_exprt();
+  for(auto i : list)
+    res=or_exprt(res, equal_exprt(chr, from_integer(i, chr.type())));
+  return res;
+}
+
+exprt character_refine_preprocesst::expr_of_is_mirrored(exprt chr, typet type)
+{
+  return in_list_expr(chr, {0x28, 0x29, 0x3C, 0x3E, 0x5B, 0x5D, 0x7B, 0x7D});
+  /* TODO : intervals:
+  2045, 2046,
+    207D, 207E,
+      208D, 208E,
+  2201, 220D,
+  2211,
+  2215, 2224,
+  2226
+  222B, 2233,
+  2239,
+  223B, 224C
+  2252, 2255
+  225F,2262
+  2264, 226B*/
+  // TODO : mirrored characters after 226B
+}
+
+void character_refine_preprocesst::convert_is_mirrored_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_mirrored, target);
+}
+
+void character_refine_preprocesst::convert_is_mirrored_int(
+  conversion_input &target)
+{
+  convert_is_mirrored_char(target);
+}
+
 void character_refine_preprocesst::convert_is_space(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_space_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_space_char_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_supplementary_code_point(conversion_input &target){  }
+
+exprt character_refine_preprocesst::expr_of_is_surrogate(exprt expr, typet type)
+{
+  return in_interval_expr(expr, 0xD800, 0xDFFF);
+}
+
 void character_refine_preprocesst::convert_is_surrogate(
   conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  exprt is_surrogate=in_interval_expr(arg, 0xD800, 0xDFFF);
-  code_assignt code(result, is_surrogate);
-  target->code=code;
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_surrogate, target);
 }
 
 void character_refine_preprocesst::convert_is_surrogate_pair(
@@ -491,8 +566,19 @@ void character_refine_preprocesst::convert_is_unicode_identifier_start_char(
 void character_refine_preprocesst::convert_is_unicode_identifier_start_int(
   conversion_input &target){  }
 
-void character_refine_preprocesst::convert_is_upper_case_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_upper_case_int(conversion_input &target){  }
+void character_refine_preprocesst::convert_is_upper_case_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_upper_case, target);
+}
+
+void character_refine_preprocesst::convert_is_upper_case_int(
+  conversion_input &target)
+{
+  convert_is_upper_case_char(target);
+}
+
 void character_refine_preprocesst::convert_is_valid_code_point(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_whitespace_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_whitespace_int(conversion_input &target){  }
@@ -566,7 +652,6 @@ void character_refine_preprocesst::replace_character_calls(
         auto it=conversion_table.find(function_id);
         if(it!=conversion_table.end())
           (it->second)(target);
-
       }
     }
   }
