@@ -71,6 +71,7 @@ class character_refine_preprocesst:public messaget
   static exprt expr_of_is_digit(exprt chr, typet type);
   static void convert_is_digit_char(conversion_input &target);
   static void convert_is_digit_int(conversion_input &target);
+  static exprt expr_of_is_high_surrogate(exprt chr, typet type);
   static void convert_is_high_surrogate(conversion_input &target);
   static void convert_is_identifier_ignorable_char(
     conversion_input &target);
@@ -121,8 +122,10 @@ class character_refine_preprocesst:public messaget
   static void convert_is_upper_case_char(conversion_input &target);
   static void convert_is_upper_case_int(conversion_input &target);
   static void convert_is_valid_code_point(conversion_input &target);
+  static exprt expr_of_is_whitespace(exprt chr, typet type);
   static void convert_is_whitespace_char(conversion_input &target);
   static void convert_is_whitespace_int(conversion_input &target);
+  static exprt expr_of_low_surrogate(exprt expr, typet type);
   static void convert_low_surrogate(conversion_input &target);
   static void convert_offset_by_code_points_char(conversion_input &target);
   static void convert_offset_by_code_points_int(conversion_input &target);

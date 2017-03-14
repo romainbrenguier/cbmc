@@ -220,7 +220,8 @@ void character_refine_preprocesst::convert_hash_code(conversion_input &target)
   convert_char_value(target);
 }
 
-exprt character_refine_preprocesst::expr_of_high_surrogate(exprt expr, typet type)
+exprt character_refine_preprocesst::expr_of_high_surrogate(
+  exprt expr, typet type)
 {
   exprt u10000=from_integer(0x010000, type);
   exprt uD800=from_integer(0xD800, type);
@@ -255,7 +256,8 @@ exprt character_refine_preprocesst::expr_of_is_letter(exprt chr, typet type)
     expr_of_is_upper_case(chr, type), expr_of_is_lower_case(chr, type));
 }
 
-exprt character_refine_preprocesst::expr_of_is_alphabetic(exprt expr, typet type)
+exprt character_refine_preprocesst::expr_of_is_alphabetic(
+  exprt expr, typet type)
 {
   return expr_of_is_letter(expr, type);
 }
@@ -338,19 +340,17 @@ void character_refine_preprocesst::convert_is_digit_int(
   convert_is_digit_char(target);
 }
 
+exprt character_refine_preprocesst::expr_of_is_high_surrogate(
+  exprt expr, typet type)
+{
+  return typecast_exprt(in_interval_expr(expr, 0xD800, 0xDBFF), type);
+}
+
 void character_refine_preprocesst::convert_is_high_surrogate(
     conversion_input &target)
 {
-  const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()==1);
-  exprt arg=function_call.arguments()[0];
-  exprt result=function_call.lhs();
-  target->make_assignment();
-  // TODO: factorize with string_constraint_generator
-  exprt is_high_surrogate=in_interval_expr(arg, 0xD800, 0xDBFF);
-  code_assignt code(result, is_high_surrogate);
-  target->code=code;
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_high_surrogate, target);
 }
 
 void character_refine_preprocesst::convert_is_identifier_ignorable_char(
@@ -580,9 +580,64 @@ void character_refine_preprocesst::convert_is_upper_case_int(
 }
 
 void character_refine_preprocesst::convert_is_valid_code_point(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_whitespace_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_whitespace_int(conversion_input &target){  }
-void character_refine_preprocesst::convert_low_surrogate(conversion_input &target){  }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_whitespace
+
+ Purpose: Determines if the specified character is white space according
+          to Java. It is the case when it one of the following:
+          * a Unicode space character (SPACE_SEPARATOR, LINE_SEPARATOR, or
+            PARAGRAPH_SEPARATOR) but is not also a non-breaking space
+            ('\u00A0', '\u2007', '\u202F').
+          * it is one of these U+0009  U+000A U+000B U+000C U+000D
+            U+001C U+001D U+001E U+001F
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_is_whitespace(
+  exprt expr, typet type)
+{
+  std::list<mp_integer> space_characters=
+    {0x20, 0x1680, 0x205F, 0x3000, 0x2028, 0x2029};
+  exprt condition0=in_list_expr(expr, space_characters);
+  exprt condition1=in_interval_expr(expr, 0x2000, 0x2006);
+  exprt condition2=in_interval_expr(expr, 0x2008, 0x200A);
+  exprt condition3=in_interval_expr(expr, 0x09, 0x0D);
+  exprt condition4=in_interval_expr(expr, 0x1C, 0x1F);
+  return or_exprt(
+    or_exprt(condition0, condition1),
+    or_exprt(condition2, or_exprt(condition3, condition4)));
+}
+
+void character_refine_preprocesst::convert_is_whitespace_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_whitespace, target);
+}
+
+void character_refine_preprocesst::convert_is_whitespace_int(
+  conversion_input &target)
+{
+  convert_is_whitespace_char(target);
+}
+
+exprt character_refine_preprocesst::expr_of_low_surrogate(
+  exprt expr, typet type)
+{
+  exprt uDC00=from_integer(0xDC00, type);
+  exprt u0400=from_integer(0x0400, type);
+  return plus_exprt(uDC00, mod_exprt(expr, u0400));
+}
+
+void character_refine_preprocesst::convert_low_surrogate(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_low_surrogate, target);
+}
+
 void character_refine_preprocesst::convert_offset_by_code_points_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_offset_by_code_points_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_reverse_bytes(conversion_input &target){  }
