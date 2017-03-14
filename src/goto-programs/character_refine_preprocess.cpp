@@ -375,14 +375,17 @@ void character_refine_preprocesst::convert_is_identifier_ignorable_char(
 }
 
 void character_refine_preprocesst::convert_is_identifier_ignorable_int(
-  conversion_input &target){  }
+  conversion_input &target)
+{
+  convert_is_identifier_ignorable_char(target);
+}
 
 void character_refine_preprocesst::convert_is_ideographic(
   conversion_input &target)
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
   source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
+  assert(function_call.arguments().size()==1);
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
@@ -392,8 +395,28 @@ void character_refine_preprocesst::convert_is_ideographic(
   code_assignt code(result, is_ideograph);
 }
 
-void character_refine_preprocesst::convert_is_ISO_control_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_ISO_control_int(conversion_input &target){  }
+void character_refine_preprocesst::convert_is_ISO_control_char(
+  conversion_input &target)
+{
+  const code_function_callt &function_call=to_code_function_call(target->code);
+  source_locationt location=function_call.source_location();
+  assert(function_call.arguments().size()==1);
+  exprt arg=function_call.arguments()[0];
+  exprt result=function_call.lhs();
+  target->make_assignment();
+  or_exprt iso(
+    in_interval_expr(arg, 0x00, 0x1F), in_interval_expr(arg, 0x7F, 0x9F));
+
+  code_assignt code(result, iso);
+  target->code=code;
+}
+
+void character_refine_preprocesst::convert_is_ISO_control_int(
+  conversion_input &target)
+{
+  convert_is_ISO_control_char(target);
+}
+
 void character_refine_preprocesst::convert_is_java_identifier_part_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_identifier_part_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_identifier_start_char(conversion_input &target){  }
