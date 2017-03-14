@@ -253,9 +253,8 @@ void character_refine_preprocesst::convert_is_bmp_code_point(
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  // TODO: unimplemented
-  exprt expr;
-  code_assignt code(result, expr);
+  binary_relation_exprt is_bmp(arg, ID_le, from_integer(0xFFFF, arg.type()));
+  code_assignt code(result, typecast_exprt(is_bmp, result.type()));
   target->code=code;
 }
 
@@ -331,6 +330,15 @@ void character_refine_preprocesst::convert_is_digit_int(conversion_input &target
   convert_is_digit_char(target);
 }
 
+exprt character_refine_preprocesst::in_interval_expr(
+  exprt arg, mp_integer lower_bound, mp_integer upper_bound)
+{
+  and_exprt res(
+    binary_relation_exprt(arg, ID_ge, from_integer(lower_bound, arg.type())),
+    binary_relation_exprt(arg, ID_le, from_integer(upper_bound, arg.type())));
+  return res;
+}
+
 void character_refine_preprocesst::convert_is_high_surrogate(
     conversion_input &target)
 {
@@ -341,15 +349,31 @@ void character_refine_preprocesst::convert_is_high_surrogate(
   exprt result=function_call.lhs();
   target->make_assignment();
   // TODO: factorize with string_constraint_generator
-  and_exprt is_high_surrogate(
-    binary_relation_exprt(arg, ID_ge, from_integer(0xD800, arg.type())),
-    binary_relation_exprt(arg, ID_le, from_integer(0xDBFF, arg.type())));
+  exprt is_high_surrogate=in_interval_expr(arg, 0xD800, 0xDBFF);
   code_assignt code(result, is_high_surrogate);
   target->code=code;
 }
 
 void character_refine_preprocesst::convert_is_identifier_ignorable_char(
-  conversion_input &target){  }
+  conversion_input &target)
+{
+  const code_function_callt &function_call=to_code_function_call(target->code);
+  source_locationt location=function_call.source_location();
+  assert(function_call.arguments().size()>=1);
+  exprt arg=function_call.arguments()[0];
+  exprt result=function_call.lhs();
+  target->make_assignment();
+  or_exprt ignorable(
+    in_interval_expr(arg, 0x0000, 0x0008),
+    or_exprt(
+      in_interval_expr(arg, 0x000E, 0x001B),
+      in_interval_expr(arg, 0x007F, 0x009F)));
+
+  // TODO: we ignore  the FORMAT general category value for now
+  code_assignt code(result, ignorable);
+  target->code=code;
+}
+
 void character_refine_preprocesst::convert_is_identifier_ignorable_int(
   conversion_input &target){  }
 
