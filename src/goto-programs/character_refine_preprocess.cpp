@@ -522,7 +522,11 @@ void character_refine_preprocesst::convert_is_mirrored_int(
   convert_is_mirrored_char(target);
 }
 
-void character_refine_preprocesst::convert_is_space(conversion_input &target){  }
+void character_refine_preprocesst::convert_is_space(conversion_input &target)
+{
+  convert_is_whitespace_char(target);
+}
+
 void character_refine_preprocesst::convert_is_space_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_space_char_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_supplementary_code_point(conversion_input &target){  }
