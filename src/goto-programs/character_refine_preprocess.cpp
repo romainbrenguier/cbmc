@@ -59,7 +59,6 @@ void character_refine_preprocesst::convert_compare_to(conversion_input &target){
 void character_refine_preprocesst::convert_digit_char(conversion_input &target)
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
-  source_locationt location=function_call.source_location();
   assert(function_call.arguments().size()==2);
   exprt arg=function_call.arguments()[0];
   exprt radix=function_call.arguments()[1];
@@ -170,8 +169,21 @@ void character_refine_preprocesst::convert_for_digit(conversion_input &target)
 void character_refine_preprocesst::convert_get_directionality_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_get_directionality_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_get_name(conversion_input &target){  }
-void character_refine_preprocesst::convert_get_numeric_value_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_get_numeric_value_int(conversion_input &target){  }
+
+void character_refine_preprocesst::convert_get_numeric_value_char(
+  conversion_input &target)
+{
+  // TODO: this is only for ASCII characters
+  convert_digit_char(target);
+}
+
+void character_refine_preprocesst::convert_get_numeric_value_int(
+  conversion_input &target)
+{
+  // TODO: this is only for ASCII characters
+  convert_digit_int(target);
+}
+
 void character_refine_preprocesst::convert_get_type_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_get_type_int(conversion_input &target){  }
 
@@ -210,9 +222,25 @@ void character_refine_preprocesst::convert_is_alphabetic(
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  // TODO: unimplemented
-  exprt expr;
-  code_assignt code(result, expr);
+
+  // TODO: this is only for ASCII characters, the following are not yet
+  // considered: TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
+  exprt cA=from_integer('A', arg.type());
+  exprt cZ=from_integer('Z', arg.type());
+  exprt i10=from_integer(10, arg.type());
+  and_exprt upper_case(
+    binary_relation_exprt(arg, ID_ge, cA),
+    binary_relation_exprt(arg, ID_le, cZ));
+
+  exprt ca=from_integer('a', arg.type());
+  exprt cz=from_integer('z', arg.type());
+  and_exprt lower_case(
+    binary_relation_exprt(arg, ID_ge, ca),
+    binary_relation_exprt(arg, ID_le, cz));
+
+  or_exprt expr(upper_case, lower_case);
+  typecast_exprt tc_expr(expr, result.type());
+  code_assignt code(result, tc_expr);
   target->code=code;
 }
 
