@@ -135,7 +135,7 @@ void character_refine_preprocesst::convert_digit_char(conversion_input &target)
     latin_digit,
     case1,
     if_exprt(upper_case, case2, if_exprt(lower_case, case3, fullwidth_cases)));
-  typecast_exprt tc_expr(expr, result.type());
+  typecast_exprt tc_expr(expr, type);
 
   code_assignt code(result, tc_expr);
   target->code=code;
@@ -147,7 +147,26 @@ void character_refine_preprocesst::convert_digit_int(conversion_input &target)
 }
 
 void character_refine_preprocesst::convert_equals(conversion_input &target){  }
-void character_refine_preprocesst::convert_for_digit(conversion_input &target){  }
+
+void character_refine_preprocesst::convert_for_digit(conversion_input &target)
+{
+  const code_function_callt &function_call=to_code_function_call(target->code);
+  source_locationt location=function_call.source_location();
+  assert(function_call.arguments().size()==2);
+  exprt digit=function_call.arguments()[0];
+  exprt radix=function_call.arguments()[1];
+  exprt result=function_call.lhs();
+  target->make_assignment();
+  typet type=result.type();
+
+  exprt d10=from_integer(10, digit.type());
+  binary_relation_exprt small(digit, ID_le, d10);
+  plus_exprt value1(digit, from_integer('0', digit.type()));
+  minus_exprt value2(plus_exprt(digit, from_integer('a', digit.type())), d10);
+  code_assignt code(result, if_exprt(small, value1, value2));
+  target->code=code;
+}
+
 void character_refine_preprocesst::convert_get_directionality_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_get_directionality_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_get_name(conversion_input &target){  }
