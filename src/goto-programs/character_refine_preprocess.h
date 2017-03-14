@@ -26,7 +26,6 @@ class character_refine_preprocesst:public messaget
 
  private:
   namespacet ns;
-  symbol_tablet & symbol_table;
   goto_functionst & goto_functions;
 
   void replace_character_calls(goto_functionst::function_mapt::iterator f_it);

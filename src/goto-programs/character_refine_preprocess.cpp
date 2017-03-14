@@ -352,7 +352,22 @@ void character_refine_preprocesst::convert_is_identifier_ignorable_char(
   conversion_input &target){  }
 void character_refine_preprocesst::convert_is_identifier_ignorable_int(
   conversion_input &target){  }
-void character_refine_preprocesst::convert_is_ideographic(conversion_input &target){  }
+
+void character_refine_preprocesst::convert_is_ideographic(
+  conversion_input &target)
+{
+  const code_function_callt &function_call=to_code_function_call(target->code);
+  source_locationt location=function_call.source_location();
+  assert(function_call.arguments().size()>=1);
+  exprt arg=function_call.arguments()[0];
+  exprt result=function_call.lhs();
+  target->make_assignment();
+  and_exprt is_ideograph(
+    binary_relation_exprt(arg, ID_ge, from_integer(0x4E00, arg.type())),
+    binary_relation_exprt(arg, ID_le, from_integer(0x9FFF, arg.type())));
+  code_assignt code(result, is_ideograph);
+}
+
 void character_refine_preprocesst::convert_is_ISO_control_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_ISO_control_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_identifier_part_char(conversion_input &target){  }
@@ -553,7 +568,6 @@ character_refine_preprocesst::character_refine_preprocesst(
   message_handlert &_message_handler):
     messaget(_message_handler),
     ns(_symbol_table),
-    symbol_table(_symbol_table),
     goto_functions(_goto_functions)
 {
   initialize_conversion_table();
