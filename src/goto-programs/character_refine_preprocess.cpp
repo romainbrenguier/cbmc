@@ -9,9 +9,30 @@ Date:   March 2017
 
 \*******************************************************************/
 
-#include "character_refine_preprocess.h"
 #include <util/arith_tools.h>
+#include "character_refine_preprocess.h"
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::in_interval_expr
+
+  Inputs: an expression, a integer lower bound and upper bound
+
+ Outputs: an expression
+
+ Purpose: the returned expression is true when the first argument is in the
+          interval defined by the lower and upper bounds (included)
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::in_interval_expr(
+  exprt arg, mp_integer lower_bound, mp_integer upper_bound)
+{
+  and_exprt res(
+    binary_relation_exprt(arg, ID_ge, from_integer(lower_bound, arg.type())),
+    binary_relation_exprt(arg, ID_le, from_integer(upper_bound, arg.type())));
+  return res;
+}
 
 void character_refine_preprocesst::convert_constructor(conversion_input &target)
 {  }
@@ -75,10 +96,7 @@ void character_refine_preprocesst::convert_digit_char(conversion_input &target)
   // decomposition) is less than the specified radix.
   exprt invalid=from_integer(-1, arg.type());
   exprt c0=from_integer('0', arg.type());
-  exprt c9=from_integer('9', arg.type());
-  and_exprt latin_digit(
-    binary_relation_exprt(arg, ID_ge, c0),
-    binary_relation_exprt(arg, ID_le, c9));
+  exprt latin_digit=in_interval_expr(arg, '0', '9');
   minus_exprt value1(arg, c0);
   // TODO: this is only valid for latin digits
   if_exprt case1(
@@ -88,11 +106,8 @@ void character_refine_preprocesst::convert_digit_char(conversion_input &target)
   // through 'Z' and its code is less than radix + 'A' - 10,
   // then ch - 'A' + 10 is returned.
   exprt cA=from_integer('A', arg.type());
-  exprt cZ=from_integer('Z', arg.type());
   exprt i10=from_integer(10, arg.type());
-  and_exprt upper_case(
-    binary_relation_exprt(arg, ID_ge, cA),
-    binary_relation_exprt(arg, ID_le, cZ));
+  exprt upper_case=in_interval_expr(arg, 'A', 'Z');
   plus_exprt value2(minus_exprt(arg, cA), i10);
   if_exprt case2(
     binary_relation_exprt(value2, ID_lt, radix), value2, invalid);
@@ -100,10 +115,7 @@ void character_refine_preprocesst::convert_digit_char(conversion_input &target)
   // The character is one of the lowercase Latin letters 'a' through 'z' and
   // its code is less than radix + 'a' - 10, then ch - 'a' + 10 is returned.
   exprt ca=from_integer('a', arg.type());
-  exprt cz=from_integer('z', arg.type());
-  and_exprt lower_case(
-    binary_relation_exprt(arg, ID_ge, ca),
-    binary_relation_exprt(arg, ID_le, cz));
+  exprt lower_case=in_interval_expr(arg, 'a', 'z');
   plus_exprt value3(minus_exprt(arg, ca), i10);
   if_exprt case3(
     binary_relation_exprt(value3, ID_lt, radix), value3, invalid);
@@ -113,10 +125,7 @@ void character_refine_preprocesst::convert_digit_char(conversion_input &target)
   // through Z ('\uFF3A') and its code is less than radix + '\uFF21' - 10.
   // In this case, ch - '\uFF21' + 10 is returned.
   exprt uFF21=from_integer(0xFF21, arg.type());
-  exprt uFF3A=from_integer(0xFF3A, arg.type());
-  and_exprt fullwidth_upper_case(
-    binary_relation_exprt(arg, ID_ge, uFF21),
-    binary_relation_exprt(arg, ID_le, uFF3A));
+  exprt fullwidth_upper_case=in_interval_expr(arg, 0xFF21, 0xFF3A);
   plus_exprt value4(minus_exprt(arg, uFF21), i10);
   if_exprt case4(
     binary_relation_exprt(value4, ID_lt, radix), value4, invalid);
@@ -225,19 +234,8 @@ void character_refine_preprocesst::convert_is_alphabetic(
 
   // TODO: this is only for ASCII characters, the following are not yet
   // considered: TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
-  exprt cA=from_integer('A', arg.type());
-  exprt cZ=from_integer('Z', arg.type());
-  exprt i10=from_integer(10, arg.type());
-  and_exprt upper_case(
-    binary_relation_exprt(arg, ID_ge, cA),
-    binary_relation_exprt(arg, ID_le, cZ));
-
-  exprt ca=from_integer('a', arg.type());
-  exprt cz=from_integer('z', arg.type());
-  and_exprt lower_case(
-    binary_relation_exprt(arg, ID_ge, ca),
-    binary_relation_exprt(arg, ID_le, cz));
-
+  exprt upper_case=in_interval_expr(arg, 'A', 'Z');
+  exprt lower_case=in_interval_expr(arg, 'a', 'z');
   or_exprt expr(upper_case, lower_case);
   typecast_exprt tc_expr(expr, result.type());
   code_assignt code(result, tc_expr);
@@ -316,27 +314,13 @@ void character_refine_preprocesst::character_refine_preprocesst::convert_is_digi
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  exprt u0030=from_integer(0x0030, arg.type());
-  exprt u0039=from_integer(0x0039, arg.type());
-  and_exprt latin_digit(
-    binary_relation_exprt(arg, ID_ge, u0030),
-    binary_relation_exprt(arg, ID_le, u0039));
-  code_assignt code(result, latin_digit);
+  code_assignt code(result, in_interval_expr(arg, '0', '9'));
   target->code=code;
 }
 
 void character_refine_preprocesst::convert_is_digit_int(conversion_input &target)
 {
   convert_is_digit_char(target);
-}
-
-exprt character_refine_preprocesst::in_interval_expr(
-  exprt arg, mp_integer lower_bound, mp_integer upper_bound)
-{
-  and_exprt res(
-    binary_relation_exprt(arg, ID_ge, from_integer(lower_bound, arg.type())),
-    binary_relation_exprt(arg, ID_le, from_integer(upper_bound, arg.type())));
-  return res;
 }
 
 void character_refine_preprocesst::convert_is_high_surrogate(
@@ -389,9 +373,7 @@ void character_refine_preprocesst::convert_is_ideographic(
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  and_exprt is_ideograph(
-    binary_relation_exprt(arg, ID_ge, from_integer(0x4E00, arg.type())),
-    binary_relation_exprt(arg, ID_le, from_integer(0x9FFF, arg.type())));
+  exprt is_ideograph=in_interval_expr(arg, 0x4E00, 0x9FFF);
   code_assignt code(result, is_ideograph);
 }
 
@@ -439,10 +421,7 @@ void character_refine_preprocesst::convert_is_low_surrogate(
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  // TODO: factorize with string_constraint_generator
-  and_exprt is_low_surrogate(
-    binary_relation_exprt(arg, ID_ge, from_integer(0xDC00, arg.type())),
-    binary_relation_exprt(arg, ID_le, from_integer(0xDFFF, arg.type())));
+  exprt is_low_surrogate=in_interval_expr(arg, 0xDC00, 0xDFFF);
   code_assignt code(result, is_low_surrogate);
   target->code=code;
 }
@@ -462,9 +441,7 @@ void character_refine_preprocesst::convert_is_surrogate(
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  and_exprt is_surrogate(
-    binary_relation_exprt(arg, ID_ge, from_integer(0xD800, arg.type())),
-    binary_relation_exprt(arg, ID_le, from_integer(0xDFFF, arg.type())));
+  exprt is_surrogate=in_interval_expr(arg, 0xD800, 0xDFFF);
   code_assignt code(result, is_surrogate);
   target->code=code;
 }
@@ -479,12 +456,8 @@ void character_refine_preprocesst::convert_is_surrogate_pair(
   exprt arg1=function_call.arguments()[1];
   exprt result=function_call.lhs();
   target->make_assignment();
-  and_exprt is_low_surrogate(
-    binary_relation_exprt(arg1, ID_ge, from_integer(0xDC00, arg1.type())),
-    binary_relation_exprt(arg1, ID_le, from_integer(0xDFFF, arg1.type())));
-  and_exprt is_high_surrogate(
-    binary_relation_exprt(arg0, ID_ge, from_integer(0xD800, arg0.type())),
-    binary_relation_exprt(arg0, ID_le, from_integer(0xDBFF, arg0.type())));
+  exprt is_low_surrogate=in_interval_expr(arg1, 0xDC00, 0xDFFF);
+  exprt is_high_surrogate=in_interval_expr(arg0, 0xD800, 0xDBFF);
   code_assignt code(result, and_exprt(is_high_surrogate, is_low_surrogate));
   target->code=code;
 }
