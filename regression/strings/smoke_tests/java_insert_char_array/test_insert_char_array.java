@@ -1,6 +1,6 @@
 public class test_insert_char_array
 {
-   public static void main(String[] argv)
+   public static void main(/*String[] argv*/)
    {
       StringBuilder sb = new StringBuilder("ad");
       char[] array = new char[2];
