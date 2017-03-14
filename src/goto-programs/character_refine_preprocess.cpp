@@ -222,6 +222,15 @@ void character_refine_preprocesst::convert_high_surrogate(conversion_input &targ
   target->code=code;
 }
 
+// TODO: this is only for ASCII characters, the following are not yet
+// considered: TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
+exprt character_refine_preprocesst::is_letter_expr(exprt chr)
+{
+  exprt upper_case=in_interval_expr(chr, 'A', 'Z');
+  exprt lower_case=in_interval_expr(chr, 'a', 'z');
+  return or_exprt(upper_case, lower_case);
+}
+
 void character_refine_preprocesst::convert_is_alphabetic(
   conversion_input &target)
 {
@@ -231,13 +240,7 @@ void character_refine_preprocesst::convert_is_alphabetic(
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-
-  // TODO: this is only for ASCII characters, the following are not yet
-  // considered: TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
-  exprt upper_case=in_interval_expr(arg, 'A', 'Z');
-  exprt lower_case=in_interval_expr(arg, 'a', 'z');
-  or_exprt expr(upper_case, lower_case);
-  typecast_exprt tc_expr(expr, result.type());
+  typecast_exprt tc_expr(is_letter_expr(arg), result.type());
   code_assignt code(result, tc_expr);
   target->code=code;
 }
@@ -301,20 +304,33 @@ Some Unicode character ranges that contain digits:
 '\uFF10' through '\uFF19', Fullwidth digits
 
 Many other character ranges contain digits as well.
-TODO: for no we only support ISO-LATIN-1 digits
+TODO: for no we only support these ranges of digits
 
 \*******************************************************************/
+
+exprt character_refine_preprocesst::is_digit_expr(exprt chr)
+{
+  exprt latin_digit=in_interval_expr(chr, '0', '9');
+  exprt arabic_indic_digit=in_interval_expr(chr, 0x660, 0x669);
+  exprt extended_digit=in_interval_expr(chr, 0x6F0, 0x6F9);
+  exprt devanagari_digit=in_interval_expr(chr, 0x966, 0x96F);
+  exprt fullwidth_digit=in_interval_expr(chr, 0xFF10, 0xFF19);
+  or_exprt digit(
+    or_exprt(latin_digit, or_exprt(arabic_indic_digit, extended_digit)),
+    or_exprt(devanagari_digit, fullwidth_digit));
+  return digit;
+}
 
 void character_refine_preprocesst::character_refine_preprocesst::convert_is_digit_char(
   conversion_input &target)
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
   source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
+  assert(function_call.arguments().size()==1);
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
-  code_assignt code(result, in_interval_expr(arg, '0', '9'));
+  code_assignt code(result, is_digit_expr(arg));
   target->code=code;
 }
 
@@ -328,7 +344,7 @@ void character_refine_preprocesst::convert_is_high_surrogate(
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
   source_locationt location=function_call.source_location();
-  assert(function_call.arguments().size()>=1);
+  assert(function_call.arguments().size()==1);
   exprt arg=function_call.arguments()[0];
   exprt result=function_call.lhs();
   target->make_assignment();
@@ -405,7 +421,9 @@ void character_refine_preprocesst::convert_is_java_identifier_start_char(convers
 void character_refine_preprocesst::convert_is_java_identifier_start_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_letter(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_java_letter_or_digit(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_letter_char(conversion_input &target){  }
+void character_refine_preprocesst::convert_is_letter_char(
+  conversion_input &target)
+{  }
 void character_refine_preprocesst::convert_is_letter_int(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_letter_or_digit_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_is_letter_or_digit_int(conversion_input &target){  }

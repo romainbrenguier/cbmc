@@ -126,8 +126,13 @@ class character_refine_preprocesst:public messaget
   static void convert_to_upper_case_int(conversion_input &target);
   static void convert_value_of(conversion_input &target);
 
+  // Helper functions
+
   static exprt in_interval_expr(
     exprt arg, mp_integer lower_bound, mp_integer upper_bound);
+
+  static exprt is_digit_expr(exprt chr);
+  static exprt is_letter_expr(exprt chr);
 };
 
 #endif // CPROVER_GOTO_PROGRAMS_CHARACTER_REFINE_PREPROCESS_H
