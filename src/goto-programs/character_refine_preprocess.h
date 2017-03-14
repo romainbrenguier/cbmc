@@ -100,6 +100,7 @@ class character_refine_preprocesst:public messaget
   static void convert_is_mirrored_char(conversion_input &target);
   static void convert_is_mirrored_int(conversion_input &target);
   static void convert_is_space(conversion_input &target);
+  static exprt expr_of_is_space_char(exprt chr, typet type);
   static void convert_is_space_char(conversion_input &target);
   static void convert_is_space_char_int(conversion_input &target);
   static void convert_is_supplementary_code_point(conversion_input &target);
@@ -129,6 +130,7 @@ class character_refine_preprocesst:public messaget
   static void convert_low_surrogate(conversion_input &target);
   static void convert_offset_by_code_points_char(conversion_input &target);
   static void convert_offset_by_code_points_int(conversion_input &target);
+  static exprt expr_of_reverse_bytes(exprt expr, typet type);
   static void convert_reverse_bytes(conversion_input &target);
   static void convert_to_chars_char(conversion_input &target);
   static void convert_to_chars_int(conversion_input &target);

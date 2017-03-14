@@ -527,8 +527,39 @@ void character_refine_preprocesst::convert_is_space(conversion_input &target)
   convert_is_whitespace_char(target);
 }
 
-void character_refine_preprocesst::convert_is_space_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_space_char_int(conversion_input &target){  }
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_whitespace
+
+ Purpose: Determines if the specified character is white space according
+          to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
+            PARAGRAPH_SEPARATOR)
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_is_space_char(
+  exprt expr, typet type)
+{
+  std::list<mp_integer> space_characters=
+    {0x20, 0x00A0, 0x1680, 0x202F, 0x205F, 0x3000, 0x2028, 0x2029};
+  exprt condition0=in_list_expr(expr, space_characters);
+  exprt condition1=in_interval_expr(expr, 0x2000, 0x200A);
+  return or_exprt(condition0, condition1);
+}
+
+void character_refine_preprocesst::convert_is_space_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_space_char, target);
+}
+
+void character_refine_preprocesst::convert_is_space_char_int(
+  conversion_input &target)
+{
+  convert_is_space_char(target);
+}
+
 void character_refine_preprocesst::convert_is_supplementary_code_point(conversion_input &target){  }
 
 exprt character_refine_preprocesst::expr_of_is_surrogate(exprt expr, typet type)
@@ -645,7 +676,7 @@ void character_refine_preprocesst::convert_low_surrogate(
 void character_refine_preprocesst::convert_offset_by_code_points_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_offset_by_code_points_int(conversion_input &target){  }
 
-static exprt character_refine_preprocesst::expr_of_reverse_bytes(
+exprt character_refine_preprocesst::expr_of_reverse_bytes(
   exprt expr, typet type)
 {
   shl_exprt first_byte(expr, from_integer(8, type));
@@ -744,10 +775,178 @@ Function: character_refine_preprocesst::initialize_conversion_table
 
 void character_refine_preprocesst::initialize_conversion_table()
 {
+  conversion_table["java::java.lang.Character.<init>()"]=
+      &character_refine_preprocesst::convert_constructor;
+  conversion_table["java::java.lang.Character.charCount:(I)I"]=
+      &character_refine_preprocesst::convert_char_count;
+  conversion_table["java::java.lang.Character.charValue:()C"]=
+      &character_refine_preprocesst::convert_char_value;
+  conversion_table["java::java.lang.Character.codePointAt:([CI)I"]=
+      &character_refine_preprocesst::convert_code_point_at;
+  conversion_table["java::java.lang.Character.codePointAt:([CII)I"]=
+      &character_refine_preprocesst::convert_code_point_at;
+  conversion_table["java::java.lang.Character.codePointAt:(Ljava.lang.CharSequence;I)I"]=
+      &character_refine_preprocesst::convert_code_point_at;
+  conversion_table["java::java.lang.Character.codePointBefore:([CI)I"]=
+      &character_refine_preprocesst::convert_code_point_before;
+  conversion_table["java::java.lang.Character.codePointBefore:([CII)I"]=
+      &character_refine_preprocesst::convert_code_point_before;
+  conversion_table["java::java.lang.Character.codePointBefore:(Ljava.lang.CharSequence;I)I"]=
+      &character_refine_preprocesst::convert_code_point_before;
+  conversion_table["java::java.lang.Character.codePointCount:([CII)I"]=
+      &character_refine_preprocesst::convert_code_point_count_char;
+  conversion_table["java::java.lang.Character.codePointCount:(Ljava.lang.CharSequence;I)I"]=
+      &character_refine_preprocesst::convert_code_point_count_int;
+  conversion_table["java::java.lang.Character.compare:(C)Z"]=
+      &character_refine_preprocesst::convert_compare;
+  conversion_table["java::java.lang.Character.compareTo:(C)Z"]=
+      &character_refine_preprocesst::convert_compare_to;
+  conversion_table["java::java.lang.Character.digit:(C)Z"]=
+      &character_refine_preprocesst::convert_digit_char;
+  conversion_table["java::java.lang.Character.digit:(C)Z"]=
+      &character_refine_preprocesst::convert_digit_int;
+  conversion_table["java::java.lang.Character.equals:(C)Z"]=
+      &character_refine_preprocesst::convert_equals;
+  conversion_table["java::java.lang.Character.forDigit:(C)Z"]=
+      &character_refine_preprocesst::convert_for_digit;
+  conversion_table["java::java.lang.Character.getDirectionality:(C)Z"]=
+      &character_refine_preprocesst::convert_get_directionality_char;
+  conversion_table["java::java.lang.Character.getDirectionality:(C)Z"]=
+      &character_refine_preprocesst::convert_get_directionality_int;
+  conversion_table["java::java.lang.Character.getName:(C)Z"]=
+      &character_refine_preprocesst::convert_get_name;
+  conversion_table["java::java.lang.Character.getNumericValue:(C)Z"]=
+      &character_refine_preprocesst::convert_get_numeric_value_char;
+  conversion_table["java::java.lang.Character.getNumericValue:(C)Z"]=
+      &character_refine_preprocesst::convert_get_numeric_value_int;
+  conversion_table["java::java.lang.Character.getType:(C)Z"]=
+      &character_refine_preprocesst::convert_get_type_char;
+  conversion_table["java::java.lang.Character.getType:(C)Z"]=
+      &character_refine_preprocesst::convert_get_type_int;
+  conversion_table["java::java.lang.Character.hashCode:(C)Z"]=
+      &character_refine_preprocesst::convert_hash_code;
+  conversion_table["java::java.lang.Character.highSurrogate:(C)Z"]=
+      &character_refine_preprocesst::convert_high_surrogate;
+  conversion_table["java::java.lang.Character.isAlphabetic:(C)Z"]=
+      &character_refine_preprocesst::convert_is_alphabetic;
+  conversion_table["java::java.lang.Character.isBmpCodePoint:(C)Z"]=
+      &character_refine_preprocesst::convert_is_bmp_code_point;
   conversion_table["java::java.lang.Character.isDefined:(C)Z"]=
-    &character_refine_preprocesst::convert_is_defined_char;
+      &character_refine_preprocesst::convert_is_defined_char;
+  conversion_table["java::java.lang.Character.isDefined:(C)Z"]=
+      &character_refine_preprocesst::convert_is_defined_int;
   conversion_table["java::java.lang.Character.isDigit:(C)Z"]=
-    &character_refine_preprocesst::convert_is_digit_char;
+      &character_refine_preprocesst::convert_is_digit_char;
+  conversion_table["java::java.lang.Character.isDigit:(C)Z"]=
+      &character_refine_preprocesst::convert_is_digit_int;
+  conversion_table["java::java.lang.Character.isHighSurrogate:(C)Z"]=
+      &character_refine_preprocesst::convert_is_high_surrogate;
+  conversion_table["java::java.lang.Character.isIdentifierIgnorable:(C)Z"]=
+      &character_refine_preprocesst::convert_is_identifier_ignorable_char;
+  conversion_table["java::java.lang.Character.isIdentifierIgnorable:(C)Z"]=
+      &character_refine_preprocesst::convert_is_identifier_ignorable_int;
+  conversion_table["java::java.lang.Character.isIdeographic:(C)Z"]=
+      &character_refine_preprocesst::convert_is_ideographic;
+  conversion_table["java::java.lang.Character.isISOControl:(C)Z"]=
+      &character_refine_preprocesst::convert_is_ISO_control_char;
+  conversion_table["java::java.lang.Character.isISOControl:(C)Z"]=
+      &character_refine_preprocesst::convert_is_ISO_control_int;
+  conversion_table["java::java.lang.Character.isJavaIdentifierPart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_java_identifier_part_char;
+  conversion_table["java::java.lang.Character.isJavaIdentifierPart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_java_identifier_part_int;
+  conversion_table["java::java.lang.Character.isJavaIdentifierStart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_java_identifier_start_char;
+  conversion_table["java::java.lang.Character.isJavaIdentifierStart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_java_identifier_start_int;
+  conversion_table["java::java.lang.Character.isJavaLetter:(C)Z"]=
+      &character_refine_preprocesst::convert_is_java_letter;
+  conversion_table["java::java.lang.Character.isJavaLetterOrDigit:(C)Z"]=
+      &character_refine_preprocesst::convert_is_java_letter_or_digit;
+  conversion_table["java::java.lang.Character.isLetter:(C)Z"]=
+      &character_refine_preprocesst::convert_is_letter_char;
+  conversion_table["java::java.lang.Character.isLetter:(C)Z"]=
+      &character_refine_preprocesst::convert_is_letter_int;
+  conversion_table["java::java.lang.Character.isLetterOrDigit:(C)Z"]=
+      &character_refine_preprocesst::convert_is_letter_or_digit_char;
+  conversion_table["java::java.lang.Character.isLetterOrDigit:(C)Z"]=
+      &character_refine_preprocesst::convert_is_letter_or_digit_int;
+  conversion_table["java::java.lang.Character.isLowerCase:(C)Z"]=
+      &character_refine_preprocesst::convert_is_lower_case_char;
+  conversion_table["java::java.lang.Character.isLowerCase:(C)Z"]=
+      &character_refine_preprocesst::convert_is_lower_case_int;
+  conversion_table["java::java.lang.Character.isLowSurrogate:(C)Z"]=
+      &character_refine_preprocesst::convert_is_low_surrogate;
+  conversion_table["java::java.lang.Character.isMirrored:(C)Z"]=
+      &character_refine_preprocesst::convert_is_mirrored_char;
+  conversion_table["java::java.lang.Character.isMirrored:(C)Z"]=
+      &character_refine_preprocesst::convert_is_mirrored_int;
+  conversion_table["java::java.lang.Character.isSpace:(C)Z"]=
+      &character_refine_preprocesst::convert_is_space;
+  conversion_table["java::java.lang.Character.isSpaceChar:(C)Z"]=
+      &character_refine_preprocesst::convert_is_space_char;
+  conversion_table["java::java.lang.Character.isSpaceChar:(C)Z"]=
+      &character_refine_preprocesst::convert_is_space_char_int;
+  conversion_table["java::java.lang.Character.isSupplementaryCodePoint:(C)Z"]=
+      &character_refine_preprocesst::convert_is_supplementary_code_point;
+  conversion_table["java::java.lang.Character.isSurrogate:(C)Z"]=
+      &character_refine_preprocesst::convert_is_surrogate;
+  conversion_table["java::java.lang.Character.isSurrogatePair:(C)Z"]=
+      &character_refine_preprocesst::convert_is_surrogate_pair;
+  conversion_table["java::java.lang.Character.isTitleCase:(C)Z"]=
+      &character_refine_preprocesst::convert_is_title_case_char;
+  conversion_table["java::java.lang.Character.isTitleCase:(C)Z"]=
+      &character_refine_preprocesst::convert_is_title_case_int;
+  conversion_table["java::java.lang.Character.isUnicodeIdentifierPart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_unicode_identifier_part_char;
+  conversion_table["java::java.lang.Character.isUnicodeIdentifierPart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_unicode_identifier_part_int;
+  conversion_table["java::java.lang.Character.isUnicodeIdentifierStart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_unicode_identifier_start_char;
+  conversion_table["java::java.lang.Character.isUnicodeIdentifierStart:(C)Z"]=
+      &character_refine_preprocesst::convert_is_unicode_identifier_start_int;
+  conversion_table["java::java.lang.Character.isUpperCase:(C)Z"]=
+      &character_refine_preprocesst::convert_is_upper_case_char;
+  conversion_table["java::java.lang.Character.isUpperCase:(C)Z"]=
+      &character_refine_preprocesst::convert_is_upper_case_int;
+  conversion_table["java::java.lang.Character.isValidCodePoint:(C)Z"]=
+      &character_refine_preprocesst::convert_is_valid_code_point;
+  conversion_table["java::java.lang.Character.isWhitespace:(C)Z"]=
+      &character_refine_preprocesst::convert_is_whitespace_char;
+  conversion_table["java::java.lang.Character.isWhitespace:(C)Z"]=
+      &character_refine_preprocesst::convert_is_whitespace_int;
+  conversion_table["java::java.lang.Character.lowSurrogate:(C)Z"]=
+      &character_refine_preprocesst::convert_is_low_surrogate;
+  conversion_table["java::java.lang.Character.offsetByCodePoints:(C)Z"]=
+      &character_refine_preprocesst::convert_offset_by_code_points_char;
+  conversion_table["java::java.lang.Character.offsetByCodePoints:(C)Z"]=
+      &character_refine_preprocesst::convert_offset_by_code_points_int;
+  conversion_table["java::java.lang.Character.reverseBytes:(C)Z"]=
+      &character_refine_preprocesst::convert_reverse_bytes;
+  conversion_table["java::java.lang.Character.toChars:(C)Z"]=
+      &character_refine_preprocesst::convert_to_chars_char;
+  conversion_table["java::java.lang.Character.toChars:(C)Z"]=
+      &character_refine_preprocesst::convert_to_chars_int;
+  conversion_table["java::java.lang.Character.toCodePoint:(C)Z"]=
+      &character_refine_preprocesst::convert_to_code_point;
+  conversion_table["java::java.lang.Character.toLowerCase:(C)Z"]=
+      &character_refine_preprocesst::convert_to_lower_case_char;
+  conversion_table["java::java.lang.Character.toLowerCase:(C)Z"]=
+      &character_refine_preprocesst::convert_to_lower_case_int;
+  conversion_table["java::java.lang.Character.toString:(C)Z"]=
+      &character_refine_preprocesst::convert_to_string_char;
+  conversion_table["java::java.lang.Character.toString:(C)Z"]=
+      &character_refine_preprocesst::convert_to_string_static;
+  conversion_table["java::java.lang.Character.toTitleCase:(C)Z"]=
+      &character_refine_preprocesst::convert_to_title_case_char;
+  conversion_table["java::java.lang.Character.toTitleCase:(C)Z"]=
+      &character_refine_preprocesst::convert_to_title_case_int;
+  conversion_table["java::java.lang.Character.toUpperCase:(C)Z"]=
+      &character_refine_preprocesst::convert_to_upper_case_char;
+  conversion_table["java::java.lang.Character.toUpperCase:(C)Z"]=
+      &character_refine_preprocesst::convert_to_upper_case_int;
+  conversion_table["java::java.lang.Character.valueOf:(C)Z"]=
+      &character_refine_preprocesst::convert_value_of;
 }
 
 /*******************************************************************\
