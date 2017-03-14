@@ -640,9 +640,25 @@ void character_refine_preprocesst::convert_low_surrogate(
 
 void character_refine_preprocesst::convert_offset_by_code_points_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_offset_by_code_points_int(conversion_input &target){  }
-void character_refine_preprocesst::convert_reverse_bytes(conversion_input &target){  }
+
+static exprt character_refine_preprocesst::expr_of_reverse_bytes(
+  exprt expr, typet type)
+{
+  shl_exprt first_byte(expr, from_integer(8, type));
+  lshr_exprt second_byte(expr, from_integer(8, type));
+  return plus_exprt(first_byte, second_byte);
+}
+
+void character_refine_preprocesst::convert_reverse_bytes(
+    conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_reverse_bytes, target);
+}
+
 void character_refine_preprocesst::convert_to_chars_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_to_chars_int(conversion_input &target){  }
+
 void character_refine_preprocesst::convert_to_code_point(
   conversion_input &target)
 {
