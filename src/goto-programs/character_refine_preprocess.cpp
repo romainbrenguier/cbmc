@@ -610,8 +610,28 @@ void character_refine_preprocesst::convert_is_surrogate_pair(
   target->code=code;
 }
 
-void character_refine_preprocesst::convert_is_title_case_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_is_title_case_int(conversion_input &target){  }
+exprt character_refine_preprocesst::expr_of_is_title_case(exprt expr, typet type)
+{
+  std::list<mp_integer>title_case_chars=
+    {0x01C5, 0x01C8, 0x01CB, 0x01F2, 0x1FBC, 0x1FCC, 0x1FFC};
+
+  exprt condition0=in_list_expr(expr, title_case_chars);
+  exprt condition1=in_interval_expr(expr, 0x1F88, 0x1F8F);
+  exprt condition2=in_interval_expr(expr, 0x1F98, 0x1F9F);
+  exprt condition3=in_interval_expr(expr, 0x1FA8, 0x1FAF);
+  return or_exprt(
+    or_exprt(condition0, condition1), or_exprt(condition2, condition3));
+}
+
+void character_refine_preprocesst::convert_is_title_case_char(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_title_case, target);
+}
+
+void character_refine_preprocesst::convert_is_title_case_int(
+  conversion_input &target){  }
 void character_refine_preprocesst::convert_is_unicode_identifier_part_char(
   conversion_input &target){  }
 void character_refine_preprocesst::convert_is_unicode_identifier_part_int(

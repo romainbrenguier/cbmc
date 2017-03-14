@@ -107,6 +107,7 @@ class character_refine_preprocesst:public messaget
   static exprt expr_of_is_surrogate(exprt chr, typet type);
   static void convert_is_surrogate(conversion_input &target);
   static void convert_is_surrogate_pair(conversion_input &target);
+  static exprt expr_of_is_title_case(exprt expr, typet type);
   static void convert_is_title_case_char(conversion_input &target);
   static void convert_is_title_case_int(conversion_input &target);
 
