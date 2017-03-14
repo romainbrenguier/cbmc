@@ -580,7 +580,18 @@ void character_refine_preprocesst::convert_is_space_char_int(
   convert_is_space_char(target);
 }
 
-void character_refine_preprocesst::convert_is_supplementary_code_point(conversion_input &target){  }
+exprt character_refine_preprocesst::expr_of_is_supplementary_code_point(
+  exprt expr, typet type)
+{
+  return binary_relation_exprt(expr, ID_gt, from_integer(0xFFFF, expr.type()));
+}
+
+void character_refine_preprocesst::convert_is_supplementary_code_point(
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_supplementary_code_point, target);
+}
 
 exprt character_refine_preprocesst::expr_of_is_surrogate(exprt expr, typet type)
 {
