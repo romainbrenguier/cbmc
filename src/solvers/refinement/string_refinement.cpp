@@ -1103,6 +1103,7 @@ bool string_refinementt::check_axioms()
         exprt premise(axiom.premise());
         exprt body(axiom.body());
         implies_exprt instance(premise, body);
+        replace_expr(symbol_resolve, instance);
         replace_expr(axiom.univ_var(), val, instance);
         debug() << "adding counter example " << from_expr(instance) << eom;
         add_lemma(instance);
