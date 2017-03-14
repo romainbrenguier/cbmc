@@ -115,6 +115,7 @@ class character_refine_preprocesst:public messaget
     conversion_input &target);
   static void convert_is_unicode_identifier_part_int(
     conversion_input &target);
+  static exprt expr_of_is_unicode_identifier_start(exprt chr, typet type);
   static void convert_is_unicode_identifier_start_char(
     conversion_input &target);
   static void convert_is_unicode_identifier_start_int(
@@ -154,6 +155,8 @@ class character_refine_preprocesst:public messaget
     exprt arg, mp_integer lower_bound, mp_integer upper_bound);
   static exprt in_list_expr(exprt chr, std::list<mp_integer> list);
   static exprt is_letter_expr(exprt chr);
+  static exprt expr_of_is_letter_number(exprt chr, typet type);
+
 
 };
 

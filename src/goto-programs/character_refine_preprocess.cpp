@@ -632,14 +632,50 @@ void character_refine_preprocesst::convert_is_title_case_char(
 
 void character_refine_preprocesst::convert_is_title_case_int(
   conversion_input &target){  }
+
+
+// General category "Nl" in the Unicode specification.
+exprt character_refine_preprocesst::expr_of_is_letter_number(
+  exprt expr, typet type)
+{
+  exprt cond0=in_interval_expr(expr, 0x16EE, 0x16F0);
+  exprt cond1=in_interval_expr(expr, 0x2160, 0x2188);
+  exprt cond2=in_interval_expr(expr, 0x3021, 0x3029);
+  exprt cond3=in_interval_expr(expr, 0x3038, 0x303A);
+  exprt cond4=in_interval_expr(expr, 0xA6E6, 0xA6EF);
+  exprt cond5=in_interval_expr(expr, 0x10140, 0x10174);
+  exprt cond6=in_interval_expr(expr, 0x103D1, 0x103D5);
+  exprt cond7=in_interval_expr(expr, 0x12400, 0x1246E);
+  exprt cond8=in_list_expr(expr, {0x3007,0x10341,0x1034A});
+  return or_exprt(
+    or_exprt(or_exprt(cond0, cond1), or_exprt(cond2, cond3)),
+    or_exprt(or_exprt(cond4, cond5), or_exprt(cond6, or_exprt(cond7, cond8))));
+}
+
 void character_refine_preprocesst::convert_is_unicode_identifier_part_char(
   conversion_input &target){  }
 void character_refine_preprocesst::convert_is_unicode_identifier_part_int(
   conversion_input &target){  }
+
+exprt character_refine_preprocesst::expr_of_is_unicode_identifier_start(
+  exprt chr, typet type)
+{
+  return or_exprt(
+    expr_of_is_letter(chr, type), expr_of_is_letter_number(chr, type));
+}
+
 void character_refine_preprocesst::convert_is_unicode_identifier_start_char(
-  conversion_input &target){  }
+  conversion_input &target)
+{
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_unicode_identifier_start, target);
+}
+
 void character_refine_preprocesst::convert_is_unicode_identifier_start_int(
-  conversion_input &target){  }
+  conversion_input &target)
+{
+  convert_is_unicode_identifier_start_char(target);
+}
 
 void character_refine_preprocesst::convert_is_upper_case_char(
   conversion_input &target)
