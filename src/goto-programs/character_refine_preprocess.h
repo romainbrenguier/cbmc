@@ -37,20 +37,13 @@ class character_refine_preprocesst:public messaget
     conversion_table;
   void initialize_conversion_table();
 
-  static void convert_constructor(conversion_input &target);
   static void convert_char_count(conversion_input &target);
   static exprt expr_of_char_count(exprt expr, typet type);
   static void convert_char_value(conversion_input &target);
   static exprt expr_of_char_value(exprt expr, typet type);
-  static void convert_code_point_at(conversion_input &target);
-  static void convert_code_point_before(conversion_input &target);
-  static void convert_code_point_count_char(conversion_input &target);
-  static void convert_code_point_count_int(conversion_input &target);
   static void convert_compare(conversion_input &target);
-  static void convert_compare_to(conversion_input &target);
   static void convert_digit_char(conversion_input &target);
   static void convert_digit_int(conversion_input &target);
-  static void convert_equals(conversion_input &target);
   static void convert_for_digit(conversion_input &target);
   static void convert_get_directionality_char(conversion_input &target);
   static void convert_get_directionality_int(conversion_input &target);
@@ -92,7 +85,7 @@ class character_refine_preprocesst:public messaget
   static exprt expr_of_is_letter_or_digit(exprt chr, typet type);
   static void convert_is_letter_or_digit_char(conversion_input &target);
   static void convert_is_letter_or_digit_int(conversion_input &target);
-  static exprt expr_of_is_lower_case(exprt chr, typet type);
+  static exprt expr_of_is_ascii_lower_case(exprt chr, typet type);
   static void convert_is_lower_case_char(conversion_input &target);
   static void convert_is_lower_case_int(conversion_input &target);
   static void convert_is_low_surrogate(conversion_input &target);
@@ -122,7 +115,7 @@ class character_refine_preprocesst:public messaget
   static void convert_is_unicode_identifier_start_int(
     conversion_input &target);
 
-  static exprt expr_of_is_upper_case(exprt chr, typet type);
+  static exprt expr_of_is_ascii_upper_case(exprt chr, typet type);
   static void convert_is_upper_case_char(conversion_input &target);
   static void convert_is_upper_case_int(conversion_input &target);
   static void convert_is_valid_code_point(conversion_input &target);
@@ -131,22 +124,16 @@ class character_refine_preprocesst:public messaget
   static void convert_is_whitespace_int(conversion_input &target);
   static exprt expr_of_low_surrogate(exprt expr, typet type);
   static void convert_low_surrogate(conversion_input &target);
-  static void convert_offset_by_code_points_char(conversion_input &target);
-  static void convert_offset_by_code_points_int(conversion_input &target);
   static exprt expr_of_reverse_bytes(exprt expr, typet type);
   static void convert_reverse_bytes(conversion_input &target);
-  static void convert_to_chars_char(conversion_input &target);
-  static void convert_to_chars_int(conversion_input &target);
+  static void convert_to_chars(conversion_input &target);
   static void convert_to_code_point(conversion_input &target);
   static void convert_to_lower_case_char(conversion_input &target);
   static void convert_to_lower_case_int(conversion_input &target);
-  static void convert_to_string_char(conversion_input &target);
-  static void convert_to_string_static(conversion_input &target);
   static void convert_to_title_case_char(conversion_input &target);
   static void convert_to_title_case_int(conversion_input &target);
   static void convert_to_upper_case_char(conversion_input &target);
   static void convert_to_upper_case_int(conversion_input &target);
-  static void convert_value_of(conversion_input &target);
 
   // Helper functions
 
