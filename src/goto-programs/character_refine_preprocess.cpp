@@ -527,7 +527,7 @@ Function: character_refine_preprocesst::expr_of_is_ascii_lower_case
     chr - An expression of type character
     type - A type for the output
 
- Outputs: An expression of the given type
+ Outputs: A Boolean expression
 
  Purpose: Determines if the specified character is an ASCII lowercase
           character.
@@ -537,7 +537,7 @@ Function: character_refine_preprocesst::expr_of_is_ascii_lower_case
 exprt character_refine_preprocesst::expr_of_is_ascii_lower_case(
   exprt chr, typet type)
 {
-  return typecast_exprt(in_interval_expr(chr, 'a', 'z'), type);
+  return in_interval_expr(chr, 'a', 'z');
 }
 
 /*******************************************************************\
@@ -548,7 +548,7 @@ Function: character_refine_preprocesst::expr_of_is_ascii_upper_case
     expr - An expression of type character
     type - A type for the output
 
- Outputs: An expression of the given type
+ Outputs: A Boolean expression
 
  Purpose: Determines if the specified character is an ASCII uppercase
           character.
@@ -558,7 +558,7 @@ Function: character_refine_preprocesst::expr_of_is_ascii_upper_case
 exprt character_refine_preprocesst::expr_of_is_ascii_upper_case(
   exprt chr, typet type)
 {
-  return typecast_exprt(in_interval_expr(chr, 'A', 'Z'), type);
+  return in_interval_expr(chr, 'A', 'Z');
 }
 
 
@@ -641,7 +641,7 @@ Function: character_refine_preprocesst::expr_of_is_bmp_code_point
     expr - An expression of type character
     type - A type for the output
 
- Outputs: An expression of the given type
+ Outputs: A Boolean expression
 
  Purpose: Determines whether the specified character (Unicode code
           point) is in the Basic Multilingual Plane (BMP). Such code
@@ -653,7 +653,7 @@ exprt character_refine_preprocesst::expr_of_is_bmp_code_point(
   exprt expr, typet type)
 {
   binary_relation_exprt is_bmp(expr, ID_le, from_integer(0xFFFF, expr.type()));
-  return typecast_exprt(is_bmp, type);
+  return is_bmp;
 }
 
 /*******************************************************************\
@@ -840,7 +840,7 @@ Function: character_refine_preprocesst::expr_of_is_high_surrogate
     expr - An expression of type character
     type - A type for the output
 
- Outputs: An expression of the given type
+ Outputs: A Boolean expression
 
  Purpose: Determines if the given char value is a Unicode
           high-surrogate code unit (also known as leading-surrogate
@@ -851,7 +851,7 @@ Function: character_refine_preprocesst::expr_of_is_high_surrogate
 exprt character_refine_preprocesst::expr_of_is_high_surrogate(
   exprt expr, typet type)
 {
-  return typecast_exprt(in_interval_expr(expr, 0xD800, 0xDBFF), type);
+  return in_interval_expr(expr, 0xD800, 0xDBFF);
 }
 
 /*******************************************************************\
@@ -2007,7 +2007,8 @@ exprt character_refine_preprocesst::expr_of_to_lower_case(
   minus_exprt transformed(
     plus_exprt(chr, from_integer('a', type)), from_integer('A', type));
 
-  if_exprt(expr_of_is_ascii_upper_case(chr, type), transformed, chr);
+  if_exprt res(expr_of_is_ascii_upper_case(chr, type), transformed, chr);
+  return res;
 }
 
 /*******************************************************************\
@@ -2155,9 +2156,11 @@ exprt character_refine_preprocesst::expr_of_to_upper_case(
   minus_exprt transformed(
     plus_exprt(chr, from_integer('A', type)), from_integer('a', type));
 
-  if_exprt(expr_of_is_ascii_lower_case(chr, type), transformed, chr);
+  if_exprt res(expr_of_is_ascii_lower_case(chr, type), transformed, chr);
+  return res;
+}
 
-}/*******************************************************************\
+/*******************************************************************\
 
 Function: character_refine_preprocesst::convert_to_upper_case_char
 
