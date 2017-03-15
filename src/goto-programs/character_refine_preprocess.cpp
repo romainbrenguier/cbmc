@@ -16,11 +16,14 @@ Date:   March 2017
 
 Function: character_refine_preprocesst::in_interval_expr
 
-  Inputs: an expression, a integer lower bound and upper bound
+  Inputs:
+    arg - Expression we want to bound
+    lower_bound - Integer lower bound
+    upper_bound - Integer upper bound
 
- Outputs: an expression
+ Outputs: A Boolean expression
 
- Purpose: the returned expression is true when the first argument is in the
+ Purpose: The returned expression is true when the first argument is in the
           interval defined by the lower and upper bounds (included)
 
 \*******************************************************************/
@@ -38,11 +41,14 @@ exprt character_refine_preprocesst::in_interval_expr(
 
 Function: character_refine_preprocesst::convert_char_function
 
-  Inputs: a function on expression and a position in a goto program
+  Inputs:
+    expr_function - A reference to a function on expressions
+    target - A position in a goto program
 
  Purpose: converts based on a function on expressions
 
 \*******************************************************************/
+
 void character_refine_preprocesst::convert_char_function(
   exprt (*expr_function)(exprt expr, typet type), conversion_input &target)
 {
@@ -56,9 +62,20 @@ void character_refine_preprocesst::convert_char_function(
   target->code=code;
 }
 
+/*******************************************************************\
 
-void character_refine_preprocesst::convert_constructor(conversion_input &target)
-{  }
+Function: character_refine_preprocesst::convert_char_function
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: A integer expression of the given type
+
+ Purpose: Determines the number of char values needed to represent
+          the specified character (Unicode code point).
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_char_count(exprt expr, typet type)
 {
@@ -73,6 +90,19 @@ void character_refine_preprocesst::convert_char_count(conversion_input &target)
     &character_refine_preprocesst::expr_of_char_count, target);
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_char_value
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Casts the given expression to the given type
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_char_value(exprt expr, typet type)
 {
   return typecast_exprt(expr, type);
@@ -83,16 +113,6 @@ void character_refine_preprocesst::convert_char_value(conversion_input &target)
   convert_char_function(
     &character_refine_preprocesst::expr_of_char_value, target);
 }
-
-void character_refine_preprocesst::convert_code_point_at(
-  conversion_input &target)
-{
-  // TODO: unimplemented
-}
-
-void character_refine_preprocesst::convert_code_point_before(conversion_input &target){  }
-void character_refine_preprocesst::convert_code_point_count_char(conversion_input &target){  }
-void character_refine_preprocesst::convert_code_point_count_int(conversion_input &target){  }
 
 void character_refine_preprocesst::convert_compare(conversion_input &target)
 {
@@ -193,8 +213,6 @@ void character_refine_preprocesst::convert_digit_int(conversion_input &target)
   convert_digit_char(target);
 }
 
-void character_refine_preprocesst::convert_equals(conversion_input &target){  }
-
 void character_refine_preprocesst::convert_for_digit(conversion_input &target)
 {
   const code_function_callt &function_call=to_code_function_call(target->code);
@@ -240,6 +258,23 @@ void character_refine_preprocesst::convert_hash_code(conversion_input &target)
   convert_char_value(target);
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_high_surrogate
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Returns the leading surrogate (a high surrogate code unit)
+          of the surrogate pair representing the specified
+          supplementary character (Unicode code point) in the UTF-16
+          encoding.
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_high_surrogate(
   exprt expr, typet type)
 {
@@ -258,23 +293,91 @@ void character_refine_preprocesst::convert_high_surrogate(
     &character_refine_preprocesst::expr_of_high_surrogate, target);
 }
 
-exprt character_refine_preprocesst::expr_of_is_lower_case(exprt chr, typet type)
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_ascii_lower_case
+
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if the specified character is an ASCII lowercase
+          character.
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_is_ascii_lower_case(
+  exprt chr, typet type)
 {
   return typecast_exprt(in_interval_expr(chr, 'a', 'z'), type);
 }
 
-exprt character_refine_preprocesst::expr_of_is_upper_case(exprt chr, typet type)
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_ascii_upper_case
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if the specified character is an ASCII uppercase
+          character.
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_is_ascii_upper_case(
+  exprt chr, typet type)
 {
   return typecast_exprt(in_interval_expr(chr, 'A', 'Z'), type);
 }
 
-// TODO: this is only for ASCII characters, the following are not yet
-// considered: TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_letter
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if the specified character is a letter.
+          TODO: for now this is only for ASCII characters, the
+          following unicode categories are not yet considered:
+          TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_is_letter(exprt chr, typet type)
 {
   return or_exprt(
     expr_of_is_upper_case(chr, type), expr_of_is_lower_case(chr, type));
 }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_alphabetic
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if the specified character (Unicode code point)
+          is alphabetic.
+          TODO: for now this is only for ASCII characters, the
+          following unicode categorise are not yet considered:
+          TITLECASE_LETTER MODIFIER_LETTER OTHER_LETTER LETTER_NUMBER
+          and contributory property Other_Alphabetic as defined by the
+          Unicode Standard.
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_is_alphabetic(
   exprt expr, typet type)
@@ -288,6 +391,22 @@ void character_refine_preprocesst::convert_is_alphabetic(
   convert_char_function(
     &character_refine_preprocesst::expr_of_is_alphabetic, target);
 }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_bmp_code_point
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines whether the specified character (Unicode code
+          point) is in the Basic Multilingual Plane (BMP). Such code
+          points can be represented using a single char.
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_is_bmp_code_point(
   exprt expr, typet type)
@@ -317,20 +436,25 @@ void character_refine_preprocesst::convert_is_defined_int(
 
 /*******************************************************************\
 
-Function: character_refine_preprocesst::convert_char_is_digit_char
+Function: character_refine_preprocesst::expr_of_is_digit
 
-  Inputs: a position in a goto program
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
 
- Purpose: Determines if a character is a digit.
-Some Unicode character ranges that contain digits:
-'\u0030' through '\u0039', ISO-LATIN-1 digits ('0' through '9')
-'\u0660' through '\u0669', Arabic-Indic digits
-'\u06F0' through '\u06F9', Extended Arabic-Indic digits
-'\u0966' through '\u096F', Devanagari digits
-'\uFF10' through '\uFF19', Fullwidth digits
+ Outputs: An expression of the given type
 
-Many other character ranges contain digits as well.
-TODO: for no we only support these ranges of digits
+ Purpose: Determines if the specified character is a digit.
+          A character is a digit if its general category type,
+          provided by Character.getType(ch), is DECIMAL_DIGIT_NUMBER.
+
+   TODO: for now we only support these ranges of digits:
+         '\u0030' through '\u0039', ISO-LATIN-1 digits ('0' through '9')
+         '\u0660' through '\u0669', Arabic-Indic digits
+         '\u06F0' through '\u06F9', Extended Arabic-Indic digits
+         '\u0966' through '\u096F', Devanagari digits
+         '\uFF10' through '\uFF19', Fullwidth digits
+         Many other character ranges contain digits as well.
 
 \*******************************************************************/
 
@@ -347,6 +471,18 @@ exprt character_refine_preprocesst::expr_of_is_digit(exprt chr, typet type)
   return digit;
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::convert_char_is_digit_char
+
+  Inputs:
+    target - a position in a goto program
+
+ Purpose: Converts function call to an assignement of an expression
+          corresponding to the java method Character.digit:(CI)I
+
+\*******************************************************************/
+
 void character_refine_preprocesst::convert_is_digit_char(
   conversion_input &target)
 {
@@ -359,6 +495,22 @@ void character_refine_preprocesst::convert_is_digit_int(
 {
   convert_is_digit_char(target);
 }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_high_surrogate
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if the given char value is a Unicode
+          high-surrogate code unit (also known as leading-surrogate
+          code unit).
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_is_high_surrogate(
   exprt expr, typet type)
@@ -454,6 +606,20 @@ void character_refine_preprocesst::convert_is_letter_int(
   convert_is_letter_char(target);
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_letter_or_digit
+
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if the specified character is a letter or digit.
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_is_letter_or_digit(
   exprt chr, typet type)
 {
@@ -500,6 +666,21 @@ void character_refine_preprocesst::convert_is_low_surrogate(
   target->code=code;
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::in_list_expr
+
+  Inputs:
+    chr - An expression of type character
+    list - A list of integer representing unicode characters
+
+ Outputs: A Boolean expression
+
+ Purpose: The returned expression is true when the given character
+          is equal to one of the element in the list
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::in_list_expr(
   exprt chr, std::list<mp_integer> list)
 {
@@ -509,25 +690,27 @@ exprt character_refine_preprocesst::in_list_expr(
   return res;
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_mirrored
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines whether the character is mirrored according to
+          the Unicode specification.
+
+    TODO: For now only ASCII characters are considered
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_is_mirrored(exprt chr, typet type)
 {
   return in_list_expr(chr, {0x28, 0x29, 0x3C, 0x3E, 0x5B, 0x5D, 0x7B, 0x7D});
-  /* TODO : intervals:
-  2045, 2046,
-    207D, 207E,
-      208D, 208E,
-  2201, 220D,
-  2211,
-  2215, 2224,
-  2226
-  222B, 2233,
-  2239,
-  223B, 224C
-  2252, 2255
-  225F,2262
-  2264, 226B*/
-  // TODO : mirrored characters after 226B
-}
+ }
 
 void character_refine_preprocesst::convert_is_mirrored_char(
   conversion_input &target)
@@ -549,11 +732,15 @@ void character_refine_preprocesst::convert_is_space(conversion_input &target)
 
 /*******************************************************************\
 
-Function: character_refine_preprocesst::expr_of_is_whitespace
+Function: character_refine_preprocesst::expr_of_is_space_char
 
- Purpose: Determines if the specified character is white space according
-          to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
-            PARAGRAPH_SEPARATOR)
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space
+          according to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
+          PARAGRAPH_SEPARATOR)
 
 \*******************************************************************/
 
@@ -580,6 +767,20 @@ void character_refine_preprocesst::convert_is_space_char_int(
   convert_is_space_char(target);
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_space_char
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space
+          according to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
+          PARAGRAPH_SEPARATOR)
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_is_supplementary_code_point(
   exprt expr, typet type)
 {
@@ -592,6 +793,20 @@ void character_refine_preprocesst::convert_is_supplementary_code_point(
   convert_char_function(
     &character_refine_preprocesst::expr_of_is_supplementary_code_point, target);
 }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_space_char
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space
+          according to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
+          PARAGRAPH_SEPARATOR)
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_is_surrogate(exprt expr, typet type)
 {
@@ -621,6 +836,20 @@ void character_refine_preprocesst::convert_is_surrogate_pair(
   target->code=code;
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_space_char
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space
+          according to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
+          PARAGRAPH_SEPARATOR)
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_is_title_case(exprt expr, typet type)
 {
   std::list<mp_integer>title_case_chars=
@@ -645,10 +874,27 @@ void character_refine_preprocesst::convert_is_title_case_int(
   conversion_input &target){  }
 
 
-// General category "Nl" in the Unicode specification.
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_space_char
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space
+          according to Unicode (SPACE_SEPARATOR, LINE_SEPARATOR, or
+          PARAGRAPH_SEPARATOR)
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_is_letter_number(
   exprt expr, typet type)
 {
+
+  // The following set of characters is the general category "Nl" in the
+  // Unicode specification.
   exprt cond0=in_interval_expr(expr, 0x16EE, 0x16F0);
   exprt cond1=in_interval_expr(expr, 0x2160, 0x2188);
   exprt cond2=in_interval_expr(expr, 0x3021, 0x3029);
@@ -657,7 +903,7 @@ exprt character_refine_preprocesst::expr_of_is_letter_number(
   exprt cond5=in_interval_expr(expr, 0x10140, 0x10174);
   exprt cond6=in_interval_expr(expr, 0x103D1, 0x103D5);
   exprt cond7=in_interval_expr(expr, 0x12400, 0x1246E);
-  exprt cond8=in_list_expr(expr, {0x3007,0x10341,0x1034A});
+  exprt cond8=in_list_expr(expr, {0x3007, 0x10341, 0x1034A});
   return or_exprt(
     or_exprt(or_exprt(cond0, cond1), or_exprt(cond2, cond3)),
     or_exprt(or_exprt(cond4, cond5), or_exprt(cond6, or_exprt(cond7, cond8))));
@@ -667,6 +913,20 @@ void character_refine_preprocesst::convert_is_unicode_identifier_part_char(
   conversion_input &target){  }
 void character_refine_preprocesst::convert_is_unicode_identifier_part_int(
   conversion_input &target){  }
+
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_unicode_identifier_start
+
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is permissible as the
+          first character in a Unicode identifier.
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_is_unicode_identifier_start(
   exprt chr, typet type)
@@ -707,6 +967,10 @@ void character_refine_preprocesst::convert_is_valid_code_point(conversion_input 
 
 Function: character_refine_preprocesst::expr_of_is_whitespace
 
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
  Purpose: Determines if the specified character is white space according
           to Java. It is the case when it one of the following:
           * a Unicode space character (SPACE_SEPARATOR, LINE_SEPARATOR, or
@@ -745,6 +1009,24 @@ void character_refine_preprocesst::convert_is_whitespace_int(
   convert_is_whitespace_char(target);
 }
 
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_whitespace
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space according
+          to Java. It is the case when it one of the following:
+          * a Unicode space character (SPACE_SEPARATOR, LINE_SEPARATOR, or
+            PARAGRAPH_SEPARATOR) but is not also a non-breaking space
+            ('\u00A0', '\u2007', '\u202F').
+          * it is one of these U+0009  U+000A U+000B U+000C U+000D
+            U+001C U+001D U+001E U+001F
+
+\*******************************************************************/
+
 exprt character_refine_preprocesst::expr_of_low_surrogate(
   exprt expr, typet type)
 {
@@ -762,6 +1044,24 @@ void character_refine_preprocesst::convert_low_surrogate(
 
 void character_refine_preprocesst::convert_offset_by_code_points_char(conversion_input &target){  }
 void character_refine_preprocesst::convert_offset_by_code_points_int(conversion_input &target){  }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_is_whitespace
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Purpose: Determines if the specified character is white space according
+          to Java. It is the case when it one of the following:
+          * a Unicode space character (SPACE_SEPARATOR, LINE_SEPARATOR, or
+            PARAGRAPH_SEPARATOR) but is not also a non-breaking space
+            ('\u00A0', '\u2007', '\u202F').
+          * it is one of these U+0009  U+000A U+000B U+000C U+000D
+            U+001C U+001D U+001E U+001F
+
+\*******************************************************************/
 
 exprt character_refine_preprocesst::expr_of_reverse_bytes(
   exprt expr, typet type)
@@ -855,45 +1155,48 @@ void character_refine_preprocesst::replace_character_calls(
 
 Function: character_refine_preprocesst::initialize_conversion_table
 
- Purpose: fill maps with correspondance from java method names to conversion
-          functions
+ Purpose: fill maps with correspondance from java method names to
+          conversion functions
 
 \*******************************************************************/
 
 void character_refine_preprocesst::initialize_conversion_table()
 {
-  conversion_table["java::java.lang.Character.<init>()"]=
-      &character_refine_preprocesst::convert_constructor;
+  // All methods are listed here in alphabetic order
+  // The ones that are not supported by this module (though they may be
+  // supported by the string solver) have no entry in the conversion
+  // table and are marked in this way:
+  // Not supported "java::java.lang.Character.<init>()"
+
   conversion_table["java::java.lang.Character.charCount:(I)I"]=
       &character_refine_preprocesst::convert_char_count;
   conversion_table["java::java.lang.Character.charValue:()C"]=
       &character_refine_preprocesst::convert_char_value;
-  conversion_table["java::java.lang.Character.codePointAt:([CI)I"]=
-      &character_refine_preprocesst::convert_code_point_at;
-  conversion_table["java::java.lang.Character.codePointAt:([CII)I"]=
-      &character_refine_preprocesst::convert_code_point_at;
-  conversion_table["java::java.lang.Character.codePointAt:(Ljava.lang.CharSequence;I)I"]=
-      &character_refine_preprocesst::convert_code_point_at;
-  conversion_table["java::java.lang.Character.codePointBefore:([CI)I"]=
-      &character_refine_preprocesst::convert_code_point_before;
-  conversion_table["java::java.lang.Character.codePointBefore:([CII)I"]=
-      &character_refine_preprocesst::convert_code_point_before;
-  conversion_table["java::java.lang.Character.codePointBefore:(Ljava.lang.CharSequence;I)I"]=
-      &character_refine_preprocesst::convert_code_point_before;
-  conversion_table["java::java.lang.Character.codePointCount:([CII)I"]=
-      &character_refine_preprocesst::convert_code_point_count_char;
-  conversion_table["java::java.lang.Character.codePointCount:(Ljava.lang.CharSequence;I)I"]=
-      &character_refine_preprocesst::convert_code_point_count_int;
+
+  // Not supported "java::java.lang.Character.codePointAt:([CI)I
+  // Not supported "java::java.lang.Character.codePointAt:([CII)I"
+  // Not supported "java::java.lang.Character.codePointAt:"
+  //   "(Ljava.lang.CharSequence;I)I"
+  // Not supported "java::java.lang.Character.codePointBefore:([CI)I"
+  // Not supported "java::java.lang.Character.codePointBefore:([CII)I"
+  // Not supported "java::java.lang.Character.codePointBefore:"
+  //   "(Ljava.lang.CharSequence;I)I"
+  // Not supported "java::java.lang.Character.codePointCount:([CII)I"
+  // Not supported "java::java.lang.Character.codePointCount:"
+  //   "(Ljava.lang.CharSequence;I)I"
+
   conversion_table["java::java.lang.Character.compare:(CC)I"]=
       &character_refine_preprocesst::convert_compare;
-  conversion_table["java::java.lang.Character.compareTo:(Ljava.lang.Character;)I"]=
+  conversion_table[
+    "java::java.lang.Character.compareTo:(Ljava.lang.Character;)I"]=
       &character_refine_preprocesst::convert_compare_to;
   conversion_table["java::java.lang.Character.digit:(CI)I"]=
       &character_refine_preprocesst::convert_digit_char;
   conversion_table["java::java.lang.Character.digit:(II)I"]=
       &character_refine_preprocesst::convert_digit_int;
-  conversion_table["java::java.lang.Character.equals:(Ljava.lang.Object;)Z"]=
-      &character_refine_preprocesst::convert_equals;
+
+ // Not supported "java::java.lang.Character.equals:(Ljava.lang.Object;)Z"
+
   conversion_table["java::java.lang.Character.forDigit:(II)C"]=
       &character_refine_preprocesst::convert_for_digit;
   // TODO: check signature
