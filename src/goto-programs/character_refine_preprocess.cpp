@@ -677,6 +677,52 @@ void character_refine_preprocesst::convert_is_bmp_code_point(
 
 /*******************************************************************\
 
+Function: character_refine_preprocesst::expr_for_is_defined
+
+  Inputs:
+    expr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Determines if a character is defined in Unicode.
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_is_defined(
+  exprt expr, typet type)
+{
+  // The following intervals are undefined in unicode
+  std::list<exprt> intervals;
+  intervals.push_back(in_interval_expr(expr, 0x0750, 0x077F));
+  intervals.push_back(in_interval_expr(expr, 0x07C0, 0x08FF));
+  intervals.push_back(in_interval_expr(expr, 0x1380, 0x139F));
+  intervals.push_back(in_interval_expr(expr, 0x18B0, 0x18FF));
+  intervals.push_back(in_interval_expr(expr, 0x1980, 0x19DF));
+  intervals.push_back(in_interval_expr(expr, 0x1A00, 0x1CFF));
+  intervals.push_back(in_interval_expr(expr, 0x1D80, 0x1DFF));
+  intervals.push_back(in_interval_expr(expr, 0x2C00, 0x2E7F));
+  intervals.push_back(in_interval_expr(expr, 0x2FE0, 0x2FEF));
+  intervals.push_back(in_interval_expr(expr, 0x31C0, 0x31EF));
+  intervals.push_back(in_interval_expr(expr, 0x9FB0, 0x9FFF));
+  intervals.push_back(in_interval_expr(expr, 0xA4D0, 0xABFF));
+  intervals.push_back(in_interval_expr(expr, 0xD7B0, 0xD7FF));
+  intervals.push_back(in_interval_expr(expr, 0xFE10, 0xFE1F));
+  intervals.push_back(in_interval_expr(expr, 0x10140, 0x102FF));
+  intervals.push_back(in_interval_expr(expr, 0x104B0, 0x107FF));
+  intervals.push_back(in_interval_expr(expr, 0x10840, 0x1CFFF));
+  intervals.push_back(in_interval_expr(expr, 0x1D200, 0x1D2FF));
+  intervals.push_back(in_interval_expr(expr, 0x1D360, 0x1D3FF));
+  intervals.push_back(in_interval_expr(expr, 0x1D800, 0x1FFFF));
+
+  exprt negated_res=false_exprt();
+  for(auto interval : intervals)
+    negated_res=or_exprt(negated_res, interval);
+  return not_exprt(negated_res);
+}
+
+/*******************************************************************\
+
 Function: character_refine_preprocesst::convert_is_defined_char
 
   Inputs:
@@ -690,7 +736,8 @@ Function: character_refine_preprocesst::convert_is_defined_char
 void character_refine_preprocesst::convert_is_defined_char(
   conversion_input &target)
 {
-  // TODO: unimplemented
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_is_defined, target);
 }
 
 /*******************************************************************\
@@ -837,7 +884,7 @@ Function: character_refine_preprocesst::convert_is_identifier_ignorable_char
           corresponding to the java method
           Character.isIdentifierIgnorable:(C)Z
 
-    TODO: For now, we ignore  the FORMAT general category value
+    TODO: For now, we ignore the FORMAT general category value
 
 \*******************************************************************/
 
@@ -871,7 +918,7 @@ Function: character_refine_preprocesst::convert_is_identifier_ignorable_int
           corresponding to the java method
           Character.isIdentifierIgnorable:(I)Z
 
-    TODO: For now, we ignore  the FORMAT general category value
+    TODO: For now, we ignore the FORMAT general category value
 
 \*******************************************************************/
 
@@ -1185,6 +1232,8 @@ Function: character_refine_preprocesst::convert_is_lower_case_int()
  Purpose: Converts function call to an assignement of an expression
           corresponding to the java method Character.isLowerCase:(I)Z
 
+    TODO: For now we only consider ASCII characters
+
 \*******************************************************************/
 
 void character_refine_preprocesst::convert_is_lower_case_int(
@@ -1251,6 +1300,8 @@ Function: character_refine_preprocesst::convert_is_mirrored_char
  Purpose: Converts function call to an assignement of an expression
           corresponding to the java method Character.isMirrored:(C)Z
 
+    TODO: For now only ASCII characters are considered
+
 \*******************************************************************/
 
 void character_refine_preprocesst::convert_is_mirrored_char(
@@ -1269,6 +1320,8 @@ Function: character_refine_preprocesst::convert_is_mirrored_int
 
  Purpose: Converts function call to an assignement of an expression
           corresponding to the java method Character.isMirrored:(I)Z
+
+    TODO: For now only ASCII characters are considered
 
 \*******************************************************************/
 
@@ -1480,7 +1533,8 @@ Function: character_refine_preprocesst::expr_of_is_title_case
 
 \*******************************************************************/
 
-exprt character_refine_preprocesst::expr_of_is_title_case(exprt expr, typet type)
+exprt character_refine_preprocesst::expr_of_is_title_case(
+  exprt expr, typet type)
 {
   std::list<mp_integer>title_case_chars=
     {0x01C5, 0x01C8, 0x01CB, 0x01F2, 0x1FBC, 0x1FCC, 0x1FFC};
@@ -1919,8 +1973,6 @@ void character_refine_preprocesst::convert_to_code_point(
   exprt result=function_call.lhs();
   target->make_assignment();
   typet type=result.type();
-
-  // TODO: factorize with string_constraint_generator
   exprt u010000=from_integer(0x010000, type);
   exprt u0800=from_integer(0x0800, type);
   exprt u0400=from_integer(0x0400, type);
