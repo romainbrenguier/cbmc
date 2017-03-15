@@ -14,31 +14,6 @@ Date:   March 2017
 
 /*******************************************************************\
 
-Function: character_refine_preprocesst::in_interval_expr
-
-  Inputs:
-    arg - Expression we want to bound
-    lower_bound - Integer lower bound
-    upper_bound - Integer upper bound
-
- Outputs: A Boolean expression
-
- Purpose: The returned expression is true when the first argument is in the
-          interval defined by the lower and upper bounds (included)
-
-\*******************************************************************/
-
-exprt character_refine_preprocesst::in_interval_expr(
-  exprt arg, mp_integer lower_bound, mp_integer upper_bound)
-{
-  and_exprt res(
-    binary_relation_exprt(arg, ID_ge, from_integer(lower_bound, arg.type())),
-    binary_relation_exprt(arg, ID_le, from_integer(upper_bound, arg.type())));
-  return res;
-}
-
-/*******************************************************************\
-
 Function: character_refine_preprocesst::convert_char_function
 
   Inputs:
@@ -64,7 +39,56 @@ void character_refine_preprocesst::convert_char_function(
 
 /*******************************************************************\
 
-Function: character_refine_preprocesst::convert_char_function
+Function: character_refine_preprocesst::in_interval_expr
+
+  Inputs:
+    arg - Expression we want to bound
+    lower_bound - Integer lower bound
+    upper_bound - Integer upper bound
+
+ Outputs: A Boolean expression
+
+ Purpose: The returned expression is true when the first argument is in the
+          interval defined by the lower and upper bounds (included)
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::in_interval_expr(
+  exprt arg, mp_integer lower_bound, mp_integer upper_bound)
+{
+  and_exprt res(
+    binary_relation_exprt(arg, ID_ge, from_integer(lower_bound, arg.type())),
+    binary_relation_exprt(arg, ID_le, from_integer(upper_bound, arg.type())));
+  return res;
+}
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::in_list_expr
+
+  Inputs:
+    chr - An expression of type character
+    list - A list of integer representing unicode characters
+
+ Outputs: A Boolean expression
+
+ Purpose: The returned expression is true when the given character
+          is equal to one of the element in the list
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::in_list_expr(
+  exprt chr, std::list<mp_integer> list)
+{
+  exprt res=false_exprt();
+  for(auto i : list)
+    res=or_exprt(res, equal_exprt(chr, from_integer(i, chr.type())));
+  return res;
+}
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::expr_of_char_count
 
   Inputs:
     expr - An expression of type character
@@ -86,7 +110,7 @@ exprt character_refine_preprocesst::expr_of_char_count(exprt expr, typet type)
 
 /*******************************************************************\
 
-Function: character_refine_preprocesst::convert_char_is_digit_char
+Function: character_refine_preprocesst::convert_char_count
 
   Inputs:
     target - a position in a goto program
@@ -440,7 +464,7 @@ Function: character_refine_preprocesst::convert_hash_code
     target - a position in a goto program
 
  Purpose: Converts function call to an assignement of an expression
-          corresponding to the java method Character.hasCode:()I
+          corresponding to the java method Character.hashCode:()I
 
 \*******************************************************************/
 
@@ -476,6 +500,17 @@ exprt character_refine_preprocesst::expr_of_high_surrogate(
   plus_exprt high_surrogate(uD800, div_exprt(minus_exprt(expr, u10000), u400));
   return high_surrogate;
 }
+
+/*******************************************************************\
+
+Function: character_refine_preprocesst::convert_high_surrogate
+  Inputs:
+    target - a position in a goto program
+
+ Purpose: Converts function call to an assignement of an expression
+          corresponding to the java method Character.highSurrogate:(C)Z
+
+\*******************************************************************/
 
 void character_refine_preprocesst::convert_high_surrogate(
   conversion_input &target)
@@ -1182,30 +1217,6 @@ void character_refine_preprocesst::convert_is_low_surrogate(
   exprt is_low_surrogate=in_interval_expr(arg, 0xDC00, 0xDFFF);
   code_assignt code(result, is_low_surrogate);
   target->code=code;
-}
-
-/*******************************************************************\
-
-Function: character_refine_preprocesst::in_list_expr
-
-  Inputs:
-    chr - An expression of type character
-    list - A list of integer representing unicode characters
-
- Outputs: A Boolean expression
-
- Purpose: The returned expression is true when the given character
-          is equal to one of the element in the list
-
-\*******************************************************************/
-
-exprt character_refine_preprocesst::in_list_expr(
-  exprt chr, std::list<mp_integer> list)
-{
-  exprt res=false_exprt();
-  for(auto i : list)
-    res=or_exprt(res, equal_exprt(chr, from_integer(i, chr.type())));
-  return res;
 }
 
 /*******************************************************************\
@@ -2032,7 +2043,8 @@ void character_refine_preprocesst::convert_to_upper_case_int(
 
 Function: character_refine_preprocesst::replace_character_calls
 
-  Inputs: a function in a goto_program
+  Inputs:
+    f_it - an iterator other a function in a goto_program
 
  Purpose: goes through the instructions, replace function calls to character
           function by equivalent instructions
@@ -2054,8 +2066,6 @@ void character_refine_preprocesst::replace_character_calls(
       {
         const irep_idt &function_id=
           to_symbol_expr(function_call.function()).get_identifier();
-
-        debug() << "function id = " << function_id << eom;
         auto it=conversion_table.find(function_id);
         if(it!=conversion_table.end())
           (it->second)(target);
@@ -2259,7 +2269,10 @@ void character_refine_preprocesst::initialize_conversion_table()
 
 Constructor: character_refine_preprocesst::string_refine_preprocesst
 
-     Inputs: a symbol table, goto functions, a message handler
+     Inputs:
+      _symbol_table - a symbol table
+      _goto_functions - goto functions
+      _message_handler - a message handler
 
     Purpose: process the goto function by replacing calls to string functions
 

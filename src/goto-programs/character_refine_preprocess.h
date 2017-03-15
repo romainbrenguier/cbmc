@@ -37,10 +37,11 @@ class character_refine_preprocesst:public messaget
     conversion_table;
   void initialize_conversion_table();
 
-  static void convert_char_count(conversion_input &target);
+  // Conversion functions
   static exprt expr_of_char_count(exprt expr, typet type);
-  static void convert_char_value(conversion_input &target);
+  static void convert_char_count(conversion_input &target);
   static exprt expr_of_char_value(exprt expr, typet type);
+  static void convert_char_value(conversion_input &target);
   static void convert_compare(conversion_input &target);
   static void convert_digit_char(conversion_input &target);
   static void convert_digit_int(conversion_input &target);
@@ -66,10 +67,8 @@ class character_refine_preprocesst:public messaget
   static void convert_is_digit_int(conversion_input &target);
   static exprt expr_of_is_high_surrogate(exprt chr, typet type);
   static void convert_is_high_surrogate(conversion_input &target);
-  static void convert_is_identifier_ignorable_char(
-    conversion_input &target);
-  static void convert_is_identifier_ignorable_int(
-    conversion_input &target);
+  static void convert_is_identifier_ignorable_char(conversion_input &target);
+  static void convert_is_identifier_ignorable_int(conversion_input &target);
   static void convert_is_ideographic(conversion_input &target);
   static void convert_is_ISO_control_char(conversion_input &target);
   static void convert_is_ISO_control_int(conversion_input &target);
@@ -104,17 +103,13 @@ class character_refine_preprocesst:public messaget
   static exprt expr_of_is_title_case(exprt expr, typet type);
   static void convert_is_title_case_char(conversion_input &target);
   static void convert_is_title_case_int(conversion_input &target);
-
-  static void convert_is_unicode_identifier_part_char(
-    conversion_input &target);
-  static void convert_is_unicode_identifier_part_int(
-    conversion_input &target);
+  static exprt expr_of_is_letter_number(exprt chr, typet type);
+  static void convert_is_unicode_identifier_part_char(conversion_input &target);
+  static void convert_is_unicode_identifier_part_int(conversion_input &target);
   static exprt expr_of_is_unicode_identifier_start(exprt chr, typet type);
   static void convert_is_unicode_identifier_start_char(
     conversion_input &target);
-  static void convert_is_unicode_identifier_start_int(
-    conversion_input &target);
-
+  static void convert_is_unicode_identifier_start_int(conversion_input &target);
   static exprt expr_of_is_ascii_upper_case(exprt chr, typet type);
   static void convert_is_upper_case_char(conversion_input &target);
   static void convert_is_upper_case_int(conversion_input &target);
@@ -136,14 +131,11 @@ class character_refine_preprocesst:public messaget
   static void convert_to_upper_case_int(conversion_input &target);
 
   // Helper functions
-
   static void convert_char_function(
       exprt (*expr_function)(exprt, typet), conversion_input &target);
   static exprt in_interval_expr(
     exprt arg, mp_integer lower_bound, mp_integer upper_bound);
   static exprt in_list_expr(exprt chr, std::list<mp_integer> list);
-  static exprt is_letter_expr(exprt chr);
-  static exprt expr_of_is_letter_number(exprt chr, typet type);
 
 
 };
