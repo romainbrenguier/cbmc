@@ -60,6 +60,7 @@ class character_refine_preprocesst:public messaget
   static void convert_is_alphabetic(conversion_input &target);
   static exprt expr_of_is_bmp_code_point(exprt expr, typet type);
   static void convert_is_bmp_code_point(conversion_input &target);
+  static exprt expr_of_is_defined(exprt chr, typet type);
   static void convert_is_defined_char(conversion_input &target);
   static void convert_is_defined_int(conversion_input &target);
   static exprt expr_of_is_digit(exprt chr, typet type);
@@ -123,10 +124,13 @@ class character_refine_preprocesst:public messaget
   static void convert_reverse_bytes(conversion_input &target);
   static void convert_to_chars(conversion_input &target);
   static void convert_to_code_point(conversion_input &target);
+  static exprt expr_of_to_lower_case(exprt expr, typet type);
   static void convert_to_lower_case_char(conversion_input &target);
   static void convert_to_lower_case_int(conversion_input &target);
+  static exprt expr_of_to_title_case(exprt expr, typet type);
   static void convert_to_title_case_char(conversion_input &target);
   static void convert_to_title_case_int(conversion_input &target);
+  static exprt expr_of_to_upper_case(exprt expr, typet type);
   static void convert_to_upper_case_char(conversion_input &target);
   static void convert_to_upper_case_int(conversion_input &target);
 

@@ -1985,6 +1985,33 @@ void character_refine_preprocesst::convert_to_code_point(
 
 /*******************************************************************\
 
+Function: character_refine_preprocesst::expr_of_to_lower_case
+
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Converts the character argument to lowercase.
+
+    TODO: For now we only consider ASCII characters but ultimately
+          we should use case mapping information from the
+          UnicodeData file
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_to_lower_case(
+  exprt chr, typet type)
+{
+  minus_exprt transformed(
+    plus_exprt(chr, from_integer('a', type)), from_integer('A', type));
+
+  if_exprt(expr_of_is_ascii_upper_case(chr, type), transformed, chr);
+}
+
+/*******************************************************************\
+
 Function: character_refine_preprocesst::convert_to_lower_case_char
 
   Inputs:
@@ -1998,7 +2025,8 @@ Function: character_refine_preprocesst::convert_to_lower_case_char
 void character_refine_preprocesst::convert_to_lower_case_char(
   conversion_input &target)
 {
-  // TODO
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_to_lower_case, target);
 }
 
 /*******************************************************************\
@@ -2021,6 +2049,53 @@ void character_refine_preprocesst::convert_to_lower_case_int(
 
 /*******************************************************************\
 
+Function: character_refine_preprocesst::expr_of_to_title_case
+
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Converts the character argument to titlecase.
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_to_title_case(
+  exprt chr, typet type)
+{
+  std::list<mp_integer> increment_list={0x01C4, 0x01C7, 0x01CA, 0x01F1};
+  std::list<mp_integer> decrement_list={0x01C6, 0x01C9, 0x01CC, 0x01F3};
+  exprt plus_8_interval1=in_interval_expr(chr, 0x1F80, 0x1F87);
+  exprt plus_8_interval2=in_interval_expr(chr, 0x1F90, 0x1F97);
+  exprt plus_8_interval3=in_interval_expr(chr, 0x1FA0, 0x1FA7);
+  std::list<mp_integer> plus_9_list={0x1FB3, 0x1FC3, 0x1FF3};
+  minus_exprt minus_1(chr, from_integer(1, type));
+  plus_exprt plus_1(chr, from_integer(1, type));
+  plus_exprt plus_8(chr, from_integer(8, type));
+  plus_exprt plus_9(chr, from_integer(9, type));
+  or_exprt plus_8_set(
+    plus_8_interval1, or_exprt(plus_8_interval2, plus_8_interval3));
+
+  if_exprt res(
+    in_list_expr(chr, increment_list),
+    plus_1,
+    if_exprt(
+      in_list_expr(chr, decrement_list),
+      minus_1,
+      if_exprt(
+        plus_8_set,
+        plus_8,
+        if_exprt(
+          in_list_expr(chr, plus_9_list),
+          plus_9,
+          chr))));
+
+  return res;
+}
+
+/*******************************************************************\
+
 Function: character_refine_preprocesst::convert_to_title_case_char
 
   Inputs:
@@ -2034,7 +2109,8 @@ Function: character_refine_preprocesst::convert_to_title_case_char
 void character_refine_preprocesst::convert_to_title_case_char(
   conversion_input &target)
 {
-  // TODO
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_to_title_case, target);
 }
 
 /*******************************************************************\
@@ -2057,6 +2133,32 @@ void character_refine_preprocesst::convert_to_title_case_int(
 
 /*******************************************************************\
 
+Function: character_refine_preprocesst::expr_of_to_upper_case
+
+  Inputs:
+    chr - An expression of type character
+    type - A type for the output
+
+ Outputs: An expression of the given type
+
+ Purpose: Converts the character argument to uppercase.
+
+    TODO: For now we only consider ASCII characters but ultimately
+          we should use case mapping information from the
+          UnicodeData file
+
+\*******************************************************************/
+
+exprt character_refine_preprocesst::expr_of_to_upper_case(
+  exprt chr, typet type)
+{
+  minus_exprt transformed(
+    plus_exprt(chr, from_integer('A', type)), from_integer('a', type));
+
+  if_exprt(expr_of_is_ascii_lower_case(chr, type), transformed, chr);
+
+}/*******************************************************************\
+
 Function: character_refine_preprocesst::convert_to_upper_case_char
 
   Inputs:
@@ -2070,7 +2172,8 @@ Function: character_refine_preprocesst::convert_to_upper_case_char
 void character_refine_preprocesst::convert_to_upper_case_char(
   conversion_input &target)
 {
-  // TODO
+  convert_char_function(
+    &character_refine_preprocesst::expr_of_to_upper_case, target);
 }
 
 /*******************************************************************\
