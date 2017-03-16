@@ -946,6 +946,11 @@ exprt string_refinementt::substitute_array_access(exprt &expr) const
       return subst;
     }
 
+    if(index_expr.array().id()==ID_array_of)
+    {
+      return to_array_of_expr(index_expr.array()).op();
+    }
+
     assert(index_expr.array().id()==ID_array);
     array_exprt &array_expr=to_array_expr(index_expr.array());
 
