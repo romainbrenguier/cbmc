@@ -1055,7 +1055,7 @@ codet character_refine_preprocesst::convert_is_java_identifier_start_char(
     conversion_input &target)
 {
   return convert_char_function(
-    &character_refine_preprocesst::expr_of_is_unicode_identifier_part, target);
+    &character_refine_preprocesst::expr_of_is_unicode_identifier_start, target);
 }
 
 /*******************************************************************\
