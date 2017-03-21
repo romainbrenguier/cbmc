@@ -1545,6 +1545,11 @@ codet java_bytecode_convert_methodt::convert_instructions(
       }
 
       call.function().add_source_location()=loc;
+
+      // Replacing call if it is a function of the Character library,
+      // returning the same call otherwise
+      c=character_preprocess.replace_character_call(call);
+
       c=call;
 
       if(!use_this)
@@ -2731,14 +2736,16 @@ void java_bytecode_convert_method(
   message_handlert &message_handler,
   size_t max_array_length,
   safe_pointer<std::vector<irep_idt> > needed_methods,
-  safe_pointer<std::set<irep_idt> > needed_classes)
+  safe_pointer<std::set<irep_idt> > needed_classes,
+  const character_refine_preprocesst &character_refine)
 {
   java_bytecode_convert_methodt java_bytecode_convert_method(
     symbol_table,
     message_handler,
     max_array_length,
     needed_methods,
-    needed_classes);
+    needed_classes,
+    character_refine);
 
   java_bytecode_convert_method(class_symbol, method);
 }
