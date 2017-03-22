@@ -733,7 +733,10 @@ exprt interpretert::get_value(
 
     error() << "interpreter: invalid pointer " << rhs[offset]
             << " > object count " << memory.size() << eom;
-    throw "interpreter: reading from invalid pointer";
+
+    constant_exprt result(type);
+    result.set_value(ID_NULL);
+    return result;
   }
   else if(real_type.id()==ID_string)
   {
@@ -742,7 +745,14 @@ exprt interpretert::get_value(
       irep_idt(rhs[offset].to_long(), 0),
       type);
   }
+
   // Retrieve value of basic data type
+  if(type.id()=="")
+  {
+    debug() << "interpreter.cpp: found empty type" << eom;
+    assert(false);
+    return from_integer(rhs[offset], unsignedbv_typet(32));
+  }
   return from_integer(rhs[offset], type);
 }
 
