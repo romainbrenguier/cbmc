@@ -18,6 +18,55 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "json_goto_trace.h"
 #include "util/message.h"
 
+template<class T> class sparse_vectort
+{
+ protected:
+  typedef std::map<std::size_t, T> underlyingt;
+
+ public:
+ sparse_vectort() :
+  _size(0) {}
+
+  const T &operator[](std::size_t idx) const
+  {
+    if(idx>=_size)
+      throw "Index out of range";
+    return underlying[idx];
+  }
+
+  T &operator[](std::size_t idx)
+  {
+    if(idx>=_size)
+      throw "Index out of range";
+    return underlying[idx];
+  }
+
+  std::size_t size() const
+  {
+    return _size;
+  }
+
+  void resize(uint64_t new_size)
+  {
+    if(new_size<_size)
+      throw "Sparse vector can't be shrunk (yet)";
+    _size=new_size;
+  }
+
+  typedef typename underlyingt::iterator iterator;
+  typedef typename underlyingt::const_iterator const_iterator;
+
+  iterator begin() { return underlying.begin(); }
+  const_iterator begin() const { return underlying.begin(); }
+
+  iterator end() { return underlying.end(); }
+  const_iterator end() const { return underlying.end(); }
+
+ protected:
+  std::map<std::size_t, T> underlying;
+  std::size_t _size;
+};
+
 class interpretert:public messaget
 {
 public:
@@ -103,26 +152,61 @@ protected:
 
   const goto_functionst &goto_functions;
 
-  typedef std::unordered_map<irep_idt, unsigned, irep_id_hash> memory_mapt;
+  typedef std::unordered_map<irep_idt, std::size_t, irep_id_hash> memory_mapt;
+  typedef std::map<std::size_t, irep_idt> inverse_memory_mapt;
   memory_mapt memory_map;
+  inverse_memory_mapt inverse_memory_map;
+
+  const inverse_memory_mapt::value_type &address_to_object_record(std::size_t address) const
+  {
+    auto lower_bound=inverse_memory_map.lower_bound(address);
+    if(lower_bound->first!=address)
+    {
+      assert(lower_bound!=inverse_memory_map.begin());
+      --lower_bound;
+    }
+    return *lower_bound;
+  }
+
+  irep_idt address_to_identifier(std::size_t address) const
+  {
+    return address_to_object_record(address).second;
+  }
+
+  std::size_t address_to_offset(std::size_t address) const
+  {
+    return address-(address_to_object_record(address).first);
+  }
+
+  std::size_t base_address_to_alloc_size(std::size_t address) const
+  {
+    assert(address_to_offset(address)==0);
+    auto upper_bound=inverse_memory_map.upper_bound(address);
+    std::size_t next_alloc_address=
+      upper_bound==inverse_memory_map.end() ?
+      memory.size() :
+      upper_bound->first;
+    return next_alloc_address-address;
+  }
 
   class memory_cellt
   {
   public:
-    irep_idt identifier;
-    unsigned offset;
+    memory_cellt() :
+    value(0),
+    initialized(0)
+    {}
     mp_integer value;
     // Initialized is annotated even during reads
     // Set to 1 when written-before-read, -1 when read-before-written
     mutable char initialized;
   };
 
-  typedef std::vector<memory_cellt> memoryt;
+  typedef sparse_vectort<memory_cellt> memoryt;
   typedef std::map<std::string, const irep_idt &> parameter_sett;
   // mapping <structure, field> -> value
   typedef std::pair<const irep_idt, const irep_idt> struct_member_idt;
   typedef std::map<struct_member_idt, const exprt> struct_valuest;
-
 
   //  The memory is being annotated/reshaped even during reads
   //  (ie to find a read-before-write location) thus memory
