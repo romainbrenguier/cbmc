@@ -62,6 +62,8 @@ template<class T> class sparse_vectort
   iterator end() { return underlying.end(); }
   const_iterator end() const { return underlying.end(); }
 
+  const_iterator find(std::size_t idx) { return underlying.find(idx); }
+
  protected:
   std::map<std::size_t, T> underlying;
   std::size_t _size;
@@ -116,6 +118,9 @@ public:
 
   // List of dynamically allocated symbols that are not in the symbol table
   typedef std::map<irep_idt, typet> dynamic_typest;
+
+  typedef std::map<irep_idt, function_assignmentst> output_valuest;
+  output_valuest output_values;
 
   // An assignment list annotated with the calling context.
   struct function_assignments_contextt
@@ -189,6 +194,20 @@ protected:
     return next_alloc_address-address;
   }
 
+  std::size_t base_address_to_actual_size(std::size_t address) const
+  {
+    auto memory_iter=memory.find(address);
+    if(memory_iter==memory.end())
+      return 0;
+    std::size_t ret=0;
+    std::size_t alloc_size=base_address_to_alloc_size(address);
+    while(memory_iter!=memory.end() && ret<alloc_size)
+    {
+      ++ret; ++memory_iter;
+    }
+    return ret;
+  }
+
   class memory_cellt
   {
   public:
@@ -219,6 +238,7 @@ protected:
   void build_memory_map(const symbolt &symbol);
   mp_integer build_memory_map(const irep_idt &id, const typet &type);
   typet concretize_type(const typet &type);
+  bool unbounded_size(const typet &);
   size_t get_size(const typet &type);
 
   irep_idt get_component_id(const irep_idt &object, unsigned offset);
@@ -250,6 +270,10 @@ protected:
     const mp_vectort &rhs);
 
   void read(
+    mp_integer address,
+    mp_vectort &dest) const;
+
+  void read_unbounded(
     mp_integer address,
     mp_vectort &dest) const;
 
