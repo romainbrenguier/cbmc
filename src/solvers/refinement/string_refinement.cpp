@@ -811,6 +811,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 
   if(arr_val.id()=="array-list")
   {
+    std::set<unsigned> initialized;
     for(size_t i=0; i<arr_val.operands().size()/2; i++)
     {
       exprt index=arr_val.operands()[i*2];
@@ -821,8 +822,19 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
         {
           exprt value=arr_val.operands()[i*2+1];
           to_unsigned_integer(to_constant_expr(value), concrete_array[idx]);
+          initialized.insert(idx);
         }
       }
+    }
+
+    unsigned last_initialized=concrete_array[n-1];
+    for(size_t i=0; i<n; ++i)
+    {
+      size_t j=n-i-1;
+      if(initialized.find(j)!=initialized.end())
+        last_initialized=concrete_array[j];
+      else
+        concrete_array[j]=last_initialized;
     }
   }
   else if(arr_val.id()==ID_array)
