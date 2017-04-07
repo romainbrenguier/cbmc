@@ -648,15 +648,11 @@ void string_refine_preprocesst::make_string_function(
   {
     if(signature.back()=='S')
     {
-      code_typet ft=function_type;
-      ft.return_type()=jls_ptr;
-      typecast_exprt lhs2(lhs, jls_ptr);
-
       make_string_assign(
         goto_program,
         target,
-        lhs2,
-        ft,
+        lhs,
+        function_type,
         function_name,
         arguments,
         location,
@@ -746,6 +742,7 @@ void string_refine_preprocesst::make_string_function(
 
   std::string new_sig=signature;
   exprt lhs;
+
   if(assign_first_arg)
   {
     assert(!function_call.arguments().empty());
