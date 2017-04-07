@@ -340,7 +340,16 @@ Function: string_refinementt::concretize_string
 
  Purpose: If the expression is of type string, then adds constants
           to the index set to force the solver to pick concrete values
-          for each character, and fill the map `found_length`
+          for each character, and fill the maps `found_length` and
+          `found_content`.
+
+          The way this is done is by looking for the length of the string,
+          then for each `i` in the index set, look at the value found by
+          the solver and put it in the `result` table.
+          For indexes that are not present in the index set, we put the
+          same value as the next index that is present in the index set.
+          We do so by traversing the array backward, remembering the
+          last value that has been initialized.
 
 \*******************************************************************/
 
@@ -357,68 +366,57 @@ void string_refinementt::concretize_string(const exprt &expr)
     if(!to_integer(length, found_length))
     {
       assert(found_length.is_long());
-      if(found_length<0)
+      assert(found_length>=0);
+      size_t concretize_limit=found_length.to_long();
+      assert(concretize_limit<=generator.max_string_length);
+      exprt content_expr=str.content();
+      std::vector<exprt> result;
+
+      if(index_set[str.content()].empty())
+        return;
+
+      // Use the last index as the default character value
+      exprt last_concretized=simplify_expr(
+            get(str[minus_exprt(length,from_integer(1, length.type()))]), ns);
+      result.resize(concretize_limit, last_concretized);
+
+      // Keep track of the indexes for which we have actual values
+      std::set<mp_integer> initialized;
+
+      for(const auto &i : index_set[str.content()])
       {
-        // Lengths should not be negative.
-        // TODO: Add constraints no the sign of string lengths.
-        debug() << "concretize_results: WARNING found length is negative"
-                << eom;
+        mp_integer mp_index;
+        exprt simple_i=simplify_expr(get(i), ns);
+        if(to_integer(simple_i, mp_index) ||
+           mp_index<0 ||
+           mp_index>=concretize_limit)
+          debug() << "concretize_string: ignoring out of bound index: "
+                  << from_expr(simple_i) << eom;
+        else
+        {
+          // Add an entry in the result vector
+          size_t index=mp_index.to_long();
+          exprt str_i=simplify_expr(str[simple_i], ns);
+          exprt value=simplify_expr(get(str_i), ns);
+          result[index]=value;
+          initialized.insert(index);
+        }
       }
-      else
+
+      for(size_t i=0; i<concretize_limit; ++i)
       {
-        size_t concretize_limit=found_length.to_long();
-        assert(concretize_limit<=generator.max_string_length);
-        concretize_limit=concretize_limit>generator.max_string_length?
-              generator.max_string_length:concretize_limit;
-        exprt content_expr=str.content();
-
-        std::vector<exprt> result;
-        if(index_set[str.content()].empty())
-          return;
-
-        // Use the last index as the default character value
-        exprt last_concretized=simplify_expr(
-           get(str[minus_exprt(length,from_integer(1, length.type()))]), ns);
-        result.resize(concretize_limit, last_concretized);
-
-        // Keep track of the indexes for which we have actual values
-        std::set<mp_integer> initialized;
-
-        for(const auto &i : index_set[str.content()])
-        {
-          mp_integer mp_index;
-          exprt simple_i=simplify_expr(get(i), ns);
-          if(to_integer(simple_i, mp_index) ||
-             mp_index<0 ||
-             mp_index>=concretize_limit)
-            debug() << "concretize_string: ignoring out of bound index: "
-                    << from_expr(simple_i) << eom;
-          else
-          {
-            // Add an entry in the result vector
-            size_t index=mp_index.to_long();
-            exprt str_i=simplify_expr(str[simple_i], ns);
-            exprt value=simplify_expr(get(str_i), ns);
-            result[index]=value;
-            initialized.insert(index);
-          }
-        }
-
-        for(size_t i=0; i<concretize_limit; ++i)
-        {
-          size_t j=concretize_limit-i-1;
-          if(initialized.find(j)!=initialized.end())
-            last_concretized=result[j];
-          else
-            result[j]=last_concretized;
-        }
-
-        array_exprt arr(to_array_type(content.type()));
-        arr.operands()=result;
-        debug() << "Concretized " << from_expr(content_expr)
-                << " = " << from_expr(arr) << eom;
-        found_content[content]=arr;
+        size_t j=concretize_limit-i-1;
+        if(initialized.find(j)!=initialized.end())
+          last_concretized=result[j];
+        else
+          result[j]=last_concretized;
       }
+
+      array_exprt arr(to_array_type(content.type()));
+      arr.operands()=result;
+      debug() << "Concretized " << from_expr(content_expr)
+              << " = " << from_expr(arr) << eom;
+      found_content[content]=arr;
     }
   }
 }
