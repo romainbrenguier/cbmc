@@ -144,7 +144,7 @@ class string_refine_preprocesst:public messaget
     const code_typet &function_type,
     const irep_idt &function_name,
     const exprt::operandst &arguments,
-    const source_locationt &location,
+    source_locationt location,
     const std::string &signature);
 
   exprt make_cprover_string_assign(

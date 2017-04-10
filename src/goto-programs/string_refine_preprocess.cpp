@@ -571,7 +571,7 @@ void string_refine_preprocesst::make_string_assign(
   const code_typet &function_type,
   const irep_idt &function_name,
   const exprt::operandst &arguments,
-  const source_locationt &location,
+  source_locationt location,
   const std::string &signature)
 {
   assert(implements_java_char_sequence(function_type.return_type()));
