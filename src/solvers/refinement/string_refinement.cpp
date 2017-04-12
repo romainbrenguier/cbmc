@@ -577,6 +577,7 @@ Function: string_refinementt::dec_solve
 
 decision_proceduret::resultt string_refinementt::dec_solve()
 {
+
   // Substitute all symbols to char arrays in the axioms to give to
   // supert::set_to().
   for(std::pair<exprt, bool> &pair : non_string_axioms)
@@ -614,17 +615,20 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   found_length.clear();
   found_content.clear();
 
-  // Initial try without index set
+  debug() << "string_refinementt::dec_solve: Initial check without index set"
+          << eom;
   decision_proceduret::resultt res=supert::dec_solve();
   if(res==D_SATISFIABLE)
   {
     if(!check_axioms())
     {
-      debug() << "check_SAT: got SAT but the model is not correct" << eom;
+      debug() << "string_refinementt::dec_solve: "
+              << "got SAT but the model is not correct" << eom;
     }
     else
     {
-      debug() << "check_SAT: the model is correct" << eom;
+      debug() << "string_refinementt::dec_solve: "
+              << "the model is correct" << eom;
       concretize_lengths();
       return D_SATISFIABLE;
     }
@@ -644,11 +648,13 @@ decision_proceduret::resultt string_refinementt::dec_solve()
     case D_SATISFIABLE:
       if(!check_axioms())
       {
-        debug() << "check_SAT: got SAT but the model is not correct" << eom;
+        debug() << "string_refinementt::dec_solve: "
+                << "got SAT but the model is not correct" << eom;
       }
       else
       {
-        debug() << "check_SAT: the model is correct" << eom;
+        debug() << "string_refinementt::dec_solve: "
+                << "the model is correct" << eom;
         concretize_lengths();
         return D_SATISFIABLE;
       }
@@ -665,7 +671,8 @@ decision_proceduret::resultt string_refinementt::dec_solve()
 
       if(current_index_set.empty())
       {
-        debug() << "current index set is empty" << eom;
+        debug() << "string_refinementt::dec_solve: "
+                << "current index set is empty" << eom;
         if(do_concretizing)
         {
           concretize_results();
@@ -673,17 +680,19 @@ decision_proceduret::resultt string_refinementt::dec_solve()
         }
         else
         {
-          debug() << "check_SAT: the model is correct and "
-                  << "does not need concretizing" << eom;
+          debug() << "string_refinementt::dec_solve: "
+                  << "the model is correct and does not need concretizing"
+                  << eom;
           return D_SATISFIABLE;
         }
       }
 
       display_index_set();
-      debug()<< "instantiating NOT_CONTAINS constraints" << eom;
+      debug()<< "instantiating not_contains_constraints" << eom;
       for(unsigned i=0; i<not_contains_axioms.size(); i++)
       {
-        debug()<< "constraint " << i << eom;
+        debug() << "string_refinementt::dec_solve: "
+                << " not_contains_constraint " << i << eom;
         std::list<exprt> lemmas;
         instantiate_not_contains(not_contains_axioms[i], lemmas);
         for(const exprt &lemma : lemmas)
@@ -691,11 +700,12 @@ decision_proceduret::resultt string_refinementt::dec_solve()
       }
       break;
     default:
-      debug() << "check_SAT: default return " << res << eom;
+      debug() << "string_refinementt::dec_solve: "
+              << "default return " << res << eom;
       return res;
     }
   }
-  debug() << "string_refinementt::dec_solve reached the maximum number"
+  debug() << "string_refinementt::dec_solve: reached the maximum number"
            << "of steps allowed" << eom;
   return D_ERROR;
 }
@@ -715,6 +725,7 @@ Function: string_refinementt::convert_bool_bv
 
 bvt string_refinementt::convert_bool_bv(const exprt &boole, const exprt &orig)
 {
+  assert(false); // is there a reason to use this function?
   bvt ret;
   ret.push_back(convert(boole));
   size_t width=boolbv_width(orig.type());
