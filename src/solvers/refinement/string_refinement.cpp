@@ -377,7 +377,7 @@ void string_refinementt::concretize_string(const exprt &expr)
 
       // Use the last index as the default character value
       exprt last_concretized=simplify_expr(
-            get(str[minus_exprt(length,from_integer(1, length.type()))]), ns);
+        get(str[minus_exprt(length, from_integer(1, length.type()))]), ns);
       result.resize(concretize_limit, last_concretized);
 
       // Keep track of the indexes for which we have actual values
