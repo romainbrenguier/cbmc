@@ -1550,8 +1550,6 @@ codet java_bytecode_convert_methodt::convert_instructions(
       // returning the same call otherwise
       c=character_preprocess.replace_character_call(call);
 
-      c=call;
-
       if(!use_this)
       {
         codet clinit_call=get_clinit_call(arg0.get(ID_C_class));

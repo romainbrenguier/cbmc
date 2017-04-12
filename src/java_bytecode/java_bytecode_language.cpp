@@ -556,7 +556,8 @@ bool java_bytecode_languaget::typecheck(
         *method_sig.second.second,
         symbol_table,
         get_message_handler(),
-        max_user_array_length);
+        max_user_array_length,
+        character_preprocess);
     }
   }
   // Otherwise our caller is in charge of elaborating methods on demand.
