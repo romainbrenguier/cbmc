@@ -114,8 +114,6 @@ private:
   exprt add_axioms_for_code_point_at(const function_application_exprt &f);
   exprt add_axioms_for_code_point_before(const function_application_exprt &f);
   exprt add_axioms_for_contains(const function_application_exprt &f);
-  exprt add_axioms_for_contains_constant(
-    const string_exprt &s0, const string_exprt &s1);
   exprt add_axioms_for_equals(const function_application_exprt &f);
   exprt add_axioms_for_equals_ignore_case(const function_application_exprt &f);
 
