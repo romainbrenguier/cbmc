@@ -379,7 +379,6 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
       equal_exprt(i, unary_minus_exprt(sum)));
     axioms.push_back(a7);
   }
-
   return res;
 }
 
