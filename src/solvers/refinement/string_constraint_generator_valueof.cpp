@@ -313,19 +313,22 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   exprt max=from_integer(max_size, index_type);
 
   // We add axioms:
-  // a1 : 0 <|res|<=max_size
-  // a2 : (res[0]='-')||('0'<=res[0]<='9')
+  // a1 : i < 0 => 1 <|res|<=max_size && res[0]='-'
+  // a2 : i >= 0 => 0 <|res|<=max_size-1 && '0'<=res[0]<='9'
 
-  and_exprt a1(res.axiom_for_is_strictly_longer_than(zero),
-               res.axiom_for_is_shorter_than(max));
+  binary_relation_exprt is_negative(i, ID_lt, zero);
+  and_exprt correct_length1(res.axiom_for_is_strictly_longer_than(zero),
+                            res.axiom_for_is_shorter_than(max));
+  equal_exprt starts_with_minus(res[0], minus_char);
+  implies_exprt a1(is_negative, and_exprt(correct_length1, starts_with_minus));
   axioms.push_back(a1);
 
-  exprt chr=res[0];
-  equal_exprt starts_with_minus(chr, minus_char);
-  and_exprt starts_with_digit(
-    binary_relation_exprt(chr, ID_ge, zero_char),
-    binary_relation_exprt(chr, ID_le, nine_char));
-  or_exprt a2(starts_with_digit, starts_with_minus);
+  not_exprt is_postive(is_negative);
+  and_exprt starts_with_digit(binary_relation_exprt(res[0], ID_ge, zero_char),
+                              binary_relation_exprt(res[0], ID_le, nine_char));
+  and_exprt correct_length2(res.axiom_for_is_longer_than(zero),
+                            res.axiom_for_is_strictly_shorter_than(max));
+  implies_exprt a2(is_postive, and_exprt(correct_length2, starts_with_digit));
   axioms.push_back(a2);
 
   // These are constraints to detect number that requiere the maximum number
@@ -337,12 +340,14 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   binary_relation_exprt big_positive(i, ID_ge, smallest_with_max_digits);
   or_exprt requieres_max_digits(big_negative, big_positive);
 
+  exprt chr=res[0];
   for(size_t size=1; size<=max_size; size++)
   {
     // For each possible size, we add axioms:
     // all_numbers: forall 1<=i<=size. '0'<=res[i]<='9'
-    // a3 : |res|=size&&'0'<=res[0]<='9' =>
-    //      i=sum+str[0]-'0' &&all_numbers
+    // a3 : |res|=size && '0'<=res[0]<='9' =>
+    //      i=sum+str[0]-'0'
+    // a? : all_numbers
     // a4 : |res|=size&&res[0]='-' => i=-sum
     // a5 : size>1 => |res|=size&&'0'<=res[0]<='9' => res[0]!='0'
     // a6 : size>1 => |res|=size&&res[0]'-' => res[1]!='0'
@@ -358,6 +363,7 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
       sum=plus_exprt(
         mult_exprt(sum, ten),
         typecast_exprt(minus_exprt(chr, zero_char), type));
+      // TODO: detect overflows in sum
       first_value=mult_exprt(first_value, ten);
       and_exprt is_number(
         binary_relation_exprt(chr, ID_ge, zero_char),
