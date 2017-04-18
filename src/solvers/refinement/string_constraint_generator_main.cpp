@@ -422,10 +422,13 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
   const exprt &name=expr.function();
   assert(name.id()==ID_symbol);
 
-  const irep_idt &id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
+  irep_idt id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
     to_symbol_expr(name).get_identifier();
 
   std::string str_id(id.c_str());
+
+  if(has_prefix(str_id, "java::"))
+    str_id=str_id.substr(6);
 
   size_t pos=str_id.find("func_length");
   if(pos!=std::string::npos)
