@@ -26,6 +26,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_bytecode_convert_method_class.h"
 #include "bytecode_info.h"
 #include "java_types.h"
+#include "java_string_libraries_preprocess.h"
 
 #include <limits>
 #include <algorithm>
@@ -1115,6 +1116,12 @@ codet java_bytecode_convert_methodt::convert_instructions(
   std::vector<unsigned> jsr_ret_targets;
   std::vector<instructionst::const_iterator> ret_instructions;
 
+  // Initialize string preprocessing
+  java_string_libraries_preprocesst string_preprocess(symbol_table);
+  // TODO: there should be a flag to activate the preprocessing
+  if(true)
+    string_preprocess.initialize_conversion_table();
+
   for(instructionst::const_iterator
       i_it=instructions.begin();
       i_it!=instructions.end();
@@ -1518,11 +1525,13 @@ codet java_bytecode_convert_methodt::convert_instructions(
         symbol.type=arg0.type();
         symbol.value.make_nil();
         symbol.mode=ID_java;
-
         assign_parameter_names(
           to_code_type(symbol.type),
           symbol.name,
           symbol_table);
+
+        symbol.value=string_preprocess.code_of_function(
+          id, to_code_type(symbol.type), loc);
 
         symbol_table.add(symbol);
       }

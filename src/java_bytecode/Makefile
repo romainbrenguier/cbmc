@@ -8,6 +8,7 @@ SRC = java_bytecode_language.cpp java_bytecode_parse_tree.cpp \
       java_bytecode_convert_method.cpp java_local_variable_table.cpp \
       java_pointer_casts.cpp java_utils.cpp java_class_loader_limit.cpp \
       character_refine_preprocess.cpp \
+      java_string_libraries_preprocess.cpp \
       # Empty last line
 
 INCLUDES= -I ..
