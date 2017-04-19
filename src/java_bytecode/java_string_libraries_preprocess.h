@@ -17,6 +17,8 @@ Date:   March 2017
 #include <util/ui_message.h>
 #include <util/std_code.h>
 #include <util/symbol_table.h>
+#include <util/refined_string_type.h>
+#include <util/string_expr.h>
 
 class java_string_libraries_preprocesst:public messaget
 {
@@ -30,12 +32,8 @@ public:
     const code_typet &type,
     const source_locationt &loc);
 
-  codet make_string_assign(
-    const code_typet &function_type,
-    const irep_idt &function_name,
-    const source_locationt &location);
-
-  exprt::operandst process_arguments(code_typet::parameterst params);
+  static exprt::operandst process_arguments(
+    const code_typet::parameterst &params, symbol_tablet &symbol_table);
 
   // Should these functions go to: java_types
   static bool check_java_type(const typet &type, const std::string &tag);
@@ -61,17 +59,48 @@ public:
 private:
   symbol_tablet symbol_table;
 
+  typedef codet (*conversion_functiont)(
+    const code_typet &, const source_locationt &, symbol_tablet &);
+
   // A table tells us what method to call for each java method signature
-  std::unordered_map<irep_idt, unsigned, irep_id_hash> conversion_table;
+  std::unordered_map<irep_idt, conversion_functiont, irep_id_hash> conversion_table;
 
   // Conversion functions
-  codet make_string_builder_append_object_code(
-    const code_typet &type, const source_locationt &loc);
+  static codet make_string_builder_append_object_code(
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   // Helper functions
-  void declare_function(irep_idt function_name, const typet &type);
-  symbol_exprt fresh_string(const typet &type, const source_locationt &loc);
-  symbol_exprt fresh_array(const typet &type, const source_locationt &loc);
+  static void declare_function(
+    irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
+
+  static symbol_exprt fresh_string(
+    const typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
+  static symbol_exprt fresh_array(
+    const typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
+  static string_exprt fresh_string_expr(
+    const refined_string_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
+  static codet code_assign_function_to_string_expr(
+      const string_exprt &str,
+      const irep_idt &function_name,
+      const code_typet &function_type,
+      const exprt::operandst &arguments,
+      symbol_tablet &symbol_table);
+
+  static codet code_assign_string_expr_to_java_string(
+    const exprt &lhs, const string_exprt &rhs, symbol_tablet &symbol_table);
+  static codet code_assign_java_string_to_string_expr(
+    const string_exprt &lhs, const exprt &rhs, symbol_tablet &symbol_table);
 };
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARIES_PREPROCESS_H
