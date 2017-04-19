@@ -621,7 +621,7 @@ codet java_string_libraries_preprocesst::make_string_builder_append_object_code(
   typet data_type=string_data_type(symbol_table);
 
   // String expression that will hold the result
-  refined_string_typet ref_type(length_type, data_type.subtype());
+  refined_string_typet ref_type(length_type, java_char_type());
   string_exprt str=fresh_string_expr(ref_type, loc, symbol_table);
 
   exprt::operandst arguments=process_arguments(type.parameters(), symbol_table);
