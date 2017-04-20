@@ -1116,12 +1116,6 @@ codet java_bytecode_convert_methodt::convert_instructions(
   std::vector<unsigned> jsr_ret_targets;
   std::vector<instructionst::const_iterator> ret_instructions;
 
-  // Initialize string preprocessing
-  java_string_libraries_preprocesst string_preprocess(symbol_table);
-  // TODO: there should be a flag to activate the preprocessing
-  if(true)
-    string_preprocess.initialize_conversion_table();
-
   for(instructionst::const_iterator
       i_it=instructions.begin();
       i_it!=instructions.end();
@@ -1530,8 +1524,10 @@ codet java_bytecode_convert_methodt::convert_instructions(
           symbol.name,
           symbol_table);
 
+        // functions of the String libraries can have code
+        // generated for them
         symbol.value=string_preprocess.code_of_function(
-          id, to_code_type(symbol.type), loc);
+          id, to_code_type(symbol.type), loc, symbol_table);
 
         symbol_table.add(symbol);
       }
@@ -1557,7 +1553,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
 
       // Replacing call if it is a function of the Character library,
       // returning the same call otherwise
-      c=character_preprocess.replace_character_call(call);
+      c=string_preprocess.replace_character_call(call);
 
       if(!use_this)
       {
@@ -2736,15 +2732,14 @@ Function: java_bytecode_convert_method
 
 \*******************************************************************/
 
-void java_bytecode_convert_method(
-  const symbolt &class_symbol,
+void java_bytecode_convert_method(const symbolt &class_symbol,
   const java_bytecode_parse_treet::methodt &method,
   symbol_tablet &symbol_table,
   message_handlert &message_handler,
   size_t max_array_length,
   safe_pointer<std::vector<irep_idt> > needed_methods,
   safe_pointer<std::set<irep_idt> > needed_classes,
-  const character_refine_preprocesst &character_refine)
+  const java_string_libraries_preprocesst &string_preprocess)
 {
   java_bytecode_convert_methodt java_bytecode_convert_method(
     symbol_table,
@@ -2752,7 +2747,7 @@ void java_bytecode_convert_method(
     max_array_length,
     needed_methods,
     needed_classes,
-    character_refine);
+    string_preprocess);
 
   java_bytecode_convert_method(class_symbol, method);
 }

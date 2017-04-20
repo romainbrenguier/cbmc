@@ -513,7 +513,7 @@ bool java_bytecode_languaget::typecheck(
   const std::string &module)
 {
   if(string_refinement_enabled)
-    character_preprocess.initialize_conversion_table();
+    string_preprocess.initialize_conversion_table();
 
   // first convert all
   for(java_class_loadert::class_mapt::const_iterator
@@ -533,8 +533,7 @@ bool java_bytecode_languaget::typecheck(
          max_user_array_length,
          lazy_methods,
          lazy_methods_mode,
-         string_refinement_enabled,
-         character_preprocess))
+         string_preprocess))
       return true;
   }
 
@@ -557,7 +556,7 @@ bool java_bytecode_languaget::typecheck(
         symbol_table,
         get_message_handler(),
         max_user_array_length,
-        character_preprocess);
+        string_preprocess);
     }
   }
   // Otherwise our caller is in charge of elaborating methods on demand.
@@ -671,7 +670,7 @@ bool java_bytecode_languaget::do_ci_lazy_method_conversion(
             &method_worklist2),
           safe_pointer<std::set<irep_idt> >::create_non_null(
             &needed_classes),
-          character_preprocess);
+          string_preprocess);
         gather_virtual_callsites(
           symbol_table.lookup(mname).value,
           virtual_callsites);
@@ -782,7 +781,7 @@ void java_bytecode_languaget::convert_lazy_method(
     symtab,
     get_message_handler(),
     max_user_array_length,
-    character_preprocess);
+    string_preprocess);
 }
 
 /*******************************************************************\
