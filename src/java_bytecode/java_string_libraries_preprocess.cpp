@@ -388,7 +388,8 @@ exprt::operandst java_string_libraries_preprocesst::process_arguments(
       dereference_exprt deref(sym, to_pointer_type(sym.type()).subtype());
       member_exprt length(deref, "length", string_length_type(symbol_table));
       member_exprt data(deref, "data", string_data_type(symbol_table));
-      string_exprt str(length, data, ref_type);
+      dereference_exprt deref_data(data, data.type().subtype());
+      string_exprt str(length, deref_data, ref_type);
       ops.push_back(str);
     }
     else
@@ -604,7 +605,12 @@ Function: java_string_libraries_preprocesst::
   Inputs:
     code - the code of a function call
 
- Outputs: code for the StringBuilder.append(Object) function
+ Outputs: code for the StringBuilder.append(Object) function:
+          > string1 = arguments[1].toString()
+          > string_expr1 = string_to_string_expr(string1)
+          > string_expr2 = concat(this, string_expr1)
+          > this = string_expr_to_string(string_expr2)
+          > return this
 
 \*******************************************************************/
 
@@ -622,82 +628,46 @@ codet java_string_libraries_preprocesst::make_string_builder_append_object_code(
 
   // String expression that will hold the result
   refined_string_typet ref_type(length_type, java_char_type());
-  string_exprt str=fresh_string_expr(ref_type, loc, symbol_table);
+  string_exprt string_expr1=fresh_string_expr(ref_type, loc, symbol_table);
+  string_exprt string_expr2=fresh_string_expr(ref_type, loc, symbol_table);
 
   exprt::operandst arguments=process_arguments(type.parameters(), symbol_table);
   assert(arguments.size()==2);
 
-  // Case of Strings
-  exprt::operandst arguments_string=arguments;
-  string_exprt string_expr_argument=fresh_string_expr(ref_type, loc, symbol_table);
-  typecast_exprt string_argument(
-    arguments[1], pointer_typet(symbol_typet("java::java.lang.String")));
-  codet assign_to_string_expr=code_assign_java_string_to_string_expr(
-    string_expr_argument, string_argument, symbol_table);
-  arguments_string[1]=string_expr_argument;
-  code_blockt case_string({
-    assign_to_string_expr,
-    code_assign_function_to_string_expr(
-      str, ID_cprover_string_concat_func, type, arguments_string, symbol_table)});
+  // > string1 = arguments[1].toString()
+  exprt string1=fresh_string(this_obj.type(), loc, symbol_table);
+  code_function_callt fun_call;
+  fun_call.lhs()=string1;
+  // TODO: we should look in the symbol table for such a symbol
+  fun_call.function()=symbol_exprt(
+    "java::java.lang.Object.toString:()Ljava/lang/String;");
+  fun_call.arguments().push_back(arguments[1]);
+  code_typet fun_type;
+  fun_type.return_type()=string1.type();
+  fun_call.function().type()=fun_type;
 
-  // Case of StringBuilders
-  exprt::operandst arguments_string_builder=arguments;
-  typecast_exprt string_builder_argument(
-    arguments[1], pointer_typet(symbol_typet("java::java.lang.StringBuilder")));
-  codet assign_builder_to_string_expr=code_assign_java_string_to_string_expr(
-    string_expr_argument, string_builder_argument, symbol_table);
-  arguments_string_builder[1]=string_expr_argument;
-  code_blockt case_string_builder({
-    assign_builder_to_string_expr,
-    code_assign_function_to_string_expr(
-      str, ID_cprover_string_concat_func, type, arguments_string_builder, symbol_table)});
+  // > string_expr1 = string_to_string_expr(string1)
+  codet assign_string_expr1=code_assign_java_string_to_string_expr(
+    string_expr1, string1, symbol_table);
 
-#if 0
-  // Case of Integers
-  exprt::operandst arguments_int=arguments;
-  arguments_int[1]=typecast_exprt(
-    arguments_int[1], symbol_typet("java::java.lang.Integer"));
-  codet case_int=code_assign_function_to_string_expr(
-    str, ID_cprover_string_concat_int_func, type, arguments_int);
-#endif
+  // > string_expr2 = concat(this, string1)
+  exprt::operandst concat_arguments(arguments);
+  concat_arguments[1]=string_expr1;
+  codet concat=code_assign_function_to_string_expr(
+    string_expr2,
+    ID_cprover_string_concat_func,
+    type,
+    concat_arguments,
+    symbol_table);
 
-  // Other cases
-  // TODO: we should call "java.lang.Object.toString:()Ljava/lang/String;"
-  codet default_case;
-  default_case.make_nil();
+  // > this = string_expr
+  codet assign=code_assign_string_expr_to_java_string(
+    this_obj, string_expr2, symbol_table);
 
-  // Assigning string expression to the java string
-  codet assign_result_to_string=code_assign_string_expr_to_java_string(
-    this_obj, str, symbol_table);
-
-  // Looking for class identifier
-  symbolt sym_type=symbol_table.lookup("java::java.lang.StringBuilder");
-  this_obj.type()=pointer_typet(sym_type.type);
-  member_exprt obj(
-    dereference_exprt(this_obj, this_obj.type().subtype()),
-    "@java.lang.Object",
-    symbol_typet("java::java.lang.Object"));
-  member_exprt class_id(obj, "@class_identifier", string_typet());
-
-  // Making conditional statement
-  code_ifthenelset conditional_string, conditional_string_builder;
-  equal_exprt is_string(
-     class_id, constant_exprt("java.lang.String", string_typet()));
-  equal_exprt is_string_builder(
-    class_id, constant_exprt("java.lang.StringBuilder", string_typet()));
-
-  conditional_string_builder.cond()=is_string_builder;
-  conditional_string_builder.then_case()=case_string_builder;
-  conditional_string_builder.else_case()=default_case;
-
-  conditional_string.cond()=is_string;
-  conditional_string.then_case()=case_string;
-  conditional_string.else_case()=conditional_string_builder;
-
-  // Return statement
+  // > return this
   code_returnt ret(this_obj);
 
-  return code_blockt({conditional_string, assign_result_to_string, ret});
+  return code_blockt({fun_call, assign_string_expr1, concat, assign, ret});
 }
 
 /*******************************************************************\
