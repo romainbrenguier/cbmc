@@ -125,7 +125,7 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
   // a1 : start < end => |res| = end - start
   // a2 : start >= end => |res| = 0
   // a3 : |str| > end
-  // a4 : forall idx<str.length, str[idx]=arg_str[idx+i]
+  // a4 : forall idx < str.length, str[idx] = arg_str[idx + start]
 
   implies_exprt a1(
     binary_relation_exprt(start, ID_lt, end),
@@ -136,15 +136,16 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
   implies_exprt a2(binary_relation_exprt(start, ID_ge, end), is_empty);
   axioms.push_back(a2);
 
-  // Warning: check what to do if the string is not long enough
+  // TODO: check what to do if the string is not long enough
   axioms.push_back(str.axiom_for_is_longer_than(end));
 
   symbol_exprt idx=fresh_univ_index("QA_index_substring", index_type);
   string_constraintt a4(idx,
                         res.length(),
                         equal_exprt(res[idx],
-                        str[plus_exprt_with_overflow_check(start, idx)]));
+                        str[plus_exprt(start, idx)]));
   axioms.push_back(a4);
+
   return res;
 }
 
