@@ -21,25 +21,6 @@ Date:   April 2017
 
 #include "java_string_libraries_preprocess.h"
 
-// Identifiers for string functions
-#define ID_STRING_BUILDER_APPEND_OBJECT 0
-
-/*******************************************************************\
-
-Constructor: java_string_libraries_preprocesst
-
-     Inputs:
-       _symbol_table - a symbol table
-
-    Purpose: initialize the symbol_table field and the conversion table.
-
-\*******************************************************************/
-
-java_string_libraries_preprocesst::java_string_libraries_preprocesst(
-  symbol_tablet _symbol_table):
-    symbol_table(_symbol_table)
-{ }
-
 /*******************************************************************\
 
 Function: java_string_libraries_preprocesst::check_java_type
@@ -303,6 +284,72 @@ typet string_length_type(symbol_tablet symbol_table)
 
 /*******************************************************************\
 
+Function: java_string_libraries_preprocesst::add_string_type
+
+  Inputs: a name for the class such as "java.lang.String"
+
+ Purpose: Implements the java.lang.String type in the case that
+          we provide an internal implementation.
+
+\*******************************************************************/
+
+void java_string_libraries_preprocesst::add_string_type(
+  const irep_idt &class_name, symbol_tablet &symbol_table)
+{
+  class_typet string_type;
+  string_type.set_tag(class_name);
+  string_type.components().resize(3);
+  string_type.components()[0].set_name("@java.lang.Object");
+  string_type.components()[0].set_pretty_name("@java.lang.Object");
+  string_type.components()[0].type()=symbol_typet("java::java.lang.Object");
+  string_type.components()[1].set_name("length");
+  string_type.components()[1].set_pretty_name("length");
+  string_type.components()[1].type()=java_int_type();
+  string_type.components()[2].set_name("data");
+  string_type.components()[2].set_pretty_name("data");
+  // Use a pointer-to-unbounded-array instead of a pointer-to-char.
+  // Saves some casting in the string refinement algorithm but may
+  // be unnecessary.
+  string_type.components()[2].type()=pointer_typet(
+    array_typet(java_char_type(), infinity_exprt(java_int_type())));
+  string_type.add_base(symbol_typet("java::java.lang.Object"));
+
+  symbolt string_symbol;
+  string_symbol.name="java::"+id2string(class_name);
+  string_symbol.base_name=id2string(class_name);
+  string_symbol.type=string_type;
+  string_symbol.is_type=true;
+
+  symbol_table.add(string_symbol);
+
+  // Also add a stub of `String.equals` so that remove-virtual-functions
+  // generates a check for Object.equals vs. String.equals.
+  // No need to fill it in, as pass_preprocess will replace the calls again.
+  symbolt string_equals_symbol;
+  string_equals_symbol.name=
+    "java::java.lang.String.equals:(Ljava/lang/Object;)Z";
+  string_equals_symbol.base_name=id2string(class_name)+".equals";
+  string_equals_symbol.pretty_name=id2string(class_name)+".equals";
+  string_equals_symbol.mode=ID_java;
+
+  code_typet string_equals_type;
+  string_equals_type.return_type()=java_boolean_type();
+  code_typet::parametert thisparam;
+  thisparam.set_this();
+  thisparam.type()=pointer_typet(symbol_typet(string_symbol.name));
+  code_typet::parametert otherparam;
+  otherparam.type()=pointer_typet(symbol_typet("java::java.lang.Object"));
+  string_equals_type.parameters().push_back(thisparam);
+  string_equals_type.parameters().push_back(otherparam);
+  string_equals_symbol.type=std::move(string_equals_type);
+
+  symbol_table.add(string_equals_symbol);
+}
+
+
+
+/*******************************************************************\
+
 Function: fresh_array
 
   Inputs:
@@ -452,7 +499,8 @@ string_exprt java_string_libraries_preprocesst::fresh_string_expr(
     ID_java,
     symbol_table);
   symbol_exprt length_field=sym_length.symbol_expr();
-  symbol_exprt content_field=fresh_array(type.get_content_type(), loc, symbol_table);
+  symbol_exprt content_field=fresh_array(
+    type.get_content_type(), loc, symbol_table);
   string_exprt str(length_field, content_field, type);
   return str;
 }
@@ -672,10 +720,13 @@ codet java_string_libraries_preprocesst::make_string_builder_append_object_code(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::replace_string_call
+Function: java_string_libraries_preprocesst::code_of_function
 
   Inputs:
-    code - the code of a function call
+    function_id - name of the function
+    type - its type
+    loc - location in the program
+    symbol_table - a symbol table
 
  Outputs: code for the body of the String functions if they are part
           of the supported String functions nil_exprt otherwise.
@@ -685,13 +736,40 @@ Function: java_string_libraries_preprocesst::replace_string_call
 exprt java_string_libraries_preprocesst::code_of_function(
   const irep_idt &function_id,
   const code_typet &type,
-  const source_locationt &loc)
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
 {
   auto it=conversion_table.find(function_id);
   if(it!=conversion_table.end())
     return it->second(type, loc, symbol_table);
 
   return nil_exprt();
+}
+
+/*******************************************************************\
+
+Function: java_string_libraries_preprocesst::add_string_type_success
+
+  Inputs:
+    class_name - name of the class
+    symbol_table - a symbol table
+
+ Outputs: true if the type is one that is known to our preprocessing
+
+ Purpose: Declare a class for String types that are used in the program
+
+\*******************************************************************/
+
+bool java_string_libraries_preprocesst::add_string_type_success(
+  irep_idt class_name, symbol_tablet &symbol_table)
+{
+  if(string_types.find(class_name)!=string_types.end())
+  {
+    add_string_type(class_name, symbol_table);
+    return true;
+  }
+  else
+    return false;
 }
 
 /*******************************************************************\
@@ -705,6 +783,13 @@ Function: java_string_libraries_preprocesst::initialize_conversion_table
 
 void java_string_libraries_preprocesst::initialize_conversion_table()
 {
+  character_preprocess.initialize_conversion_table();
+
+  string_types={"java.lang.String",
+                "java.lang.StringBuilder",
+                "java.lang.CharSequence",
+                "java.lang.StringBuffer"};
+
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"]=
     &java_string_libraries_preprocesst::make_string_builder_append_object_code;
