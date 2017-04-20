@@ -38,12 +38,14 @@ Constructor: string_refinementt
 string_refinementt::string_refinementt(
   const namespacet &_ns,
   propt &_prop,
-  unsigned refinement_bound):
+  unsigned refinement_bound,
+  unsigned _max_counter_example_length):
   supert(_ns, _prop),
   use_counter_example(false),
   do_concretizing(false),
   initial_loop_bound(refinement_bound),
-  non_empty_string(false)
+  non_empty_string(false),
+  max_counter_example_length(_max_counter_example_length)
 { }
 
 /*******************************************************************\
@@ -812,9 +814,6 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
     return empty_ret;
   }
 
-  array_typet ret_type(char_type, from_integer(n, index_type));
-  array_exprt ret(ret_type);
-
   if(n>generator.max_string_length)
   {
 #if 0
@@ -831,6 +830,8 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
     return empty_ret;
   }
 
+  array_typet ret_type(char_type, from_integer(n, index_type));
+  array_exprt ret(ret_type);
   std::vector<unsigned> concrete_array(n);
 
   if(arr_val.id()=="array-list")
@@ -981,19 +982,28 @@ void string_refinementt::fill_model()
 
       exprt len=supert::get(elength);
       len=simplify_expr(len, ns);
-      exprt arr=get_array(econtent, len);
 
-      current_model[elength]=len;
-      current_model[econtent]=arr;
-      debug() << from_expr(to_symbol_expr(it.first)) << "="
-              << from_expr(refined);
+      unsigned n;
+      if(!to_unsigned_integer(to_constant_expr(len), n)
+         && n<=max_counter_example_length)
+      {
+        exprt arr=get_array(econtent, len);
+        current_model[elength]=len;
+        current_model[econtent]=arr;
+        debug() << from_expr(to_symbol_expr(it.first)) << "="
+                << from_expr(refined);
 
-      if(arr.id()==ID_array)
-        debug() << " = \"" << string_of_array(to_array_expr(arr))
-                << "\" (size:" << from_expr(len) << ")"<< eom;
+        if(arr.id()==ID_array)
+          debug() << " = \"" << string_of_array(to_array_expr(arr))
+                  << "\" (size:" << from_expr(len) << ")"<< eom;
+        else
+          debug() << " = " << from_expr(arr) << " (size:" << from_expr(len)
+                  << ")" << eom;
+      }
       else
-        debug() << " = " << from_expr(arr) << " (size:" << from_expr(len)
-                << ")" << eom;
+        debug() << from_expr(to_symbol_expr(it.first))
+                << " of undetermined size" << eom;
+
     }
     else
     {

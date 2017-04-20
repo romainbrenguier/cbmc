@@ -230,7 +230,7 @@ cbmc_solverst::solvert* cbmc_solverst::get_string_refinement()
   prop->set_message_handler(get_message_handler());
 
   string_refinementt *string_refinement=new string_refinementt(
-    ns, *prop, MAX_NB_REFINEMENT);
+    ns, *prop, MAX_NB_REFINEMENT, MAX_COUNTER_EXAMPLE_LENGTH);
   string_refinement->set_ui(ui);
 
   string_refinement->do_concretizing=options.get_bool_option("trace");

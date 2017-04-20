@@ -19,6 +19,7 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <solvers/refinement/string_constraint_generator.h>
 
 #define MAX_NB_REFINEMENT 100
+#define MAX_COUNTER_EXAMPLE_LENGTH 100
 
 class string_refinementt: public bv_refinementt
 {
@@ -26,7 +27,8 @@ public:
   string_refinementt(
     const namespacet &_ns,
     propt &_prop,
-    unsigned refinement_bound);
+    unsigned refinement_bound,
+    unsigned _max_counter_example_length);
 
   void set_mode();
 
@@ -62,6 +64,10 @@ private:
   typedef bv_refinementt supert;
 
   unsigned initial_loop_bound;
+
+  // Maximum size to which we concretize strings before trying to find
+  // counter examples to universal axioms.
+  unsigned max_counter_example_length;
 
   string_constraint_generatort generator;
 
