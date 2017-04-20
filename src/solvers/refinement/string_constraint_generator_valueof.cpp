@@ -355,13 +355,14 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
         binary_relation_exprt(res[j], ID_le, nine_char));
       digit_constraints.push_back(is_number);
 
-      if(j>=max_size-1)
+      if(j>=max_size-2)
       {
         // check for overflows if the size is big
         and_exprt no_overflow(
           equal_exprt(sum, div_exprt(ten_sum, ten)),
           binary_relation_exprt(new_sum, ID_ge, ten_sum));
-        digit_constraints.push_back(no_overflow);
+        digit_constraints.push_back(
+          implies_exprt(res.axiom_for_has_length(size), no_overflow));
       }
       sum=new_sum;
     }
