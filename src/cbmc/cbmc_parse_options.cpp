@@ -911,8 +911,10 @@ bool cbmc_parse_optionst::process_goto_program(
     if(cmdline.isset("refine-strings"))
     {
       status() << "Preprocessing for string refinement" << eom;
+#if 0
       string_refine_preprocesst(
         symbol_table, goto_functions, ui_message_handler);
+#endif
     }
 
     // remove returns, gcc vectors, complex
