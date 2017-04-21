@@ -119,6 +119,11 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
+  static exprt fresh_string_expr_symbol(
+    const refined_string_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
   static exprt make_function_application(
       const irep_idt &function_name,
       const exprt::operandst &arguments,
@@ -138,7 +143,7 @@ private:
       symbol_tablet &symbol_table);
 
   static codet code_assign_function_to_string_expr(
-      const string_exprt &str,
+      const string_exprt &string_expr,
       const irep_idt &function_name,
       const exprt::operandst &arguments,
       symbol_tablet &symbol_table);

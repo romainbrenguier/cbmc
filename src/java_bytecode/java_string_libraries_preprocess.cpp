@@ -508,6 +508,36 @@ string_exprt java_string_libraries_preprocesst::fresh_string_expr(
 
 /*******************************************************************\
 
+Function: java_string_libraries_preprocesst::fresh_string_expr_symbol
+
+  Inputs:
+    type - a type for refined strings
+    location - a location in the program
+
+ Outputs: a new expression of refined string type
+
+ Purpose: add symbols with prefixe cprover_string_length and
+          cprover_string_data and construct a string_expr from them.
+
+\*******************************************************************/
+
+exprt java_string_libraries_preprocesst::fresh_string_expr_symbol(
+  const refined_string_typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  symbolt sym=get_fresh_aux_symbol(
+    type,
+    "java::cprover_string",
+    "cprover_string",
+    loc,
+    ID_java,
+    symbol_table);
+  return sym.symbol_expr();
+}
+
+/*******************************************************************\
+
 Function: java_string_libraries_preprocesst::make_function_application
 
   Inputs:
@@ -604,13 +634,13 @@ Function: java_string_libraries_preprocesst::code_assign_function_to_string_expr
     function_name - the name of the function
 
   Output: return the following code:
-          > str->length=function_name_length(arguments)
-          > str->data=function_name_data(arguments)
+          > str.length=function_name_length(arguments)
+          > str.data=function_name_data(arguments)
 
 \*******************************************************************/
 
 codet java_string_libraries_preprocesst::code_assign_function_to_string_expr(
-  const string_exprt &str,
+  const string_exprt &string_expr,
   const irep_idt &function_name,
   const exprt::operandst &arguments,
   symbol_tablet &symbol_table)
@@ -618,39 +648,19 @@ codet java_string_libraries_preprocesst::code_assign_function_to_string_expr(
   // Getting types
   typet length_type=string_length_type(symbol_table);
   typet data_type=string_data_type(symbol_table);
+  refined_string_typet ref_type(length_type, data_type.subtype());
 
   // Names of function to call
   std::string fun_name_length="java::"+id2string(function_name)+"_length";
   std::string fun_name_data="java::"+id2string(function_name)+"_data";
 
-#if 0
-  // Declaring functions
-  declare_function(fun_name_length, length_type, symbol_table);
-  declare_function(fun_name_data, data_type.subtype(), symbol_table);
-
-  // Declaring function applications
-  function_application_exprt rhs_length(
-    symbol_exprt(fun_name_length), length_type);
-  function_application_exprt rhs_data(
-    symbol_exprt(fun_name_data), data_type.subtype());
-
-  // Adding arguments
-  rhs_length.arguments()=arguments;
-  rhs_data.arguments()=arguments;
-#endif
   // Assignments
-  std::list<codet> assigns;
-#if 0
-  assigns.push_back(code_assignt(str.length(), rhs_length));
-  assigns.push_back(code_assignt(str.content(), rhs_data));
- #endif
   codet assign_fun_length=code_assign_function_application(
-        str.length(), fun_name_length, arguments, symbol_table);
+        string_expr.length(), fun_name_length, arguments, symbol_table);
   codet assign_fun_data=code_assign_function_application(
-        str.content(), fun_name_data, arguments, symbol_table);
-  assigns.push_back(assign_fun_length);
-  assigns.push_back(assign_fun_data);
-  return code_blockt(assigns);
+        string_expr.content(), fun_name_data, arguments, symbol_table);
+
+  return code_blockt({ assign_fun_length, assign_fun_data});
 }
 
 /*******************************************************************\
@@ -929,7 +939,7 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
   assert(params.size()==1 && "wrong number of parameters in Float.toString");
   exprt arg=symbol_exprt(params[0].get_identifier(), params[0].type());
 
-  // Case of computurezied scientific notation
+  // Case of computerized scientific notation
   code_returnt case_sci_notation(string_literal("0.0f"));
   //concat(integer_part, '.');
   //concat(fractional part);
@@ -952,6 +962,10 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
   refined_string_typet refined_string_type(java_int_type(), java_char_type());
   string_exprt string_expr=fresh_string_expr(
     refined_string_type, loc, symbol_table);
+
+  exprt string_expr_sym=fresh_string_expr_symbol(refined_string_type, loc, symbol_table);
+  code_assignt assign_string_expr_sym(string_expr_sym, string_expr);
+
   codet assign_int=code_assign_function_to_string_expr(
     string_expr,
     ID_cprover_string_of_int_func,
@@ -964,7 +978,7 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
   //concat(integer_part, '.');
   //concat(fractional part);
   case_simple_notation.then_case()=code_blockt(
-    {assign_int, assign_string, code_returnt(str)});
+    {assign_int, assign_string_expr_sym, assign_string, code_returnt(str)});
   case_simple_notation.else_case()=case_sci_notation;
 
   // Case of NaN
@@ -1058,18 +1072,23 @@ codet java_string_libraries_preprocesst::
   // String expression that will hold the result
   refined_string_typet ref_type(length_type, java_char_type());
   string_exprt string_expr=fresh_string_expr(ref_type, loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(ref_type, loc, symbol_table);
 
   // Calling the function
   exprt::operandst arguments=process_arguments(type.parameters(), symbol_table);
   codet assign_result=code_assign_function_to_string_expr(
     string_expr, function_name, arguments, symbol_table);
 
+  // Assigning string_expr to symbol for keeping track of it
+  code_assignt assign_string_expr(string_expr_sym, string_expr);
+
   // Assigning to string
   exprt str=fresh_string(type.return_type(), loc, symbol_table);
   codet assign_to_string=code_assign_string_expr_to_java_string(
     str, string_expr, symbol_table);
 
-  return code_blockt({assign_result, assign_to_string, code_returnt(str)});
+  return code_blockt(
+    {assign_result, assign_string_expr, assign_to_string, code_returnt(str)});
 }
 
 /*******************************************************************\
