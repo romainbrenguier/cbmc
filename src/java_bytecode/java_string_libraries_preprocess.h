@@ -82,6 +82,21 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
+  static codet make_string_builder_append_float_code(
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
+  static codet make_float_to_string_code(
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
+  static codet make_char_at_code(
+      const code_typet &type,
+      const source_locationt &loc,
+      symbol_tablet &symbol_table);
+
   // Helper functions
   static exprt::operandst process_arguments(
     const code_typet::parameterst &params, symbol_tablet &symbol_table);
@@ -104,10 +119,27 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
+  static exprt make_function_application(
+      const irep_idt &function_name,
+      const exprt::operandst &arguments,
+      const typet &type,
+      symbol_tablet &symbol_table);
+
+  static codet code_assign_function_application(
+      const exprt &lhs,
+      const irep_idt &function_name,
+      const exprt::operandst &arguments,
+      symbol_tablet &symbol_table);
+
+  static codet code_return_function_application(
+      const irep_idt &function_name,
+      const exprt::operandst &arguments,
+      const typet &type,
+      symbol_tablet &symbol_table);
+
   static codet code_assign_function_to_string_expr(
       const string_exprt &str,
       const irep_idt &function_name,
-      const code_typet &function_type,
       const exprt::operandst &arguments,
       symbol_tablet &symbol_table);
 
@@ -118,6 +150,20 @@ private:
     const string_exprt &lhs, const exprt &rhs, symbol_tablet &symbol_table);
 
   void add_string_type(const irep_idt &class_name, symbol_tablet &symbol_table);
+
+  static exprt string_literal(const std::string &s);
+
+  static codet make_function_from_call(
+      const irep_idt &function_name,
+      const code_typet &type,
+      const source_locationt &loc,
+      symbol_tablet &symbol_table);
+
+  static codet make_string_returning_function_from_call(
+      const irep_idt &function_name,
+      const code_typet &type,
+      const source_locationt &loc,
+      symbol_tablet &symbol_table);
 
 };
 
