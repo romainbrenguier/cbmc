@@ -428,7 +428,10 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
   std::string str_id(id.c_str());
 
   if(has_prefix(str_id, "java::"))
+  {
     str_id=str_id.substr(6);
+    id=str_id;
+  }
 
   size_t pos=str_id.find("func_length");
   if(pos!=std::string::npos)
