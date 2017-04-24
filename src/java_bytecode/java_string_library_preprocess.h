@@ -99,7 +99,10 @@ private:
 
   // Helper functions
   static exprt::operandst process_arguments(
-    const code_typet::parameterst &params, symbol_tablet &symbol_table);
+    const code_typet::parameterst &params,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &init_code);
 
   static void declare_function(
     irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
