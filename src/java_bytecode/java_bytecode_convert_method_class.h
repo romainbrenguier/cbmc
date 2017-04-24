@@ -33,7 +33,7 @@ public:
     size_t _max_array_length,
     safe_pointer<std::vector<irep_idt> > _needed_methods,
     safe_pointer<std::set<irep_idt> > _needed_classes,
-    const java_string_libraries_preprocesst &_string_preprocess):
+    const java_string_library_preprocesst &_string_preprocess):
     messaget(_message_handler),
     symbol_table(_symbol_table),
     max_array_length(_max_array_length),
@@ -63,7 +63,7 @@ protected:
   irep_idt method_id;
   irep_idt current_method;
   typet method_return_type;
-  java_string_libraries_preprocesst string_preprocess;
+  java_string_library_preprocesst string_preprocess;
 
 public:
   struct holet

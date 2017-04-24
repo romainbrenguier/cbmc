@@ -22,7 +22,7 @@ Date:   March 2017
 #include <unordered_set>
 #include "character_refine_preprocess.h"
 
-class java_string_libraries_preprocesst:public messaget
+class java_string_library_preprocesst:public messaget
 {
 public:
   void initialize_conversion_table();

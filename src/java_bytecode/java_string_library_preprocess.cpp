@@ -26,7 +26,7 @@ Date:   April 2017
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::check_java_type
+Function: java_string_library_preprocesst::check_java_type
 
   Inputs: a type and a string
 
@@ -35,7 +35,7 @@ Function: java_string_libraries_preprocesst::check_java_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::check_java_type(
+bool java_string_library_preprocesst::check_java_type(
   const typet &type, const std::string &tag)
 {
   if(type.id()==ID_symbol)
@@ -53,7 +53,7 @@ bool java_string_libraries_preprocesst::check_java_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_string_pointer_type
+Function: java_string_library_preprocesst::is_java_string_pointer_type
 
   Inputs: a type
 
@@ -61,7 +61,7 @@ Function: java_string_libraries_preprocesst::is_java_string_pointer_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_string_pointer_type(
+bool java_string_library_preprocesst::is_java_string_pointer_type(
   const typet &type)
 {
   if(type.id()==ID_pointer)
@@ -75,7 +75,7 @@ bool java_string_libraries_preprocesst::is_java_string_pointer_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_string_type
+Function: java_string_library_preprocesst::is_java_string_type
 
   Inputs: a type
 
@@ -83,7 +83,7 @@ Function: java_string_libraries_preprocesst::is_java_string_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_string_type(
+bool java_string_library_preprocesst::is_java_string_type(
   const typet &type)
 {
   return check_java_type(type, "java.lang.String");
@@ -91,7 +91,7 @@ bool java_string_libraries_preprocesst::is_java_string_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_string_builder_type
+Function: java_string_library_preprocesst::is_java_string_builder_type
 
   Inputs: a type
 
@@ -99,7 +99,7 @@ Function: java_string_libraries_preprocesst::is_java_string_builder_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_string_builder_type(
+bool java_string_library_preprocesst::is_java_string_builder_type(
   const typet &type)
 {
   return check_java_type(type, "java.lang.StringBuilder");
@@ -107,7 +107,7 @@ bool java_string_libraries_preprocesst::is_java_string_builder_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_string_builder_pointer_type
+Function: java_string_library_preprocesst::is_java_string_builder_pointer_type
 
   Inputs: a type
 
@@ -116,7 +116,7 @@ Function: java_string_libraries_preprocesst::is_java_string_builder_pointer_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_string_builder_pointer_type(
+bool java_string_library_preprocesst::is_java_string_builder_pointer_type(
   const typet &type)
 {
   if(type.id()==ID_pointer)
@@ -130,7 +130,7 @@ bool java_string_libraries_preprocesst::is_java_string_builder_pointer_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_string_buffer_type
+Function: java_string_library_preprocesst::is_java_string_buffer_type
 
   Inputs: a type
 
@@ -138,7 +138,7 @@ Function: java_string_libraries_preprocesst::is_java_string_buffer_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_string_buffer_type(
+bool java_string_library_preprocesst::is_java_string_buffer_type(
   const typet &type)
 {
   return check_java_type(type, "java.lang.StringBuffer");
@@ -146,7 +146,7 @@ bool java_string_libraries_preprocesst::is_java_string_buffer_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_string_buffer_pointer_type
+Function: java_string_library_preprocesst::is_java_string_buffer_pointer_type
 
   Inputs: a type
 
@@ -155,7 +155,7 @@ Function: java_string_libraries_preprocesst::is_java_string_buffer_pointer_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_string_buffer_pointer_type(
+bool java_string_library_preprocesst::is_java_string_buffer_pointer_type(
   const typet &type)
 {
   if(type.id()==ID_pointer)
@@ -169,7 +169,7 @@ bool java_string_libraries_preprocesst::is_java_string_buffer_pointer_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_char_sequence_type
+Function: java_string_library_preprocesst::is_java_char_sequence_type
 
   Inputs: a type
 
@@ -177,7 +177,7 @@ Function: java_string_libraries_preprocesst::is_java_char_sequence_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_char_sequence_type(
+bool java_string_library_preprocesst::is_java_char_sequence_type(
   const typet &type)
 {
   return check_java_type(type, "java.lang.CharSequence");
@@ -185,7 +185,7 @@ bool java_string_libraries_preprocesst::is_java_char_sequence_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_char_sequence_pointer_type
+Function: java_string_library_preprocesst::is_java_char_sequence_pointer_type
 
   Inputs: a type
 
@@ -194,7 +194,7 @@ Function: java_string_libraries_preprocesst::is_java_char_sequence_pointer_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_char_sequence_pointer_type(
+bool java_string_library_preprocesst::is_java_char_sequence_pointer_type(
   const typet &type)
 {
   if(type.id()==ID_pointer)
@@ -208,7 +208,7 @@ bool java_string_libraries_preprocesst::is_java_char_sequence_pointer_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_char_array_type
+Function: java_string_library_preprocesst::is_java_char_array_type
 
   Inputs: a type
 
@@ -216,7 +216,7 @@ Function: java_string_libraries_preprocesst::is_java_char_array_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_char_array_type(
+bool java_string_library_preprocesst::is_java_char_array_type(
   const typet &type)
 {
   return check_java_type(type, "array[char]");
@@ -224,7 +224,7 @@ bool java_string_libraries_preprocesst::is_java_char_array_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::is_java_char_array_pointer_type
+Function: java_string_library_preprocesst::is_java_char_array_pointer_type
 
   Inputs: a type
 
@@ -233,7 +233,7 @@ Function: java_string_libraries_preprocesst::is_java_char_array_pointer_type
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::is_java_char_array_pointer_type(
+bool java_string_library_preprocesst::is_java_char_array_pointer_type(
   const typet &type)
 {
   if(type.id()==ID_pointer)
@@ -247,7 +247,7 @@ bool java_string_libraries_preprocesst::is_java_char_array_pointer_type(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::string_data_type
+Function: java_string_library_preprocesst::string_data_type
 
   Inputs:
     symbol_table - a symbol_table containing an entry for java Strings
@@ -267,7 +267,7 @@ typet string_data_type(symbol_tablet symbol_table)
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::string_length_type
+Function: java_string_library_preprocesst::string_length_type
 
   Inputs:
     symbol_table - a symbol_table containing an entry for java Strings
@@ -287,7 +287,7 @@ typet string_length_type(symbol_tablet symbol_table)
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::add_string_type
+Function: java_string_library_preprocesst::add_string_type
 
   Inputs: a name for the class such as "java.lang.String"
 
@@ -296,7 +296,7 @@ Function: java_string_libraries_preprocesst::add_string_type
 
 \*******************************************************************/
 
-void java_string_libraries_preprocesst::add_string_type(
+void java_string_library_preprocesst::add_string_type(
   const irep_idt &class_name, symbol_tablet &symbol_table)
 {
   class_typet string_type;
@@ -364,7 +364,7 @@ Function: fresh_array
 
 \*******************************************************************/
 
-symbol_exprt java_string_libraries_preprocesst::fresh_array(
+symbol_exprt java_string_library_preprocesst::fresh_array(
   const typet &type,
   const source_locationt &location,
   symbol_tablet &symbol_table)
@@ -382,7 +382,7 @@ symbol_exprt java_string_libraries_preprocesst::fresh_array(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::declare_function
+Function: java_string_library_preprocesst::declare_function
 
   Inputs: a name and a type
 
@@ -392,7 +392,7 @@ Function: java_string_libraries_preprocesst::declare_function
 
 \*******************************************************************/
 
-void java_string_libraries_preprocesst::declare_function(
+void java_string_library_preprocesst::declare_function(
   irep_idt function_name, const typet &type, symbol_tablet &symbol_table)
 {
   auxiliary_symbolt func_symbol;
@@ -424,7 +424,7 @@ Function: string_refine_preprocesst::process_arguments
 
 \*******************************************************************/
 
-exprt::operandst java_string_libraries_preprocesst::process_arguments(
+exprt::operandst java_string_library_preprocesst::process_arguments(
   const code_typet::parameterst &params,
   const source_locationt &loc,
   symbol_tablet &symbol_table,
@@ -464,7 +464,7 @@ exprt::operandst java_string_libraries_preprocesst::process_arguments(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::fresh_string
+Function: java_string_library_preprocesst::fresh_string
 
   Inputs:
     type - a type for refined strings
@@ -477,7 +477,7 @@ Function: java_string_libraries_preprocesst::fresh_string
 
 \*******************************************************************/
 
-symbol_exprt java_string_libraries_preprocesst::fresh_string(
+symbol_exprt java_string_library_preprocesst::fresh_string(
   const typet &type, const source_locationt &loc, symbol_tablet &symbol_table)
 {
   symbolt string_symbol=get_fresh_aux_symbol(
@@ -488,7 +488,7 @@ symbol_exprt java_string_libraries_preprocesst::fresh_string(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::fresh_string_expr
+Function: java_string_library_preprocesst::fresh_string_expr
 
   Inputs:
     type - a type for refined strings
@@ -501,7 +501,7 @@ Function: java_string_libraries_preprocesst::fresh_string_expr
 
 \*******************************************************************/
 
-string_exprt java_string_libraries_preprocesst::fresh_string_expr(
+string_exprt java_string_library_preprocesst::fresh_string_expr(
   const refined_string_typet &type,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
@@ -522,7 +522,7 @@ string_exprt java_string_libraries_preprocesst::fresh_string_expr(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::fresh_string_expr_symbol
+Function: java_string_library_preprocesst::fresh_string_expr_symbol
 
   Inputs:
     type - a type for refined strings
@@ -535,7 +535,7 @@ Function: java_string_libraries_preprocesst::fresh_string_expr_symbol
 
 \*******************************************************************/
 
-exprt java_string_libraries_preprocesst::fresh_string_expr_symbol(
+exprt java_string_library_preprocesst::fresh_string_expr_symbol(
   const refined_string_typet &type,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
@@ -552,7 +552,7 @@ exprt java_string_libraries_preprocesst::fresh_string_expr_symbol(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::make_function_application
+Function: java_string_library_preprocesst::make_function_application
 
   Inputs:
     function_name - the name of the function
@@ -564,7 +564,7 @@ Function: java_string_libraries_preprocesst::make_function_application
 
 \*******************************************************************/
 
-exprt java_string_libraries_preprocesst::make_function_application(
+exprt java_string_library_preprocesst::make_function_application(
   const irep_idt &function_name,
   const exprt::operandst &arguments,
   const typet &type,
@@ -584,7 +584,7 @@ exprt java_string_libraries_preprocesst::make_function_application(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::code_assign_function_application
+Function: java_string_library_preprocesst::code_assign_function_application
 
   Inputs:
     lhs - an expression
@@ -599,7 +599,7 @@ Function: java_string_libraries_preprocesst::code_assign_function_application
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::code_assign_function_application(
+codet java_string_library_preprocesst::code_assign_function_application(
   const exprt &lhs,
   const irep_idt &function_name,
   const exprt::operandst &arguments,
@@ -612,7 +612,7 @@ codet java_string_libraries_preprocesst::code_assign_function_application(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::code_return_function_application
+Function: java_string_library_preprocesst::code_return_function_application
 
   Inputs:
     function_name - the name of the function
@@ -627,7 +627,7 @@ Function: java_string_libraries_preprocesst::code_return_function_application
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::code_return_function_application(
+codet java_string_library_preprocesst::code_return_function_application(
   const irep_idt &function_name,
   const exprt::operandst &arguments,
   const typet &type,
@@ -640,7 +640,7 @@ codet java_string_libraries_preprocesst::code_return_function_application(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::code_assign_function_to_string_expr
+Function: java_string_library_preprocesst::code_assign_function_to_string_expr
 
   Inputs:
     str - a string expression
@@ -653,7 +653,7 @@ Function: java_string_libraries_preprocesst::code_assign_function_to_string_expr
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::code_assign_function_to_string_expr(
+codet java_string_library_preprocesst::code_assign_function_to_string_expr(
   const string_exprt &string_expr,
   const irep_idt &function_name,
   const exprt::operandst &arguments,
@@ -679,7 +679,7 @@ codet java_string_libraries_preprocesst::code_assign_function_to_string_expr(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::
+Function: java_string_library_preprocesst::
             code_assign_string_expr_to_java_string
 
   Inputs:
@@ -693,7 +693,7 @@ Function: java_string_libraries_preprocesst::
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::code_assign_string_expr_to_java_string(
+codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
   const exprt &lhs,
   const string_exprt &rhs,
   symbol_tablet &symbol_table)
@@ -719,7 +719,7 @@ codet java_string_libraries_preprocesst::code_assign_string_expr_to_java_string(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::
+Function: java_string_library_preprocesst::
             code_assign_java_string_to_string_expr
 
   Inputs:
@@ -733,7 +733,7 @@ Function: java_string_libraries_preprocesst::
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::code_assign_java_string_to_string_expr(
+codet java_string_library_preprocesst::code_assign_java_string_to_string_expr(
   const string_exprt &lhs, const exprt &rhs, symbol_tablet &symbol_table)
 {
   assert(implements_java_char_sequence(rhs.type()));
@@ -766,7 +766,7 @@ codet java_string_libraries_preprocesst::code_assign_java_string_to_string_expr(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::
+Function: java_string_library_preprocesst::
             code_assign_string_literal_to_string_expr
 
   Inputs:
@@ -781,7 +781,7 @@ Function: java_string_libraries_preprocesst::
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::
+codet java_string_library_preprocesst::
   code_assign_string_literal_to_string_expr(
     const string_exprt &lhs,
     const exprt &tmp_string,
@@ -798,7 +798,7 @@ codet java_string_libraries_preprocesst::
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::
+Function: java_string_library_preprocesst::
     make_string_builder_append_object_code
 
   Inputs:
@@ -813,7 +813,7 @@ Function: java_string_libraries_preprocesst::
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::make_string_builder_append_object_code(
+codet java_string_library_preprocesst::make_string_builder_append_object_code(
   const code_typet &type,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
@@ -875,7 +875,7 @@ codet java_string_libraries_preprocesst::make_string_builder_append_object_code(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::
+Function: java_string_library_preprocesst::
     make_string_builder_append_float_code
 
   Inputs:
@@ -890,7 +890,7 @@ Function: java_string_libraries_preprocesst::
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::make_string_builder_append_float_code(
+codet java_string_library_preprocesst::make_string_builder_append_float_code(
   const code_typet &type,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
@@ -952,7 +952,7 @@ codet java_string_libraries_preprocesst::make_string_builder_append_float_code(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::string_literal
+Function: java_string_library_preprocesst::string_literal
 
   Inputs:
     s - a string
@@ -964,7 +964,7 @@ Function: java_string_libraries_preprocesst::string_literal
 
 \*******************************************************************/
 
-exprt java_string_libraries_preprocesst::string_literal(const std::string &s)
+exprt java_string_library_preprocesst::string_literal(const std::string &s)
 {
   exprt string_literal(ID_java_string_literal);
   string_literal.set(ID_value, s);
@@ -973,7 +973,7 @@ exprt java_string_libraries_preprocesst::string_literal(const std::string &s)
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::make_float_to_string_code
+Function: java_string_library_preprocesst::make_float_to_string_code
 
   Inputs:
     code - the code of a function call
@@ -998,7 +998,7 @@ Function: java_string_libraries_preprocesst::make_float_to_string_code
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::make_float_to_string_code(
+codet java_string_library_preprocesst::make_float_to_string_code(
   const code_typet &type,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
@@ -1103,7 +1103,7 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::make_char_at_code
+Function: java_string_library_preprocesst::make_char_at_code
 
   Inputs:
 
@@ -1111,7 +1111,7 @@ Function: java_string_libraries_preprocesst::make_char_at_code
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::make_char_at_code(
+codet java_string_library_preprocesst::make_char_at_code(
   const code_typet &type,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
@@ -1122,7 +1122,7 @@ codet java_string_libraries_preprocesst::make_char_at_code(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::make_function
+Function: java_string_library_preprocesst::make_function
 
   Inputs:
 
@@ -1130,7 +1130,7 @@ Function: java_string_libraries_preprocesst::make_function
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::make_function_from_call(
+codet java_string_library_preprocesst::make_function_from_call(
   const irep_idt &function_name,
   const code_typet &type,
   const source_locationt &loc,
@@ -1146,7 +1146,7 @@ codet java_string_libraries_preprocesst::make_function_from_call(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::make_string_returning_function
+Function: java_string_library_preprocesst::make_string_returning_function
 
   Inputs:
 
@@ -1157,7 +1157,7 @@ Function: java_string_libraries_preprocesst::make_string_returning_function
 
 \*******************************************************************/
 
-codet java_string_libraries_preprocesst::
+codet java_string_library_preprocesst::
   make_string_returning_function_from_call(
     const irep_idt &function_name,
     const code_typet &type,
@@ -1196,7 +1196,7 @@ codet java_string_libraries_preprocesst::
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::code_of_function
+Function: java_string_library_preprocesst::code_of_function
 
   Inputs:
     function_id - name of the function
@@ -1209,7 +1209,7 @@ Function: java_string_libraries_preprocesst::code_of_function
 
 \*******************************************************************/
 
-exprt java_string_libraries_preprocesst::code_of_function(
+exprt java_string_library_preprocesst::code_of_function(
   const irep_idt &function_id,
   const code_typet &type,
   const source_locationt &loc,
@@ -1224,7 +1224,7 @@ exprt java_string_libraries_preprocesst::code_of_function(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::add_string_type_success
+Function: java_string_library_preprocesst::add_string_type_success
 
   Inputs:
     class_name - name of the class
@@ -1236,7 +1236,7 @@ Function: java_string_libraries_preprocesst::add_string_type_success
 
 \*******************************************************************/
 
-bool java_string_libraries_preprocesst::add_string_type_success(
+bool java_string_library_preprocesst::add_string_type_success(
   irep_idt class_name, symbol_tablet &symbol_table)
 {
   if(string_types.find(class_name)!=string_types.end())
@@ -1250,14 +1250,14 @@ bool java_string_libraries_preprocesst::add_string_type_success(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::initialize_conversion_table
+Function: java_string_library_preprocesst::initialize_conversion_table
 
  Purpose: fill maps with correspondance from java method names to
           conversion functions
 
 \*******************************************************************/
 
-void java_string_libraries_preprocesst::initialize_conversion_table()
+void java_string_library_preprocesst::initialize_conversion_table()
 {
   character_preprocess.initialize_conversion_table();
 
@@ -1268,15 +1268,15 @@ void java_string_libraries_preprocesst::initialize_conversion_table()
 
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"]=
-    &java_string_libraries_preprocesst::make_string_builder_append_object_code;
+    &java_string_library_preprocesst::make_string_builder_append_object_code;
 
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(F)Ljava/lang/StringBuilder;"]=
-    &java_string_libraries_preprocesst::make_string_builder_append_float_code;
+    &java_string_library_preprocesst::make_string_builder_append_float_code;
 
   conversion_table["java::java.lang.Float.toString:(F)Ljava/lang/String;"]=
-    &java_string_libraries_preprocesst::make_float_to_string_code;
+    &java_string_library_preprocesst::make_float_to_string_code;
 
   conversion_table["java::java.lang.String.charAt:(I)C"]=
-    &java_string_libraries_preprocesst::make_char_at_code;
+    &java_string_library_preprocesst::make_char_at_code;
 }

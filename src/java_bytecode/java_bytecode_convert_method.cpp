@@ -2739,7 +2739,7 @@ void java_bytecode_convert_method(const symbolt &class_symbol,
   size_t max_array_length,
   safe_pointer<std::vector<irep_idt> > needed_methods,
   safe_pointer<std::set<irep_idt> > needed_classes,
-  const java_string_libraries_preprocesst &string_preprocess)
+  const java_string_library_preprocesst &string_preprocess)
 {
   java_bytecode_convert_methodt java_bytecode_convert_method(
     symbol_table,
