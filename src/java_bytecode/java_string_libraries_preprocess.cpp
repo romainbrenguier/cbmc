@@ -19,6 +19,8 @@ Date:   April 2017
 #include <util/string_expr.h>
 #include <util/ieee_float.h>
 #include "java_types.h"
+#include "java_object_factory.h"
+
 
 #include "java_string_libraries_preprocess.h"
 
@@ -346,8 +348,6 @@ void java_string_libraries_preprocesst::add_string_type(
 
   symbol_table.add(string_equals_symbol);
 }
-
-
 
 /*******************************************************************\
 
@@ -753,6 +753,38 @@ codet java_string_libraries_preprocesst::code_assign_java_string_to_string_expr(
 /*******************************************************************\
 
 Function: java_string_libraries_preprocesst::
+            code_assign_string_literal_to_string_expr
+
+  Inputs:
+    lhs - an expression representing a java string
+    tmp_string - a temporary string to hold the literal
+    s - the literal to be assigned
+    location - a location in the program
+
+  Output: return the following code:
+          > tmp_string = "s"
+          > lhs = (string_expr) tmp_string
+
+\*******************************************************************/
+
+codet java_string_libraries_preprocesst::
+  code_assign_string_literal_to_string_expr(
+    const string_exprt &lhs,
+    const exprt &tmp_string,
+    const std::string &s,
+    symbol_tablet &symbol_table)
+{
+  code_blockt code;
+  code.copy_to_operands(code_assignt(tmp_string, string_literal(s)));
+  code.copy_to_operands(code_assign_java_string_to_string_expr(
+    lhs, tmp_string, symbol_table));
+  return code;
+
+}
+
+/*******************************************************************\
+
+Function: java_string_libraries_preprocesst::
     make_string_builder_append_object_code
 
   Inputs:
@@ -922,13 +954,26 @@ Function: java_string_libraries_preprocesst::make_float_to_string_code
   Inputs:
     code - the code of a function call
 
- Outputs: code for the StringBuilder.append(F) function:
-          > if arguments[1]==NaN then return "NaN"
-          > if arguments[1]==Infinity then return "Infinity"
-          > if arguments[1]==-Infinity then return "-Infinity"
+ Outputs: code for the Float.toString(F) function:
+          > String * str;
+          > str = MALLOC(String);
+          > String * tmp_string;
+          > int string_expr_length;
+          > char[] string_expr_content;
+          > CPROVER_string string_expr_sym;
+          > if arguments[1]==NaN
+          > then {tmp_string="NaN"; string_expr=(string_expr)tmp_string}
+          > if arguments[1]==Infinity
+          > then {tmp_string="Infinity"; string_expr=(string_expr)tmp_string}
+          > if 1e-3<arguments[1]<1e6
+          > then {tmp_string=string_of_int((int)arguments[1]);
+          >       string_expr=(string_expr)tmp_string}
+          > string_expr_sym=string_expr;
+          > str=(String*) string_expr;
+          > return str;
 
 \*******************************************************************/
-
+#include<iostream>
 codet java_string_libraries_preprocesst::make_float_to_string_code(
   const code_typet &type,
   const source_locationt &loc,
@@ -939,15 +984,63 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
   assert(params.size()==1 && "wrong number of parameters in Float.toString");
   exprt arg=symbol_exprt(params[0].get_identifier(), params[0].type());
 
-  // Case of computerized scientific notation
-  code_returnt case_sci_notation(string_literal("0.0f"));
-  //concat(integer_part, '.');
-  //concat(fractional part);
+  // Holder for output code
+  code_blockt code;
+
+  // Declaring and allocating String * str
+  exprt str=fresh_string(type.return_type(), loc, symbol_table);
+  code.copy_to_operands(code_declt(str));
+  exprt malloc=allocate_dynamic_object(
+    str, str.type().subtype(), symbol_table, loc, code, false);
+  exprt tmp_string=fresh_string(type.return_type(), loc, symbol_table);
+
+  // Declaring CPROVER_string string_expr
+  refined_string_typet refined_string_type(java_int_type(), java_char_type());
+  string_exprt string_expr=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+  code.copy_to_operands(code_declt(string_expr.length()));
+  code.copy_to_operands(code_declt(string_expr.content()));
+  exprt string_expr_sym=fresh_string_expr_symbol(
+    refined_string_type, loc, symbol_table);
+  code.copy_to_operands(code_declt(string_expr_sym));
+
+  // List of the different cases
+  std::vector<code_ifthenelset> case_list;
+
+  // First case in the list is the default
+  code_ifthenelset case_sci_notation;
+  ieee_float_spect float_spec=ieee_float_spect::single_precision();
+  // Subcase of 0.0
+  ieee_floatt zero_float(float_spec);
+  zero_float.from_float(0.0);
+  constant_exprt zero=zero_float.to_expr();
+  case_sci_notation.cond()=ieee_float_equal_exprt(arg, zero);
+  case_sci_notation.then_case()=code_assign_string_literal_to_string_expr(
+    string_expr, tmp_string, "0.0", symbol_table);
+  // Subcase of computerized scientific notation
+  // TODO: specify this subcase
+  case_sci_notation.else_case()=code_assign_string_literal_to_string_expr(
+    string_expr, tmp_string, "0.0e0", symbol_table);
+  case_list.push_back(case_sci_notation);
+
+  // Case of NaN
+  code_ifthenelset case_nan;
+  case_nan.cond()=isnan_exprt(arg);
+  case_nan.then_case()=code_assign_string_literal_to_string_expr(
+    string_expr, tmp_string, "NaN", symbol_table);
+  case_list.push_back(case_nan);
+
+  // Case of Infinity
+  code_ifthenelset case_infinity;
+  case_infinity.cond()=isinf_exprt(arg);
+  // TODO: should also detect -Infinity
+  case_infinity.then_case()=code_assign_string_literal_to_string_expr(
+        string_expr, tmp_string, "Infinity", symbol_table);
+  case_list.push_back(case_infinity);
 
   // Case of simple notation
   code_ifthenelset case_simple_notation;
 
-  ieee_float_spect float_spec=ieee_float_spect::single_precision();
   ieee_floatt bound_inf_float(float_spec);
   ieee_floatt bound_sup_float(float_spec);
   bound_inf_float.from_float(1e-3);
@@ -955,15 +1048,12 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
   constant_exprt bound_inf=bound_inf_float.to_expr();
   constant_exprt bound_sup=bound_sup_float.to_expr();
 
-  case_simple_notation.cond()=and_exprt(
+  and_exprt simple_float(
     binary_relation_exprt(arg, ID_ge, bound_inf),
     binary_relation_exprt(arg, ID_lt, bound_sup));
+  case_simple_notation.cond()=simple_float;
   typecast_exprt integer_part(arg, java_int_type());
-  refined_string_typet refined_string_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(
-    refined_string_type, loc, symbol_table);
 
-  exprt string_expr_sym=fresh_string_expr_symbol(refined_string_type, loc, symbol_table);
   code_assignt assign_string_expr_sym(string_expr_sym, string_expr);
 
   codet assign_int=code_assign_function_to_string_expr(
@@ -971,39 +1061,29 @@ codet java_string_libraries_preprocesst::make_float_to_string_code(
     ID_cprover_string_of_int_func,
     {integer_part},
     symbol_table);
-  exprt str=fresh_string(type.return_type(), loc, symbol_table);
   codet assign_string=code_assign_string_expr_to_java_string(
     str, string_expr, symbol_table);
 
-  //concat(integer_part, '.');
-  //concat(fractional part);
+  // TODO : add point and fractional part
   case_simple_notation.then_case()=code_blockt(
     {assign_int, assign_string_expr_sym, assign_string, code_returnt(str)});
-  case_simple_notation.else_case()=case_sci_notation;
+  case_list.push_back(case_simple_notation);
 
-  // Case of NaN
-  code_ifthenelset case_nan;
-  case_nan.cond()=isnan_exprt(arg);
-  case_nan.then_case()=code_returnt(string_literal("NaN"));
-  case_nan.else_case()=case_simple_notation;
+  // Combining all cases
+  for(std::size_t i=1; i<case_list.size(); i++)
+    case_list[i].else_case()=case_list[i-1];
+  code.copy_to_operands(case_list[case_list.size()-1]);
 
-  // Case of Infinity
-  code_ifthenelset case_infinity;
-  case_infinity.cond()=isinf_exprt(arg);
-  // TODO: should also detect -Infinity
-  case_infinity.then_case()=code_returnt(string_literal("Infinity"));
-  case_infinity.else_case()=case_nan;
+  // str = string_expr
+  code.copy_to_operands(code_assign_string_expr_to_java_string(
+    str, string_expr, symbol_table));
 
-  // Case of 0.0
-  code_ifthenelset case_zero;
-  ieee_floatt zero_float(float_spec);
-  zero_float.from_float(0.0);
-  constant_exprt zero=zero_float.to_expr();
-  case_zero.cond()=ieee_float_equal_exprt(arg, zero);
-  case_zero.then_case()=code_returnt(string_literal("0.0"));
-  case_zero.else_case()=case_infinity;
+  // Assign string_expr_sym = { string_expr_length, string_expr_content }
+  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
-  return case_zero;
+  // Return str
+  code.copy_to_operands(code_returnt(str));
+  return code;
 }
 
 /*******************************************************************\
@@ -1042,8 +1122,12 @@ codet java_string_libraries_preprocesst::make_function_from_call(
   symbol_tablet &symbol_table)
 {
   exprt::operandst args=process_arguments(type.parameters(), symbol_table);
-  return code_return_function_application(
-    function_name, args, type.return_type(), symbol_table);
+  refined_string_typet ref_type(java_int_type(), java_char_type());
+  string_exprt string_expr=fresh_string_expr(ref_type, loc, symbol_table);
+  code_assignt assign_array(string_expr.content(), to_string_expr(args[0]).content());
+  to_string_expr(args[0]).content()=string_expr.content();
+  return code_blockt({assign_array, code_return_function_application(
+    function_name, args, type.return_type(), symbol_table)});
 }
 
 /*******************************************************************\
