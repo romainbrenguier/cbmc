@@ -1075,13 +1075,28 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   case_simple_notation.cond()=simple_float;
 
   typecast_exprt integer_part(arg, java_int_type());
-  case_simple_notation.then_case()=code_assign_function_to_string_expr(
-      string_expr,
+  case_simple_notation.then_case()=code_blockt();
+  string_exprt tmp_string_expr=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+  case_simple_notation.then_case().copy_to_operands(
+    code_assign_function_to_string_expr(
+      tmp_string_expr,
       ID_cprover_string_of_int_func,
       {integer_part},
-      symbol_table);
+      symbol_table));
+  string_exprt dot_string_lit=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+  case_simple_notation.then_case().copy_to_operands(
+    code_assign_string_literal_to_string_expr(
+      dot_string_lit, tmp_string, ".0", symbol_table));
+  case_simple_notation.then_case().copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_expr,
+      ID_cprover_string_concat_func,
+      {tmp_string_expr, dot_string_lit},
+      symbol_table));
 
-  // TODO : add point and fractional part
+  // TODO : add fractional part
   case_list.push_back(case_simple_notation);
 
   // Combining all cases
