@@ -86,6 +86,68 @@ public:
 
 /*******************************************************************\
 
+Function: allocate_dynamic_object
+
+  Inputs:
+
+ Outputs:
+
+ Purpose:
+
+\*******************************************************************/
+
+exprt allocate_dynamic_object(
+  const exprt &target_expr,
+  const typet &allocate_type,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &output_code,
+  bool cast_needed)
+{
+  // build size expression
+  exprt object_size=size_of_expr(allocate_type, namespacet(symbol_table));
+
+  if(allocate_type.id()!=ID_empty)
+  {
+    assert(!object_size.is_nil() && "size of Java objects should be known");
+    // malloc expression
+    exprt malloc_expr=side_effect_exprt(ID_malloc);
+    malloc_expr.copy_to_operands(object_size);
+    typet result_type=pointer_typet(allocate_type);
+    malloc_expr.type()=result_type;
+    // Create a symbol for the malloc expression so we can initialize
+    // without having to do it potentially through a double-deref, which
+    // breaks the to-SSA phase.
+    symbolt &malloc_sym=new_tmp_symbol(
+      symbol_table,
+      loc,
+      pointer_typet(allocate_type),
+      "malloc_site");
+    code_assignt assign=code_assignt(malloc_sym.symbol_expr(), malloc_expr);
+    code_assignt &malloc_assign=assign;
+    malloc_assign.add_source_location()=loc;
+    output_code.copy_to_operands(malloc_assign);
+    malloc_expr=malloc_sym.symbol_expr();
+    if(cast_needed)
+      malloc_expr=typecast_exprt(malloc_expr, target_expr.type());
+    code_assignt code(target_expr, malloc_expr);
+    code.add_source_location()=loc;
+    output_code.copy_to_operands(code);
+    return malloc_sym.symbol_expr();
+  }
+  else
+  {
+    // make null
+    null_pointer_exprt null_pointer_expr(to_pointer_type(target_expr.type()));
+    code_assignt code(target_expr, null_pointer_expr);
+    code.add_source_location()=loc;
+    output_code.copy_to_operands(code);
+    return exprt();
+  }
+}
+
+/*******************************************************************\
+
 Function: java_object_factoryt::allocate_object
 
   Inputs: the target expression, desired object type, source location
@@ -123,46 +185,8 @@ exprt java_object_factoryt::allocate_object(
   }
   else
   {
-    // build size expression
-    exprt object_size=size_of_expr(allocate_type, namespacet(symbol_table));
-
-    if(allocate_type.id()!=ID_empty)
-    {
-      assert(!object_size.is_nil() && "size of Java objects should be known");
-      // malloc expression
-      exprt malloc_expr=side_effect_exprt(ID_malloc);
-      malloc_expr.copy_to_operands(object_size);
-      typet result_type=pointer_typet(allocate_type);
-      malloc_expr.type()=result_type;
-      // Create a symbol for the malloc expression so we can initialize
-      // without having to do it potentially through a double-deref, which
-      // breaks the to-SSA phase.
-      symbolt &malloc_sym=new_tmp_symbol(
-        symbol_table,
-        loc,
-        pointer_typet(allocate_type),
-        "malloc_site");
-      code_assignt assign=code_assignt(malloc_sym.symbol_expr(), malloc_expr);
-      code_assignt &malloc_assign=assign;
-      malloc_assign.add_source_location()=loc;
-      init_code.copy_to_operands(malloc_assign);
-      malloc_expr=malloc_sym.symbol_expr();
-      if(cast_needed)
-        malloc_expr=typecast_exprt(malloc_expr, target_expr.type());
-      code_assignt code(target_expr, malloc_expr);
-      code.add_source_location()=loc;
-      init_code.copy_to_operands(code);
-      return malloc_sym.symbol_expr();
-    }
-    else
-    {
-      // make null
-      null_pointer_exprt null_pointer_expr(to_pointer_type(target_expr.type()));
-      code_assignt code(target_expr, null_pointer_expr);
-      code.add_source_location()=loc;
-      init_code.copy_to_operands(code);
-      return exprt();
-    }
+    return allocate_dynamic_object(
+      target_expr, allocate_type, symbol_table, loc, init_code, cast_needed);
   }
 }
 

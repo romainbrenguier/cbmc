@@ -50,4 +50,12 @@ symbolt &new_tmp_symbol(
   const typet &,
   const std::string &prefix="tmp_object_factory");
 
+exprt allocate_dynamic_object(
+  const exprt &target_expr,
+  const typet &allocate_type,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &output_code,
+  bool cast_needed=false);
+
 #endif // CPROVER_JAVA_BYTECODE_JAVA_OBJECT_FACTORY_H
