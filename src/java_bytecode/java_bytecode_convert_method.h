@@ -12,7 +12,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/symbol_table.h>
 #include <util/message.h>
 #include <util/safe_pointer.h>
-#include "java_string_libraries_preprocess.h"
+#include "java_string_library_preprocess.h"
 
 #include "java_bytecode_parse_tree.h"
 

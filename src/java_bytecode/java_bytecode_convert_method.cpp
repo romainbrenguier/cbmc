@@ -26,7 +26,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_bytecode_convert_method_class.h"
 #include "bytecode_info.h"
 #include "java_types.h"
-#include "java_string_libraries_preprocess.h"
+#include "java_string_library_preprocess.h"
 
 #include <limits>
 #include <algorithm>

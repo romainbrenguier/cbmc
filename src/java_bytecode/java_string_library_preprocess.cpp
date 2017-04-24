@@ -22,7 +22,7 @@ Date:   April 2017
 #include "java_object_factory.h"
 
 
-#include "java_string_libraries_preprocess.h"
+#include "java_string_library_preprocess.h"
 
 /*******************************************************************\
 

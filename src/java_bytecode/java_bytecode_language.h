@@ -13,7 +13,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/cmdline.h>
 
 #include "java_class_loader.h"
-#include "java_string_libraries_preprocess.h"
+#include "java_string_library_preprocess.h"
 
 #define MAX_NONDET_ARRAY_LENGTH_DEFAULT 5
 
