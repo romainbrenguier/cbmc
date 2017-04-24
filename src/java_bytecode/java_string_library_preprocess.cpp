@@ -997,7 +997,7 @@ Function: java_string_libraries_preprocesst::make_float_to_string_code
           > return str;
 
 \*******************************************************************/
-#include<iostream>
+
 codet java_string_libraries_preprocesst::make_float_to_string_code(
   const code_typet &type,
   const source_locationt &loc,
