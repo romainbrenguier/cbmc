@@ -1147,7 +1147,63 @@ codet java_string_library_preprocesst::make_float_to_string_code(
 
 /*******************************************************************\
 
-Function: java_string_library_preprocesst::make_char_at_code
+Function: java_string_library_preprocesst::make_init_code
+
+  Inputs:
+    type - the type of the function call
+    loc - location in program
+    symbol_table - the symbol table to populate
+
+ Outputs: code for the String.<init>(java/lang/String) function:
+          > cprover_string_length = arg->length;
+          > cprover_string_array = *arg1->data;
+          > this->length = cprover_string_length;
+          > this->data = cprover_string_array;
+          > cprover_string = {.=cprover_string_length, .=cprover_string_array};
+
+  Purpose: Generate the goto code for string initialization.
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::make_init_code(
+  const code_typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  // Getting the assignment arguments (String arg0 = new String(arg1);)
+  code_typet::parameterst params=type.parameters();
+  assert(params.size()==2 && "wrong number of parameters in String.<init>");
+  exprt arg0=symbol_exprt(params[0].get_identifier(), params[0].type());
+  exprt arg1=symbol_exprt(params[1].get_identifier(), params[1].type());
+
+  // Holder for output code
+  code_blockt code;
+
+  // Declaring and allocating String * str
+
+  // Declaring cprover_string string_expr
+  refined_string_typet refined_string_type(java_int_type(), java_char_type());
+  string_exprt string_expr=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(
+    refined_string_type, loc, symbol_table);
+
+  // Make the assignment: string_expr <- arg1
+  code.copy_to_operands(
+    code_assign_java_string_to_string_expr(string_expr, arg1, symbol_table));
+
+  // Make the assignment: arg0 <- string_expr
+  code.copy_to_operands(
+    code_assign_string_expr_to_java_string(arg0, string_expr, symbol_table));
+
+  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
+
+  return code;
+}
+
+/*******************************************************************\
+
+Function: java_string_libraries_preprocesst::make_char_at_code
 
   Inputs:
 
@@ -1309,6 +1365,9 @@ void java_string_library_preprocesst::initialize_conversion_table()
                 "java.lang.StringBuilder",
                 "java.lang.CharSequence",
                 "java.lang.StringBuffer"};
+
+  conversion_table["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
+    &java_string_library_preprocesst::make_init_code;
 
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"]=

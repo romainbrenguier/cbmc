@@ -92,6 +92,11 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
+  static codet make_init_code(
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
   static codet make_char_at_code(
       const code_typet &type,
       const source_locationt &loc,
