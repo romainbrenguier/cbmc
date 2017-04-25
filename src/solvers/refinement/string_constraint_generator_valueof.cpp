@@ -349,11 +349,12 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
             binary_relation_exprt(res[j], ID_le, nine_char));
       digit_constraints.push_back(is_number);
 
-      if(j>=max_size-1)
+      if(j>=max_size-2)
       {
         // check for overflows if the size is big
-        and_exprt no_overflow(equal_exprt(sum, div_exprt(ten_sum, ten)),
-                              binary_relation_exprt(new_sum, ID_ge, ten_sum));
+        implies_exprt no_overflow(res.axiom_for_has_length(size),
+                                  and_exprt(equal_exprt(sum, div_exprt(ten_sum, ten)),
+                                            binary_relation_exprt(new_sum, ID_ge, ten_sum)));
         digit_constraints.push_back(no_overflow);
       }
       sum=new_sum;
@@ -374,6 +375,114 @@ string_exprt string_constraint_generatort::add_axioms_from_int(
   }
 
   return res;
+}
+
+/*******************************************************************\
+
+Function: string_constraint_generatort::add_axioms_from_fractional_part
+
+  Inputs: a signed integer expression, and a maximal size for the string
+          representation
+
+ Outputs: a string expression
+
+ Purpose: add axioms corresponding to the given int, but adds zero in
+          the begining to match the maximum size, and removes trailing
+          zeros (except for the first character).
+          For instance the string corresponding to i=3210 and max_size=6
+          is "00321".
+          This is useful to construct a string representation of floats.
+
+\*******************************************************************/
+
+string_exprt string_constraint_generatort::add_axioms_from_fractional_part(
+  const exprt &i, size_t max_size, const refined_string_typet &ref_type)
+{
+  string_exprt res=fresh_string(ref_type);
+  const typet &type=i.type();
+  assert(type.id()==ID_signedbv);
+  exprt ten=from_integer(10, type);
+  const typet &char_type=ref_type.get_char_type();
+  const typet &index_type=ref_type.get_index_type();
+  exprt zero_char=constant_char('0', char_type);
+  exprt nine_char=constant_char('9', char_type);
+  exprt minus_char=constant_char('-', char_type);
+  exprt zero=from_integer(0, index_type);
+  exprt max=from_integer(max_size, index_type);
+
+  // We add axioms:
+  // a1 : 0 < |res| <= max_size
+  // a2 : forall i < size '0' < res[i] < '9'
+  // a3 : i = sum_j 10^j res[j] - '0'
+  // for all j : !(|res| = j+1 && res[j]='0')
+  // for all j : |res| <= j => res[j]='0'
+
+  and_exprt a1(res.axiom_for_is_strictly_longer_than(0),
+               res.axiom_for_is_shorter_than(max));
+  axioms.push_back(a1);
+
+  and_exprt starts_with_digit(binary_relation_exprt(res[0], ID_ge, zero_char),
+                              binary_relation_exprt(res[0], ID_le, nine_char));
+
+  exprt::operandst digit_constraints;
+  digit_constraints.push_back(starts_with_digit);
+  exprt sum=typecast_exprt(minus_exprt(res[0], zero_char), type);
+
+  for(size_t j=1; j<max_size; j++)
+  {
+    mult_exprt ten_sum(sum, ten);
+    // sum = 10 * sum + (res[j]-'0')
+    sum=plus_exprt(
+          ten_sum, typecast_exprt(minus_exprt(res[j], zero_char), type));
+
+    and_exprt is_number(
+          binary_relation_exprt(res[j], ID_ge, zero_char),
+          binary_relation_exprt(res[j], ID_le, nine_char));
+    digit_constraints.push_back(is_number);
+
+    not_exprt no_trailing_zero(and_exprt(
+      equal_exprt(res.length(),from_integer(j+1, res.length().type())),
+      equal_exprt(res[j], zero_char)));
+    axioms.push_back(no_trailing_zero);
+
+    implies_exprt only_zero_after_end(
+      binary_relation_exprt(res.length(), ID_le, from_integer(j, res.length().type())),
+      equal_exprt(res[j], zero_char));
+    axioms.push_back(only_zero_after_end);
+  }
+
+  exprt a2=conjunction(digit_constraints);
+  axioms.push_back(a2);
+
+  equal_exprt a3(i, sum);
+  axioms.push_back(a3);
+
+  return res;
+}
+
+/*******************************************************************\
+
+Function: string_constraint_generatort::add_axioms_from_fractional_part
+
+  Inputs: function application with a integer argument and a const integer
+          argument for the maximum_size
+
+ Outputs: a new string expression
+
+ Purpose: add axioms corresponding for the fractional part of a floating point
+          value.
+
+\*******************************************************************/
+
+string_exprt string_constraint_generatort::add_axioms_from_fractional_part(
+  const function_application_exprt &f)
+{
+  const refined_string_typet &ref_type=to_refined_string_type(f.type());
+  mp_integer max_size;
+
+  assert(!to_integer(args(f, 2)[1], max_size));
+  return add_axioms_from_fractional_part(
+    args(f, 2)[0], integer2size_t(max_size), ref_type);
 }
 
 /*******************************************************************\

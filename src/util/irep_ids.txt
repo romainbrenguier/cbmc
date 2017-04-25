@@ -804,4 +804,5 @@ cprover_string_to_lower_case_func
 cprover_string_to_upper_case_func
 cprover_string_trim_func
 cprover_string_value_of_func
+cprover_string_of_fractional_part_func
 basic_block_covered_lines

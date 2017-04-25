@@ -235,6 +235,11 @@ private:
     const refined_string_typet &ref_type,
     bool double_precision);
 
+  string_exprt add_axioms_from_fractional_part(
+    const exprt &i, size_t max_size, const refined_string_typet &ref_type);
+  string_exprt add_axioms_from_fractional_part(
+    const function_application_exprt &f);
+
   // Add axioms corresponding to the String.valueOf(D) java function
   // TODO: the specifications is only partial
   string_exprt add_axioms_from_double(const function_application_exprt &f);
