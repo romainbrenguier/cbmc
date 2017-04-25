@@ -103,8 +103,14 @@ private:
       symbol_tablet &symbol_table);
 
   // Helper functions
-  static exprt::operandst process_arguments(
+  static exprt::operandst process_parameters(
     const code_typet::parameterst &params,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &init_code);
+
+  static exprt::operandst process_operands(
+    const exprt::operandst &operands,
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &init_code);

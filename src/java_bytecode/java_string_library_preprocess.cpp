@@ -416,15 +416,12 @@ Function: string_refine_preprocesst::process_arguments
 
  Outputs: a list of expressions
 
- Purpose: for each expression that is of a type implementing strings,
-          we declare a new `cprover_string` whose contents is deduced
-          from the expression and replace the
-          expression by this cprover_string in the output list;
-          in the other case the expression is kept as is for the output list.
+ Purpose: calls string_refine_preprocesst::process_operands with a
+          list of parameters.
 
 \*******************************************************************/
 
-exprt::operandst java_string_library_preprocesst::process_arguments(
+exprt::operandst java_string_library_preprocesst::process_parameters(
   const code_typet::parameterst &params,
   const source_locationt &loc,
   symbol_tablet &symbol_table,
@@ -433,13 +430,48 @@ exprt::operandst java_string_library_preprocesst::process_arguments(
   exprt::operandst ops;
   for(const auto &p : params)
   {
+    symbol_exprt sym(p.get_identifier(), p.type());
+    ops.push_back(sym);
+  }
+  return process_operands(ops, loc, symbol_table, init_code);
+}
+
+/*******************************************************************\
+
+Function: string_refine_preprocesst::process_operands
+
+  Inputs:
+    operands - a list of expressions
+    loc - location in the source
+    symbol_table - symbol table
+    init_code - code block, in which declaration of some arguments
+                may be added
+
+ Outputs: a list of expressions
+
+ Purpose: for each expression that is of a type implementing strings,
+          we declare a new `cprover_string` whose contents is deduced
+          from the expression and replace the
+          expression by this cprover_string in the output list;
+          in the other case the expression is kept as is for the output list.
+
+\*******************************************************************/
+
+exprt::operandst java_string_library_preprocesst::process_operands(
+  const exprt::operandst &operands,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table,
+  code_blockt &init_code)
+{
+  exprt::operandst ops;
+  for(const auto &p : operands)
+  {
     if(implements_java_char_sequence(p.type()))
     {
       refined_string_typet ref_type(
         string_length_type(symbol_table),
         string_data_type(symbol_table).subtype().subtype());
-      symbol_exprt sym(p.get_identifier(), p.type());
-      dereference_exprt deref(sym, to_pointer_type(sym.type()).subtype());
+      dereference_exprt deref(p, to_pointer_type(p.type()).subtype());
       member_exprt length(deref, "length", string_length_type(symbol_table));
       member_exprt data(deref, "data", string_data_type(symbol_table));
       dereference_exprt deref_data(data, data.type().subtype());
@@ -450,17 +482,19 @@ exprt::operandst java_string_library_preprocesst::process_arguments(
       init_code.copy_to_operands(code_declt(string_expr.content()));
       init_code.copy_to_operands(code_declt(string_expr_sym));
       init_code.copy_to_operands(code_assignt(string_expr.length(), length));
-      init_code.copy_to_operands(code_assignt(string_expr.content(), deref_data));
-          init_code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
+      init_code.copy_to_operands(
+        code_assignt(string_expr.content(), deref_data));
+      init_code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
       ops.push_back(string_expr);
     }
     else
     {
-      ops.push_back(symbol_exprt(p.get_identifier(), p.type()));
+      ops.push_back(p);
     }
   }
   return ops;
 }
+
 
 /*******************************************************************\
 
@@ -723,13 +757,13 @@ Function: java_string_library_preprocesst::
             code_assign_java_string_to_string_expr
 
   Inputs:
-    lhs - an expression representing a java string
-    rhs - a string expression
+    lhs - a string expression
+    rhs - an expression representing a java string
     location - a location in the program
 
   Output: return the following code:
-          > rhs.length=lhs->length
-          > rhs.data=*(lhs->data)
+          > lhs.length=rhs->length
+          > lhs.data=*(rhs->data)
 
 \*******************************************************************/
 
@@ -833,7 +867,7 @@ codet java_string_library_preprocesst::make_string_builder_append_object_code(
   // Code to be returned
   code_blockt code;
 
-  exprt::operandst arguments=process_arguments(
+  exprt::operandst arguments=process_parameters(
     type.parameters(), loc, symbol_table, code);
   assert(arguments.size()==2);
 
@@ -910,7 +944,7 @@ codet java_string_library_preprocesst::make_string_builder_append_float_code(
   // Code to be returned
   code_blockt code;
 
-  exprt::operandst arguments=process_arguments(
+  exprt::operandst arguments=process_parameters(
     type.parameters(), loc, symbol_table, code);
   assert(arguments.size()==2);
 
@@ -1237,7 +1271,7 @@ codet java_string_library_preprocesst::make_function_from_call(
   symbol_tablet &symbol_table)
 {
   code_blockt code;
-  exprt::operandst args=process_arguments(
+  exprt::operandst args=process_parameters(
     type.parameters(), loc, symbol_table, code);
   code.copy_to_operands(code_return_function_application(
     function_name, args, type.return_type(), symbol_table));
@@ -1276,7 +1310,7 @@ codet java_string_library_preprocesst::
   code_blockt code;
 
   // Calling the function
-  exprt::operandst arguments=process_arguments(
+  exprt::operandst arguments=process_parameters(
     type.parameters(), loc, symbol_table, code);
   code.copy_to_operands(code_assign_function_to_string_expr(
     string_expr, function_name, arguments, symbol_table));
