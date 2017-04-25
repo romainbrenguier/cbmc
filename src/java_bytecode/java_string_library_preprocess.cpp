@@ -1069,34 +1069,63 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   constant_exprt bound_inf=bound_inf_float.to_expr();
   constant_exprt bound_sup=bound_sup_float.to_expr();
 
-  and_exprt simple_float(
+  and_exprt is_simple_float(
     binary_relation_exprt(arg, ID_ge, bound_inf),
     binary_relation_exprt(arg, ID_lt, bound_sup));
-  case_simple_notation.cond()=simple_float;
-
-  typecast_exprt integer_part(arg, java_int_type());
+  case_simple_notation.cond()=is_simple_float;
   case_simple_notation.then_case()=code_blockt();
-  string_exprt tmp_string_expr=fresh_string_expr(
+
+  // integer part
+  typecast_exprt integer_part(arg, java_int_type());
+  string_exprt integer_part_string_expr=fresh_string_expr(
     refined_string_type, loc, symbol_table);
+
   case_simple_notation.then_case().copy_to_operands(
     code_assign_function_to_string_expr(
-      tmp_string_expr,
+      integer_part_string_expr,
       ID_cprover_string_of_int_func,
       {integer_part},
       symbol_table));
-  string_exprt dot_string_lit=fresh_string_expr(
+
+  // dot
+ string_exprt dot_string_lit=fresh_string_expr(
     refined_string_type, loc, symbol_table);
   case_simple_notation.then_case().copy_to_operands(
     code_assign_string_literal_to_string_expr(
-      dot_string_lit, tmp_string, ".0", symbol_table));
+      dot_string_lit, tmp_string, ".", symbol_table));
+  string_exprt with_dot_string_expr=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+
+  case_simple_notation.then_case().copy_to_operands(
+    code_assign_function_to_string_expr(
+      with_dot_string_expr,
+      ID_cprover_string_concat_func,
+      {integer_part_string_expr, dot_string_lit},
+      symbol_table));
+
+  // fractional_part = arg - (float) integer_part
+  minus_exprt fractional_part(arg, typecast_exprt(integer_part, arg.type()));
+  string_exprt fractional_part_string_expr=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+  ieee_floatt shifting(float_spec);
+  shifting.from_float(1e7);
+  typecast_exprt fractional_part_shifted(
+    mult_exprt(fractional_part, shifting.to_expr()), java_int_type());
+  case_simple_notation.then_case().copy_to_operands(
+    code_assign_function_to_string_expr(
+      fractional_part_string_expr,
+      ID_cprover_string_of_fractional_part_func,
+      {fractional_part_shifted, from_integer(7, java_int_type())},
+      symbol_table));
+
+  // string_expr = concat(with_dot_string_expr, string_of_int(fractional_part))
   case_simple_notation.then_case().copy_to_operands(
     code_assign_function_to_string_expr(
       string_expr,
       ID_cprover_string_concat_func,
-      {tmp_string_expr, dot_string_lit},
+      {with_dot_string_expr, fractional_part_string_expr},
       symbol_table));
 
-  // TODO : add fractional part
   case_list.push_back(case_simple_notation);
 
   // Combining all cases
