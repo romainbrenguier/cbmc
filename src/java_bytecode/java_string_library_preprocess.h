@@ -19,6 +19,9 @@ Date:   March 2017
 #include <util/symbol_table.h>
 #include <util/refined_string_type.h>
 #include <util/string_expr.h>
+
+#include <util/ieee_float.h> // should get rid of this
+
 #include <unordered_set>
 #include "character_refine_preprocess.h"
 
@@ -101,6 +104,16 @@ private:
       const code_typet &type,
       const source_locationt &loc,
       symbol_tablet &symbol_table);
+
+  // Auxiliary functions
+  static codet code_for_scientific_notation(
+    const exprt &arg,
+    const ieee_float_spect &float_spec,
+    const string_exprt &string_expr,
+    const exprt &tmp_string,
+    const refined_string_typet &refined_string_type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   // Helper functions
   static exprt::operandst process_parameters(

@@ -1007,6 +1007,217 @@ exprt java_string_library_preprocesst::string_literal(const std::string &s)
 
 /*******************************************************************\
 
+Function: get_exponent
+
+  Inputs:
+    src - a floating point expression
+    spec - specification for floating points
+
+ Outputs:
+
+ Purpose: Gets the unbiased exponent in a floating-point bit-vector
+
+\*******************************************************************/
+
+exprt get_exponent(
+  const exprt &src,
+  const ieee_float_spect &spec)
+{
+  exprt res_plus_128=extractbits_exprt(
+    src, spec.f+spec.e-1, spec.f,
+    unsignedbv_typet(spec.e));
+  return minus_exprt(typecast_exprt(res_plus_128, java_int_type()),
+                     from_integer(128, java_int_type()));
+}
+
+/*******************************************************************\
+
+Function: get_magnitude
+
+  Inputs:
+    src - a floating point expression
+    spec - specification for floating points
+
+ Outputs:
+
+ Purpose: Gets the magnitude
+
+\*******************************************************************/
+
+exprt get_magnitude(
+  const exprt &src,
+  const ieee_float_spect &spec)
+{
+  return extractbits_exprt(
+    src, spec.f, 0,
+    unsignedbv_typet(spec.f));
+}
+
+/*******************************************************************\
+
+Function:  single_precision_float
+
+\*******************************************************************/
+
+exprt single_precision_float(float f)
+{
+  ieee_float_spect float_spec=ieee_float_spect::single_precision();
+  // Subcase of 0.0
+  ieee_floatt fl(float_spec);
+  fl.from_float(f);
+  return fl.to_expr();
+}
+
+/*******************************************************************\
+
+Function:  estimate_decimal_exponent
+
+Purpose:
+         log10(d2) ~=~  log10(2) * bin_exp
+
+\*******************************************************************/
+
+exprt log_10_of_2=single_precision_float(0.301029995663981);
+
+exprt estimate_decimal_exponent(const exprt &f,  const ieee_float_spect &spec)
+{
+  exprt bin_exp=get_exponent(f, spec);
+  return plus_exprt(
+    single_precision_float(1e0),
+    mult_exprt(typecast_exprt(bin_exp, java_float_type()), log_10_of_2));
+}
+
+
+/*******************************************************************\
+
+Function:  estimate_decimal_magnitude
+
+Purpose:
+
+
+\*******************************************************************/
+
+
+exprt estimate_decimal_magnitude(const exprt &f,  const ieee_float_spect &spec)
+{
+  exprt bin_frac=get_magnitude(f, spec);
+  return typecast_exprt(bin_frac, java_int_type());
+}
+
+/*******************************************************************\
+
+Function:  get_first_character_from_log_representation
+
+Purpose: Given logarithm 10 of n, finds out what should be the first
+         character in the representation of n.
+         For instance if n=8, its logarithm is 0.90309, so given 0.90309
+         the function should return '8'
+
+\*******************************************************************/
+
+double log_table[]={0.0000000, 0.3010300, 0.4771213, 0.6020600, 0.6989700,
+                    0.7781513, 0.8450980, 0.9030900, 0.9542425, 0.1000000};
+
+exprt get_first_character_from_log_representation(const exprt &log)
+{
+  exprt ret=from_integer('0', java_char_type());
+  for(std::size_t i=9; i>0; --i)
+    ret=if_exprt(
+      binary_relation_exprt(log, ID_le, single_precision_float(log_table[i])),
+      from_integer('0'+i, java_char_type()),
+      ret);
+  return ret;
+}
+
+
+/*******************************************************************\
+
+Function:  get_first_character_from_log_representation
+
+ A float is represented as f=m*2^e where
+ 0 <= m < 2 is the magnitude and -128 < e <= 128 is the exponent
+ We want an alternate representation by finding n and d
+ such that f=n*10^d
+ We can estimate d using the following:
+ d ~= log_10(f/n) ~= log_10(m) + log_10(2) * e - log_10(n)
+ Then n can be expressed by the equation:
+ log_10(n) = log_10(m) + log_10(2) * e - d
+ log_10(m) can be 0 or -1
+ We use the function get_first_character_from_log_representation
+ to write n from its log.
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::code_for_scientific_notation(
+  const exprt &arg,
+  const ieee_float_spect &float_spec,
+  const string_exprt &string_expr,
+  const exprt &tmp_string,
+  const refined_string_typet &refined_string_type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  code_blockt code;
+
+  exprt binary_exponent=get_exponent(arg, float_spec);
+  typecast_exprt decimal_exponent(
+    estimate_decimal_exponent(arg, float_spec), java_int_type());
+
+  exprt log_n=minus_exprt(
+    mult_exprt(typecast_exprt(binary_exponent, java_float_type()), log_10_of_2),
+    typecast_exprt(decimal_exponent, java_float_type()));
+
+  string_exprt exponent_string=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+
+  code.copy_to_operands(
+    code_assign_function_to_string_expr(
+      exponent_string,
+      ID_cprover_string_of_int_func,
+      {decimal_exponent},
+      symbol_table));
+
+  string_exprt string_magnitude=fresh_string_expr(
+     refined_string_type, loc, symbol_table);
+  exprt first_character=get_first_character_from_log_representation(log_n);
+  code.copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_magnitude,
+      ID_cprover_string_of_char_func,
+      {first_character},
+      symbol_table));
+
+  // string_lit_E = "E"
+  string_exprt string_lit_E=fresh_string_expr(
+     refined_string_type, loc, symbol_table);
+
+  code.copy_to_operands(
+    code_assign_string_literal_to_string_expr(
+      string_lit_E, tmp_string, "E", symbol_table));
+
+  // string_expr1 = concat(string_magnitude, string_lit_E)
+  string_exprt string_expr1=fresh_string_expr(
+     refined_string_type, loc, symbol_table);
+  code.copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_expr1,
+      ID_cprover_string_concat_func,
+      {string_magnitude, string_lit_E},
+      symbol_table));
+
+  // string_expr = concat(string_expr1, exponent_string)
+  code.copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_expr,
+      ID_cprover_string_concat_func,
+      {string_expr1, exponent_string},
+      symbol_table));
+
+  return code;
+}
+
+/*******************************************************************\
+
 Function: java_string_library_preprocesst::make_float_to_string_code
 
   Inputs:
@@ -1072,10 +1283,10 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   case_sci_notation.cond()=ieee_float_equal_exprt(arg, zero);
   case_sci_notation.then_case()=code_assign_string_literal_to_string_expr(
     string_expr, tmp_string, "0.0", symbol_table);
+
   // Subcase of computerized scientific notation
-  // TODO: specify this subcase
-  case_sci_notation.else_case()=code_assign_string_literal_to_string_expr(
-    string_expr, tmp_string, "0.0e0", symbol_table);
+  case_sci_notation.else_case()=code_for_scientific_notation(
+    arg, float_spec, string_expr, tmp_string, refined_string_type, loc, symbol_table);
   case_list.push_back(case_sci_notation);
 
   // Case of NaN
@@ -1122,8 +1333,8 @@ codet java_string_library_preprocesst::make_float_to_string_code(
       symbol_table));
 
   // dot
- string_exprt dot_string_lit=fresh_string_expr(
-    refined_string_type, loc, symbol_table);
+  string_exprt dot_string_lit=fresh_string_expr(
+     refined_string_type, loc, symbol_table);
   case_simple_notation.then_case().copy_to_operands(
     code_assign_string_literal_to_string_expr(
       dot_string_lit, tmp_string, ".", symbol_table));
@@ -1160,7 +1371,7 @@ codet java_string_library_preprocesst::make_float_to_string_code(
       {with_dot_string_expr, fractional_part_string_expr},
       symbol_table));
 
-  case_list.push_back(case_simple_notation);
+//  case_list.push_back(case_simple_notation);
 
   // Combining all cases
   for(std::size_t i=1; i<case_list.size(); i++)
