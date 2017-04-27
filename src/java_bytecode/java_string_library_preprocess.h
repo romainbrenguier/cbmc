@@ -211,6 +211,12 @@ private:
       const source_locationt &loc,
       symbol_tablet &symbol_table);
 
+  static codet make_init_function_from_call(
+      const irep_idt &function_name,
+      const code_typet &type,
+      const source_locationt &loc,
+      symbol_tablet &symbol_table);
+
   static codet make_string_returning_function_from_call(
       const irep_idt &function_name,
       const code_typet &type,

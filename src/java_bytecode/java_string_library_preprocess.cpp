@@ -1565,6 +1565,66 @@ codet java_string_library_preprocesst::make_init_code(
 
 /*******************************************************************\
 
+Function: java_string_library_preprocesst::make_init_function_from_call
+
+  Inputs:
+    type - the type of the function call
+    loc - location in program
+    symbol_table - the symbol table to populate
+
+ Outputs: code for the String.<init>(args) function:
+          > cprover_string_length = fun(arg).length;
+          > cprover_string_array = fun(arg).data;
+          > this->length = cprover_string_length;
+          > this->data = cprover_string_array;
+          > cprover_string = {.=cprover_string_length, .=cprover_string_array};
+
+  Purpose: Generate the goto code for string initialization.
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::make_init_function_from_call(
+  const irep_idt &function_name,
+  const code_typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  code_typet::parameterst params=type.parameters();
+
+  // The first parameter is the object to be initialized
+  assert(!params.empty());
+  exprt arg_this=symbol_exprt(params[0].get_identifier(), params[0].type());
+  params.erase(params.begin());
+
+  // Holder for output code
+  code_blockt code;
+
+  // Processing parameters
+  exprt::operandst args=process_parameters(params, loc, symbol_table, code);
+
+  // Declaring cprover_string string_expr
+  refined_string_typet refined_string_type(java_int_type(), java_char_type());
+  string_exprt string_expr=fresh_string_expr(
+    refined_string_type, loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(
+    refined_string_type, loc, symbol_table);
+
+  // Make the assignment: string_expr <- function(arg1)
+  code.copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_expr, function_name, args, symbol_table));
+
+  // Make the assignment: arg_this <- string_expr
+  code.copy_to_operands(
+    code_assign_string_expr_to_java_string(arg_this, string_expr, symbol_table));
+
+  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
+
+  return code;
+}
+
+/*******************************************************************\
+
 Function: java_string_libraries_preprocesst::make_char_at_code
 
   Inputs:
@@ -1681,7 +1741,10 @@ exprt java_string_library_preprocesst::code_of_function(
   if(it_id!=cprover_equivalent_to_java_function.end())
     return make_function_from_call(it_id->second, type, loc, symbol_table);
 
-  // TODO : case of initialization functions
+  it_id=cprover_equivalent_to_java_initialization_function.find(function_id);
+    if(it_id!=cprover_equivalent_to_java_initialization_function.end())
+      return make_init_function_from_call(
+        it_id->second, type, loc, symbol_table);
 
   // TODO : case of assign and return functions
 
