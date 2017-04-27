@@ -1571,6 +1571,9 @@ Function: java_string_library_preprocesst::make_init_function_from_call
     type - the type of the function call
     loc - location in program
     symbol_table - the symbol table to populate
+    ignore_first_arg - boolean flag telling that the first argument
+        should not be part of the arguments of the call (but only used
+        to be assigned the result)
 
  Outputs: code for the String.<init>(args) function:
           > cprover_string_length = fun(arg).length;
@@ -1589,14 +1592,16 @@ codet java_string_library_preprocesst::make_init_function_from_call(
   const irep_idt &function_name,
   const code_typet &type,
   const source_locationt &loc,
-  symbol_tablet &symbol_table)
+  symbol_tablet &symbol_table,
+  bool ignore_first_arg)
 {
   code_typet::parameterst params=type.parameters();
 
   // The first parameter is the object to be initialized
   assert(!params.empty());
   exprt arg_this=symbol_exprt(params[0].get_identifier(), params[0].type());
-  params.erase(params.begin());
+  if(ignore_first_arg)
+    params.erase(params.begin());
 
   // Holder for output code
   code_blockt code;
@@ -1622,6 +1627,42 @@ codet java_string_library_preprocesst::make_init_function_from_call(
 
   code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
+  return code;
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::
+            make_assign_and_return_function_from_call
+
+  Inputs:
+    function_name - name of the function to be called
+    type - the type of the function call
+    loc - location in program
+    symbol_table - the symbol table to populate
+
+ Outputs: code
+
+  Purpose: Call a cprover internal function, assign the result to
+           object `this` and return it.
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::
+  make_assign_and_return_function_from_call(
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table)
+{
+  // This is similar to initialization function except we also return
+  // a pointer to `this`
+  code_typet::parameterst params=type.parameters();
+  assert(!params.empty());
+  exprt arg_this=symbol_exprt(params[0].get_identifier(), params[0].type());
+  codet code=make_init_function_from_call(
+    function_name, type, loc, symbol_table, false);
+  code.copy_to_operands(code_returnt(arg_this));
   return code;
 }
 
@@ -1744,11 +1785,14 @@ exprt java_string_library_preprocesst::code_of_function(
     return make_function_from_call(it_id->second, type, loc, symbol_table);
 
   it_id=cprover_equivalent_to_java_initialization_function.find(function_id);
-    if(it_id!=cprover_equivalent_to_java_initialization_function.end())
-      return make_init_function_from_call(
-        it_id->second, type, loc, symbol_table);
+  if(it_id!=cprover_equivalent_to_java_initialization_function.end())
+    return make_init_function_from_call(
+      it_id->second, type, loc, symbol_table);
 
-  // TODO : case of assign and return functions
+  it_id=cprover_equivalent_to_java_assign_and_return_function.find(function_id);
+  if(it_id!=cprover_equivalent_to_java_assign_and_return_function.end())
+    return make_assign_and_return_function_from_call(
+      it_id->second, type, loc, symbol_table);
 
   auto it=conversion_table.find(function_id);
   if(it!=conversion_table.end())

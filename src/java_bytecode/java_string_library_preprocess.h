@@ -215,6 +215,13 @@ private:
       const irep_idt &function_name,
       const code_typet &type,
       const source_locationt &loc,
+      symbol_tablet &symbol_table,
+      bool ignore_first_arg=true);
+
+  static codet make_assign_and_return_function_from_call(
+      const irep_idt &function_name,
+      const code_typet &type,
+      const source_locationt &loc,
       symbol_tablet &symbol_table);
 
   static codet make_string_returning_function_from_call(
