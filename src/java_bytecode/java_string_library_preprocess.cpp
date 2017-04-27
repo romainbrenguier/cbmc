@@ -1677,6 +1677,14 @@ exprt java_string_library_preprocesst::code_of_function(
   const source_locationt &loc,
   symbol_tablet &symbol_table)
 {
+  auto it_id=cprover_equivalent_to_java_function.find(function_id);
+  if(it_id!=cprover_equivalent_to_java_function.end())
+    return make_function_from_call(it_id->second, type, loc, symbol_table);
+
+  // TODO : case of initialization functions
+
+  // TODO : case of assign and return functions
+
   auto it=conversion_table.find(function_id);
   if(it!=conversion_table.end())
     return it->second(type, loc, symbol_table);
@@ -1731,17 +1739,383 @@ void java_string_library_preprocesst::initialize_conversion_table()
   conversion_table["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
     &java_string_library_preprocesst::make_init_code;
 
-  conversion_table["java::java.lang.StringBuilder.append:"
-                   "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"]=
-    &java_string_library_preprocesst::make_string_builder_append_object_code;
+
+
+#if 0
+  conversion_table["java::java.lang.String.charAt:(I)C"]=
+    &java_string_library_preprocesst::make_char_at_code;
+#endif
+
+  // String library
+  cprover_equivalent_to_java_initialization_function
+    ["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_initialization_function
+    ["java::java.lang.String.<init>:(Ljava/lang/StringBuilder;)V"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_initialization_function["java::java.lang.String.<init>:([C)V"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_initialization_function["java::java.lang.String.<init>:([CII)V"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_initialization_function["java::java.lang.String.<init>:()V"]=
+    ID_cprover_string_empty_string_func;
+  // Not supported java.lang.String.<init>:(Ljava/lang/StringBuffer;)
+
+  cprover_equivalent_to_java_function["java::java.lang.String.charAt:(I)C"]=
+    ID_cprover_string_char_at_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.codePointAt:(I)I"]=
+    ID_cprover_string_code_point_at_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.codePointBefore:(I)I"]=
+    ID_cprover_string_code_point_before_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.codePointCount:(II)I"]=
+    ID_cprover_string_code_point_count_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.compareTo:(Ljava/lang/String;)I"]=
+    ID_cprover_string_compare_to_func;
+  // Not supported "java.lang.String.contentEquals"
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.concat:(Ljava/lang/String;)Ljava/lang/String;"]=
+    ID_cprover_string_concat_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.contains:(Ljava/lang/CharSequence;)Z"]=
+    ID_cprover_string_contains_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.copyValueOf:([CII)Ljava/lang/String;"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.copyValueOf:([C)Ljava/lang/String;"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.endsWith:(Ljava/lang/String;)Z"]=
+    ID_cprover_string_endswith_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.equals:(Ljava/lang/Object;)Z"]=
+    ID_cprover_string_equal_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.equalsIgnoreCase:(Ljava/lang/String;)Z"]=
+    ID_cprover_string_equals_ignore_case_func;
+  // Not supported "java.lang.String.format"
+  // Not supported "java.lang.String.getBytes"
+  // Not supported "java.lang.String.getChars"
+  cprover_equivalent_to_java_function["java::java.lang.String.hashCode:()I"]=
+    ID_cprover_string_hash_code_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.indexOf:(I)I"]=
+    ID_cprover_string_index_of_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.indexOf:(II)I"]=
+    ID_cprover_string_index_of_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.indexOf:(Ljava/lang/String;)I"]=
+    ID_cprover_string_index_of_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.indexOf:(Ljava/lang/String;I)I"]=
+    ID_cprover_string_index_of_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.intern:()Ljava/lang/String;"]=
+    ID_cprover_string_intern_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.isEmpty:()Z"]=
+    ID_cprover_string_is_empty_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.lastIndexOf:(I)I"]=
+    ID_cprover_string_last_index_of_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.lastIndexOf:(II)I"]=
+    ID_cprover_string_last_index_of_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.lastIndexOf:(Ljava/lang/String;)I"]=
+    ID_cprover_string_last_index_of_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.lastIndexOf:(Ljava/lang/String;I)I"]=
+    ID_cprover_string_last_index_of_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.length:()I"]=
+    ID_cprover_string_length_func;
+  // Not supported "java.lang.String.matches"
+  cprover_equivalent_to_java_function["java::java.lang.String.offsetByCodePoints:(II)I"]=
+    ID_cprover_string_offset_by_code_point_func;
+  // Not supported "java.lang.String.regionMatches"
+  cprover_equivalent_to_java_function["java::java.lang.String.replace:(CC)Ljava/lang/String;"]=
+    ID_cprover_string_replace_func;
+  // Not supported "java.lang.String.replace:(LCharSequence;LCharSequence)"
+  // Not supported "java.lang.String.replaceAll"
+  // Not supported "java.lang.String.replaceFirst"
+  // Not supported "java.lang.String.split"
+  cprover_equivalent_to_java_function["java::java.lang.String.startsWith:(Ljava/lang/String;)Z"]=
+    ID_cprover_string_startswith_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.startsWith:(Ljava/lang/String;I)Z"]=
+    ID_cprover_string_startswith_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.String.subSequence:(II)Ljava/lang/CharSequence;"]=
+   ID_cprover_string_substring_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.substring:(II)Ljava/lang/String;"]=
+    ID_cprover_string_substring_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.substring:(I)Ljava/lang/String;"]=
+    ID_cprover_string_substring_func;
+  // "java.lang.String.toCharArray has a special treatment in the
+  // replace_string_calls function
+  cprover_equivalent_to_java_function["java::java.lang.String.toLowerCase:()Ljava/lang/String;"]=
+    ID_cprover_string_to_lower_case_func;
+  // Not supported "java.lang.String.toLowerCase:(Locale)"
+  // Not supported "java.lang.String.toString:()"
+  cprover_equivalent_to_java_function["java::java.lang.String.toUpperCase:()Ljava/lang/String;"]=
+    ID_cprover_string_to_upper_case_func;
+  // Not supported "java.lang.String.toUpperCase:(Locale)"
+  cprover_equivalent_to_java_function["java::java.lang.String.trim:()Ljava/lang/String;"]=
+    ID_cprover_string_trim_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:(Z)Ljava/lang/String;"]=
+    ID_cprover_string_of_bool_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:(C)Ljava/lang/String;"]=
+    ID_cprover_string_of_char_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:([C)Ljava/lang/String;"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:([CII)Ljava/lang/String;"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:(D)Ljava/lang/String;"]=
+    ID_cprover_string_of_double_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:(F)Ljava/lang/String;"]=
+    ID_cprover_string_of_float_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:(I)Ljava/lang/String;"]=
+    ID_cprover_string_of_int_func;
+  cprover_equivalent_to_java_function["java::java.lang.String.valueOf:(J)Ljava/lang/String;"]=
+    ID_cprover_string_of_long_func;
+  // Not supported "java.lang.String.valueOf:(LObject;)"
+
+  // StringBuilder library
+  cprover_equivalent_to_java_initialization_function
+    ["java::java.lang.StringBuilder.<init>:(Ljava/lang/String;)V"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_initialization_function["java::java.lang.StringBuilder.<init>:()V"]=
+    ID_cprover_string_empty_string_func;
+
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(Z)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_bool_func;
+  cprover_equivalent_to_java_assign_and_return_function
+      ["java::java.lang.StringBuilder.append:(C)Ljava/lang/StringBuilder;"]=
+      ID_cprover_string_concat_char_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:([C)"
+      "Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_func;
+  // Not supported: "java.lang.StringBuilder.append:([CII)"
+  // Not supported: "java.lang.StringBuilder.append:(LCharSequence;)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(D)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_double_func;
 
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(F)Ljava/lang/StringBuilder;"]=
     &java_string_library_preprocesst::make_string_builder_append_float_code;
+#if 0
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(F)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_float_func;
+#endif
 
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(I)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_int_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(J)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_long_func;
+
+  conversion_table["java::java.lang.StringBuilder.append:"
+                   "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"]=
+    &java_string_library_preprocesst::make_string_builder_append_object_code;
+
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(Ljava/lang/String;)"
+      "Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.appendCodePoint:(I)"
+     "Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_concat_code_point_func;
+  // Not supported: "java.lang.StringBuilder.append:(Ljava/lang/StringBuffer;)"
+  // Not supported: "java.lang.StringBuilder.capacity:()"
+  cprover_equivalent_to_java_function["java::java.lang.StringBuilder.charAt:(I)C"]=
+    ID_cprover_string_char_at_func;
+  cprover_equivalent_to_java_function["java::java.lang.StringBuilder.codePointAt:(I)I"]=
+    ID_cprover_string_code_point_at_func;
+  cprover_equivalent_to_java_function["java::java.lang.StringBuilder.codePointBefore:(I)I"]=
+    ID_cprover_string_code_point_before_func;
+  cprover_equivalent_to_java_function["java::java.lang.StringBuilder.codePointCount:(II)I"]=
+    ID_cprover_string_code_point_count_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.delete:(II)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_delete_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.deleteCharAt:(I)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_delete_char_at_func;
+  // Not supported: "java.lang.StringBuilder.ensureCapacity:()"
+  // Not supported: "java.lang.StringBuilder.getChars:()"
+  // Not supported: "java.lang.StringBuilder.indexOf:()"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(IZ)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_bool_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(IC)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_char_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(I[C)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(I[CII)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_func;
+  // Not supported "java.lang.StringBuilder.insert:(ILCharSequence;)"
+  // Not supported "java.lang.StringBuilder.insert:(ILCharSequence;II)"
+  // Not supported "java.lang.StringBuilder.insert:(ID)"
+  // Not supported "java.lang.StringBuilder.insert:(IF)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(II)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_int_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(IJ)Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_long_func;
+  // Not supported "java.lang.StringBuilder.insert:(ILObject;)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.insert:(ILjava/lang/String;)"
+     "Ljava/lang/StringBuilder;"]=
+    ID_cprover_string_insert_func;
+  // Not supported "java.lang.StringBuilder.lastIndexOf"
+  cprover_equivalent_to_java_function["java::java.lang.StringBuilder.length:()I"]=
+    ID_cprover_string_length_func;
+  // Not supported "java.lang.StringBuilder.offsetByCodePoints"
+  // Not supported "java.lang.StringBuilder.replace"
+  // Not supported "java.lang.StringBuilder.reverse"
+  cprover_equivalent_to_java_assign_and_return_function["java::java.lang.StringBuilder.setCharAt:(IC)V"]=
+    ID_cprover_string_char_set_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.setLength:(I)V"]=
+    ID_cprover_string_set_length_func;
+  // Not supported "java.lang.StringBuilder.subSequence"
+  cprover_equivalent_to_java_function
+    ["java::java.lang.StringBuilder.substring:(II)Ljava/lang/String;"]=
+    ID_cprover_string_substring_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.StringBuilder.substring:(I)Ljava/lang/String;"]=
+    ID_cprover_string_substring_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.StringBuilder.toString:()Ljava/lang/String;"]=
+    ID_cprover_string_copy_func;
+  // Not supported "java.lang.StringBuilder.trimToSize"
+  // TODO clean irep ids from insert_char_array etc...
+
+  // StringBuffer library
+  cprover_equivalent_to_java_initialization_function
+    ["java::java.lang.StringBuffer.<init>:(Ljava/lang/String;)V"]=
+    ID_cprover_string_copy_func;
+  cprover_equivalent_to_java_initialization_function["java::java.lang.StringBuffer.<init>:()V"]=
+    ID_cprover_string_empty_string_func;
+
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:(Z)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_bool_func;
+  cprover_equivalent_to_java_assign_and_return_function
+      ["java::java.lang.StringBuffer.append:(C)Ljava/lang/StringBuffer;"]=
+      ID_cprover_string_concat_char_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:([C)"
+      "Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_func;
+  // Not supported: "java.lang.StringBuffer.append:([CII)"
+  // Not supported: "java.lang.StringBuffer.append:(LCharSequence;)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:(D)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_double_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:(F)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_float_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:(I)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_int_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:(J)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_long_func;
+  // Not supported: "java.lang.StringBuffer.append:(LObject;)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.append:(Ljava/lang/String;)"
+      "Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.appendCodePoint:(I)"
+     "Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_concat_code_point_func;
+  // Not supported: "java.lang.StringBuffer.append:(Ljava/lang/StringBuffer;)"
+  // Not supported: "java.lang.StringBuffer.capacity:()"
+  cprover_equivalent_to_java_function["java::java.lang.StringBuffer.charAt:(I)C"]=
+    ID_cprover_string_char_at_func;
+  cprover_equivalent_to_java_function["java::java.lang.StringBuffer.codePointAt:(I)I"]=
+    ID_cprover_string_code_point_at_func;
+  cprover_equivalent_to_java_function["java::java.lang.StringBuffer.codePointBefore:(I)I"]=
+    ID_cprover_string_code_point_before_func;
+  cprover_equivalent_to_java_function["java::java.lang.StringBuffer.codePointCount:(II)I"]=
+    ID_cprover_string_code_point_count_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.delete:(II)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_delete_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.deleteCharAt:(I)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_delete_char_at_func;
+  // Not supported: "java.lang.StringBuffer.ensureCapacity:()"
+  // Not supported: "java.lang.StringBuffer.getChars:()"
+  // Not supported: "java.lang.StringBuffer.indexOf:()"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(IZ)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_bool_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(IC)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_char_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(I[C)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(I[CII)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_func;
+  // Not supported "java.lang.StringBuffer.insert:(ILCharSequence;)"
+  // Not supported "java.lang.StringBuffer.insert:(ILCharSequence;II)"
+  // Not supported "java.lang.StringBuffer.insert:(ID)"
+  // Not supported "java.lang.StringBuffer.insert:(IF)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(II)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_int_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(IJ)Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_long_func;
+  // Not supported "java.lang.StringBuffer.insert:(ILObject;)"
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.insert:(ILjava/lang/String;)"
+     "Ljava/lang/StringBuffer;"]=
+    ID_cprover_string_insert_func;
+  // Not supported "java.lang.StringBuffer.lastIndexOf"
+  cprover_equivalent_to_java_function["java::java.lang.StringBuffer.length:()I"]=
+    ID_cprover_string_length_func;
+  // Not supported "java.lang.StringBuffer.offsetByCodePoints"
+  // Not supported "java.lang.StringBuffer.replace"
+  // Not supported "java.lang.StringBuffer.reverse"
+  cprover_equivalent_to_java_assign_and_return_function["java::java.lang.StringBuffer.setCharAt:(IC)V"]=
+    ID_cprover_string_char_set_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.setLength:(I)V"]=
+    ID_cprover_string_set_length_func;
+  // Not supported "java.lang.StringBuffer.subSequence"
+  cprover_equivalent_to_java_function
+    ["java::java.lang.StringBuffer.substring:(II)Ljava/lang/String;"]=
+    ID_cprover_string_substring_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.StringBuffer.substring:(I)Ljava/lang/String;"]=
+    ID_cprover_string_substring_func;
+  cprover_equivalent_to_java_function
+    ["java::java.lang.StringBuffer.toString:()Ljava/lang/String;"]=
+    ID_cprover_string_copy_func;
+  // Not supported "java.lang.StringBuffer.trimToSize"
+
+
+  // Other libraries
+  cprover_equivalent_to_java_function["java::java.lang.CharSequence.charAt:(I)C"]=
+    ID_cprover_string_char_at_func;
   conversion_table["java::java.lang.Float.toString:(F)Ljava/lang/String;"]=
     &java_string_library_preprocesst::make_float_to_string_code;
+#if 0
+  cprover_equivalent_to_java_function["java::java.lang.Float.toString:(F)Ljava/lang/String;"]=
+    ID_cprover_string_of_float_func;
+#endif
+  cprover_equivalent_to_java_function["java::java.lang.Integer.toHexString:(I)Ljava/lang/String;"]=
+    ID_cprover_string_of_int_hex_func;
+  cprover_equivalent_to_java_function["java::java.lang.Integer.parseInt:(Ljava/lang/String;)I"]=
+    ID_cprover_string_parse_int_func;
+  cprover_equivalent_to_java_function["java::java.lang.Integer.toString:(I)Ljava/lang/String;"]=
+    ID_cprover_string_of_int_func;
 
-  conversion_table["java::java.lang.String.charAt:(I)C"]=
-    &java_string_library_preprocesst::make_char_at_code;
 }

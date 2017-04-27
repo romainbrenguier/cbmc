@@ -72,9 +72,23 @@ private:
   typedef codet (*conversion_functiont)(
     const code_typet &, const source_locationt &, symbol_tablet &);
 
+  typedef std::unordered_map<irep_idt, irep_idt, irep_id_hash> id_mapt;
+
   // A table tells us what method to call for each java method signature
   std::unordered_map<irep_idt, conversion_functiont, irep_id_hash>
     conversion_table;
+
+  // Some Java functions have an equivalent in the solver that we will
+  // call with the same argument and will return the same result
+  id_mapt cprover_equivalent_to_java_function;
+
+  // Some Java initialization function initialize strings with the
+  // same result as som function of the solver
+  id_mapt cprover_equivalent_to_java_initialization_function;
+
+  // Some Java functions have an equivalent in the solver except that
+  // in addition they assign the result to the object on wich it is called
+  id_mapt cprover_equivalent_to_java_assign_and_return_function;
 
   // A set tells us what java types should be considered as string objects
   std::unordered_set<irep_idt, irep_id_hash> string_types;
