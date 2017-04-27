@@ -142,8 +142,21 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &init_code);
 
+  static string_exprt process_char_array(
+    const exprt &array_pointer,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
+
   static void declare_function(
     irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
+
+  static typet get_data_type(const typet &type);
+  static typet get_length_type(const typet &type);
+  static exprt get_data(const exprt &expr);
+  static exprt get_length(const exprt &expr);
+
+  static refined_string_typet refined_string_type();
 
   static symbol_exprt fresh_string(
     const typet &type,
@@ -156,12 +169,10 @@ private:
     symbol_tablet &symbol_table);
 
   static string_exprt fresh_string_expr(
-    const refined_string_typet &type,
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
   static exprt fresh_string_expr_symbol(
-    const refined_string_typet &type,
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 

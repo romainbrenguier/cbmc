@@ -438,7 +438,7 @@ exprt::operandst java_string_library_preprocesst::process_parameters(
 
 /*******************************************************************\
 
-Function: string_refine_preprocesst::process_operands
+Function: java_string_library_preprocesst::process_operands
 
   Inputs:
     operands - a list of expressions
@@ -454,6 +454,7 @@ Function: string_refine_preprocesst::process_operands
           from the expression and replace the
           expression by this cprover_string in the output list;
           in the other case the expression is kept as is for the output list.
+          Also does the same thing for char array references.
 
 \*******************************************************************/
 
@@ -475,9 +476,8 @@ exprt::operandst java_string_library_preprocesst::process_operands(
       member_exprt length(deref, "length", string_length_type(symbol_table));
       member_exprt data(deref, "data", string_data_type(symbol_table));
       dereference_exprt deref_data(data, data.type().subtype());
-      string_exprt string_expr=fresh_string_expr(ref_type, loc, symbol_table);
-      exprt string_expr_sym=fresh_string_expr_symbol(
-        ref_type, loc, symbol_table);
+      string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+      exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
       init_code.copy_to_operands(code_declt(string_expr.length()));
       init_code.copy_to_operands(code_declt(string_expr.content()));
       init_code.copy_to_operands(code_declt(string_expr_sym));
@@ -487,6 +487,10 @@ exprt::operandst java_string_library_preprocesst::process_operands(
       init_code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
       ops.push_back(string_expr);
     }
+    else if(is_java_char_array_pointer_type(p.type()))
+    {
+      ops.push_back(process_char_array(p, loc, symbol_table, init_code));
+    }
     else
     {
       ops.push_back(p);
@@ -495,6 +499,157 @@ exprt::operandst java_string_library_preprocesst::process_operands(
   return ops;
 }
 
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::refined_string_type
+
+  Inputs: a type containing a "data" component
+
+  Outputs: type of the "data" component
+
+ Purpose: Finds the type of the data component
+
+\*******************************************************************/
+
+refined_string_typet java_string_library_preprocesst::refined_string_type()
+{
+  return refined_string_typet(java_int_type(), java_char_type());
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::get_data_type
+
+  Inputs: a type containing a "data" component
+
+  Outputs: type of the "data" component
+
+ Purpose: Finds the type of the data component
+
+\*******************************************************************/
+
+typet java_string_library_preprocesst::get_data_type(const typet &type)
+{
+  assert(type.id()==ID_struct);
+  const struct_typet &struct_type=to_struct_type(type);
+  for(auto component : struct_type.components())
+    if(component.get_name()=="data")
+      return component.type();
+  assert(false && "type does not contain data component");
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::get_length_type
+
+  Inputs: a type containing a "length" component
+
+  Outputs: type of the "length" component
+
+ Purpose: Finds the type of the length component
+
+\*******************************************************************/
+
+typet java_string_library_preprocesst::get_length_type(const typet &type)
+{
+  assert(type.id()==ID_struct);
+  const struct_typet &struct_type=to_struct_type(type);
+  for(auto component : struct_type.components())
+    if(component.get_name()=="length")
+      return component.type();
+  assert(false && "type does not contain length component");
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::get_length
+
+  Inputs: an expression of structured type with length component
+
+  Outputs: expression representing the "length" member
+
+ Purpose: access length member
+
+\*******************************************************************/
+
+exprt java_string_library_preprocesst::get_length(const exprt &expr)
+{
+  return member_exprt(expr, "length", get_length_type(expr.type()));
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::get_data
+
+  Inputs: an expression of structured type with length component
+
+  Outputs: expression representing the "data" member
+
+ Purpose: access data member
+
+\*******************************************************************/
+
+exprt java_string_library_preprocesst::get_data(const exprt &expr)
+{
+  return member_exprt(expr, "data", get_data_type(expr.type()));
+}
+
+/*******************************************************************\
+
+Function: string_refine_preprocesst::process_char_array
+
+  Inputs:
+    array_pointer - an expression of type char array pointer
+    loc - location in the source
+    symbol_table - symbol table
+    init_code - code block, in which some assignements will be added
+
+ Outputs: a string expression
+
+ Purpose: we declare a new `cprover_string` whose contents is deduced
+          from the char array.
+
+\*******************************************************************/
+
+string_exprt java_string_library_preprocesst::process_char_array(
+  const exprt &array_pointer,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table,
+  code_blockt &code)
+{
+  // TODO : this is used often and we should have a static function for that
+  refined_string_typet ref_type(java_int_type(), java_char_type());
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+
+  // deref=*(rhs->data)
+  dereference_exprt array(array_pointer, array_pointer.type().subtype());
+  typet data_type=get_data_type(array.type());
+  member_exprt array_data(array, "data", data_type);
+  dereference_exprt deref_array(array_data, data_type.subtype());
+  symbolt sym_lhs_deref=get_fresh_aux_symbol(
+    data_type.subtype(),
+    "char_array_assign$deref",
+    "char_array_assign$deref",
+    loc,
+    ID_java,
+    symbol_table);
+  symbol_exprt lhs_deref=sym_lhs_deref.symbol_expr();
+  code.copy_to_operands(code_assignt(lhs_deref, deref_array));
+
+  // array=convert_pointer_to_char_array(*rhs->data)
+  code.copy_to_operands(code_assign_function_application(
+    array,
+    ID_cprover_string_array_of_char_pointer_func,
+    {deref_array},
+    symbol_table));
+
+  // string={ rhs->length; string_array }
+  string_exprt new_rhs(get_length(array), array, ref_type);
+  symbol_exprt lhs=fresh_string(ref_type, loc, symbol_table);
+  code.copy_to_operands(code_assignt(lhs, new_rhs));
+
+  return new_rhs;
+}
 
 /*******************************************************************\
 
@@ -536,10 +691,9 @@ Function: java_string_library_preprocesst::fresh_string_expr
 \*******************************************************************/
 
 string_exprt java_string_library_preprocesst::fresh_string_expr(
-  const refined_string_typet &type,
-  const source_locationt &loc,
-  symbol_tablet &symbol_table)
+  const source_locationt &loc, symbol_tablet &symbol_table)
 {
+  refined_string_typet type=refined_string_type();
   symbolt sym_length=get_fresh_aux_symbol(
     type.get_index_type(),
     "java::cprover_string_length",
@@ -570,12 +724,10 @@ Function: java_string_library_preprocesst::fresh_string_expr_symbol
 \*******************************************************************/
 
 exprt java_string_library_preprocesst::fresh_string_expr_symbol(
-  const refined_string_typet &type,
-  const source_locationt &loc,
-  symbol_tablet &symbol_table)
+  const source_locationt &loc, symbol_tablet &symbol_table)
 {
   symbolt sym=get_fresh_aux_symbol(
-    type,
+    refined_string_type(),
     "java::cprover_string",
     "cprover_string",
     loc,
@@ -855,14 +1007,9 @@ codet java_string_library_preprocesst::make_string_builder_append_object_code(
   code_typet::parameterst params=type.parameters();
   exprt this_obj=symbol_exprt(params[0].get_identifier(), params[0].type());
 
-  // Getting types
-  typet length_type=string_length_type(symbol_table);
-  typet data_type=string_data_type(symbol_table);
-
   // String expression that will hold the result
-  refined_string_typet ref_type(length_type, java_char_type());
-  string_exprt string_expr1=fresh_string_expr(ref_type, loc, symbol_table);
-  string_exprt string_expr2=fresh_string_expr(ref_type, loc, symbol_table);
+  string_exprt string_expr1=fresh_string_expr(loc, symbol_table);
+  string_exprt string_expr2=fresh_string_expr(loc, symbol_table);
 
   // Code to be returned
   code_blockt code;
@@ -938,8 +1085,8 @@ codet java_string_library_preprocesst::make_string_builder_append_float_code(
 
   // String expression that will hold the result
   refined_string_typet ref_type(length_type, java_char_type());
-  string_exprt string_expr1=fresh_string_expr(ref_type, loc, symbol_table);
-  string_exprt string_expr2=fresh_string_expr(ref_type, loc, symbol_table);
+  string_exprt string_expr1=fresh_string_expr(loc, symbol_table);
+  string_exprt string_expr2=fresh_string_expr(loc, symbol_table);
 
   // Code to be returned
   code_blockt code;
@@ -1243,8 +1390,7 @@ codet java_string_library_preprocesst::code_for_scientific_notation(
   // The first character is given by dec_significand_int / 1000000
   div_exprt dec_significand_integer_part(
     dec_significand_int, from_integer(1000000, java_int_type()));
-  string_exprt string_first_character=fresh_string_expr(
-     refined_string_type, loc, symbol_table);
+  string_exprt string_first_character=fresh_string_expr(loc, symbol_table);
   code.copy_to_operands(
     code_assign_function_to_string_expr(
       string_first_character,
@@ -1253,16 +1399,13 @@ codet java_string_library_preprocesst::code_for_scientific_notation(
       symbol_table));
 
   // string_lit_dot = "."
-  string_exprt string_lit_dot=fresh_string_expr(
-    refined_string_type, loc, symbol_table);
-
+  string_exprt string_lit_dot=fresh_string_expr(loc, symbol_table);
   code.copy_to_operands(
     code_assign_string_literal_to_string_expr(
       string_lit_dot, tmp_string, ".", symbol_table));
 
   // string_expr_with_dot = concat(string_magnitude, string_lit_dot)
-  string_exprt string_expr_with_dot=fresh_string_expr(
-     refined_string_type, loc, symbol_table);
+  string_exprt string_expr_with_dot=fresh_string_expr(loc, symbol_table);
   code.copy_to_operands(
     code_assign_function_to_string_expr(
       string_expr_with_dot,
@@ -1276,8 +1419,7 @@ codet java_string_library_preprocesst::code_for_scientific_notation(
     mult_exprt(dec_significand_integer_part,
                from_integer(1000000, java_int_type())));
 
-  string_exprt string_fractional_part=fresh_string_expr(
-     refined_string_type, loc, symbol_table);
+  string_exprt string_fractional_part=fresh_string_expr(loc, symbol_table);
   code.copy_to_operands(
     code_assign_function_to_string_expr(
       string_fractional_part,
@@ -1288,7 +1430,7 @@ codet java_string_library_preprocesst::code_for_scientific_notation(
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
   string_exprt string_expr_with_fractional_part=fresh_string_expr(
-     refined_string_type, loc, symbol_table);
+    loc, symbol_table);
   code.copy_to_operands(
     code_assign_function_to_string_expr(
       string_expr_with_fractional_part,
@@ -1297,16 +1439,14 @@ codet java_string_library_preprocesst::code_for_scientific_notation(
       symbol_table));
 
   // string_lit_E = "E"
-  string_exprt string_lit_E=fresh_string_expr(
-    refined_string_type, loc, symbol_table);
+  string_exprt string_lit_E=fresh_string_expr(loc, symbol_table);
 
   code.copy_to_operands(
     code_assign_string_literal_to_string_expr(
       string_lit_E, tmp_string, "E", symbol_table));
 
   // string_expr_with_E = concat(string_magnitude, string_lit_E)
-  string_exprt string_expr_with_E=fresh_string_expr(
-     refined_string_type, loc, symbol_table);
+  string_exprt string_expr_with_E=fresh_string_expr(loc, symbol_table);
   code.copy_to_operands(
     code_assign_function_to_string_expr(
       string_expr_with_E,
@@ -1315,8 +1455,7 @@ codet java_string_library_preprocesst::code_for_scientific_notation(
       symbol_table));
 
   // exponent_string = string_of_int(decimal_exponent)
-  string_exprt exponent_string=fresh_string_expr(
-        refined_string_type, loc, symbol_table);
+  string_exprt exponent_string=fresh_string_expr(loc, symbol_table);
 
   code.copy_to_operands(
     code_assign_function_to_string_expr(
@@ -1385,8 +1524,8 @@ codet java_string_library_preprocesst::make_float_to_string_code(
 
   // Declaring CPROVER_string string_expr
   refined_string_typet ref_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(ref_type, loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(ref_type, loc, symbol_table);
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
 
   // List of the different cases
   std::vector<code_ifthenelset> case_list;
@@ -1440,8 +1579,7 @@ codet java_string_library_preprocesst::make_float_to_string_code(
 
   // integer part
   typecast_exprt integer_part(arg, java_int_type());
-  string_exprt integer_part_string_expr=fresh_string_expr(
-    ref_type, loc, symbol_table);
+  string_exprt integer_part_string_expr=fresh_string_expr(loc, symbol_table);
 
   case_simple_notation.then_case().copy_to_operands(
     code_assign_function_to_string_expr(
@@ -1451,13 +1589,11 @@ codet java_string_library_preprocesst::make_float_to_string_code(
       symbol_table));
 
   // dot
-  string_exprt dot_string_lit=fresh_string_expr(
-     ref_type, loc, symbol_table);
+  string_exprt dot_string_lit=fresh_string_expr(loc, symbol_table);
   case_simple_notation.then_case().copy_to_operands(
     code_assign_string_literal_to_string_expr(
       dot_string_lit, tmp_string, ".", symbol_table));
-  string_exprt with_dot_string_expr=fresh_string_expr(
-    ref_type, loc, symbol_table);
+  string_exprt with_dot_string_expr=fresh_string_expr(loc, symbol_table);
 
   case_simple_notation.then_case().copy_to_operands(
     code_assign_function_to_string_expr(
@@ -1468,8 +1604,7 @@ codet java_string_library_preprocesst::make_float_to_string_code(
 
   // fractional_part = arg - (float) integer_part
   minus_exprt fractional_part(arg, typecast_exprt(integer_part, arg.type()));
-  string_exprt fractional_part_string_expr=fresh_string_expr(
-    ref_type, loc, symbol_table);
+  string_exprt fractional_part_string_expr=fresh_string_expr(loc, symbol_table);
   ieee_floatt shifting(float_spec);
   shifting.from_float(1e7);
   typecast_exprt fractional_part_shifted(
@@ -1545,11 +1680,8 @@ codet java_string_library_preprocesst::make_init_code(
   // Declaring and allocating String * str
 
   // Declaring cprover_string string_expr
-  refined_string_typet refined_string_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(
-    refined_string_type, loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(
-    refined_string_type, loc, symbol_table);
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
 
   // Make the assignment: string_expr <- arg1
   code.copy_to_operands(
@@ -1612,10 +1744,8 @@ codet java_string_library_preprocesst::make_init_function_from_call(
 
   // Declaring cprover_string string_expr
   refined_string_typet refined_string_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(
-    refined_string_type, loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(
-    refined_string_type, loc, symbol_table);
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
 
   // Make the assignment: string_expr <- function(arg1)
   code.copy_to_operands(
@@ -1735,8 +1865,8 @@ codet java_string_library_preprocesst::
 
   // String expression that will hold the result
   refined_string_typet ref_type(length_type, java_char_type());
-  string_exprt string_expr=fresh_string_expr(ref_type, loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(ref_type, loc, symbol_table);
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
 
   // Code for the output
   code_blockt code;
@@ -1846,10 +1976,11 @@ void java_string_library_preprocesst::initialize_conversion_table()
                 "java.lang.CharSequence",
                 "java.lang.StringBuffer"};
 
+  // String library
+#if 0  //this duplicates the following one
   conversion_table["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
     &java_string_library_preprocesst::make_init_code;
-
-  // String library
+#endif
   cprover_equivalent_to_java_initialization_function
     ["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
       ID_cprover_string_copy_func;
