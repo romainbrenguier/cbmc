@@ -1581,6 +1581,8 @@ Function: java_string_library_preprocesst::make_init_function_from_call
 
   Purpose: Generate the goto code for string initialization.
 
+  TODO: part of this function could be factorized with make_init_code
+
 \*******************************************************************/
 
 codet java_string_library_preprocesst::make_init_function_from_call(
