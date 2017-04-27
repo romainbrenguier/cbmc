@@ -528,14 +528,24 @@ Function: java_string_library_preprocesst::get_data_type
 
 \*******************************************************************/
 
-typet java_string_library_preprocesst::get_data_type(const typet &type)
+typet java_string_library_preprocesst::get_data_type(
+  const typet &type, const symbol_tablet &symbol_table)
 {
-  assert(type.id()==ID_struct);
-  const struct_typet &struct_type=to_struct_type(type);
-  for(auto component : struct_type.components())
-    if(component.get_name()=="data")
-      return component.type();
-  assert(false && "type does not contain data component");
+  if(type.id()==ID_symbol)
+  {
+    symbolt sym=symbol_table.lookup(to_symbol_type(type).get_identifier());
+    assert(sym.type.id()!=ID_symbol);
+    return get_data_type(sym.type, symbol_table);
+  }
+  else
+  {
+    assert(type.id()==ID_struct);
+    const struct_typet &struct_type=to_struct_type(type);
+    for(auto component : struct_type.components())
+      if(component.get_name()=="data")
+        return component.type();
+    assert(false && "type does not contain data component");
+  }
 }
 
 /*******************************************************************\
@@ -550,14 +560,24 @@ Function: java_string_library_preprocesst::get_length_type
 
 \*******************************************************************/
 
-typet java_string_library_preprocesst::get_length_type(const typet &type)
+typet java_string_library_preprocesst::get_length_type(
+  const typet &type, const symbol_tablet &symbol_table)
 {
-  assert(type.id()==ID_struct);
-  const struct_typet &struct_type=to_struct_type(type);
-  for(auto component : struct_type.components())
-    if(component.get_name()=="length")
-      return component.type();
-  assert(false && "type does not contain length component");
+  if(type.id()==ID_symbol)
+  {
+    symbolt sym=symbol_table.lookup(to_symbol_type(type).get_identifier());
+    assert(sym.type.id()!=ID_symbol);
+    return get_data_type(sym.type, symbol_table);
+  }
+  else
+  {
+    assert(type.id()==ID_struct);
+    const struct_typet &struct_type=to_struct_type(type);
+    for(auto component : struct_type.components())
+      if(component.get_name()=="length")
+        return component.type();
+    assert(false && "type does not contain length component");
+  }
 }
 
 /*******************************************************************\
@@ -572,9 +592,11 @@ Function: java_string_library_preprocesst::get_length
 
 \*******************************************************************/
 
-exprt java_string_library_preprocesst::get_length(const exprt &expr)
+exprt java_string_library_preprocesst::get_length(
+  const exprt &expr, const symbol_tablet &symbol_table)
 {
-  return member_exprt(expr, "length", get_length_type(expr.type()));
+  return member_exprt(
+    expr, "length", get_length_type(expr.type(), symbol_table));
 }
 
 /*******************************************************************\
@@ -589,9 +611,10 @@ Function: java_string_library_preprocesst::get_data
 
 \*******************************************************************/
 
-exprt java_string_library_preprocesst::get_data(const exprt &expr)
+exprt java_string_library_preprocesst::get_data(
+  const exprt &expr, const symbol_tablet &symbol_table)
 {
-  return member_exprt(expr, "data", get_data_type(expr.type()));
+  return member_exprt(expr, "data", get_data_type(expr.type(), symbol_table));
 }
 
 /*******************************************************************\
@@ -623,7 +646,7 @@ string_exprt java_string_library_preprocesst::process_char_array(
 
   // deref=*(rhs->data)
   dereference_exprt array(array_pointer, array_pointer.type().subtype());
-  typet data_type=get_data_type(array.type());
+  typet data_type=get_data_type(array.type(), symbol_table);
   member_exprt array_data(array, "data", data_type);
   dereference_exprt deref_array(array_data, data_type.subtype());
   symbolt sym_lhs_deref=get_fresh_aux_symbol(
@@ -644,7 +667,7 @@ string_exprt java_string_library_preprocesst::process_char_array(
     symbol_table));
 
   // string={ rhs->length; string_array }
-  string_exprt new_rhs(get_length(array), array, ref_type);
+  string_exprt new_rhs(get_length(array, symbol_table), array, ref_type);
   symbol_exprt lhs=fresh_string(ref_type, loc, symbol_table);
   code.copy_to_operands(code_assignt(lhs, new_rhs));
 

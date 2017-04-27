@@ -151,10 +151,12 @@ private:
   static void declare_function(
     irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
 
-  static typet get_data_type(const typet &type);
-  static typet get_length_type(const typet &type);
-  static exprt get_data(const exprt &expr);
-  static exprt get_length(const exprt &expr);
+  static typet get_data_type(
+    const typet &type, const symbol_tablet &symbol_table);
+  static typet get_length_type(
+    const typet &type, const symbol_tablet &symbol_table);
+  static exprt get_data(const exprt &expr, const symbol_tablet &symbol_table);
+  static exprt get_length(const exprt &expr, const symbol_tablet &symbol_table);
 
   static refined_string_typet refined_string_type();
 
