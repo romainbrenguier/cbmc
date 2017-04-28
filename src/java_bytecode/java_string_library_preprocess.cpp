@@ -2498,10 +2498,10 @@ void java_string_library_preprocesst::initialize_conversion_table()
   // Not supported "java.lang.StringBuffer.offsetByCodePoints"
   // Not supported "java.lang.StringBuffer.replace"
   // Not supported "java.lang.StringBuffer.reverse"
-  cprover_equivalent_to_java_assign_and_return_function
+  cprover_equivalent_to_java_assign_function
     ["java::java.lang.StringBuffer.setCharAt:(IC)V"]=
       ID_cprover_string_char_set_func;
-  cprover_equivalent_to_java_assign_and_return_function
+  cprover_equivalent_to_java_assign_function
     ["java::java.lang.StringBuffer.setLength:(I)V"]=
     ID_cprover_string_set_length_func;
   // Not supported "java.lang.StringBuffer.subSequence"
