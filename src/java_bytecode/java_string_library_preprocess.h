@@ -1,9 +1,6 @@
 /*******************************************************************\
 
-Module: Preprocess a goto-programs so that calls to the java Character
-        library are replaced by simple expressions.
-        For now support is limited to character in the ASCII range,
-        some methods may have incorrect specifications outside of this range.
+Module: Produce code for simple implementation of String Java libraries
 
 Author: Romain Brenguier
 
