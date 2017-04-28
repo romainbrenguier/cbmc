@@ -2144,7 +2144,7 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_function
     ["java::java.lang.String.startsWith:(Ljava/lang/String;I)Z"]=
       ID_cprover_string_startswith_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.subSequence:(II)Ljava/lang/CharSequence;"]=
       ID_cprover_string_substring_func;
   cprover_equivalent_to_java_string_returning_function
