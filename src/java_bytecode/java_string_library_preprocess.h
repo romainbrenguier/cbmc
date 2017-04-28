@@ -87,12 +87,17 @@ private:
   id_mapt cprover_equivalent_to_java_string_returning_function;
 
   // Some Java initialization function initialize strings with the
-  // same result as som function of the solver
+  // same result as some function of the solver
   id_mapt cprover_equivalent_to_java_initialization_function;
 
   // Some Java functions have an equivalent in the solver except that
-  // in addition they assign the result to the object on wich it is called
+  // in addition they assign the result to the object on which it is called
   id_mapt cprover_equivalent_to_java_assign_and_return_function;
+
+  // Some Java functions have an equivalent in the solver except that
+  // they assign the result to the object on which it is called instead
+  // of returning it
+  id_mapt cprover_equivalent_to_java_assign_function;
 
   // A set tells us what java types should be considered as string objects
   std::unordered_set<irep_idt, irep_id_hash> string_types;
@@ -247,6 +252,12 @@ private:
       bool ignore_first_arg=true);
 
   static codet make_assign_and_return_function_from_call(
+      const irep_idt &function_name,
+      const code_typet &type,
+      const source_locationt &loc,
+      symbol_tablet &symbol_table);
+
+  static codet make_assign_function_from_call(
       const irep_idt &function_name,
       const code_typet &type,
       const source_locationt &loc,

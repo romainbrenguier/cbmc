@@ -1829,14 +1829,43 @@ codet java_string_library_preprocesst::
     const source_locationt &loc,
     symbol_tablet &symbol_table)
 {
-  // This is similar to initialization function except we also return
-  // a pointer to `this`
+  // This is similar to assign functions except we return a pointer to `this`
+  codet code=make_assign_function_from_call(
+    function_name, type, loc, symbol_table);
   code_typet::parameterst params=type.parameters();
   assert(!params.empty());
   exprt arg_this=symbol_exprt(params[0].get_identifier(), params[0].type());
+  code.copy_to_operands(code_returnt(arg_this));
+  return code;
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::make_assign_function_from_call
+
+  Inputs:
+    function_name - name of the function to be called
+    type - the type of the function call
+    loc - location in program
+    symbol_table - the symbol table to populate
+
+  Outputs: code
+
+  Purpose: Call a cprover internal function and assign the result to
+           object `this`
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::make_assign_function_from_call(
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table)
+{
+  // This is similar to initialization function except we do not ignore
+  // the first argument
   codet code=make_init_function_from_call(
     function_name, type, loc, symbol_table, false);
-  code.copy_to_operands(code_returnt(arg_this));
   return code;
 }
 
@@ -1936,9 +1965,9 @@ codet java_string_library_preprocesst::make_function_from_call(
 {
   code_blockt code;
   exprt::operandst args=process_parameters(
-    type.parameters(), loc, symbol_table, code);
+        type.parameters(), loc, symbol_table, code);
   code.copy_to_operands(code_return_function_application(
-    function_name, args, type.return_type(), symbol_table));
+      function_name, args, type.return_type(), symbol_table));
   return code;
 }
 
@@ -2026,6 +2055,11 @@ exprt java_string_library_preprocesst::code_of_function(
   it_id=cprover_equivalent_to_java_assign_and_return_function.find(function_id);
   if(it_id!=cprover_equivalent_to_java_assign_and_return_function.end())
     return make_assign_and_return_function_from_call(
+      it_id->second, type, loc, symbol_table);
+
+  it_id=cprover_equivalent_to_java_assign_function.find(function_id);
+  if(it_id!=cprover_equivalent_to_java_assign_function.end())
+    return make_assign_function_from_call(
       it_id->second, type, loc, symbol_table);
 
   auto it=conversion_table.find(function_id);
@@ -2347,10 +2381,10 @@ void java_string_library_preprocesst::initialize_conversion_table()
   // Not supported "java.lang.StringBuilder.offsetByCodePoints"
   // Not supported "java.lang.StringBuilder.replace"
   // Not supported "java.lang.StringBuilder.reverse"
-  cprover_equivalent_to_java_assign_and_return_function
+  cprover_equivalent_to_java_assign_function
     ["java::java.lang.StringBuilder.setCharAt:(IC)V"]=
       ID_cprover_string_char_set_func;
-  cprover_equivalent_to_java_assign_and_return_function
+  cprover_equivalent_to_java_assign_function
     ["java::java.lang.StringBuilder.setLength:(I)V"]=
       ID_cprover_string_set_length_func;
   // Not supported "java.lang.StringBuilder.subSequence"
