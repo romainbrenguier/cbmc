@@ -82,6 +82,10 @@ private:
   // call with the same argument and will return the same result
   id_mapt cprover_equivalent_to_java_function;
 
+  // Some Java functions have an equivalent except that they should
+  // return Java Strings instead of string_exprt
+  id_mapt cprover_equivalent_to_java_string_returning_function;
+
   // Some Java initialization function initialize strings with the
   // same result as som function of the solver
   id_mapt cprover_equivalent_to_java_initialization_function;

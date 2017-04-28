@@ -1885,11 +1885,7 @@ codet java_string_library_preprocesst::
     const source_locationt &loc,
     symbol_tablet &symbol_table)
 {
-  // Getting types
-  typet length_type=string_length_type(symbol_table);
-
   // String expression that will hold the result
-  refined_string_typet ref_type(length_type, java_char_type());
   string_exprt string_expr=fresh_string_expr(loc, symbol_table);
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
 
@@ -1903,7 +1899,7 @@ codet java_string_library_preprocesst::
     string_expr, function_name, arguments, symbol_table));
 
   // Assigning string_expr to symbol for keeping track of it
-  code.copy_to_operands((string_expr_sym, string_expr));
+  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
   // Assigning to string
   exprt str=fresh_string(type.return_type(), loc, symbol_table);
@@ -1939,6 +1935,11 @@ exprt java_string_library_preprocesst::code_of_function(
   auto it_id=cprover_equivalent_to_java_function.find(function_id);
   if(it_id!=cprover_equivalent_to_java_function.end())
     return make_function_from_call(it_id->second, type, loc, symbol_table);
+
+  it_id=cprover_equivalent_to_java_string_returning_function.find(function_id);
+  if(it_id!=cprover_equivalent_to_java_string_returning_function.end())
+    return make_string_returning_function_from_call(
+      it_id->second, type, loc, symbol_table);
 
   it_id=cprover_equivalent_to_java_initialization_function.find(function_id);
   if(it_id!=cprover_equivalent_to_java_initialization_function.end())
@@ -2039,16 +2040,16 @@ void java_string_library_preprocesst::initialize_conversion_table()
     ["java::java.lang.String.compareTo:(Ljava/lang/String;)I"]=
       ID_cprover_string_compare_to_func;
   // Not supported "java.lang.String.contentEquals"
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.concat:(Ljava/lang/String;)Ljava/lang/String;"]=
       ID_cprover_string_concat_func;
   cprover_equivalent_to_java_function
     ["java::java.lang.String.contains:(Ljava/lang/CharSequence;)Z"]=
     ID_cprover_string_contains_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.copyValueOf:([CII)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.copyValueOf:([C)Ljava/lang/String;"]=
     ID_cprover_string_copy_func;
   cprover_equivalent_to_java_function
@@ -2078,7 +2079,7 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_function
     ["java::java.lang.String.indexOf:(Ljava/lang/String;I)I"]=
       ID_cprover_string_index_of_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.intern:()Ljava/lang/String;"]=
       ID_cprover_string_intern_func;
   cprover_equivalent_to_java_function
@@ -2104,7 +2105,7 @@ void java_string_library_preprocesst::initialize_conversion_table()
     ["java::java.lang.String.offsetByCodePoints:(II)I"]=
       ID_cprover_string_offset_by_code_point_func;
   // Not supported "java.lang.String.regionMatches"
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.replace:(CC)Ljava/lang/String;"]=
       ID_cprover_string_replace_func;
   // Not supported "java.lang.String.replace:(LCharSequence;LCharSequence)"
@@ -2120,48 +2121,48 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_function
     ["java::java.lang.String.subSequence:(II)Ljava/lang/CharSequence;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.substring:(II)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
   // "java.lang.String.toCharArray has a special treatment in the
   // replace_string_calls function
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.toLowerCase:()Ljava/lang/String;"]=
       ID_cprover_string_to_lower_case_func;
   // Not supported "java.lang.String.toLowerCase:(Locale)"
   // Not supported "java.lang.String.toString:()"
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.toUpperCase:()Ljava/lang/String;"]=
       ID_cprover_string_to_upper_case_func;
   // Not supported "java.lang.String.toUpperCase:(Locale)"
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.trim:()Ljava/lang/String;"]=
       ID_cprover_string_trim_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(Z)Ljava/lang/String;"]=
       ID_cprover_string_of_bool_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(C)Ljava/lang/String;"]=
       ID_cprover_string_of_char_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:([C)Ljava/lang/String;"]=
       ID_cprover_string_copy_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:([CII)Ljava/lang/String;"]=
       ID_cprover_string_copy_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(D)Ljava/lang/String;"]=
       ID_cprover_string_of_double_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(F)Ljava/lang/String;"]=
       ID_cprover_string_of_float_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(I)Ljava/lang/String;"]=
       ID_cprover_string_of_int_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(J)Ljava/lang/String;"]=
       ID_cprover_string_of_long_func;
   // Not supported "java.lang.String.valueOf:(LObject;)"
@@ -2275,13 +2276,13 @@ void java_string_library_preprocesst::initialize_conversion_table()
     ["java::java.lang.StringBuilder.setLength:(I)V"]=
       ID_cprover_string_set_length_func;
   // Not supported "java.lang.StringBuilder.subSequence"
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuilder.substring:(II)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuilder.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuilder.toString:()Ljava/lang/String;"]=
       ID_cprover_string_copy_func;
   // Not supported "java.lang.StringBuilder.trimToSize"
@@ -2385,19 +2386,20 @@ void java_string_library_preprocesst::initialize_conversion_table()
   // Not supported "java.lang.StringBuffer.offsetByCodePoints"
   // Not supported "java.lang.StringBuffer.replace"
   // Not supported "java.lang.StringBuffer.reverse"
-  cprover_equivalent_to_java_assign_and_return_function["java::java.lang.StringBuffer.setCharAt:(IC)V"]=
-    ID_cprover_string_char_set_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuffer.setCharAt:(IC)V"]=
+      ID_cprover_string_char_set_func;
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuffer.setLength:(I)V"]=
     ID_cprover_string_set_length_func;
   // Not supported "java.lang.StringBuffer.subSequence"
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuffer.substring:(II)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuffer.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuffer.toString:()Ljava/lang/String;"]=
       ID_cprover_string_copy_func;
   // Not supported "java.lang.StringBuffer.trimToSize"
@@ -2409,13 +2411,13 @@ void java_string_library_preprocesst::initialize_conversion_table()
   conversion_table
     ["java::java.lang.Float.toString:(F)Ljava/lang/String;"]=
       &java_string_library_preprocesst::make_float_to_string_code;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.Integer.toHexString:(I)Ljava/lang/String;"]=
       ID_cprover_string_of_int_hex_func;
   cprover_equivalent_to_java_function
     ["java::java.lang.Integer.parseInt:(Ljava/lang/String;)I"]=
       ID_cprover_string_parse_int_func;
-  cprover_equivalent_to_java_function
+  cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.Integer.toString:(I)Ljava/lang/String;"]=
       ID_cprover_string_of_int_func;
 
