@@ -1835,11 +1835,19 @@ codet java_string_library_preprocesst::make_char_at_code(
 
 /*******************************************************************\
 
-Function: java_string_library_preprocesst::make_function
+Function: java_string_library_preprocesst::make_function_from_call
 
   Inputs:
+    function_name - name of the function to be called
+    type - type of the function
+    loc - location in the source
+    symbol_table - symbol table
 
- Outputs:
+  Outputs: code:
+          > return function_name(args);
+
+  Purpose: make code for a function that calls a function from the solver
+           and simply returns it
 
 \*******************************************************************/
 
