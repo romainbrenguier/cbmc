@@ -2079,7 +2079,7 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_function
     ["java::java.lang.String.indexOf:(Ljava/lang/String;I)I"]=
       ID_cprover_string_index_of_func;
-  cprover_equivalent_to_java_string_returning_function
+  cprover_equivalent_to_java_function
     ["java::java.lang.String.intern:()Ljava/lang/String;"]=
       ID_cprover_string_intern_func;
   cprover_equivalent_to_java_function
