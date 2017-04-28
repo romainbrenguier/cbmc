@@ -272,17 +272,13 @@ Function: java_string_library_preprocesst::string_length_type
   Inputs:
     symbol_table - a symbol_table containing an entry for java Strings
 
- Outputs: the type of lenngth fields in java Strings.
+ Outputs: the type of length fields in java Strings.
 
 \*******************************************************************/
 
 typet string_length_type(symbol_tablet symbol_table)
 {
-  symbolt sym=symbol_table.lookup("java::java.lang.String");
-  typet concrete_type=sym.type;
-  // TODO: we should look at the name of the field
-  typet length_type=to_struct_type(concrete_type).components()[1].type();
-  return length_type;
+  return java_int_type();
 }
 
 /*******************************************************************\
@@ -875,13 +871,14 @@ codet java_string_library_preprocesst::code_return_function_application(
 Function: java_string_library_preprocesst::code_assign_function_to_string_expr
 
   Inputs:
-    str - a string expression
-    function_type - a function type
+    string_expr - a string expression
     function_name - the name of the function
+    arguments - arguments of the function
+    symbol_table - symbol table
 
   Output: return the following code:
-          > str.length=function_name_length(arguments)
-          > str.data=function_name_data(arguments)
+          > str.length <- function_name_length(arguments)
+          > str.data <- function_name_data(arguments)
 
 \*******************************************************************/
 
@@ -933,20 +930,15 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
   assert(implements_java_char_sequence(lhs.type()));
   dereference_exprt deref(lhs, lhs.type().subtype());
 
-  // Getting types
-  // TODO: should get types from lhs.type()
-  typet length_type=string_length_type(symbol_table);
-  typet data_type=string_data_type(symbol_table);
-
   // Fields of the string object
-  member_exprt lhs_length(deref, "length", length_type);
-  member_exprt lhs_data(deref, "data", data_type);
+  exprt lhs_length=get_length(deref, symbol_table);
+  exprt lhs_data=get_data(deref, symbol_table);
 
   // Assignments
-  std::list<codet> assigns;
-  assigns.push_back(code_assignt(lhs_length,rhs.length()));
-  assigns.push_back(code_assignt(lhs_data, address_of_exprt(rhs.content())));
-  return code_blockt(assigns);
+  code_blockt code;
+  code.copy_to_operands(code_assignt(lhs_length, rhs.length()));
+  code.copy_to_operands(code_assignt(lhs_data, address_of_exprt(rhs.content())));
+  return code;
 }
 
 /*******************************************************************\
@@ -957,7 +949,7 @@ Function: java_string_library_preprocesst::
   Inputs:
     lhs - a string expression
     rhs - an expression representing a java string
-    location - a location in the program
+    symbol_table - symbol table
 
   Output: return the following code:
           > lhs.length=rhs->length
@@ -979,21 +971,16 @@ codet java_string_library_preprocesst::code_assign_java_string_to_string_expr(
 
   dereference_exprt deref(rhs, deref_type);
 
-  // Getting types
-  // TODO: should get types from rhs.type()
-  typet length_type=string_length_type(symbol_table);
-  typet data_type=string_data_type(symbol_table);
-
   // Fields of the string object
-  member_exprt rhs_length(deref, "length", length_type);
-  member_exprt member_data(deref, "data", data_type);
+  exprt rhs_length=get_length(deref, symbol_table);
+  exprt member_data=get_data(deref, symbol_table);
   dereference_exprt rhs_data(member_data, member_data.type().subtype());
 
   // Assignments
-  std::list<codet> assigns;
-  assigns.push_back(code_assignt(lhs.length(), rhs_length));
-  assigns.push_back(code_assignt(lhs.content(), rhs_data));
-  return code_blockt(assigns);
+  codet code;
+  code.copy_to_operands(code_assignt(lhs.length(), rhs_length));
+  code.copy_to_operands(code_assignt(lhs.content(), rhs_data));
+  return code;
 }
 
 /*******************************************************************\
