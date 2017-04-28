@@ -123,6 +123,11 @@ private:
       const source_locationt &loc,
       symbol_tablet &symbol_table);
 
+  static codet make_string_to_char_array_code(
+      const code_typet &type,
+      const source_locationt &loc,
+      symbol_tablet &symbol_table);
+
   // Auxiliary functions
   static codet code_for_scientific_notation(
     const exprt &arg,

@@ -567,7 +567,7 @@ typet java_string_library_preprocesst::get_length_type(
   {
     symbolt sym=symbol_table.lookup(to_symbol_type(type).get_identifier());
     assert(sym.type.id()!=ID_symbol);
-    return get_data_type(sym.type, symbol_table);
+    return get_length_type(sym.type, symbol_table);
   }
   else
   {
@@ -1842,6 +1842,57 @@ codet java_string_library_preprocesst::
 
 /*******************************************************************\
 
+Function: java_string_library_preprocesst::make_string_to_char_array_code
+
+  Inputs:
+
+ Purpose: at the given position replace `return_tmp0=s.toCharArray()` with:
+          > return_tmp0 = malloc(array[char]);
+          > return_tmp0->data=&((s->data)[0])
+          > return_tmp0->length=s->length
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::make_string_to_char_array_code(
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table)
+{
+  code_blockt code;
+  assert(!type.parameters().empty());
+  const code_typet::parametert &p=type.parameters()[0];
+  symbol_exprt string_argument(p.get_identifier(), p.type());
+  assert(implements_java_char_sequence(string_argument.type()));
+  dereference_exprt deref(string_argument, string_argument.type().subtype());
+
+  // lhs <- malloc(array[char])
+  exprt lhs=fresh_array(type.return_type(), loc, symbol_table);
+  allocate_dynamic_object(lhs, lhs.type().subtype(), symbol_table, loc, code);
+
+  // first_element_address is `&((string_argument->data)[0])`
+  exprt data=get_data(deref, symbol_table);
+  dereference_exprt deref_data(data, data.type().subtype());
+  exprt first_index=from_integer(0, java_int_type());
+  index_exprt first_element(deref_data, first_index, java_char_type());
+  address_of_exprt first_element_address(first_element);
+
+  // lhs->data <- &((string_argument->data)[0])
+  dereference_exprt deref_lhs(lhs, lhs.type().subtype());
+  exprt lhs_data=get_data(deref_lhs, symbol_table);
+  code.copy_to_operands(code_assignt(lhs_data, first_element_address));
+
+  // lhs->length <- s->length
+  exprt rhs_length=get_length(deref, symbol_table);
+  exprt lhs_length=get_length(deref_lhs, symbol_table);
+  code.copy_to_operands(code_assignt(lhs_length, rhs_length));
+
+  // return lhs
+  code.copy_to_operands(code_returnt(lhs));
+  return code;
+}
+
+/*******************************************************************\
+
 Function: java_string_libraries_preprocesst::make_char_at_code
 
   Inputs:
@@ -2153,8 +2204,9 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  // "java.lang.String.toCharArray has a special treatment in the
-  // replace_string_calls function
+  conversion_table
+    ["java::java.lang.String.toCharArray:()[C"]=
+      &java_string_library_preprocesst::make_string_to_char_array_code;
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.toLowerCase:()Ljava/lang/String;"]=
       ID_cprover_string_to_lower_case_func;
