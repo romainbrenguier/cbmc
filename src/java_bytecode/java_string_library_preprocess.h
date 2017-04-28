@@ -182,6 +182,12 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
+  static exprt allocate_fresh_string(
+    const typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
+
   static exprt make_function_application(
       const irep_idt &function_name,
       const exprt::operandst &arguments,

@@ -755,6 +755,35 @@ exprt java_string_library_preprocesst::fresh_string_expr_symbol(
 
 /*******************************************************************\
 
+Function: java_string_library_preprocesst::allocate_fresh_string
+
+  Inputs:
+    type - a type for string
+    location - a location in the program
+    symbol_table - symbol table
+    code - code block to which allocation instruction will be added
+
+ Outputs: a new string
+
+ Purpose: declare a new String and allocate it
+
+\*******************************************************************/
+
+exprt java_string_library_preprocesst::allocate_fresh_string(
+  const typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table,
+  code_blockt &code)
+{
+  exprt str=fresh_string(type, loc, symbol_table);
+  code.copy_to_operands(code_declt(str));
+  exprt malloc=allocate_dynamic_object(
+    str, str.type().subtype(), symbol_table, loc, code, false);
+  return str;
+}
+
+/*******************************************************************\
+
 Function: java_string_library_preprocesst::make_function_application
 
   Inputs:
@@ -1533,10 +1562,7 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   code_blockt code;
 
   // Declaring and allocating String * str
-  exprt str=fresh_string(type.return_type(), loc, symbol_table);
-  code.copy_to_operands(code_declt(str));
-  exprt malloc=allocate_dynamic_object(
-    str, str.type().subtype(), symbol_table, loc, code, false);
+  exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
   exprt tmp_string=fresh_string(type.return_type(), loc, symbol_table);
 
   // Declaring CPROVER_string string_expr
@@ -1902,7 +1928,7 @@ codet java_string_library_preprocesst::
   code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
   // Assigning to string
-  exprt str=fresh_string(type.return_type(), loc, symbol_table);
+  exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
   code.copy_to_operands(code_assign_string_expr_to_java_string(
     str, string_expr, symbol_table));
 
