@@ -640,38 +640,32 @@ string_exprt java_string_library_preprocesst::process_char_array(
   symbol_tablet &symbol_table,
   code_blockt &code)
 {
-  // TODO : this is used often and we should have a static function for that
-  refined_string_typet ref_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
-
-  // deref=*(rhs->data)
+  refined_string_typet ref_type=refined_string_type();
   dereference_exprt array(array_pointer, array_pointer.type().subtype());
-  typet data_type=get_data_type(array.type(), symbol_table);
-  member_exprt array_data(array, "data", data_type);
-  dereference_exprt deref_array(array_data, data_type.subtype());
-  symbolt sym_lhs_deref=get_fresh_aux_symbol(
-    data_type.subtype(),
-    "char_array_assign$deref",
-    "char_array_assign$deref",
-    loc,
-    ID_java,
-    symbol_table);
-  symbol_exprt lhs_deref=sym_lhs_deref.symbol_expr();
-  code.copy_to_operands(code_assignt(lhs_deref, deref_array));
+  exprt array_data=get_data(array, symbol_table);
+  // `deref_array` is *(array_pointer->data)`
+  const typet &content_type=ref_type.get_content_type();
+  dereference_exprt deref_array(array_data, array_data.type().subtype());
 
-  // array=convert_pointer_to_char_array(*rhs->data)
+  // lhs_deref <- convert_pointer_to_char_array(*(array_pointer->data))
+  symbolt sym_char_array=get_fresh_aux_symbol(
+    content_type, "char_array", "char_array", loc, ID_java, symbol_table);
+  symbol_exprt char_array=sym_char_array.symbol_expr();
   code.copy_to_operands(code_assign_function_application(
-    array,
+    char_array,
     ID_cprover_string_array_of_char_pointer_func,
     {deref_array},
     symbol_table));
 
-  // string={ rhs->length; string_array }
-  string_exprt new_rhs(get_length(array, symbol_table), array, ref_type);
-  symbol_exprt lhs=fresh_string(ref_type, loc, symbol_table);
-  code.copy_to_operands(code_assignt(lhs, new_rhs));
+  // string_expr is `{ rhs->length; string_array }`
+  string_exprt string_expr(
+    get_length(array, symbol_table), char_array, refined_string_type());
+  // string_expr_sym <- { rhs->length; string_array }
+  symbol_exprt string_expr_sym=
+    fresh_string(refined_string_type(), loc, symbol_table);
+  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
-  return new_rhs;
+  return string_expr;
 }
 
 /*******************************************************************\
