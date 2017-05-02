@@ -8,7 +8,6 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 \*******************************************************************/
 
 #include <solvers/refinement/string_constraint_generator.h>
-#include <solvers/floatbv/float_bv.h>
 
 /*******************************************************************\
 
@@ -48,147 +47,6 @@ string_exprt string_constraint_generatort::add_axioms_from_long(
   return add_axioms_from_int(args(expr, 1)[0], MAX_LONG_LENGTH, ref_type);
 }
 
-/*******************************************************************\
-
-Function: string_constraint_generatort::add_axioms_from_float
-
-  Inputs: function application with one float argument
-
- Outputs: a new string expression
-
- Purpose: add axioms corresponding to the String.valueOf(F) java function
-
-\*******************************************************************/
-
-string_exprt string_constraint_generatort::add_axioms_from_float(
-  const function_application_exprt &f)
-{
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_float(args(f, 1)[0], ref_type, false);
-}
-
-/*******************************************************************\
-
-Function: string_constraint_generatort::add_axioms_from_double
-
-  Inputs: function application with one double argument
-
- Outputs: a new string expression
-
- Purpose: add axioms corresponding to the String.valueOf(D) java function
-
-\*******************************************************************/
-
-string_exprt string_constraint_generatort::add_axioms_from_double(
-  const function_application_exprt &f)
-{
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_float(args(f, 1)[0], ref_type, true);
-}
-
-/*******************************************************************\
-
-Function: string_constraint_generatort::add_axioms_from_float
-
-  Inputs: float expression and Boolean signaling that the argument has
-          double precision
-
- Outputs: a new string expression
-
- Purpose: add axioms corresponding to the String.valueOf(F) java function
-          Warning: we currently only have partial specification
-
-\*******************************************************************/
-
-string_exprt string_constraint_generatort::add_axioms_from_float(
-  const exprt &f, const refined_string_typet &ref_type, bool double_precision)
-{
-  string_exprt res=fresh_string(ref_type);
-  const typet &index_type=ref_type.get_index_type();
-  const typet &char_type=ref_type.get_char_type();
-  const exprt &index24=from_integer(24, index_type);
-  axioms.push_back(res.axiom_for_is_shorter_than(index24));
-
-  string_exprt magnitude=fresh_string(ref_type);
-  string_exprt sign_string=fresh_string(ref_type);
-  string_exprt nan_string=add_axioms_for_constant("NaN", ref_type);
-
-  // We add the axioms:
-  // a1 : If the argument is NaN, the result length is that of "NaN".
-  // a2 : If the argument is NaN, the result content is the string "NaN".
-  // a3 : f<0 => |sign_string|=1
-  // a4 : f>=0 => |sign_string|=0
-  // a5 : f<0 => sign_string[0]='-'
-  // a6 : f infinite => |magnitude|=|"Infinity"|
-  // a7 : forall i<|"Infinity"|, f infinite => magnitude[i]="Infinity"[i]
-  // a8 : f=0 => |magnitude|=|"0.0"|
-  // a9 : forall i<|"0.0"|, f=0 => f[i]="0.0"[i]
-
-  ieee_float_spect fspec=
-    double_precision?ieee_float_spect::double_precision()
-    :ieee_float_spect::single_precision();
-
-  exprt isnan=float_bvt().isnan(f, fspec);
-  implies_exprt a1(isnan, magnitude.axiom_for_has_same_length_as(nan_string));
-  axioms.push_back(a1);
-
-  symbol_exprt qvar=fresh_univ_index("QA_equal_nan", index_type);
-  string_constraintt a2(
-    qvar,
-    nan_string.length(),
-    isnan,
-    equal_exprt(magnitude[qvar], nan_string[qvar]));
-  axioms.push_back(a2);
-
-  // If the argument is not NaN, the result is a string that represents
-  // the sign and magnitude (absolute value) of the argument.
-  // If the sign is negative, the first character of the result is '-';
-  // if the sign is positive, no sign character appears in the result.
-
-  bitvector_typet bv_type=to_bitvector_type(f.type());
-  unsigned width=bv_type.get_width();
-  exprt isneg=extractbit_exprt(f, width-1);
-
-  implies_exprt a3(isneg, sign_string.axiom_for_has_length(1));
-  axioms.push_back(a3);
-
-  implies_exprt a4(not_exprt(isneg), sign_string.axiom_for_has_length(0));
-  axioms.push_back(a4);
-
-  implies_exprt a5(
-    isneg, equal_exprt(sign_string[0], constant_char('-', char_type)));
-  axioms.push_back(a5);
-
-  // If m is infinity, it is represented by the characters "Infinity";
-  // thus, positive infinity produces the result "Infinity" and negative
-  // infinity produces the result "-Infinity".
-
-  string_exprt infinity_string=add_axioms_for_constant("Infinity", ref_type);
-  exprt isinf=float_bvt().isinf(f, fspec);
-  implies_exprt a6(
-    isinf, magnitude.axiom_for_has_same_length_as(infinity_string));
-  axioms.push_back(a6);
-
-  symbol_exprt qvar_inf=fresh_univ_index("QA_equal_infinity", index_type);
-  equal_exprt meq(magnitude[qvar_inf], infinity_string[qvar_inf]);
-  string_constraintt a7(qvar_inf, infinity_string.length(), isinf, meq);
-  axioms.push_back(a7);
-
-  // If m is zero, it is represented by the characters "0.0"; thus, negative
-  // zero produces the result "-0.0" and positive zero produces "0.0".
-
-  string_exprt zero_string=add_axioms_for_constant("0.0", ref_type);
-  exprt iszero=float_bvt().is_zero(f, fspec);
-  implies_exprt a8(iszero, magnitude.axiom_for_has_same_length_as(zero_string));
-  axioms.push_back(a8);
-
-  symbol_exprt qvar_zero=fresh_univ_index("QA_equal_zero", index_type);
-  equal_exprt eq_zero(magnitude[qvar_zero], zero_string[qvar_zero]);
-  string_constraintt a9(qvar_zero, zero_string.length(), iszero, eq_zero);
-  axioms.push_back(a9);
-
-  return add_axioms_for_concat(sign_string, magnitude);
-}
 
 
 /*******************************************************************\
@@ -209,7 +67,6 @@ string_exprt string_constraint_generatort::add_axioms_from_bool(
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
   return add_axioms_from_bool(args(f, 1)[0], ref_type);
 }
-
 
 /*******************************************************************\
 
