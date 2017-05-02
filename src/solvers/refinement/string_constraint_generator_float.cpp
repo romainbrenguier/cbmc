@@ -21,7 +21,7 @@ Function: get_exponent
     spec - specification for floating points
 
  Outputs:
-    a java integer representing the exponent
+    a 32 bit integer representing the exponent
 
  Purpose: Gets the unbiased exponent in a floating-point bit-vector
 
@@ -50,6 +50,7 @@ Function: get_magnitude
     spec - specification for floating points
 
  Outputs:
+    an unsigned value representing the magnitude
 
  Purpose: Gets the magnitude without hidden bit
 
@@ -72,7 +73,8 @@ Function: get_significand
     src - a floating point expression
     spec - specification for floating points
 
- Outputs:
+  Outputs:
+    an unsigned 32 bit expression
 
  Purpose: Gets the significand as a java integer, looking for the hidden bit
 
@@ -94,6 +96,12 @@ exprt get_significand(
 
 Function:  single_precision_float
 
+  Inputs:
+    f - a floating point value
+
+  Ouptus:
+    an expression representing this floating point
+
 \*******************************************************************/
 
 exprt single_precision_float(float f)
@@ -108,7 +116,11 @@ exprt single_precision_float(float f)
 
 Function:  estimate_decimal_exponent
 
-Purpose:
+  Inputs:
+    f - a floating point expression
+    spec - specification for floating point
+
+ Purpose:
          We are looking for d such that n * 10^d = m * 10^e, so:
          d = log_10(m) + log_10(2) * e - log_10(n)
          m - the magnitude - should be between 1 and 2 so log_10(m)
@@ -120,50 +132,14 @@ Purpose:
 
 \*******************************************************************/
 
-exprt log_10_of_2=single_precision_float(0.301029995663981);
-
 exprt estimate_decimal_exponent(const exprt &f,  const ieee_float_spect &spec)
 {
+  exprt log_10_of_2=single_precision_float(0.301029995663981);
   exprt bin_exp=get_exponent(f, spec);
   mult_exprt dec_exponent(
     typecast_exprt(bin_exp, spec.to_type()), log_10_of_2);
   return typecast_exprt(dec_exponent, unsignedbv_typet(32));
 }
-
-
-/*******************************************************************\
-
-Function:  estimate_decimal_magnitude
-
-Purpose:
-
-
-\*******************************************************************/
-
-exprt estimate_decimal_magnitude(const exprt &f,  const ieee_float_spect &spec)
-{
-  exprt bin_frac=get_magnitude(f, spec);
-  return typecast_exprt(bin_frac, unsignedbv_typet(32));
-}
-
-// Table for values of 2^e / 10^(floor(log_10(2) * e)) for e from 0 to 128
-std::vector<double> two_power_e_over_ten_power_d_table(
-{1, 2, 4, 8, 1.6, 3.2, 6.4, 1.28, 2.56,
- 5.12, 1.024, 2.048, 4.096, 8.192, 1.6384, 3.2768, 6.5536,
- 1.31072, 2.62144, 5.24288, 1.04858, 2.09715, 4.19430, 8.38861, 1.67772,
- 3.35544, 6.71089, 1.34218, 2.68435, 5.36871, 1.07374, 2.14748, 4.29497,
- 8.58993, 1.71799, 3.43597, 6.87195, 1.37439, 2.74878, 5.49756, 1.09951,
- 2.19902, 4.39805, 8.79609, 1.75922, 3.51844, 7.03687, 1.40737, 2.81475,
- 5.62950, 1.12590, 2.25180, 4.50360, 9.00720, 1.80144, 3.60288, 7.20576,
- 1.44115, 2.88230, 5.76461, 1.15292, 2.30584, 4.61169, 9.22337, 1.84467,
- 3.68935, 7.37870, 1.47574, 2.95148, 5.90296, 1.18059, 2.36118, 4.72237,
- 9.44473, 1.88895, 3.77789, 7.55579, 1.51116, 3.02231, 6.04463, 1.20893,
- 2.41785, 4.83570, 9.67141, 1.93428, 3.86856, 7.73713, 1.54743, 3.09485,
- 6.18970, 1.23794, 2.47588, 4.95176, 9.90352, 1.98070, 3.96141, 7.92282,
- 1.58456, 3.16913, 6.33825, 1.26765, 2.53530, 5.07060, 1.01412, 2.02824,
- 4.05648, 8.11296, 1.62259, 3.24519, 6.49037, 1.29807, 2.59615, 5.1923,
- 1.03846, 2.07692, 4.15384, 8.30767, 1.66153, 3.32307, 6.64614, 1.32923,
- 2.65846, 5.31691, 1.06338, 2.12676, 4.25353, 8.50706, 1.70141});
 
 /*******************************************************************\
 
@@ -381,6 +357,26 @@ string_exprt string_constraint_generatort::
   // TODO: this 32 bit is arbitrary
   array_exprt bias_table(
     array_typet(unsignedbv_typet(32), from_integer(128, unsignedbv_typet(32))));
+
+  // Table for values of 2^e / 10^(floor(log_10(2) * e)) for e from 0 to 128
+  std::vector<double> two_power_e_over_ten_power_d_table(
+  {1, 2, 4, 8, 1.6, 3.2, 6.4, 1.28, 2.56,
+   5.12, 1.024, 2.048, 4.096, 8.192, 1.6384, 3.2768, 6.5536,
+   1.31072, 2.62144, 5.24288, 1.04858, 2.09715, 4.19430, 8.38861, 1.67772,
+   3.35544, 6.71089, 1.34218, 2.68435, 5.36871, 1.07374, 2.14748, 4.29497,
+   8.58993, 1.71799, 3.43597, 6.87195, 1.37439, 2.74878, 5.49756, 1.09951,
+   2.19902, 4.39805, 8.79609, 1.75922, 3.51844, 7.03687, 1.40737, 2.81475,
+   5.62950, 1.12590, 2.25180, 4.50360, 9.00720, 1.80144, 3.60288, 7.20576,
+   1.44115, 2.88230, 5.76461, 1.15292, 2.30584, 4.61169, 9.22337, 1.84467,
+   3.68935, 7.37870, 1.47574, 2.95148, 5.90296, 1.18059, 2.36118, 4.72237,
+   9.44473, 1.88895, 3.77789, 7.55579, 1.51116, 3.02231, 6.04463, 1.20893,
+   2.41785, 4.83570, 9.67141, 1.93428, 3.86856, 7.73713, 1.54743, 3.09485,
+   6.18970, 1.23794, 2.47588, 4.95176, 9.90352, 1.98070, 3.96141, 7.92282,
+   1.58456, 3.16913, 6.33825, 1.26765, 2.53530, 5.07060, 1.01412, 2.02824,
+   4.05648, 8.11296, 1.62259, 3.24519, 6.49037, 1.29807, 2.59615, 5.1923,
+   1.03846, 2.07692, 4.15384, 8.30767, 1.66153, 3.32307, 6.64614, 1.32923,
+   2.65846, 5.31691, 1.06338, 2.12676, 4.25353, 8.50706, 1.70141});
+
   for(const auto &f:two_power_e_over_ten_power_d_table)
     bias_table.copy_to_operands(single_precision_float(f));
   index_exprt bias_factor(bias_table, binary_exponent, float_type);
