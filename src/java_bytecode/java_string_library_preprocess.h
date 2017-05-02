@@ -152,6 +152,13 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &init_code);
 
+  static void process_single_operand(
+    exprt::operandst &processed_ops,
+    const exprt &deref,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &init_code);
+
   static exprt::operandst process_operands(
     const exprt::operandst &operands,
     const source_locationt &loc,
