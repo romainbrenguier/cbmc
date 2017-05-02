@@ -125,6 +125,7 @@ SRC = $(CHAFF_SRC) $(BOOLEFORCE_SRC) $(MINISAT_SRC) $(MINISAT2_SRC) \
       refinement/string_constraint_generator_constants.cpp \
       refinement/string_constraint_generator_indexof.cpp \
       refinement/string_constraint_generator_insert.cpp \
+      refinement/string_constraint_generator_float.cpp \
       refinement/string_constraint_generator_main.cpp \
       refinement/string_constraint_generator_testing.cpp \
       refinement/string_constraint_generator_transformation.cpp \

@@ -1187,6 +1187,131 @@ exprt java_string_library_preprocesst::string_literal(const std::string &s)
   return string_literal;
 }
 
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::make_float_to_string_code
+
+  Inputs:
+    code - the code of a function call
+
+ Outputs: code for the Float.toString(F) function:
+          > String * str;
+          > str = MALLOC(String);
+          > String * tmp_string;
+          > int string_expr_length;
+          > char[] string_expr_content;
+          > CPROVER_string string_expr_sym;
+          > if arguments[1]==NaN
+          > then {tmp_string="NaN"; string_expr=(string_expr)tmp_string}
+          > if arguments[1]==Infinity
+          > then {tmp_string="Infinity"; string_expr=(string_expr)tmp_string}
+          > if 1e-3<arguments[1]<1e6
+          > then string_expr=cprover_float_to_string(arguments[1])
+          > else string_expr=cprover_float_to_scientific_notation_string(arg[1])
+          > string_expr_sym=string_expr;
+          > str=(String*) string_expr;
+          > return str;
+
+\*******************************************************************/
+
+codet java_string_library_preprocesst::make_float_to_string_code(
+  const code_typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  // Getting the argument
+  code_typet::parameterst params=type.parameters();
+  assert(params.size()==1 && "wrong number of parameters in Float.toString");
+  exprt arg=symbol_exprt(params[0].get_identifier(), params[0].type());
+
+  // Holder for output code
+  code_blockt code;
+
+  // Declaring and allocating String * str
+  exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
+  exprt tmp_string=fresh_string(type.return_type(), loc, symbol_table);
+
+  // Declaring CPROVER_string string_expr
+  refined_string_typet ref_type(java_int_type(), java_char_type());
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
+
+  // List of the different cases
+  std::vector<code_ifthenelset> case_list;
+
+  // First case in the list is the default
+  code_ifthenelset case_sci_notation;
+  ieee_float_spect float_spec=ieee_float_spect::single_precision();
+  // Subcase of 0.0
+  // TODO: case of -0.0
+  ieee_floatt zero_float(float_spec);
+  zero_float.from_float(0.0);
+  constant_exprt zero=zero_float.to_expr();
+  case_sci_notation.cond()=ieee_float_equal_exprt(arg, zero);
+  case_sci_notation.then_case()=code_assign_string_literal_to_string_expr(
+    string_expr, tmp_string, "0.0", symbol_table);
+
+  // Subcase of computerized scientific notation
+  case_sci_notation.else_case()=code_assign_function_to_string_expr(
+        string_expr, ID_cprover_string_of_float_func, {arg}, symbol_table);
+  case_list.push_back(case_sci_notation);
+
+  // Case of NaN
+  code_ifthenelset case_nan;
+  case_nan.cond()=isnan_exprt(arg);
+  case_nan.then_case()=code_assign_string_literal_to_string_expr(
+    string_expr, tmp_string, "NaN", symbol_table);
+  case_list.push_back(case_nan);
+
+  // Case of Infinity
+  code_ifthenelset case_infinity;
+  code_ifthenelset case_minus_infinity;
+
+  case_infinity.cond()=isinf_exprt(arg);
+  // Case -Infinity
+  exprt isneg=extractbit_exprt(arg, float_spec.width()-1);
+  case_minus_infinity.cond()=isneg;
+  case_minus_infinity.then_case()=code_assign_string_literal_to_string_expr(
+        string_expr, tmp_string, "-Infinity", symbol_table);
+  case_minus_infinity.else_case()=code_assign_string_literal_to_string_expr(
+        string_expr, tmp_string, "Infinity", symbol_table);
+  case_infinity.then_case()=case_minus_infinity;
+  case_list.push_back(case_infinity);
+
+  // Case of simple notation
+  code_ifthenelset case_simple_notation;
+
+  ieee_floatt bound_inf_float(float_spec);
+  ieee_floatt bound_sup_float(float_spec);
+  bound_inf_float.from_float(1e-3);
+  bound_sup_float.from_float(1e7);
+  constant_exprt bound_inf=bound_inf_float.to_expr();
+  constant_exprt bound_sup=bound_sup_float.to_expr();
+
+  and_exprt is_simple_float(
+    binary_relation_exprt(arg, ID_ge, bound_inf),
+    binary_relation_exprt(arg, ID_lt, bound_sup));
+  case_simple_notation.cond()=is_simple_float;
+  case_simple_notation.then_case()=code_assign_function_to_string_expr(
+        string_expr, ID_cprover_string_of_float_func, {arg}, symbol_table);
+  case_list.push_back(case_simple_notation);
+
+  // Combining all cases
+  for(std::size_t i=1; i<case_list.size(); i++)
+    case_list[i].else_case()=case_list[i-1];
+  code.copy_to_operands(case_list[case_list.size()-1]);
+
+  // str = string_expr
+  code.copy_to_operands(code_assign_string_expr_to_java_string(
+    str, string_expr, symbol_table));
+
+  // Assign string_expr_sym = { string_expr_length, string_expr_content }
+  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
+
+  // Return str
+  code.copy_to_operands(code_returnt(str));
+  return code;
+}
 
 /*******************************************************************\
 

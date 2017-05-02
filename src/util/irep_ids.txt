@@ -792,6 +792,7 @@ cprover_string_of_long_func
 cprover_string_of_bool_func
 cprover_string_of_float_func
 cprover_string_of_double_func
+cprover_string_of_float_scientific_notation_func
 cprover_string_of_char_func
 cprover_string_of_char_array_func
 cprover_string_parse_int_func
@@ -804,5 +805,4 @@ cprover_string_to_lower_case_func
 cprover_string_to_upper_case_func
 cprover_string_trim_func
 cprover_string_value_of_func
-cprover_string_of_fractional_part_func
 basic_block_covered_lines
