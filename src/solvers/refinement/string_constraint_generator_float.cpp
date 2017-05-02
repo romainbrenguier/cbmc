@@ -60,9 +60,7 @@ exprt get_magnitude(
   const exprt &src,
   const ieee_float_spect &spec)
 {
-  return extractbits_exprt(
-    src, spec.f-1, 0,
-    unsignedbv_typet(spec.f));
+  return extractbits_exprt(src, spec.f-1, 0, unsignedbv_typet(spec.f));
 }
 
 /*******************************************************************\
@@ -76,7 +74,9 @@ Function: get_significand
   Outputs:
     an unsigned 32 bit expression
 
- Purpose: Gets the significand as a java integer, looking for the hidden bit
+  Purpose: Gets the significand as a java integer, looking for the hidden bit
+
+  TODO : this should be generalized for non 32 bits
 
 \*******************************************************************/
 
@@ -205,9 +205,12 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
     res.axiom_for_is_shorter_than(from_integer(MAX_FLOAT_LENGTH, index_type)));
 
   // integer part
-  typecast_exprt integer_part(f, unsignedbv_typet(32));
+  floatbv_typecast_exprt integer_part(
+    f,
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    signedbv_typet(32));
   string_exprt integer_part_string_expr=add_axioms_from_int(
-    integer_part, MAX_INTEGER_LENGTH, ref_type);
+    integer_part, 4, ref_type);
 
 #if 0 // not needed if the dot is added in the fractional part
   string_exprt with_dot_string_expr=add_axioms_for_concat_char(
@@ -221,7 +224,7 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
   // TODO: adapt this for double precision
   exprt shifting=single_precision_float(1e7);
   typecast_exprt fractional_part_shifted(
-    mult_exprt(fractional_part, shifting), unsignedbv_typet(32));
+    mult_exprt(fractional_part, shifting), signedbv_typet(32));
   string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
       fractional_part_shifted, MAX_INTEGER_LENGTH, ref_type);
 
@@ -256,8 +259,6 @@ string_exprt string_constraint_generatort::add_axioms_for_fractional_part(
   const typet &index_type=ref_type.get_index_type();
   exprt zero_char=constant_char('0', char_type);
   exprt nine_char=constant_char('9', char_type);
-  exprt dot_char=constant_char('.', char_type);
-  exprt zero=from_integer(0, index_type);
   exprt max=from_integer(max_size, index_type);
 
   // We add axioms:
@@ -276,7 +277,7 @@ string_exprt string_constraint_generatort::add_axioms_for_fractional_part(
 
   exprt::operandst digit_constraints;
   digit_constraints.push_back(starts_with_dot);
-  exprt sum=typecast_exprt(minus_exprt(res[0], zero_char), type);
+  exprt sum=from_integer(0, type);
 
   for(size_t j=1; j<max_size; j++)
   {
