@@ -318,29 +318,6 @@ void java_string_library_preprocesst::add_string_type(
   string_symbol.is_type=true;
 
   symbol_table.add(string_symbol);
-
-  // Also add a stub of `String.equals` so that remove-virtual-functions
-  // generates a check for Object.equals vs. String.equals.
-  // No need to fill it in, as pass_preprocess will replace the calls again.
-  symbolt string_equals_symbol;
-  string_equals_symbol.name=
-    "java::java.lang.String.equals:(Ljava/lang/Object;)Z";
-  string_equals_symbol.base_name=id2string(class_name)+".equals";
-  string_equals_symbol.pretty_name=id2string(class_name)+".equals";
-  string_equals_symbol.mode=ID_java;
-
-  code_typet string_equals_type;
-  string_equals_type.return_type()=java_boolean_type();
-  code_typet::parametert thisparam;
-  thisparam.set_this();
-  thisparam.type()=pointer_typet(symbol_typet(string_symbol.name));
-  code_typet::parametert otherparam;
-  otherparam.type()=pointer_typet(symbol_typet("java::java.lang.Object"));
-  string_equals_type.parameters().push_back(thisparam);
-  string_equals_type.parameters().push_back(otherparam);
-  string_equals_symbol.type=std::move(string_equals_type);
-
-  symbol_table.add(string_equals_symbol);
 }
 
 /*******************************************************************\
@@ -490,6 +467,81 @@ exprt::operandst java_string_library_preprocesst::process_operands(
       ops.push_back(p);
     }
   }
+  return ops;
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::process_operands_for_equals
+
+  Inputs:
+    operands - a list of expressions
+    loc - location in the source
+    symbol_table - symbol table
+    init_code - code block, in which declaration of some arguments
+                may be added
+
+ Outputs: a list of expressions
+
+ Purpose: for each expression that is of a type implementing strings,
+          we declare a new `cprover_string` whose contents is deduced
+          from the expression and replace the
+          expression by this cprover_string in the output list;
+          in the other case the expression is kept as is for the output list.
+          Also does the same thing for char array references.
+
+\*******************************************************************/
+
+#include <iostream>
+
+exprt::operandst java_string_library_preprocesst::process_operands_for_equals(
+  const exprt::operandst &operands,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table,
+  code_blockt &init_code)
+{
+  assert(operands.size()==2);
+  exprt::operandst ops;
+  exprt op0=operands[0];
+  exprt op1=operands[1];
+
+  {
+  assert(implements_java_char_sequence(op0.type()));
+  dereference_exprt deref(op0, to_pointer_type(op0.type()).subtype());
+  member_exprt length(deref, "length", string_length_type(symbol_table));
+  member_exprt data(deref, "data", string_data_type(symbol_table));
+  dereference_exprt deref_data(data, data.type().subtype());
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
+  init_code.copy_to_operands(code_declt(string_expr.length()));
+  init_code.copy_to_operands(code_declt(string_expr.content()));
+  init_code.copy_to_operands(code_declt(string_expr_sym));
+  init_code.copy_to_operands(code_assignt(string_expr.length(), length));
+  init_code.copy_to_operands(
+    code_assignt(string_expr.content(), deref_data));
+  init_code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
+  ops.push_back(string_expr);
+  }
+
+  // TODO: Manage the case where we have a non-String Object (this should
+  // probably be handled upstream. At any rate, the following code should be
+  // protected with assertions on the type of op1.
+  typecast_exprt tcast(op1, to_pointer_type(op0.type()));
+  dereference_exprt deref(tcast, to_pointer_type(op0.type()).subtype());
+  member_exprt length(deref, "length", string_length_type(symbol_table));
+  member_exprt data(deref, "data", string_data_type(symbol_table));
+  dereference_exprt deref_data(data, data.type().subtype());
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
+  init_code.copy_to_operands(code_declt(string_expr.length()));
+  init_code.copy_to_operands(code_declt(string_expr.content()));
+  init_code.copy_to_operands(code_declt(string_expr_sym));
+  init_code.copy_to_operands(code_assignt(string_expr.length(), length));
+  init_code.copy_to_operands(
+    code_assignt(string_expr.content(), deref_data));
+  init_code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
+  ops.push_back(string_expr);
+
   return ops;
 }
 
@@ -1086,6 +1138,27 @@ codet java_string_library_preprocesst::make_string_builder_append_object_code(
 
   return code;
 }
+
+codet java_string_library_preprocesst::make_equals_code(
+  const code_typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  // TODO: Code should return false if Object is not String.
+  code_blockt code;
+  exprt::operandst ops;
+  for(const auto &p : type.parameters())
+  {
+    symbol_exprt sym(p.get_identifier(), p.type());
+    ops.push_back(sym);
+  }
+  exprt::operandst args=process_operands_for_equals(
+    ops, loc, symbol_table, code);
+  code.copy_to_operands(code_return_function_application(
+    ID_cprover_string_equal_func, args, type.return_type(), symbol_table));
+  return code;
+}
+
 
 /*******************************************************************\
 
@@ -1793,9 +1866,14 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_function
     ["java::java.lang.String.endsWith:(Ljava/lang/String;)Z"]=
       ID_cprover_string_endswith_func;
+
+#if 0  //this duplicates the following one
   cprover_equivalent_to_java_function
     ["java::java.lang.String.equals:(Ljava/lang/Object;)Z"]=
       ID_cprover_string_equal_func;
+#endif
+  conversion_table["java::java.lang.String.equals:(Ljava/lang/Object;)Z"]=
+      &java_string_library_preprocesst::make_equals_code;
   cprover_equivalent_to_java_function
     ["java::java.lang.String.equalsIgnoreCase:(Ljava/lang/String;)Z"]=
       ID_cprover_string_equals_ignore_case_func;

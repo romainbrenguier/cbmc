@@ -105,6 +105,11 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
+  static codet make_equals_code(
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
   static codet make_string_builder_append_float_code(
     const code_typet &type,
     const source_locationt &loc,
@@ -148,6 +153,12 @@ private:
     code_blockt &init_code);
 
   static exprt::operandst process_operands(
+    const exprt::operandst &operands,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &init_code);
+
+  static exprt::operandst process_operands_for_equals(
     const exprt::operandst &operands,
     const source_locationt &loc,
     symbol_tablet &symbol_table,
