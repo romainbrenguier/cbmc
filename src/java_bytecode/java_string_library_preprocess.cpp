@@ -1482,6 +1482,7 @@ codet java_string_library_preprocesst::make_init_function_from_call(
   refined_string_typet refined_string_type(java_int_type(), java_char_type());
   string_exprt string_expr=fresh_string_expr(loc, symbol_table);
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
+  code.copy_to_operands(code_declt(string_expr.content()));
 
   // Make the assignment: string_expr <- function(arg1)
   code.copy_to_operands(
