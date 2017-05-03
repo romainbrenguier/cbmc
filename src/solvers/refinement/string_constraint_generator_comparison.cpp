@@ -40,8 +40,8 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   // We add axioms:
   // a1 : eq => s1.length=s2.length
   // a2 : forall i<s1.length. eq => s1[i]=s2[i]
-  // a3 : !eq => s1.length!=s2.length
-  //       || (witness<s1.length &&s1[witness]!=s2[witness])
+  // a3 : !eq => (s1.length!=s2.length)
+  //       || (0 <= witness<s1.length && s1[witness]!=s2[witness])
 
   implies_exprt a1(eq, s1.axiom_for_has_same_length_as(s2));
   axioms.push_back(a1);
@@ -52,13 +52,11 @@ exprt string_constraint_generatort::add_axioms_for_equals(
 
   symbol_exprt witness=fresh_exist_index("witness_unequal", index_type);
   exprt zero=from_integer(0, index_type);
+  notequal_exprt diff_length(s1.length(), s2.length());
   and_exprt bound_witness(
     binary_relation_exprt(witness, ID_lt, s1.length()),
     binary_relation_exprt(witness, ID_ge, zero));
   and_exprt witnessing(bound_witness, notequal_exprt(s1[witness], s2[witness]));
-  and_exprt diff_length(
-    notequal_exprt(s1.length(), s2.length()),
-    equal_exprt(witness, from_integer(-1, index_type)));
   implies_exprt a3(not_exprt(eq), or_exprt(diff_length, witnessing));
   axioms.push_back(a3);
 
