@@ -126,14 +126,14 @@ private:
     symbol_tablet &symbol_table);
 
   static codet make_char_at_code(
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table);
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   static codet make_string_to_char_array_code(
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table);
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   // Auxiliary functions
   static codet code_for_scientific_notation(
@@ -201,11 +201,13 @@ private:
 
   static string_exprt fresh_string_expr(
     const source_locationt &loc,
-    symbol_tablet &symbol_table);
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
   static exprt fresh_string_expr_symbol(
     const source_locationt &loc,
-    symbol_tablet &symbol_table);
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
   static exprt allocate_fresh_string(
     const typet &type,
@@ -213,29 +215,42 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &code);
 
+  static exprt allocate_fresh_array(
+    const typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
+
   static exprt make_function_application(
-      const irep_idt &function_name,
-      const exprt::operandst &arguments,
-      const typet &type,
-      symbol_tablet &symbol_table);
+    const irep_idt &function_name,
+    const exprt::operandst &arguments,
+    const typet &type,
+    symbol_tablet &symbol_table);
 
   static codet code_assign_function_application(
-      const exprt &lhs,
-      const irep_idt &function_name,
-      const exprt::operandst &arguments,
-      symbol_tablet &symbol_table);
+    const exprt &lhs,
+    const irep_idt &function_name,
+    const exprt::operandst &arguments,
+    symbol_tablet &symbol_table);
 
   static codet code_return_function_application(
-      const irep_idt &function_name,
-      const exprt::operandst &arguments,
-      const typet &type,
-      symbol_tablet &symbol_table);
+    const irep_idt &function_name,
+    const exprt::operandst &arguments,
+    const typet &type,
+    symbol_tablet &symbol_table);
 
   static codet code_assign_function_to_string_expr(
-      const string_exprt &string_expr,
-      const irep_idt &function_name,
-      const exprt::operandst &arguments,
-      symbol_tablet &symbol_table);
+    const string_exprt &string_expr,
+    const irep_idt &function_name,
+    const exprt::operandst &arguments,
+    symbol_tablet &symbol_table);
+
+  static string_exprt string_expr_of_function_application(
+    const irep_idt &function_name,
+    const exprt::operandst &arguments,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
   static codet code_assign_string_expr_to_java_string(
     const exprt &lhs, const string_exprt &rhs, symbol_tablet &symbol_table);
@@ -254,36 +269,35 @@ private:
   static exprt string_literal(const std::string &s);
 
   static codet make_function_from_call(
-      const irep_idt &function_name,
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table);
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   static codet make_init_function_from_call(
-      const irep_idt &function_name,
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table,
-      bool ignore_first_arg=true);
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    bool ignore_first_arg=true);
 
   static codet make_assign_and_return_function_from_call(
-      const irep_idt &function_name,
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table);
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   static codet make_assign_function_from_call(
-      const irep_idt &function_name,
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table);
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 
   static codet make_string_returning_function_from_call(
-      const irep_idt &function_name,
-      const code_typet &type,
-      const source_locationt &loc,
-      symbol_tablet &symbol_table);
-
+    const irep_idt &function_name,
+    const code_typet &type,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
 };
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARIES_PREPROCESS_H

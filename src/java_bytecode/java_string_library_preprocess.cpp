@@ -435,11 +435,11 @@ void java_string_library_preprocesst::process_single_operand(
     op_to_process, "length", string_length_type(symbol_table));
   member_exprt data(op_to_process, "data", string_data_type(symbol_table));
   dereference_exprt deref_data(data, data.type().subtype());
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
-  init_code.copy_to_operands(code_declt(string_expr.length()));
-  init_code.copy_to_operands(code_declt(string_expr.content()));
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table, init_code);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, init_code);
+#if 0
   init_code.copy_to_operands(code_declt(string_expr_sym));
+#endif
   init_code.copy_to_operands(code_assignt(string_expr.length(), length));
   init_code.copy_to_operands(
     code_assignt(string_expr.content(), deref_data));
@@ -747,7 +747,7 @@ Function: java_string_library_preprocesst::fresh_string_expr
 \*******************************************************************/
 
 string_exprt java_string_library_preprocesst::fresh_string_expr(
-  const source_locationt &loc, symbol_tablet &symbol_table)
+  const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
 {
   refined_string_typet type=refined_string_type();
   symbolt sym_length=get_fresh_aux_symbol(
@@ -761,6 +761,8 @@ string_exprt java_string_library_preprocesst::fresh_string_expr(
   symbol_exprt content_field=fresh_array(
     type.get_content_type(), loc, symbol_table);
   string_exprt str(length_field, content_field, type);
+  code.copy_to_operands(code_declt(length_field));
+  code.copy_to_operands(code_declt(content_field));
   return str;
 }
 
@@ -780,7 +782,7 @@ Function: java_string_library_preprocesst::fresh_string_expr_symbol
 \*******************************************************************/
 
 exprt java_string_library_preprocesst::fresh_string_expr_symbol(
-  const source_locationt &loc, symbol_tablet &symbol_table)
+  const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
 {
   symbolt sym=get_fresh_aux_symbol(
     refined_string_type(),
@@ -789,6 +791,7 @@ exprt java_string_library_preprocesst::fresh_string_expr_symbol(
     loc,
     ID_java,
     symbol_table);
+  code.copy_to_operands(code_declt(sym.symbol_expr()));
   return sym.symbol_expr();
 }
 
@@ -821,6 +824,18 @@ exprt java_string_library_preprocesst::allocate_fresh_string(
   return str;
 }
 
+exprt java_string_library_preprocesst::allocate_fresh_array(
+  const typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table,
+  code_blockt &code)
+{
+  exprt str=fresh_array(type, loc, symbol_table);
+  code.copy_to_operands(code_declt(str));
+  exprt malloc=allocate_dynamic_object(
+    str, str.type().subtype(), symbol_table, loc, code, false);
+  return str;
+}
 /*******************************************************************\
 
 Function: java_string_library_preprocesst::make_function_application
@@ -947,6 +962,38 @@ codet java_string_library_preprocesst::code_assign_function_to_string_expr(
         string_expr.content(), fun_name_data, arguments, symbol_table);
 
   return code_blockt({ assign_fun_length, assign_fun_data});
+}
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::string_expr_of_function_application
+
+  Inputs:
+    function_name - the name of the function
+    arguments - arguments of the function
+    symbol_table - symbol table
+    code - code block in which we add instructions
+
+  Output: return a string expr str and add the following code:
+          > array str.data
+          > str.length <- function_name_length(arguments)
+          > str.data <- function_name_data(arguments)
+
+\*******************************************************************/
+
+string_exprt java_string_library_preprocesst::
+  string_expr_of_function_application(
+    const irep_idt &function_name,
+    const exprt::operandst &arguments,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code)
+{
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
+ // code.copy_to_operands(code_declt());
+  code.copy_to_operands(code_assign_function_to_string_expr(
+    string_expr, function_name, arguments, symbol_table));
+  return string_expr;
 }
 
 /*******************************************************************\
@@ -1085,12 +1132,11 @@ codet java_string_library_preprocesst::make_string_builder_append_object_code(
   code_typet::parameterst params=type.parameters();
   exprt this_obj=symbol_exprt(params[0].get_identifier(), params[0].type());
 
-  // String expression that will hold the result
-  string_exprt string_expr1=fresh_string_expr(loc, symbol_table);
-  string_exprt string_expr2=fresh_string_expr(loc, symbol_table);
-
   // Code to be returned
   code_blockt code;
+
+  // String expression that will hold the result
+  string_exprt string_expr1=fresh_string_expr(loc, symbol_table, code);
 
   exprt::operandst arguments=process_parameters(
     type.parameters(), loc, symbol_table, code);
@@ -1116,11 +1162,8 @@ codet java_string_library_preprocesst::make_string_builder_append_object_code(
   // > string_expr2 = concat(this, string1)
   exprt::operandst concat_arguments(arguments);
   concat_arguments[1]=string_expr1;
-  code.copy_to_operands(code_assign_function_to_string_expr(
-    string_expr2,
-    ID_cprover_string_concat_func,
-    concat_arguments,
-    symbol_table));
+  string_exprt string_expr2=string_expr_of_function_application(
+    ID_cprover_string_concat_func, concat_arguments, loc, symbol_table, code);
 
   // > this = string_expr
   code.copy_to_operands(code_assign_string_expr_to_java_string(
@@ -1184,13 +1227,12 @@ codet java_string_library_preprocesst::make_string_builder_append_float_code(
   typet length_type=string_length_type(symbol_table);
   typet data_type=string_data_type(symbol_table);
 
-  // String expression that will hold the result
-  refined_string_typet ref_type(length_type, java_char_type());
-  string_exprt string_expr1=fresh_string_expr(loc, symbol_table);
-  string_exprt string_expr2=fresh_string_expr(loc, symbol_table);
-
   // Code to be returned
   code_blockt code;
+
+  // String expression that will hold the result
+  refined_string_typet ref_type(length_type, java_char_type());
+  string_exprt string_expr1=fresh_string_expr(loc, symbol_table, code);
 
   exprt::operandst arguments=process_parameters(
     type.parameters(), loc, symbol_table, code);
@@ -1216,11 +1258,9 @@ codet java_string_library_preprocesst::make_string_builder_append_float_code(
   // > string_expr2 = concat(this, string1)
   exprt::operandst concat_arguments(arguments);
   concat_arguments[1]=string_expr1;
-  code.copy_to_operands(code_assign_function_to_string_expr(
-    string_expr2,
-    ID_cprover_string_concat_func,
-    concat_arguments,
-    symbol_table));
+
+  string_exprt string_expr2=string_expr_of_function_application(
+    ID_cprover_string_concat_func, concat_arguments, loc, symbol_table, code);
 
   // > this = string_expr
   code.copy_to_operands(code_assign_string_expr_to_java_string(
@@ -1298,9 +1338,8 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   exprt tmp_string=fresh_string(type.return_type(), loc, symbol_table);
 
   // Declaring CPROVER_string string_expr
-  refined_string_typet ref_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
+  string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
 
   // List of the different cases
   std::vector<code_ifthenelset> case_list;
@@ -1381,59 +1420,6 @@ codet java_string_library_preprocesst::make_float_to_string_code(
 
 /*******************************************************************\
 
-Function: java_string_library_preprocesst::make_init_code
-
-  Inputs:
-    type - the type of the function call
-    loc - location in program
-    symbol_table - the symbol table to populate
-
- Outputs: code for the String.<init>(java/lang/String) function:
-          > cprover_string_length = arg->length;
-          > cprover_string_array = *arg1->data;
-          > this->length = cprover_string_length;
-          > this->data = cprover_string_array;
-          > cprover_string = {.=cprover_string_length, .=cprover_string_array};
-
-  Purpose: Generate the goto code for string initialization.
-
-\*******************************************************************/
-
-codet java_string_library_preprocesst::make_init_code(
-  const code_typet &type,
-  const source_locationt &loc,
-  symbol_tablet &symbol_table)
-{
-  // Getting the assignment arguments (String arg0 = new String(arg1);)
-  code_typet::parameterst params=type.parameters();
-  assert(params.size()==2 && "wrong number of parameters in String.<init>");
-  exprt arg0=symbol_exprt(params[0].get_identifier(), params[0].type());
-  exprt arg1=symbol_exprt(params[1].get_identifier(), params[1].type());
-
-  // Holder for output code
-  code_blockt code;
-
-  // Declaring and allocating String * str
-
-  // Declaring cprover_string string_expr
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
-
-  // Make the assignment: string_expr <- arg1
-  code.copy_to_operands(
-    code_assign_java_string_to_string_expr(string_expr, arg1, symbol_table));
-
-  // Make the assignment: arg0 <- string_expr
-  code.copy_to_operands(
-    code_assign_string_expr_to_java_string(arg0, string_expr, symbol_table));
-
-  code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
-
-  return code;
-}
-
-/*******************************************************************\
-
 Function: java_string_library_preprocesst::make_init_function_from_call
 
   Inputs:
@@ -1478,21 +1464,32 @@ codet java_string_library_preprocesst::make_init_function_from_call(
   // Processing parameters
   exprt::operandst args=process_parameters(params, loc, symbol_table, code);
 
-  // Declaring cprover_string string_expr
-  refined_string_typet refined_string_type(java_int_type(), java_char_type());
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
-  code.copy_to_operands(code_declt(string_expr.content()));
+  // deref is `*this`
+  dereference_exprt deref(arg_this, arg_this.type().subtype());
 
-  // Make the assignment: string_expr <- function(arg1)
-  code.copy_to_operands(
-    code_assign_function_to_string_expr(
-      string_expr, function_name, args, symbol_table));
+  // string_expr <- function(arg1)
+  string_exprt string_expr=string_expr_of_function_application(
+    function_name, args, loc, symbol_table, code);
 
-  // Make the assignment: arg_this <- string_expr
-  code.copy_to_operands(code_assign_string_expr_to_java_string(
-                          arg_this, string_expr, symbol_table));
+  // arg_this <- string_expr
+  // TODO : we should have a function performing the following sequence
+  // of assignments so that we can write:
+  // code_assign_string_expr_to_new_java_string(
+  //   arg_this, string_expr, symbol_table));
 
+  // new array <- malloc(char[])
+  exprt new_array=allocate_fresh_array(
+    get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
+  code.copy_to_operands(code_assignt(
+    dereference_exprt(new_array, new_array.type().subtype()),
+    string_expr.content()));
+  code.copy_to_operands(code_assignt(
+    get_data(deref, symbol_table), new_array));
+  code.copy_to_operands(code_assignt(
+    get_length(deref, symbol_table), to_string_expr(args[0]).length()));
+
+  // string_expr_sym <- {string_expr.length, string_expr.content}
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
   return code;
@@ -1685,20 +1682,19 @@ codet java_string_library_preprocesst::
     const source_locationt &loc,
     symbol_tablet &symbol_table)
 {
-  // String expression that will hold the result
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table);
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table);
-
   // Code for the output
   code_blockt code;
 
   // Calling the function
   exprt::operandst arguments=process_parameters(
     type.parameters(), loc, symbol_table, code);
-  code.copy_to_operands(code_assign_function_to_string_expr(
-    string_expr, function_name, arguments, symbol_table));
+
+  // String expression that will hold the result
+  string_exprt string_expr=string_expr_of_function_application(
+    function_name, arguments, loc, symbol_table, code);
 
   // Assigning string_expr to symbol for keeping track of it
+  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
   // Assigning to string
@@ -1808,10 +1804,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
                 "java.lang.StringBuffer"};
 
   // String library
-#if 0  // this duplicates the following one
-  conversion_table["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
-    &java_string_library_preprocesst::make_init_code;
-#endif
   cprover_equivalent_to_java_initialization_function
     ["java::java.lang.String.<init>:(Ljava/lang/String;)V"]=
       ID_cprover_string_copy_func;
