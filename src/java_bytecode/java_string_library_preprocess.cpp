@@ -1486,7 +1486,7 @@ codet java_string_library_preprocesst::make_init_function_from_call(
   code.copy_to_operands(code_assignt(
     get_data(deref, symbol_table), new_array));
   code.copy_to_operands(code_assignt(
-    get_length(deref, symbol_table), to_string_expr(args[0]).length()));
+    get_length(deref, symbol_table), string_expr.length()));
 
   // string_expr_sym <- {string_expr.length, string_expr.content}
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
