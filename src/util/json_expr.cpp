@@ -272,6 +272,17 @@ json_objectt json(
       else if(width==config.ansi_c.long_long_int_width)
         result["c_type"]=json_stringt(sig+"long long int");
 
+      if(width==8 && is_signed)
+        result["java_type"]=json_stringt("byte");
+      else if(width==16 && is_signed)
+        result["java_type"]=json_stringt("short");
+      else if(width==16 && !is_signed)
+        result["java_type"]=json_stringt("char");
+      else if(width==32 && is_signed)
+        result["java_type"]=json_stringt("int");
+      else if(width==64 && is_signed)
+        result["java_type"]=json_stringt("long");
+
       mp_integer i;
       if(!to_integer(expr, i))
         result["data"]=json_stringt(integer2string(i));
