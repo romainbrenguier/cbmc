@@ -68,7 +68,6 @@ protected:
 
   void generate_class_stub(const irep_idt &class_name);
   void add_array_types();
-  void add_string_type(const irep_idt &class_name);
 };
 
 /*******************************************************************\
