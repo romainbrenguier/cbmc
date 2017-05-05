@@ -108,6 +108,46 @@ json_objectt json(const source_locationt &location)
   return result;
 }
 
+
+/*******************************************************************\
+
+Function: json_of_irep
+
+  Inputs:
+    expr - any kind of cbmc expression
+
+ Outputs: a json object
+
+ Purpose:
+   convert the internal representation of cbmc expressions without
+   any processing.
+
+\*******************************************************************/
+
+json_objectt json_of_irep(const irept &irep)
+{
+  json_objectt result;
+  if(!irep.id().empty())
+  {
+    result["name"]=json_stringt(irep.id_string());
+  }
+
+  forall_named_irep(it, irep.get_named_sub())
+  {
+    result[id2string(it->first)]=json_of_irep(it->second);
+  }
+
+  if(!irep.get_sub().empty())
+  {
+    json_arrayt &members=result["members"].make_array();
+    forall_irep(it, irep.get_sub())
+    {
+      members.push_back(json_of_irep(*it));
+    }
+  }
+  return result;
+}
+
 /*******************************************************************\
 
 Function: json
@@ -216,7 +256,10 @@ json_objectt json(
     }
   }
   else
+  {
     result["name"]=json_stringt("unknown");
+    result["irep"]=json_of_irep(type);
+  }
 
   return result;
 }
@@ -233,13 +276,19 @@ Function: json
 
 \*******************************************************************/
 
+#include <langapi/language_util.h>
+#include <util/simplify_expr.h>
+
 json_objectt json(
-  const exprt &expr,
+  //const exprt &_expr,
+    exprt expr,
   const namespacet &ns)
 {
   json_objectt result;
 
   const typet &type=ns.follow(expr.type());
+
+  simplify_expr(expr, ns);
 
   if(expr.id()==ID_constant)
   {
@@ -398,7 +447,10 @@ json_objectt json(
     e["name"]=json_stringt(id2string(to_union_expr(expr).get_component_name()));
   }
   else
+  {
     result["name"]=json_stringt("unknown");
-
+    result["expr"]=json_stringt(from_expr(expr));
+   // result["irep"]=json_of_irep(expr);
+  }
   return result;
 }

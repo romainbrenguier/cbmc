@@ -930,6 +930,10 @@ void interpretert::evaluate(
           dest.push_back(byte_offset);
       }
     }
+    else
+    {
+      assert(false);
+    }
     return;
   }
   else if(expr.id()==ID_byte_extract_little_endian ||

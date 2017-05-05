@@ -221,6 +221,27 @@ Function: build_goto_trace
  Purpose:
 
 \*******************************************************************/
+#include<iostream>
+#include<goto-programs/interpreter_class.h>
+
+void simplify_pointer_offset(exprt &expr)
+{
+  if(expr.id()==ID_pointer_offset)
+  {
+    // TODO should also check it is 0
+    assert(expr.has_operands() && expr.op0().id()==ID_constant);
+
+    std::cout << "pointer offset : " << std::endl
+              << expr.pretty() << std::endl;
+    expr=expr.op0();
+    return;
+  }
+
+  for(auto &op : expr.operands())
+  {
+    simplify_pointer_offset(op);
+  }
+}
 
 void build_goto_trace(
   const symex_target_equationt &target,
@@ -237,7 +258,6 @@ void build_goto_trace(
   time_mapt time_map;
 
   mp_integer current_time=0;
-
   const goto_trace_stept *end_ptr=nullptr;
   bool end_step_seen=false;
 
@@ -343,10 +363,32 @@ void build_goto_trace(
     if(SSA_step.ssa_lhs.is_not_nil())
       goto_trace_step.lhs_object_value=prop_conv.get(SSA_step.ssa_lhs);
 
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    // see code in interpreter_input_synthesis for memory map
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     if(SSA_step.ssa_full_lhs.is_not_nil())
     {
       goto_trace_step.full_lhs_value=prop_conv.get(SSA_step.ssa_full_lhs);
       simplify(goto_trace_step.full_lhs_value, ns);
+
+      simplify_pointer_offset(goto_trace_step.full_lhs_value);
+      std::cout << "::: " << from_expr(goto_trace_step.full_lhs)
+                << " <- " << from_expr(goto_trace_step.full_lhs_value)
+                << std::endl;
+#if 0
+      if(goto_trace_step.full_lhs_value.id()==ID_index)
+      {
+        std::cout << goto_trace_step.full_lhs_value.pretty(5) << std::endl;
+        exprt index=to_index_expr(goto_trace_step.full_lhs_value).op1();
+        std::cout << "index : " << index.pretty(4) << std::endl;
+        if(
+        exprt offset=index.op0();
+        if(offset.id()==ID_constant)
+          std::cout << "offset ===" << from_expr(prop_conv.get(offset))
+                  << std::endl;
+      }
+   #endif
     }
 
     for(const auto &j : SSA_step.converted_io_args)
