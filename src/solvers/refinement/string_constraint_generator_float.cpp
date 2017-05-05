@@ -230,23 +230,19 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
   string_exprt integer_part_string_expr=add_axioms_from_int(
     integer_part, 4, ref_type);
 
-#if 0 // not needed if the dot is added in the fractional part
-  string_exprt with_dot_string_expr=add_axioms_for_concat_char(
-        integer_part_string_expr, from_integer('.', ref_type.get_char_type()));
-#endif
-
-  // fractional_part = arg - (float) integer_part
-  // TODO: this is not correct for negative numbers
-  minus_exprt fractional_part(f, typecast_exprt(integer_part, f.type()));
-
   // TODO: adapt this for double precision
-  exprt shifting=single_precision_float(1e6);
-  exprt fractional_part_shifted=round_expr_to_zero(
-    mult_exprt(fractional_part, shifting));
-#if 0
-  string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
-    fractional_part_shifted, MAX_INTEGER_LENGTH, ref_type);
-#endif
+  // mult is f * 1e5
+  exprt shifting=single_precision_float(1e5);
+  exprt mult(ID_floatbv_mult, f.type());
+  mult.copy_to_operands(f);
+  mult.copy_to_operands(shifting);
+  mult.copy_to_operands(
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)));
+  exprt shifted_float=round_expr_to_zero(mult);
+  // fractional_part_shifted is floor(f * 100000) % 100000
+  mod_exprt fractional_part_shifted(
+    shifted_float, from_integer(100000, shifted_float.type()));
+
   string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
     fractional_part_shifted, 6, ref_type);
 
