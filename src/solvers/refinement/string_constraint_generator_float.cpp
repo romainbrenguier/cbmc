@@ -315,11 +315,11 @@ string_exprt string_constraint_generatort::add_axioms_for_fractional_part(
           binary_relation_exprt(res[j], ID_le, nine_char));
     digit_constraints.push_back(is_number);
 
-    // There are no trailing zeros except for ".0" (i.e length=2)
-    if(j>2)
+    // There are no trailing zeros except for ".0" (i.e j=2)
+    if(j>1)
     {
       not_exprt no_trailing_zero(and_exprt(
-        equal_exprt(res.length(),from_integer(j+1, res.length().type())),
+        equal_exprt(res.length(), from_integer(j+1, res.length().type())),
       equal_exprt(res[j], zero_char)));
       axioms.push_back(no_trailing_zero);
     }
