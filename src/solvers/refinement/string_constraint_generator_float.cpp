@@ -181,6 +181,27 @@ string_exprt string_constraint_generatort::add_axioms_from_double(
 
 /*******************************************************************\
 
+Function: round_expr_to_zero
+
+  Inputs:
+    f - expression representing a float
+
+ Outputs: expression representing a 32 bit integer
+
+ Purpose: round the float to an integer geting closer to 0
+
+\*******************************************************************/
+
+exprt round_expr_to_zero(const exprt &f)
+{
+  return floatbv_typecast_exprt(
+    f,
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    signedbv_typet(32));
+}
+
+/*******************************************************************\
+
 Function: string_constraint_generatort::add_axioms_from_float
 
   Inputs: float expression and Boolean signaling that the argument has
@@ -205,10 +226,7 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
     res.axiom_for_is_shorter_than(from_integer(MAX_FLOAT_LENGTH, index_type)));
 
   // integer part
-  floatbv_typecast_exprt integer_part(
-    f,
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    signedbv_typet(32));
+  exprt integer_part=round_expr_to_zero(f);
   string_exprt integer_part_string_expr=add_axioms_from_int(
     integer_part, 4, ref_type);
 
@@ -222,11 +240,15 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
   minus_exprt fractional_part(f, typecast_exprt(integer_part, f.type()));
 
   // TODO: adapt this for double precision
-  exprt shifting=single_precision_float(1e7);
-  typecast_exprt fractional_part_shifted(
-    mult_exprt(fractional_part, shifting), signedbv_typet(32));
+  exprt shifting=single_precision_float(1e6);
+  exprt fractional_part_shifted=round_expr_to_zero(
+    mult_exprt(fractional_part, shifting));
+#if 0
   string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
-      fractional_part_shifted, MAX_INTEGER_LENGTH, ref_type);
+    fractional_part_shifted, MAX_INTEGER_LENGTH, ref_type);
+#endif
+  string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
+    fractional_part_shifted, 6, ref_type);
 
   return add_axioms_for_concat(
     integer_part_string_expr, fractional_part_string_expr);
@@ -262,14 +284,14 @@ string_exprt string_constraint_generatort::add_axioms_for_fractional_part(
   exprt max=from_integer(max_size, index_type);
 
   // We add axioms:
-  // a1 : 0 < |res| <= max_size
+  // a1 : 2 <= |res| <= max_size
   // a2 : forall 1 <= i < size '0' < res[i] < '9'
   // res[0] = '.'
   // a3 : i = sum_j 10^j res[j] - '0'
   // for all j : !(|res| = j+1 && res[j]='0')
   // for all j : |res| <= j => res[j]='0'
 
-  and_exprt a1(res.axiom_for_is_strictly_longer_than(0),
+  and_exprt a1(res.axiom_for_is_strictly_longer_than(1),
                res.axiom_for_is_shorter_than(max));
   axioms.push_back(a1);
 
@@ -281,26 +303,30 @@ string_exprt string_constraint_generatort::add_axioms_for_fractional_part(
 
   for(size_t j=1; j<max_size; j++)
   {
+    binary_relation_exprt after_end(
+      res.length(), ID_le, from_integer(j, res.length().type()));
     mult_exprt ten_sum(sum, ten);
+
     // sum = 10 * sum + (res[j]-'0')
-    sum=plus_exprt(
-          ten_sum, typecast_exprt(minus_exprt(res[j], zero_char), type));
+    if_exprt to_add(
+      after_end,
+      from_integer(0, type),
+      typecast_exprt(minus_exprt(res[j], zero_char), type));
+    sum=plus_exprt(ten_sum, to_add);
 
     and_exprt is_number(
           binary_relation_exprt(res[j], ID_ge, zero_char),
           binary_relation_exprt(res[j], ID_le, nine_char));
     digit_constraints.push_back(is_number);
 
-    not_exprt no_trailing_zero(and_exprt(
-      equal_exprt(res.length(),from_integer(j+1, res.length().type())),
+    // There are no trailing zeros except for ".0" (i.e length=2)
+    if(j>2)
+    {
+      not_exprt no_trailing_zero(and_exprt(
+        equal_exprt(res.length(),from_integer(j+1, res.length().type())),
       equal_exprt(res[j], zero_char)));
-    axioms.push_back(no_trailing_zero);
-
-    binary_relation_exprt after_end(
-      res.length(), ID_le, from_integer(j, res.length().type()));
-    implies_exprt only_zero_after_end(
-      after_end, equal_exprt(res[j], zero_char));
-    axioms.push_back(only_zero_after_end);
+      axioms.push_back(no_trailing_zero);
+    }
   }
 
   exprt a2=conjunction(digit_constraints);
