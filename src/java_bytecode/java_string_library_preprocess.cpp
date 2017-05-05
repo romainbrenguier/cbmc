@@ -1034,6 +1034,50 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
 /*******************************************************************\
 
 Function: java_string_library_preprocesst::
+            code_assign_string_expr_to_new_java_string
+
+  Inputs:
+    lhs - an expression representing a java string
+    rhs - a string expression
+    location - a location in the program
+
+  Output: return the following code:
+          > lhs->length=rhs.length
+          > lhs->data=&rhs.data
+
+\*******************************************************************/
+
+
+codet java_string_library_preprocesst::
+  code_assign_string_expr_to_new_java_string(
+    const exprt &lhs,
+    const string_exprt &rhs,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table)
+{
+  assert(implements_java_char_sequence(lhs.type()));
+  dereference_exprt deref(lhs, lhs.type().subtype());
+
+  // Fields of the string object
+  exprt lhs_length=get_length(deref, symbol_table);
+  exprt lhs_data=get_data(deref, symbol_table);
+
+  // Assignments
+  code_blockt code;
+  // new array <- malloc(char[])
+  exprt new_array=allocate_fresh_array(
+    get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
+  code.copy_to_operands(code_assignt(
+    dereference_exprt(new_array, new_array.type().subtype()), rhs.content()));
+  code.copy_to_operands(code_assignt(lhs_length, rhs.length()));
+  code.copy_to_operands(code_assignt(lhs_data, new_array));
+  return code;
+}
+
+
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::
             code_assign_java_string_to_string_expr
 
   Inputs:
@@ -1472,21 +1516,11 @@ codet java_string_library_preprocesst::make_init_function_from_call(
     function_name, args, loc, symbol_table, code);
 
   // arg_this <- string_expr
+
   // TODO : we should have a function performing the following sequence
   // of assignments so that we can write:
-  // code_assign_string_expr_to_new_java_string(
-  //   arg_this, string_expr, symbol_table));
-
-  // new array <- malloc(char[])
-  exprt new_array=allocate_fresh_array(
-    get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
-  code.copy_to_operands(code_assignt(
-    dereference_exprt(new_array, new_array.type().subtype()),
-    string_expr.content()));
-  code.copy_to_operands(code_assignt(
-    get_data(deref, symbol_table), new_array));
-  code.copy_to_operands(code_assignt(
-    get_length(deref, symbol_table), string_expr.length()));
+   code_assign_string_expr_to_new_java_string(
+     arg_this, string_expr, loc ,symbol_table);
 
   // string_expr_sym <- {string_expr.length, string_expr.content}
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
@@ -1699,8 +1733,8 @@ codet java_string_library_preprocesst::
 
   // Assigning to string
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
-  code.copy_to_operands(code_assign_string_expr_to_java_string(
-    str, string_expr, symbol_table));
+  code.copy_to_operands(code_assign_string_expr_to_new_java_string(
+    str, string_expr, loc, symbol_table));
 
   // Return value
   code.copy_to_operands(code_returnt(str));

@@ -255,6 +255,12 @@ private:
   static codet code_assign_string_expr_to_java_string(
     const exprt &lhs, const string_exprt &rhs, symbol_tablet &symbol_table);
 
+  static codet code_assign_string_expr_to_new_java_string(
+    const exprt &lhs,
+    const string_exprt &rhs,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table);
+
   static codet code_assign_java_string_to_string_expr(
     const string_exprt &lhs, const exprt &rhs, symbol_tablet &symbol_table);
 
