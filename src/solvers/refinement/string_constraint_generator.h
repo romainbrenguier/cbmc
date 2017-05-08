@@ -238,7 +238,7 @@ private:
   string_exprt add_axioms_for_fractional_part(
     const exprt &i, size_t max_size, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_float_scientific_notation(
-    const exprt &f, size_t max_size, const refined_string_typet &ref_type);
+    const exprt &f, const refined_string_typet &ref_type);
   string_exprt add_axioms_from_float_scientific_notation(
     const function_application_exprt &f);
 

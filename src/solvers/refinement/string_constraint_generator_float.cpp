@@ -112,6 +112,18 @@ exprt single_precision_float(float f)
   return fl.to_expr();
 }
 
+
+exprt floatbv_mult(
+  const exprt &f, const exprt &g, ieee_floatt::rounding_modet rounding)
+{
+  assert(f.type()==g.type());
+  exprt mult(ID_floatbv_mult, f.type());
+  mult.copy_to_operands(f);
+  mult.copy_to_operands(g);
+  mult.copy_to_operands(from_integer(rounding, unsignedbv_typet(32)));
+  return mult;
+}
+
 /*******************************************************************\
 
 Function:  estimate_decimal_exponent
@@ -136,9 +148,18 @@ exprt estimate_decimal_exponent(const exprt &f,  const ieee_float_spect &spec)
 {
   exprt log_10_of_2=single_precision_float(0.301029995663981);
   exprt bin_exp=get_exponent(f, spec);
-  mult_exprt dec_exponent(
-    typecast_exprt(bin_exp, spec.to_type()), log_10_of_2);
-  return typecast_exprt(dec_exponent, unsignedbv_typet(32));
+  floatbv_typecast_exprt float_bin_exp(
+    bin_exp,
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    spec.to_type());
+  exprt dec_exponent=floatbv_mult(
+    float_bin_exp,
+    log_10_of_2,
+    ieee_floatt::ROUND_TO_EVEN);
+  return floatbv_typecast_exprt(
+    dec_exponent,
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    signedbv_typet(32));
 }
 
 /*******************************************************************\
@@ -231,14 +252,10 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
     integer_part, 4, ref_type);
 
   // TODO: adapt this for double precision
-  // mult is f * 1e5
+  // shited_float is floor(f * 1e5)
   exprt shifting=single_precision_float(1e5);
-  exprt mult(ID_floatbv_mult, f.type());
-  mult.copy_to_operands(f);
-  mult.copy_to_operands(shifting);
-  mult.copy_to_operands(
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)));
-  exprt shifted_float=round_expr_to_zero(mult);
+  exprt shifted_float=round_expr_to_zero(
+    floatbv_mult(f, shifting, ieee_floatt::ROUND_TO_ZERO));
   // fractional_part_shifted is floor(f * 100000) % 100000
   mod_exprt fractional_part_shifted(
     shifted_float, from_integer(100000, shifted_float.type()));
@@ -362,7 +379,7 @@ Function: string_constraint_generatort::
 
 string_exprt string_constraint_generatort::
   add_axioms_from_float_scientific_notation(
-    const exprt &f, size_t max_size, const refined_string_typet &ref_type)
+    const exprt &f, const refined_string_typet &ref_type)
 {
   ieee_float_spect float_spec=ieee_float_spect::single_precision();
   typet float_type=float_spec.to_type();
@@ -404,39 +421,44 @@ string_exprt string_constraint_generatort::
     bias_table.copy_to_operands(single_precision_float(f));
   index_exprt bias_factor(bias_table, binary_exponent, float_type);
 
+  floatbv_typecast_exprt binary_significand_float(
+    binary_significand,
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    float_type);
   // `dec_significand` is $n = m * bias_factor$
-  mult_exprt dec_significand(
-    typecast_exprt(binary_significand, float_type), bias_factor);
+  exprt dec_significand=floatbv_mult(
+    bias_factor, binary_significand_float, ieee_floatt::ROUND_TO_ZERO);
 
   // we divide this number by 0x80000 because it represents a fraction
   // and multiply by 1000000 to get more digits
-  mult_exprt dec_significand_with_8_digits(
-    dec_significand, single_precision_float(1.192092896));
-  typecast_exprt dec_significand_int(
+  exprt dec_significand_with_8_digits=floatbv_mult(
+    dec_significand,
+    single_precision_float(0.1192092896),
+    ieee_floatt::ROUND_TO_ZERO);
+  floatbv_typecast_exprt dec_significand_int(
     dec_significand_with_8_digits,
-    unsignedbv_typet(32));
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    signedbv_typet(32));
 
   // The first character is given by dec_significand_int / 1000000
   div_exprt dec_significand_integer_part(
-    dec_significand_int, from_integer(1000000, unsignedbv_typet(32)));
+    dec_significand_int, from_integer(1000000, signedbv_typet(32)));
   string_exprt string_integer_part=add_axioms_from_int(
-    dec_significand_integer_part, MAX_INTEGER_LENGTH, ref_type);
+    dec_significand_integer_part, 4, ref_type);
 
-#if 0 // Not need if the dot is added in fractional part
-  string_exprt string_expr_with_dot=add_axioms_for_concat_char(
-        string_integer_part, from_integer('.', ref_type.get_char_type()));
-#endif
-
-  // string_fractional_part
-  minus_exprt dec_significand_fractional_part(
-    dec_significand_int,
-    mult_exprt(dec_significand_integer_part,
-               from_integer(1000000, unsignedbv_typet(32))));
+  // TODO: adapt this for double precision
+  // shited_float is floor(f * 1e5)
+  exprt shifting=single_precision_float(1e5);
+  exprt shifted_float=round_expr_to_zero(
+    floatbv_mult(f, shifting, ieee_floatt::ROUND_TO_ZERO));
+  // fractional_part_shifted is floor(f * 100000) % 100000
+  mod_exprt fractional_part_shifted(
+    shifted_float, from_integer(100000, shifted_float.type()));
 
   string_exprt string_fractional_part=add_axioms_for_fractional_part(
-    typecast_exprt(dec_significand_fractional_part, unsignedbv_typet(32)),
-    MAX_INTEGER_LENGTH,
-    ref_type);
+        fractional_part_shifted, 6, ref_type);
+  //  typecast_exprt(dec_significand_fractional_part, signedbv_typet(32)),
+  //  6,   ref_type);
 
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
@@ -450,7 +472,7 @@ string_exprt string_constraint_generatort::
 
   // exponent_string = string_of_int(decimal_exponent)
   string_exprt exponent_string=add_axioms_from_int(
-    decimal_exponent, MAX_INTEGER_LENGTH, ref_type);
+    decimal_exponent, 3, ref_type);
 
   // string_expr = concat(string_expr_withE, exponent_string)
   return add_axioms_for_concat(string_expr_with_E, exponent_string);
@@ -476,9 +498,7 @@ string_exprt string_constraint_generatort::
     const function_application_exprt &f)
 {
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  mp_integer max_size;
 
-  assert(!to_integer(args(f, 2)[1], max_size));
   return add_axioms_from_float_scientific_notation(
-    args(f, 2)[0], integer2size_t(max_size), ref_type);
+    args(f, 1)[0], ref_type);
 }
