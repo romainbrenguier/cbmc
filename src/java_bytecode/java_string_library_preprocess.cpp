@@ -1508,19 +1508,13 @@ codet java_string_library_preprocesst::make_init_function_from_call(
   // Processing parameters
   exprt::operandst args=process_parameters(params, loc, symbol_table, code);
 
-  // deref is `*this`
-  dereference_exprt deref(arg_this, arg_this.type().subtype());
-
   // string_expr <- function(arg1)
   string_exprt string_expr=string_expr_of_function_application(
     function_name, args, loc, symbol_table, code);
 
   // arg_this <- string_expr
-
-  // TODO : we should have a function performing the following sequence
-  // of assignments so that we can write:
-   code_assign_string_expr_to_new_java_string(
-     arg_this, string_expr, loc ,symbol_table);
+  code.copy_to_operands(code_assign_string_expr_to_new_java_string(
+     arg_this, string_expr, loc ,symbol_table));
 
   // string_expr_sym <- {string_expr.length, string_expr.content}
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
