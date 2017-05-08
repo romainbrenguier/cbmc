@@ -283,10 +283,12 @@ typet string_length_type(symbol_tablet symbol_table)
 
 Function: java_string_library_preprocesst::add_string_type
 
-  Inputs: a name for the class such as "java.lang.String"
+  Inputs:
+    class_name - a name for the class such as "java.lang.String"
+    symbol_table - symbol table to which the class will be added
 
- Purpose: Implements the java.lang.String type in the case that
-          we provide an internal implementation.
+ Purpose: Add to the symbol table type declaration for a String-like
+          Java class.
 
 \*******************************************************************/
 
@@ -358,8 +360,6 @@ Function: java_string_library_preprocesst::declare_function
   Inputs: a name and a type
 
  Purpose: declare a function with the given name and type
-
- TODO: duplicates goto_programs/string_refine_preprocess function
 
 \*******************************************************************/
 
@@ -1047,7 +1047,6 @@ Function: java_string_library_preprocesst::
 
 \*******************************************************************/
 
-
 codet java_string_library_preprocesst::
   code_assign_string_expr_to_new_java_string(
     const exprt &lhs,
@@ -1073,7 +1072,6 @@ codet java_string_library_preprocesst::
   code.copy_to_operands(code_assignt(lhs_data, new_array));
   return code;
 }
-
 
 /*******************************************************************\
 
@@ -1219,6 +1217,24 @@ codet java_string_library_preprocesst::make_string_builder_append_object_code(
   return code;
 }
 
+/*******************************************************************\
+
+Function: java_string_library_preprocesst::make_equals_code
+
+  Inputs:
+    type - type of the function call
+    loc - location in the program_invocation_name
+    symbol_table - symbol table
+
+  Outputs: Code corresponding to:
+    > string_expr1 = {this->length; *this->data}
+    > string_expr2 = {arg->length; *arg->data}
+    > return cprover_string_equal(string_expr1, string_expr2)
+
+  Purpose: Used to provide code for the Java String.equals(Object) function.
+
+\*******************************************************************/
+
 codet java_string_library_preprocesst::make_equals_code(
   const code_typet &type,
   const source_locationt &loc,
@@ -1239,7 +1255,6 @@ codet java_string_library_preprocesst::make_equals_code(
   return code;
 }
 
-
 /*******************************************************************\
 
 Function: java_string_library_preprocesst::
@@ -1250,12 +1265,15 @@ Function: java_string_library_preprocesst::
     loc - location in the program_invocation_name
     symbol_table - symbol table
 
- Outputs: code for the StringBuilder.append(F) function:
+  Outputs: Code corresponding to:
           > string1 = arguments[1].toString()
           > string_expr1 = string_to_string_expr(string1)
           > string_expr2 = concat(this, string_expr1)
           > this = string_expr_to_string(string_expr2)
           > return this
+
+  Purpose: Used to provide code for the Java StringBuilder.append(F)
+           function.
 
 \*******************************************************************/
 
@@ -1342,9 +1360,11 @@ exprt java_string_library_preprocesst::string_literal(const std::string &s)
 Function: java_string_library_preprocesst::make_float_to_string_code
 
   Inputs:
-    code - the code of a function call
+    type - type of the function call
+    loc - location in the program_invocation_name
+    symbol_table - symbol table
 
- Outputs: code for the Float.toString(F) function:
+  Outputs: Code corresponding to:
           > String * str;
           > str = MALLOC(String);
           > String * tmp_string;
@@ -1361,6 +1381,8 @@ Function: java_string_library_preprocesst::make_float_to_string_code
           > string_expr_sym=string_expr;
           > str=(String*) string_expr;
           > return str;
+
+  Purpose: Provide code for the Float.toString(F) function.
 
 \*******************************************************************/
 
@@ -1514,7 +1536,7 @@ codet java_string_library_preprocesst::make_init_function_from_call(
 
   // arg_this <- string_expr
   code.copy_to_operands(code_assign_string_expr_to_new_java_string(
-     arg_this, string_expr, loc ,symbol_table));
+    arg_this, string_expr, loc, symbol_table));
 
   // string_expr_sym <- {string_expr.length, string_expr.content}
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
@@ -1534,7 +1556,7 @@ Function: java_string_library_preprocesst::
     loc - location in program
     symbol_table - the symbol table to populate
 
- Outputs: code
+  Outputs: Code calling function with the given function name.
 
   Purpose: Call a cprover internal function, assign the result to
            object `this` and return it.
@@ -1568,10 +1590,11 @@ Function: java_string_library_preprocesst::make_assign_function_from_call
     loc - location in program
     symbol_table - the symbol table to populate
 
-  Outputs: code
+  Outputs: Code assigning result of a call to the function with given
+           function name.
 
   Purpose: Call a cprover internal function and assign the result to
-           object `this`
+           object `this`.
 
 \*******************************************************************/
 
@@ -1593,11 +1616,17 @@ codet java_string_library_preprocesst::make_assign_function_from_call(
 Function: java_string_library_preprocesst::make_string_to_char_array_code
 
   Inputs:
+    type - type of the function called
+    loc - location in the source
+    symbol_table - the symbol table
 
- Purpose: at the given position replace `return_tmp0=s.toCharArray()` with:
+  Outputs: Code corresponding to
           > return_tmp0 = malloc(array[char]);
           > return_tmp0->data=&((s->data)[0])
           > return_tmp0->length=s->length
+
+  Purpose: Used to provide our own implementation of the
+           java.lang.String.toCharArray:()[C function.
 
 \*******************************************************************/
 
@@ -1641,25 +1670,6 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
 
 /*******************************************************************\
 
-Function: java_string_libraries_preprocesst::make_char_at_code
-
-  Inputs:
-
- Outputs:
-
-\*******************************************************************/
-
-codet java_string_library_preprocesst::make_char_at_code(
-  const code_typet &type,
-  const source_locationt &loc,
-  symbol_tablet &symbol_table)
-{
-  return make_function_from_call(
-    ID_cprover_string_char_at_func, type, loc, symbol_table);
-}
-
-/*******************************************************************\
-
 Function: java_string_library_preprocesst::make_function_from_call
 
   Inputs:
@@ -1668,11 +1678,11 @@ Function: java_string_library_preprocesst::make_function_from_call
     loc - location in the source
     symbol_table - symbol table
 
-  Outputs: code:
+  Outputs: Code corresponding to:
           > return function_name(args);
 
-  Purpose: make code for a function that calls a function from the solver
-           and simply returns it
+  Purpose: Povide code for a function that calls a function from the
+           solver and simply returns it.
 
 \*******************************************************************/
 
@@ -1692,14 +1702,22 @@ codet java_string_library_preprocesst::make_function_from_call(
 
 /*******************************************************************\
 
-Function: java_string_library_preprocesst::make_string_returning_function
+Function:
+    java_string_library_preprocesst::make_string_returning_function_from_call
 
   Inputs:
+    function_name - name of the function to be called
+    type - type of the function
+    loc - location in the source
+    symbol_table - symbol table
 
- Outputs: code :
+  Outputs: Code corresponding to:
           > string_expr = function_name(args)
           > string = string_expr_to_string(string)
           > return string
+
+  Purpose: Povide code for a function that calls a function from the
+           solver and return the string_expr result as a Java string.
 
 \*******************************************************************/
 
@@ -1745,8 +1763,12 @@ Function: java_string_library_preprocesst::code_of_function
     loc - location in the program
     symbol_table - a symbol table
 
- Outputs: code for the body of the String functions if they are part
-          of the supported String functions nil_exprt otherwise.
+  Outputs: Code for the body of the String functions if they are part
+           of the supported String functions nil_exprt otherwise.
+
+  Purpose: Should be called to provide code for string functions that
+           are used in the code but for which no implementation is
+           provided.
 
 \*******************************************************************/
 
@@ -1881,11 +1903,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
     ["java::java.lang.String.endsWith:(Ljava/lang/String;)Z"]=
       ID_cprover_string_endswith_func;
 
-#if 0  //this duplicates the following one
-  cprover_equivalent_to_java_function
-    ["java::java.lang.String.equals:(Ljava/lang/Object;)Z"]=
-      ID_cprover_string_equal_func;
-#endif
   conversion_table["java::java.lang.String.equals:(Ljava/lang/Object;)Z"]=
       &java_string_library_preprocesst::make_equals_code;
   cprover_equivalent_to_java_function
@@ -2251,5 +2268,4 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.Integer.toString:(I)Ljava/lang/String;"]=
       ID_cprover_string_of_int_func;
-
 }
