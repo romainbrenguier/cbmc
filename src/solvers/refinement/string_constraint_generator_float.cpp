@@ -241,16 +241,6 @@ Function: string_constraint_generatort::add_axioms_from_float
 string_exprt string_constraint_generatort::add_axioms_from_float(
   const exprt &f, const refined_string_typet &ref_type, bool double_precision)
 {
-  string_exprt res=fresh_string(ref_type);
-  const typet &index_type=ref_type.get_index_type();
-  axioms.push_back(
-    res.axiom_for_is_shorter_than(from_integer(MAX_FLOAT_LENGTH, index_type)));
-
-  // integer part
-  exprt integer_part=round_expr_to_zero(f);
-  string_exprt integer_part_string_expr=add_axioms_from_int(
-    integer_part, 4, ref_type);
-
   // TODO: adapt this for double precision
   // shited_float is floor(f * 1e5)
   exprt shifting=single_precision_float(1e5);
@@ -259,6 +249,12 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
   // fractional_part_shifted is floor(f * 100000) % 100000
   mod_exprt fractional_part_shifted(
     shifted_float, from_integer(100000, shifted_float.type()));
+
+  // integer part
+  mod_exprt integer_part(
+    round_expr_to_zero(f), from_integer(10000, shifted_float.type()));
+  string_exprt integer_part_string_expr=add_axioms_from_int(
+    integer_part, 4, ref_type);
 
   string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
     fractional_part_shifted, 6, ref_type);
@@ -457,8 +453,6 @@ string_exprt string_constraint_generatort::
 
   string_exprt string_fractional_part=add_axioms_for_fractional_part(
         fractional_part_shifted, 6, ref_type);
-  //  typecast_exprt(dec_significand_fractional_part, signedbv_typet(32)),
-  //  6,   ref_type);
 
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
