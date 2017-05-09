@@ -414,8 +414,9 @@ string_exprt string_constraint_generatort::
     from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
     float_type);
 
-  // `decimal_exponent` is $d$ in the formulas
-  exprt decimal_exponent=estimate_decimal_exponent(f, float_spec);
+  // This is a first approximation of the exponent that will adjust
+  // if the magnitude we get is greater than 10
+  exprt decimal_exponent_estimate=estimate_decimal_exponent(f, float_spec);
 
   // Table for values of $2^x / 10^(floor(log_10(2)*x))$ where x=Range[0,128]
   std::vector<double> two_power_e_over_ten_power_d_table(
@@ -472,7 +473,8 @@ string_exprt string_constraint_generatort::
     binary_exponent, from_integer(128, binary_exponent.type()));
 
   // bias_factor is $2^e / 10^(floor(log_10(2)*e))$ that is $2^e/10^d$
-  index_exprt conversion_factor(conversion_factor_table, shifted_index, float_type);
+  index_exprt conversion_factor(
+    conversion_factor_table, shifted_index, float_type);
 
   // `dec_significand` is $n = m * bias_factor$
   exprt dec_significand=floatbv_mult(
@@ -481,10 +483,34 @@ string_exprt string_constraint_generatort::
   // 1 corresponds to 0x0800000 so we multiply dec_significand
   // by 1 / 0x0800000 = 1.192092896e-7
   dec_significand=floatbv_mult(
-    dec_significand, single_precision_float(1.192092896e-7),
-        ieee_floatt::ROUND_TO_ZERO);
+    dec_significand,
+    single_precision_float(1.192092896e-7),
+    ieee_floatt::ROUND_TO_ZERO);
 
   exprt dec_significand_integer_part=round_expr_to_zero(dec_significand);
+
+  // TODO: if dec_siginificand_integer_part is greater than 10
+  // we need to decrease the decimal exponent
+  // `decimal_exponent` is $d$ in the formulas
+  binary_relation_exprt estimate_too_small(
+    dec_significand_integer_part,
+    ID_ge,
+    from_integer(10, dec_significand_integer_part.type()));
+  if_exprt decimal_exponent(
+    estimate_too_small,
+    plus_exprt(decimal_exponent_estimate,
+                from_integer(1, decimal_exponent_estimate.type())),
+    decimal_exponent_estimate);
+
+  dec_significand=if_exprt(
+    estimate_too_small,
+    floatbv_mult(dec_significand,
+                 single_precision_float(0.1),
+                 ieee_floatt::ROUND_TO_ZERO),
+    dec_significand);
+
+  dec_significand_integer_part=round_expr_to_zero(dec_significand);
+
   string_exprt string_integer_part=add_axioms_from_int(
     dec_significand_integer_part, 3, ref_type);
 
