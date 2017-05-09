@@ -271,9 +271,9 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
 
   // integer part
   mod_exprt integer_part(
-    round_expr_to_zero(f), from_integer(10000, shifted_float.type()));
+    round_expr_to_zero(f), from_integer(10000000, shifted_float.type()));
   string_exprt integer_part_string_expr=add_axioms_from_int(
-    integer_part, 4, ref_type);
+    integer_part, 8, ref_type);
 
   string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
     fractional_part_shifted, 6, ref_type);
