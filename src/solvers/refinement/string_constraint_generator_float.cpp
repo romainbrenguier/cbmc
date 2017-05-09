@@ -25,6 +25,8 @@ Function: get_exponent
 
  Purpose: Gets the unbiased exponent in a floating-point bit-vector
 
+ TODO: factorize with float_bv.cpp float_utils.h
+
 \*******************************************************************/
 
 exprt get_exponent(
@@ -37,8 +39,8 @@ exprt get_exponent(
   // exponent is in biased from (numbers form -128 to 127 are encoded with
   // integer from 0 to 255) we have to remove the bias.
   // TODO: this 32 bit is arbitrary
-  return minus_exprt(typecast_exprt(exp_bits, unsignedbv_typet(32)),
-                     from_integer(spec.bias(), unsignedbv_typet(32)));
+  return minus_exprt(typecast_exprt(exp_bits, signedbv_typet(32)),
+                     from_integer(spec.bias(), signedbv_typet(32)));
 }
 
 /*******************************************************************\
@@ -99,7 +101,7 @@ Function:  single_precision_float
   Inputs:
     f - a floating point value
 
-  Ouptus:
+  Outputs:
     an expression representing this floating point
 
 \*******************************************************************/
@@ -112,6 +114,19 @@ exprt single_precision_float(float f)
   return fl.to_expr();
 }
 
+/*******************************************************************\
+
+Function:  floatbv_mult
+
+  Inputs:
+    f - a floating point expression
+    g - a floating point expression
+    rounding - rounding mode
+
+  Outputs:
+    an expression representing floating point multiplication
+
+\*******************************************************************/
 
 exprt floatbv_mult(
   const exprt &f, const exprt &g, ieee_floatt::rounding_modet rounding)
@@ -140,7 +155,7 @@ Function:  estimate_decimal_exponent
          n - the magnitude in base 10 - should be between 1 and 10 so
          log_10(n) in [0, 1]
          So the estimate is given by:
-         d ~=~  floor( log10(2) * e)
+         d ~=~  floor( log_10(2) * e)
 
 \*******************************************************************/
 
@@ -156,8 +171,12 @@ exprt estimate_decimal_exponent(const exprt &f,  const ieee_float_spect &spec)
     float_bin_exp,
     log_10_of_2,
     ieee_floatt::ROUND_TO_EVEN);
+  binary_relation_exprt negative_exponent(
+    dec_exponent, ID_lt, single_precision_float(0.0));
   return floatbv_typecast_exprt(
-    dec_exponent,
+    if_exprt(negative_exponent,
+             minus_exprt(dec_exponent, single_precision_float(1.0)),
+             dec_exponent),
     from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
     signedbv_typet(32));
 }
@@ -353,21 +372,24 @@ Function: string_constraint_generatort::
             add_axioms_from_float_scientific_notation(
 
   Inputs:
-    f - a float expression
+    f - a float expression, which is positive
     max_size - a maximal size for the string
     ref_type - a type for refined strings
 
- Outputs: a string expression
+  Outputs: a string expression
 
- Purpose: Add axioms to write the float in scientific notation
-         A float is represented as $f=m*2^e$ where
+  Purpose: Add axioms to write the float in scientific notation
+         A float is represented as $f = m * 2^e$ where
          $0 <= m < 2$ is the significand and $-126 <= e <= 127$ is the exponent
-         We want an alternate representation by finding n and d
-         such that $f=n*10^d$. We can estimate d using the following:
+         We want an alternate representation by finding $n$ and $d$
+         such that $f=n*10^d$.
+
+         We can estimate $d$ the following way:
          $d ~= log_10(f/n) ~= log_10(m) + log_10(2) * e - log_10(n)$
+         $d = floor(log_10(2) * e)$
          Then $n$ can be expressed by the equation:
          $log_10(n) = log_10(m) + log_10(2) * e - d$
-         log_10(m) can be 0 or -1
+         $n = f /10^d = m * 2^e / 10^d = m * 2^e / 10^(floor(log_10(2) * e))$
 
  TODO: this is not precise at the moment
 
@@ -383,18 +405,19 @@ string_exprt string_constraint_generatort::
   // `binary_exponent` is $e$ in the formulas
   exprt binary_exponent=get_exponent(f, float_spec);
 
-  // `binary_significand` is `m` in the formulas
+  // `binary_significand` is $m$ in the formulas
+  // in the range 0x000000 0x0FFFFFF representing a value between 0.0 and 2.0
+  // 1 corresponds to 0x0800000
   exprt binary_significand=get_significand(f, float_spec);
+  floatbv_typecast_exprt binary_significand_float(
+    binary_significand,
+    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
+    float_type);
 
   // `decimal_exponent` is $d$ in the formulas
   exprt decimal_exponent=estimate_decimal_exponent(f, float_spec);
 
-  // bias_factor is $2^e/10^d$
-  // TODO: this 32 bit is arbitrary
-  array_exprt bias_table(
-    array_typet(unsignedbv_typet(32), from_integer(128, unsignedbv_typet(32))));
-
-  // Table for values of 2^e / 10^(floor(log_10(2) * e)) for e from 0 to 128
+  // Table for values of $2^x / 10^(floor(log_10(2)*x))$ where x=Range[0,128]
   std::vector<double> two_power_e_over_ten_power_d_table(
   {1, 2, 4, 8, 1.6, 3.2, 6.4, 1.28, 2.56,
    5.12, 1.024, 2.048, 4.096, 8.192, 1.6384, 3.2768, 6.5536,
@@ -413,40 +436,69 @@ string_exprt string_constraint_generatort::
    1.03846, 2.07692, 4.15384, 8.30767, 1.66153, 3.32307, 6.64614, 1.32923,
    2.65846, 5.31691, 1.06338, 2.12676, 4.25353, 8.50706, 1.70141});
 
-  for(const auto &f:two_power_e_over_ten_power_d_table)
-    bias_table.copy_to_operands(single_precision_float(f));
-  index_exprt bias_factor(bias_table, binary_exponent, float_type);
+  // Table for values of $2^x / 10^(floor(log_10(2)*x))$ where x=Range[-128,-1]
+  std::vector<double> two_power_e_over_ten_power_d_table_negatives(
+  { 2.93874, 5.87747, 1.17549, 2.35099, 4.70198, 9.40395, 1.88079, 3.76158,
+    7.52316, 1.50463, 3.00927, 6.01853, 1.20371, 2.40741, 4.81482, 9.62965,
+    1.92593, 3.85186, 7.70372, 1.54074, 3.08149, 6.16298, 1.23260, 2.46519,
+    4.93038, 9.86076, 1.97215, 3.94430, 7.88861, 1.57772, 3.15544, 6.31089,
+    1.26218, 2.52435, 5.04871, 1.00974, 2.01948, 4.03897, 8.07794, 1.61559,
+    3.23117, 6.46235, 1.29247, 2.58494, 5.16988, 1.03398, 2.06795, 4.13590,
+    8.27181, 1.65436, 3.30872, 6.61744, 1.32349, 2.64698, 5.29396, 1.05879,
+    2.11758, 4.23516, 8.47033, 1.69407, 3.38813, 6.77626, 1.35525, 2.71051,
+    5.42101, 1.08420, 2.16840, 4.33681, 8.67362, 1.73472, 3.46945, 6.93889,
+    1.38778, 2.77556, 5.55112, 1.11022, 2.22045, 4.44089, 8.88178, 1.77636,
+    3.55271, 7.10543, 1.42109, 2.84217, 5.68434, 1.13687, 2.27374, 4.54747,
+    9.09495, 1.81899, 3.63798, 7.27596, 1.45519, 2.91038, 5.82077, 1.16415,
+    2.32831, 4.65661, 9.31323, 1.86265, 3.72529, 7.45058, 1.49012, 2.98023,
+    5.96046, 1.19209, 2.38419, 4.76837, 9.53674, 1.90735, 3.81470, 7.62939,
+    1.52588, 3.05176, 6.10352, 1.22070, 2.44141, 4.88281, 9.76563, 1.95313,
+    3.90625, 7.81250, 1.56250, 3.12500, 6.25000, 1.25000, 2.50000, 5});
 
-  floatbv_typecast_exprt binary_significand_float(
-    binary_significand,
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    float_type);
+  // bias_table used to find the bias factor
+  exprt conversion_factor_table_size=from_integer(
+    two_power_e_over_ten_power_d_table_negatives.size()+
+      two_power_e_over_ten_power_d_table.size(),
+    unsignedbv_typet(32));
+  array_exprt conversion_factor_table(
+    array_typet(float_type, conversion_factor_table_size));
+  for(const auto &f:two_power_e_over_ten_power_d_table_negatives)
+    conversion_factor_table.copy_to_operands(single_precision_float(f));
+  for(const auto &f:two_power_e_over_ten_power_d_table)
+    conversion_factor_table.copy_to_operands(single_precision_float(f));
+
+  // The index in the table, corresponding to exponent e is e+128
+  plus_exprt shifted_index(
+    binary_exponent, from_integer(128, binary_exponent.type()));
+
+  // bias_factor is $2^e / 10^(floor(log_10(2)*e))$ that is $2^e/10^d$
+  index_exprt conversion_factor(conversion_factor_table, shifted_index, float_type);
+
   // `dec_significand` is $n = m * bias_factor$
   exprt dec_significand=floatbv_mult(
-    bias_factor, binary_significand_float, ieee_floatt::ROUND_TO_ZERO);
+    conversion_factor, binary_significand_float, ieee_floatt::ROUND_TO_ZERO);
 
-  // we divide this number by 0x80000 because it represents a fraction
-  // and multiply by 1000000 to get more digits
-  exprt dec_significand_with_8_digits=floatbv_mult(
-    dec_significand,
-    single_precision_float(0.1192092896),
-    ieee_floatt::ROUND_TO_ZERO);
-  floatbv_typecast_exprt dec_significand_int(
-    dec_significand_with_8_digits,
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    signedbv_typet(32));
+  // 1 corresponds to 0x0800000 so we multiply dec_significand
+  // by 1 / 0x0800000 = 1.192092896e-7
+  dec_significand=floatbv_mult(
+    dec_significand, single_precision_float(1.192092896e-7),
+        ieee_floatt::ROUND_TO_ZERO);
 
-  // The first character is given by dec_significand_int / 1000000
-  div_exprt dec_significand_integer_part(
-    dec_significand_int, from_integer(1000000, signedbv_typet(32)));
+  exprt dec_significand_integer_part=round_expr_to_zero(dec_significand);
   string_exprt string_integer_part=add_axioms_from_int(
-    dec_significand_integer_part, 4, ref_type);
+    dec_significand_integer_part, 3, ref_type);
+
+  minus_exprt fractional_part(dec_significand,
+    floatbv_typecast_exprt(
+      dec_significand_integer_part,
+      from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)), float_type));
 
   // TODO: adapt this for double precision
-  // shited_float is floor(f * 1e5)
+  // shifted_float is floor(f * 1e5)
   exprt shifting=single_precision_float(1e5);
   exprt shifted_float=round_expr_to_zero(
-    floatbv_mult(f, shifting, ieee_floatt::ROUND_TO_ZERO));
+    floatbv_mult(fractional_part, shifting, ieee_floatt::ROUND_TO_ZERO));
+
   // fractional_part_shifted is floor(f * 100000) % 100000
   mod_exprt fractional_part_shifted(
     shifted_float, from_integer(100000, shifted_float.type()));
