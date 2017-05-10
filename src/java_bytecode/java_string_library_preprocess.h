@@ -27,7 +27,7 @@ class java_string_library_preprocesst:public messaget
 public:
   void initialize_conversion_table();
 
-  exprt code_of_function(
+  exprt code_for_function(
     const irep_idt &function_id,
     const code_typet &type,
     const source_locationt &loc,

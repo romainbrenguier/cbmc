@@ -1771,7 +1771,7 @@ Function: java_string_library_preprocesst::code_of_function
 
 \*******************************************************************/
 
-exprt java_string_library_preprocesst::code_of_function(
+exprt java_string_library_preprocesst::code_for_function(
   const irep_idt &function_id,
   const code_typet &type,
   const source_locationt &loc,
