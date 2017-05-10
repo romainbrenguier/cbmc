@@ -1143,7 +1143,6 @@ codet java_string_library_preprocesst::
   code.copy_to_operands(code_assign_java_string_to_string_expr(
     lhs, tmp_string, symbol_table));
   return code;
-
 }
 
 /*******************************************************************\

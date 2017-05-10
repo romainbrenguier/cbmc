@@ -8,8 +8,8 @@ Date:   March 2017
 
 \*******************************************************************/
 
-#ifndef CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARIES_PREPROCESS_H
-#define CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARIES_PREPROCESS_H
+#ifndef CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARY_PREPROCESS_H
+#define CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARY_PREPROCESS_H
 
 #include <util/ui_message.h>
 #include <util/std_code.h>
@@ -28,7 +28,7 @@ class java_string_library_preprocesst:public messaget
 {
 public:
   java_string_library_preprocesst():
-    refined_string_type(java_int_type(), java_char_type()){}
+    refined_string_type(java_int_type(), java_char_type()) {}
 
   void initialize_conversion_table();
   void initialize_refined_string_type();
@@ -163,7 +163,7 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &init_code);
 
-   exprt::operandst process_operands_for_equals(
+  exprt::operandst process_operands_for_equals(
     const exprt::operandst &operands,
     const source_locationt &loc,
     symbol_tablet &symbol_table,
@@ -302,4 +302,4 @@ private:
     symbol_tablet &symbol_table);
 };
 
-#endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARIES_PREPROCESS_H
+#endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARY_PREPROCESS_H
