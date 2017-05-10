@@ -545,11 +545,6 @@ exprt::operandst java_string_library_preprocesst::process_operands_for_equals(
   return ops;
 }
 
-refined_string_typet java_string_library_preprocesst::refined_string_type()
-{
-  return refined_string_typet(java_int_type(), java_char_type());
-}
-
 /*******************************************************************\
 
 Function: java_string_library_preprocesst::get_data_type
@@ -682,7 +677,7 @@ string_exprt java_string_library_preprocesst::process_char_array(
   symbol_tablet &symbol_table,
   code_blockt &code)
 {
-  refined_string_typet ref_type=refined_string_type();
+  refined_string_typet ref_type=refined_string_type;
   dereference_exprt array(array_pointer, array_pointer.type().subtype());
   exprt array_data=get_data(array, symbol_table);
   // `deref_array` is *(array_pointer->data)`
@@ -701,10 +696,10 @@ string_exprt java_string_library_preprocesst::process_char_array(
 
   // string_expr is `{ rhs->length; string_array }`
   string_exprt string_expr(
-    get_length(array, symbol_table), char_array, refined_string_type());
+    get_length(array, symbol_table), char_array, refined_string_type);
   // string_expr_sym <- { rhs->length; string_array }
   symbol_exprt string_expr_sym=
-    fresh_string(refined_string_type(), loc, symbol_table);
+    fresh_string(refined_string_type, loc, symbol_table);
   code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
 
   return string_expr;
@@ -754,7 +749,7 @@ Function: java_string_library_preprocesst::fresh_string_expr
 string_exprt java_string_library_preprocesst::fresh_string_expr(
   const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
 {
-  refined_string_typet type=refined_string_type();
+  refined_string_typet type=refined_string_type;
   symbolt sym_length=get_fresh_aux_symbol(
     type.get_index_type(),
     "cprover_string_length",
@@ -791,7 +786,7 @@ exprt java_string_library_preprocesst::fresh_string_expr_symbol(
   const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
 {
   symbolt sym=get_fresh_aux_symbol(
-    refined_string_type(),
+    refined_string_type,
     "cprover_string",
     "cprover_string",
     loc,

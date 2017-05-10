@@ -22,11 +22,16 @@ Date:   March 2017
 #include <unordered_set>
 #include <functional>
 #include "character_refine_preprocess.h"
+#include "java_types.h"
 
 class java_string_library_preprocesst:public messaget
 {
 public:
+  java_string_library_preprocesst():
+    refined_string_type(java_int_type(), java_char_type()){}
+
   void initialize_conversion_table();
+  void initialize_refined_string_type();
 
   exprt code_for_function(
     const irep_idt &function_id,
@@ -65,7 +70,7 @@ private:
 
   character_refine_preprocesst character_preprocess;
 
-  const refined_string_typet refined_java_string_type;
+  const refined_string_typet refined_string_type;
 
   typedef
     std::function<codet(
@@ -179,8 +184,6 @@ private:
     const typet &type, const symbol_tablet &symbol_table);
   exprt get_data(const exprt &expr, const symbol_tablet &symbol_table);
   exprt get_length(const exprt &expr, const symbol_tablet &symbol_table);
-
-  refined_string_typet refined_string_type();
 
   symbol_exprt fresh_string(
     const typet &type,
