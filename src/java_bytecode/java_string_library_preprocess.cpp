@@ -1406,25 +1406,55 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
 
-  // List of the different cases
-  std::vector<code_ifthenelset> case_list;
+  // temporary string expressions
+  string_exprt tmp_string_expr1=fresh_string_expr(loc, symbol_table, code);
+  string_exprt tmp_string_expr2=fresh_string_expr(loc, symbol_table, code);
 
-  // First case in the list is the default
-  code_ifthenelset case_sci_notation;
+  // Expression representing 0.0
   ieee_float_spect float_spec=ieee_float_spect::single_precision();
-  // Subcase of 0.0
-  // TODO: case of -0.0
   ieee_floatt zero_float(float_spec);
   zero_float.from_float(0.0);
   constant_exprt zero=zero_float.to_expr();
-  case_sci_notation.cond()=ieee_float_equal_exprt(arg, zero);
-  case_sci_notation.then_case()=code_assign_string_literal_to_string_expr(
-    string_expr, tmp_string, "0.0", symbol_table);
 
-  // Subcase of computerized scientific notation
-  case_sci_notation.else_case()=code_assign_function_to_string_expr(
-        string_expr, ID_cprover_string_of_float_func, {arg}, symbol_table);
+  // List of the different cases
+  std::vector<code_ifthenelset> case_list;
+
+  // First case in the list is the default, and must have both `then`
+  // and `else` branches
+  code_ifthenelset case_sci_notation;
+  // Case of computerized scientific notation
+  case_sci_notation.cond()=binary_relation_exprt(arg, ID_ge, zero);
+  case_sci_notation.then_case()=code_assign_function_to_string_expr(
+    string_expr,
+    ID_cprover_string_of_float_scientific_notation_func,
+    {arg},
+    symbol_table);
+  // Subcase of negative scientific notation
+  code_blockt case_neg_sci_notation;
+  case_neg_sci_notation.copy_to_operands(
+    code_assign_string_literal_to_string_expr(
+      tmp_string_expr1, tmp_string, "-", symbol_table));
+  case_neg_sci_notation.copy_to_operands(
+    code_assign_function_to_string_expr(
+      tmp_string_expr2,
+      ID_cprover_string_of_float_scientific_notation_func,
+      {unary_minus_exprt(arg)},
+      symbol_table));
+  case_neg_sci_notation.copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_expr,
+      ID_cprover_string_concat_func,
+      {tmp_string_expr1, tmp_string_expr2},
+      symbol_table));
+  case_sci_notation.else_case()=case_neg_sci_notation;
   case_list.push_back(case_sci_notation);
+
+  // Case of 0.0
+  // TODO: case of -0.0
+  code_ifthenelset case_zero;
+  case_zero.cond()=ieee_float_equal_exprt(arg, zero);
+  case_zero.then_case()=code_assign_string_literal_to_string_expr(
+    string_expr, tmp_string, "0.0", symbol_table);
 
   // Case of NaN
   code_ifthenelset case_nan;
@@ -1463,8 +1493,33 @@ codet java_string_library_preprocesst::make_float_to_string_code(
     binary_relation_exprt(arg, ID_lt, bound_sup));
   case_simple_notation.cond()=is_simple_float;
   case_simple_notation.then_case()=code_assign_function_to_string_expr(
-        string_expr, ID_cprover_string_of_float_func, {arg}, symbol_table);
+    string_expr, ID_cprover_string_of_float_func, {arg}, symbol_table);
   case_list.push_back(case_simple_notation);
+
+  // Case of a negative number in simple notation
+  code_ifthenelset case_neg_simple;
+  and_exprt is_neg_simple_float(
+    binary_relation_exprt(arg, ID_le, unary_minus_exprt(bound_inf)),
+    binary_relation_exprt(arg, ID_gt, unary_minus_exprt(bound_sup)));
+
+  case_neg_simple.cond()=is_neg_simple_float;
+  case_neg_simple.then_case()=code_blockt();
+  case_neg_simple.then_case().copy_to_operands(
+    code_assign_string_literal_to_string_expr(
+      tmp_string_expr1, tmp_string, "-", symbol_table));
+  case_neg_simple.then_case().copy_to_operands(
+    code_assign_function_to_string_expr(
+      tmp_string_expr2,
+      ID_cprover_string_of_float_func,
+      {unary_minus_exprt(arg)},
+      symbol_table));
+  case_neg_simple.then_case().copy_to_operands(
+    code_assign_function_to_string_expr(
+      string_expr,
+      ID_cprover_string_concat_func,
+      {tmp_string_expr1, tmp_string_expr2},
+      symbol_table));
+  case_list.push_back(case_neg_simple);
 
   // Combining all cases
   for(std::size_t i=1; i<case_list.size(); i++)
@@ -1559,6 +1614,8 @@ Function: java_string_library_preprocesst::
 
   Purpose: Call a cprover internal function, assign the result to
            object `this` and return it.
+
+  TODO: part of this function could be factorized with make_init_code
 
 \*******************************************************************/
 
