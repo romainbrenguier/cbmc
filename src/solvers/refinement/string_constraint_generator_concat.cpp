@@ -160,9 +160,31 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_char(
   const function_application_exprt &f)
 {
   string_exprt s1=get_string_expr(args(f, 2)[0]);
-  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
-  string_exprt s2=add_axioms_from_char(args(f, 2)[1], ref_type);
-  return add_axioms_for_concat(s1, s2);
+  return add_axioms_for_concat_char(s1, args(f, 2)[1]);
+}
+
+/*******************************************************************\
+
+Function: string_constraint_generatort::add_axioms_for_concat_char
+
+  Inputs:
+    string_expr - a string expression
+    char - a character expression
+
+ Outputs: a new string expression
+
+ Purpose: add axioms corresponding adding the character char at the
+          end of string_expr
+
+\*******************************************************************/
+
+string_exprt string_constraint_generatort::add_axioms_for_concat_char(
+  const string_exprt &string_expr, const exprt &char_expr)
+{
+  const refined_string_typet &ref_type=
+    to_refined_string_type(string_expr.type());
+  string_exprt s2=add_axioms_from_char(char_expr, ref_type);
+  return add_axioms_for_concat(string_expr, s2);
 }
 
 /*******************************************************************\
@@ -183,7 +205,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_double(
   string_exprt s1=get_string_expr(args(f, 2)[0]);
   assert(refined_string_typet::is_refined_string_type(f.type()));
   refined_string_typet ref_type=to_refined_string_type(f.type());
-  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type, true);
+  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }
 
@@ -205,7 +227,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_float(
   string_exprt s1=get_string_expr(args(f, 2)[0]);
   assert(refined_string_typet::is_refined_string_type(f.type()));
   refined_string_typet ref_type=to_refined_string_type(f.type());
-  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type, false);
+  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }
 
