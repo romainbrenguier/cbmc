@@ -26,9 +26,11 @@ Date:   April 2017
 
 Function: java_string_library_preprocesst::check_java_type
 
-  Inputs: a type and a string
+  Inputs:
+    type - a type
+    tag - a string
 
- Outputs: Boolean telling whether the type is a struct with the given
+  Output: Boolean telling whether the type is a struct with the given
           tag or a symbolic type with the tag prefixed by "java::"
 
 \*******************************************************************/
@@ -55,7 +57,7 @@ Function: java_string_library_preprocesst::is_java_string_pointer_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java string pointers
+  Output: Boolean telling whether the type is that of java string pointer
 
 \*******************************************************************/
 
@@ -77,7 +79,7 @@ Function: java_string_library_preprocesst::is_java_string_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java string
+  Output: Boolean telling whether the type is that of java string
 
 \*******************************************************************/
 
@@ -93,7 +95,7 @@ Function: java_string_library_preprocesst::is_java_string_builder_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java string builder
+  Output: Boolean telling whether the type is that of java StringBuilder
 
 \*******************************************************************/
 
@@ -109,7 +111,7 @@ Function: java_string_library_preprocesst::is_java_string_builder_pointer_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java StringBuilder
+  Output: Boolean telling whether the type is that of java StringBuilder
           pointers
 
 \*******************************************************************/
@@ -132,7 +134,7 @@ Function: java_string_library_preprocesst::is_java_string_buffer_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java string buffer
+  Output: Boolean telling whether the type is that of java StringBuffer
 
 \*******************************************************************/
 
@@ -148,7 +150,7 @@ Function: java_string_library_preprocesst::is_java_string_buffer_pointer_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java StringBuffer
+  Output: Boolean telling whether the type is that of java StringBuffer
           pointers
 
 \*******************************************************************/
@@ -171,7 +173,7 @@ Function: java_string_library_preprocesst::is_java_char_sequence_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java char sequence
+  Output: Boolean telling whether the type is that of java char sequence
 
 \*******************************************************************/
 
@@ -187,7 +189,7 @@ Function: java_string_library_preprocesst::is_java_char_sequence_pointer_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of a pointer
+  Output: Boolean telling whether the type is that of a pointer
           to a java char sequence
 
 \*******************************************************************/
@@ -210,7 +212,7 @@ Function: java_string_library_preprocesst::is_java_char_array_type
 
   Inputs: a type
 
- Outputs: Boolean telling whether the type is that of java char array
+  Output: Boolean telling whether the type is that of java char array
 
 \*******************************************************************/
 
@@ -250,7 +252,7 @@ Function: java_string_library_preprocesst::string_data_type
   Inputs:
     symbol_table - a symbol_table containing an entry for java Strings
 
- Outputs: the type of data fields in java Strings.
+  Output: the type of data fields in java Strings.
 
 \*******************************************************************/
 
@@ -329,8 +331,9 @@ Function: fresh_array
   Inputs:
     type - an array type
     location - a location in the program
+    symbol_table - symbol table
 
- Outputs: a new symbol
+  Output: a new symbol
 
  Purpose: add a symbol in the table with static lifetime and name
           containing `cprover_string_array` and given type
@@ -357,7 +360,10 @@ symbol_exprt java_string_library_preprocesst::fresh_array(
 
 Function: java_string_library_preprocesst::declare_function
 
-  Inputs: a name and a type
+  Inputs:
+    function_name - a name
+    type - a type
+    symbol_table - symbol table
 
  Purpose: declare a function with the given name and type
 
@@ -381,11 +387,12 @@ Function: string_refine_preprocesst::process_arguments
 
   Inputs:
     params - a list of function parameters
+    loc - location in the source
     symbol_table - symbol table
     init_code - code block, in which declaration of some arguments
                 may be added
 
- Outputs: a list of expressions
+  Output: a list of expressions
 
  Purpose: calls string_refine_preprocesst::process_operands with a
           list of parameters.
@@ -458,7 +465,7 @@ Function: java_string_library_preprocesst::process_operands
     init_code - code block, in which declaration of some arguments
                 may be added
 
- Outputs: a list of expressions
+  Output: a list of expressions
 
  Purpose: for each expression that is of a type implementing strings,
           we declare a new `cprover_string` whose contents is deduced
@@ -506,7 +513,7 @@ Function: java_string_library_preprocesst::process_operands_for_equals
     init_code - code block, in which declaration of some arguments
                 may be added
 
- Outputs: a list of expressions
+  Output: a list of expressions
 
  Purpose: Converts the operands of the equals function to string
           expressions and outputs these conversions. As a side effect
@@ -538,18 +545,6 @@ exprt::operandst java_string_library_preprocesst::process_operands_for_equals(
   return ops;
 }
 
-/*******************************************************************\
-
-Function: java_string_library_preprocesst::refined_string_type
-
-  Inputs: a type containing a "data" component
-
-  Outputs: type of the "data" component
-
- Purpose: Finds the type of the data component
-
-\*******************************************************************/
-
 refined_string_typet java_string_library_preprocesst::refined_string_type()
 {
   return refined_string_typet(java_int_type(), java_char_type());
@@ -559,9 +554,11 @@ refined_string_typet java_string_library_preprocesst::refined_string_type()
 
 Function: java_string_library_preprocesst::get_data_type
 
-  Inputs: a type containing a "data" component
+  Inputs:
+    type - a type containing a "data" component
+    symbol_table - symbol table
 
-  Outputs: type of the "data" component
+  Output: type of the "data" component
 
  Purpose: Finds the type of the data component
 
@@ -591,9 +588,11 @@ typet java_string_library_preprocesst::get_data_type(
 
 Function: java_string_library_preprocesst::get_length_type
 
-  Inputs: a type containing a "length" component
+  Inputs:
+    type - a type containing a "length" component
+    symbol_table - symbol table
 
-  Outputs: type of the "length" component
+  Output: type of the "length" component
 
  Purpose: Finds the type of the length component
 
@@ -623,9 +622,11 @@ typet java_string_library_preprocesst::get_length_type(
 
 Function: java_string_library_preprocesst::get_length
 
-  Inputs: an expression of structured type with length component
+  Inputs:
+    expr - an expression of structured type with length component
+    symbol_table - symbol table
 
-  Outputs: expression representing the "length" member
+  Output: expression representing the "length" member
 
  Purpose: access length member
 
@@ -642,9 +643,11 @@ exprt java_string_library_preprocesst::get_length(
 
 Function: java_string_library_preprocesst::get_data
 
-  Inputs: an expression of structured type with length component
+  Inputs:
+    expr - an expression of structured type with length component
+    symbol_table - symbol table
 
-  Outputs: expression representing the "data" member
+  Output: expression representing the "data" member
 
  Purpose: access data member
 
@@ -664,9 +667,9 @@ Function: string_refine_preprocesst::process_char_array
     array_pointer - an expression of type char array pointer
     loc - location in the source
     symbol_table - symbol table
-    init_code - code block, in which some assignements will be added
+    code - code block, in which some assignements will be added
 
- Outputs: a string expression
+  Output: a string expression
 
  Purpose: we declare a new `cprover_string` whose contents is deduced
           from the char array.
@@ -713,9 +716,10 @@ Function: java_string_library_preprocesst::fresh_string
 
   Inputs:
     type - a type for refined strings
-    location - a location in the program
+    loc - a location in the program
+    symbol_table - symbol table
 
- Outputs: a new symbol
+  Output: a new symbol
 
  Purpose: add a symbol with static lifetime and name containing
           `cprover_string` and given type
@@ -736,12 +740,13 @@ symbol_exprt java_string_library_preprocesst::fresh_string(
 Function: java_string_library_preprocesst::fresh_string_expr
 
   Inputs:
-    type - a type for refined strings
-    location - a location in the program
+    loc - a location in the program
+    symbol_table - symbol table
+    code - code block to which allocation instruction will be added
 
- Outputs: a new string_expr
+  Output: a new string_expr
 
- Purpose: add symbols with prefixe cprover_string_length and
+ Purpose: add symbols with prefix cprover_string_length and
           cprover_string_data and construct a string_expr from them.
 
 \*******************************************************************/
@@ -771,12 +776,13 @@ string_exprt java_string_library_preprocesst::fresh_string_expr(
 Function: java_string_library_preprocesst::fresh_string_expr_symbol
 
   Inputs:
-    type - a type for refined strings
-    location - a location in the program
+    loc - a location in the program
+    symbol_table - symbol table
+    code - code block to which allocation instruction will be added
 
- Outputs: a new expression of refined string type
+  Output: a new expression of refined string type
 
- Purpose: add symbols with prefixe cprover_string_length and
+ Purpose: add symbols with prefix cprover_string_length and
           cprover_string_data and construct a string_expr from them.
 
 \*******************************************************************/
@@ -801,11 +807,11 @@ Function: java_string_library_preprocesst::allocate_fresh_string
 
   Inputs:
     type - a type for string
-    location - a location in the program
+    loc - a location in the program
     symbol_table - symbol table
     code - code block to which allocation instruction will be added
 
- Outputs: a new string
+  Output: a new string
 
  Purpose: declare a new String and allocate it
 
@@ -971,6 +977,7 @@ Function: java_string_library_preprocesst::string_expr_of_function_application
   Inputs:
     function_name - the name of the function
     arguments - arguments of the function
+    loc - a location in the program
     symbol_table - symbol table
     code - code block in which we add instructions
 
@@ -1004,7 +1011,7 @@ Function: java_string_library_preprocesst::
   Inputs:
     lhs - an expression representing a java string
     rhs - a string expression
-    location - a location in the program
+    symbol_table - symbol table
 
   Output: return the following code:
           > lhs->length=rhs.length
@@ -1039,7 +1046,8 @@ Function: java_string_library_preprocesst::
   Inputs:
     lhs - an expression representing a java string
     rhs - a string expression
-    location - a location in the program
+    loc - a location in the program
+    symbol_table - symbol table
 
   Output: return the following code:
           > lhs->length=rhs.length
@@ -1124,7 +1132,7 @@ Function: java_string_library_preprocesst::
     lhs - an expression representing a java string
     tmp_string - a temporary string to hold the literal
     s - the literal to be assigned
-    location - a location in the program
+    symbol_table - symbol table
 
   Output: return the following code:
           > tmp_string = "s"
@@ -1488,12 +1496,13 @@ codet java_string_library_preprocesst::make_float_to_string_code(
 Function: java_string_library_preprocesst::make_init_function_from_call
 
   Inputs:
+    function_name - name of the function to be called
     type - the type of the function call
     loc - location in program
     symbol_table - the symbol table to populate
     ignore_first_arg - boolean flag telling that the first argument
-        should not be part of the arguments of the call (but only used
-        to be assigned the result)
+                       should not be part of the arguments of the call
+                       (but only used to be assigned the result)
 
  Outputs: code for the String.<init>(args) function:
           > cprover_string_length = fun(arg).length;
@@ -1503,8 +1512,6 @@ Function: java_string_library_preprocesst::make_init_function_from_call
           > cprover_string = {.=cprover_string_length, .=cprover_string_array};
 
   Purpose: Generate the goto code for string initialization.
-
-  TODO: part of this function could be factorized with make_init_code
 
 \*******************************************************************/
 
@@ -1678,9 +1685,9 @@ Function: java_string_library_preprocesst::make_function_from_call
     symbol_table - symbol table
 
   Outputs: Code corresponding to:
-          > return function_name(args);
+           > return function_name(args);
 
-  Purpose: Povide code for a function that calls a function from the
+  Purpose: Provide code for a function that calls a function from the
            solver and simply returns it.
 
 \*******************************************************************/
@@ -1754,7 +1761,7 @@ codet java_string_library_preprocesst::
 
 /*******************************************************************\
 
-Function: java_string_library_preprocesst::code_of_function
+Function: java_string_library_preprocesst::code_for_function
 
   Inputs:
     function_id - name of the function
@@ -1763,7 +1770,7 @@ Function: java_string_library_preprocesst::code_of_function
     symbol_table - a symbol table
 
   Outputs: Code for the body of the String functions if they are part
-           of the supported String functions nil_exprt otherwise.
+           of the supported String functions, nil_exprt otherwise.
 
   Purpose: Should be called to provide code for string functions that
            are used in the code but for which no implementation is
@@ -1816,7 +1823,8 @@ Function: java_string_library_preprocesst::add_string_type_success
     class_name - name of the class
     symbol_table - a symbol table
 
- Outputs: true if the type is one that is known to our preprocessing
+ Outputs: True if the type is one that is known to our preprocessing,
+          false otherwise
 
  Purpose: Declare a class for String types that are used in the program
 
