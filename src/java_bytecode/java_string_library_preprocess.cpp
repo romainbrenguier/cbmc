@@ -1907,7 +1907,12 @@ void java_string_library_preprocesst::initialize_conversion_table()
       ID_cprover_string_endswith_func;
 
   conversion_table["java::java.lang.String.equals:(Ljava/lang/Object;)Z"]=
-      &java_string_library_preprocesst::make_equals_code;
+    std::bind(
+      &java_string_library_preprocesst::make_equals_code,
+      this,
+      std::placeholders::_1,
+      std::placeholders::_2,
+      std::placeholders::_3);
   cprover_equivalent_to_java_function
     ["java::java.lang.String.equalsIgnoreCase:(Ljava/lang/String;)Z"]=
       ID_cprover_string_equals_ignore_case_func;
@@ -1979,7 +1984,12 @@ void java_string_library_preprocesst::initialize_conversion_table()
       ID_cprover_string_substring_func;
   conversion_table
     ["java::java.lang.String.toCharArray:()[C"]=
-      &java_string_library_preprocesst::make_string_to_char_array_code;
+      std::bind(
+        &java_string_library_preprocesst::make_string_to_char_array_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.toLowerCase:()Ljava/lang/String;"]=
       ID_cprover_string_to_lower_case_func;
@@ -2043,7 +2053,12 @@ void java_string_library_preprocesst::initialize_conversion_table()
       ID_cprover_string_concat_double_func;
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(F)Ljava/lang/StringBuilder;"]=
-    &java_string_library_preprocesst::make_string_builder_append_float_code;
+    std::bind(
+      &java_string_library_preprocesst::make_string_builder_append_float_code,
+      this,
+      std::placeholders::_1,
+      std::placeholders::_2,
+      std::placeholders::_3);
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.append:(I)Ljava/lang/StringBuilder;"]=
       ID_cprover_string_concat_int_func;
@@ -2053,8 +2068,12 @@ void java_string_library_preprocesst::initialize_conversion_table()
 
   conversion_table["java::java.lang.StringBuilder.append:"
                    "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"]=
-    &java_string_library_preprocesst::make_string_builder_append_object_code;
-
+    std::bind(
+      &java_string_library_preprocesst::make_string_builder_append_object_code,
+      this,
+      std::placeholders::_1,
+      std::placeholders::_2,
+      std::placeholders::_3);
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.append:(Ljava/lang/String;)"
       "Ljava/lang/StringBuilder;"]=
@@ -2261,7 +2280,12 @@ void java_string_library_preprocesst::initialize_conversion_table()
       ID_cprover_string_char_at_func;
   conversion_table
     ["java::java.lang.Float.toString:(F)Ljava/lang/String;"]=
-      &java_string_library_preprocesst::make_float_to_string_code;
+      std::bind(
+        &java_string_library_preprocesst::make_float_to_string_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.Integer.toHexString:(I)Ljava/lang/String;"]=
       ID_cprover_string_of_int_hex_func;
