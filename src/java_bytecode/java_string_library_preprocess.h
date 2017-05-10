@@ -41,7 +41,7 @@ public:
   bool add_string_type_success(
     irep_idt class_name, symbol_tablet &symbol_table);
 
-  // TODO: these functions should go to java_types
+private:
   static bool check_java_type(const typet &type, const std::string &tag);
   static bool is_java_string_pointer_type(const typet &type);
   static bool is_java_string_type(const typet &type);
@@ -55,14 +55,12 @@ public:
   static bool is_java_char_array_pointer_type(const typet &type);
   static bool implements_java_char_sequence(const typet &type)
   {
-      return
-        is_java_char_sequence_pointer_type(type) ||
-        is_java_string_builder_pointer_type(type) ||
-        is_java_string_buffer_pointer_type(type) ||
-        is_java_string_pointer_type(type);
+    return
+      is_java_char_sequence_pointer_type(type) ||
+      is_java_string_builder_pointer_type(type) ||
+      is_java_string_buffer_pointer_type(type) ||
+      is_java_string_pointer_type(type);
   }
-
-private:
 
   character_refine_preprocesst character_preprocess;
 
@@ -71,7 +69,7 @@ private:
 
   typedef std::unordered_map<irep_idt, irep_idt, irep_id_hash> id_mapt;
 
-  // A table tells us what method to call for each java method signature
+  // Table mapping each java method signature to the code generating function
   std::unordered_map<irep_idt, conversion_functiont, irep_id_hash>
     conversion_table;
 
@@ -116,11 +114,6 @@ private:
     symbol_tablet &symbol_table);
 
   static codet make_float_to_string_code(
-    const code_typet &type,
-    const source_locationt &loc,
-    symbol_tablet &symbol_table);
-
-  static codet make_init_code(
     const code_typet &type,
     const source_locationt &loc,
     symbol_tablet &symbol_table);
