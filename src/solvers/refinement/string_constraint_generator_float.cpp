@@ -21,7 +21,9 @@ Function: get_exponent
     spec - specification for floating points
 
  Outputs:
-    a 32 bit integer representing the exponent
+    A 32 bit integer representing the exponent.
+    Note that 32 bits are sufficient for the exponent even in
+    octuple precision.
 
  Purpose: Gets the unbiased exponent in a floating-point bit-vector
 
@@ -30,17 +32,16 @@ Function: get_exponent
 \*******************************************************************/
 
 exprt get_exponent(
-  const exprt &src,
-  const ieee_float_spect &spec)
+  const exprt &src, const ieee_float_spect &spec)
 {
   exprt exp_bits=extractbits_exprt(
-    src, spec.f+spec.e-1, spec.f,
-    unsignedbv_typet(spec.e));
-  // exponent is in biased from (numbers form -128 to 127 are encoded with
+    src, spec.f+spec.e-1, spec.f, unsignedbv_typet(spec.e));
+
+  // Exponent is in biased from (numbers form -128 to 127 are encoded with
   // integer from 0 to 255) we have to remove the bias.
-  // TODO: this 32 bit is arbitrary
-  return minus_exprt(typecast_exprt(exp_bits, signedbv_typet(32)),
-                     from_integer(spec.bias(), signedbv_typet(32)));
+  return minus_exprt(
+    typecast_exprt(exp_bits, signedbv_typet(32)),
+    from_integer(spec.bias(), signedbv_typet(32)));
 }
 
 /*******************************************************************\
@@ -52,15 +53,14 @@ Function: get_magnitude
     spec - specification for floating points
 
  Outputs:
-    an unsigned value representing the magnitude
+    An unsigned value representing the magnitude.
 
  Purpose: Gets the magnitude without hidden bit
 
 \*******************************************************************/
 
 exprt get_magnitude(
-  const exprt &src,
-  const ieee_float_spect &spec)
+  const exprt &src, const ieee_float_spect &spec)
 {
   return extractbits_exprt(src, spec.f-1, 0, unsignedbv_typet(spec.f));
 }
@@ -72,46 +72,73 @@ Function: get_significand
   Inputs:
     src - a floating point expression
     spec - specification for floating points
+    type - type of the output, should be unsigned with width greater
+           than the width of the significand in the given spec
 
   Outputs:
-    an unsigned 32 bit expression
+    An integer expression of the given type representing the significand.
 
   Purpose: Gets the significand as a java integer, looking for the hidden bit
-
-  TODO : this should be generalized for non 32 bits
 
 \*******************************************************************/
 
 exprt get_significand(
-  const exprt &src,
-  const ieee_float_spect &spec)
+  const exprt &src, const ieee_float_spect &spec, const typet &type)
 {
-  typecast_exprt magnitude(get_magnitude(src, spec), unsignedbv_typet(32));
+  assert(type.id()==ID_unsignedbv);
+  assert(to_unsignedbv_type(type).get_width()>spec.f);
+  typecast_exprt magnitude(get_magnitude(src, spec), type);
   exprt exponent=get_exponent(src, spec);
   equal_exprt all_zeros(exponent, from_integer(0, exponent.type()));
-  plus_exprt with_hidden_bit(
-    magnitude, from_integer(0x800000, unsignedbv_typet(32)));
+  exprt hidden_bit=from_integer((1 << spec.f), type);
+  plus_exprt with_hidden_bit(magnitude, hidden_bit);
   return if_exprt(all_zeros, magnitude, with_hidden_bit);
 }
 
 /*******************************************************************\
 
-Function:  single_precision_float
+Function:  constant_float
 
   Inputs:
-    f - a floating point value
+    f - a floating point value in double precision
 
   Outputs:
     an expression representing this floating point
 
 \*******************************************************************/
 
-exprt single_precision_float(float f)
+exprt constant_float(const double f, const ieee_float_spect &float_spec)
 {
-  ieee_float_spect float_spec=ieee_float_spect::single_precision();
   ieee_floatt fl(float_spec);
-  fl.from_float(f);
+  if(float_spec==ieee_float_spect::single_precision())
+  {
+    fl.from_float(f);
+  }
+  else
+  {
+    assert(float_spec==ieee_float_spect::double_precision());
+    fl.from_double(f);
+  }
   return fl.to_expr();
+}
+
+/*******************************************************************\
+
+Function: round_expr_to_zero
+
+  Inputs:
+    f - expression representing a float
+
+ Outputs: expression representing a 32 bit integer
+
+ Purpose: round the float to an integer geting closer to 0
+
+\*******************************************************************/
+
+exprt round_expr_to_zero(const exprt &f)
+{
+  exprt rounding=from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32));
+  return floatbv_typecast_exprt(f, rounding, signedbv_typet(32));
 }
 
 /*******************************************************************\
@@ -124,19 +151,47 @@ Function:  floatbv_mult
     rounding - rounding mode
 
   Outputs:
-    an expression representing floating point multiplication
+    An expression representing floating point multiplication.
+
+  Purpose:
+    Multiplication of expressions representing floating points.
+    Note that the rounding mode is set to ROUND_TO_EVEN.
 
 \*******************************************************************/
 
-exprt floatbv_mult(
-  const exprt &f, const exprt &g, ieee_floatt::rounding_modet rounding)
+exprt floatbv_mult(const exprt &f, const exprt &g)
 {
+  ieee_floatt::rounding_modet rounding=ieee_floatt::ROUND_TO_EVEN;
   assert(f.type()==g.type());
   exprt mult(ID_floatbv_mult, f.type());
   mult.copy_to_operands(f);
   mult.copy_to_operands(g);
   mult.copy_to_operands(from_integer(rounding, unsignedbv_typet(32)));
   return mult;
+}
+
+/*******************************************************************\
+
+Function:  floatbv_of_int_expr
+
+  Inputs:
+    i - an expression representing an integer
+    spec - specification for floating point numbers
+
+  Outputs:
+    An expression representing representing the value of the input
+    integer as a float.
+
+  Purpose:
+    Convert integers to floating point to be used in operations with
+    other values that are in floating point representation.
+
+\*******************************************************************/
+
+exprt floatbv_of_int_expr(const exprt &i, const ieee_float_spect &spec)
+{
+  exprt rounding=from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32));
+  return floatbv_typecast_exprt(i, rounding, spec.to_type());
 }
 
 /*******************************************************************\
@@ -159,26 +214,17 @@ Function:  estimate_decimal_exponent
 
 \*******************************************************************/
 
-exprt estimate_decimal_exponent(const exprt &f,  const ieee_float_spect &spec)
+exprt estimate_decimal_exponent(const exprt &f, const ieee_float_spect &spec)
 {
-  exprt log_10_of_2=single_precision_float(0.301029995663981);
+  exprt log_10_of_2=constant_float(0.30102999566398119521373889472449302, spec);
   exprt bin_exp=get_exponent(f, spec);
-  floatbv_typecast_exprt float_bin_exp(
-    bin_exp,
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    spec.to_type());
-  exprt dec_exponent=floatbv_mult(
-    float_bin_exp,
-    log_10_of_2,
-    ieee_floatt::ROUND_TO_EVEN);
-  binary_relation_exprt negative_exponent(
-    dec_exponent, ID_lt, single_precision_float(0.0));
-  return floatbv_typecast_exprt(
-    if_exprt(negative_exponent,
-             minus_exprt(dec_exponent, single_precision_float(1.0)),
-             dec_exponent),
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    signedbv_typet(32));
+  exprt float_bin_exp=floatbv_of_int_expr(bin_exp, spec);
+  exprt dec_exp=floatbv_mult(float_bin_exp, log_10_of_2);
+  binary_relation_exprt negative_exp(dec_exp, ID_lt, constant_float(0.0, spec));
+  // Rounding to zero is not correct for negative number, so we remove 1.
+  minus_exprt dec_minus_one(dec_exp, constant_float(1.0, spec));
+  if_exprt adjust_for_neg(negative_exp, dec_minus_one, dec_exp);
+  return round_expr_to_zero(adjust_for_neg);
 }
 
 /*******************************************************************\
@@ -197,7 +243,7 @@ string_exprt string_constraint_generatort::add_axioms_from_float(
   const function_application_exprt &f)
 {
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_float(args(f, 1)[0], ref_type, false);
+  return add_axioms_from_float(args(f, 1)[0], ref_type);
 }
 
 /*******************************************************************\
@@ -216,36 +262,16 @@ string_exprt string_constraint_generatort::add_axioms_from_double(
   const function_application_exprt &f)
 {
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_float(args(f, 1)[0], ref_type, true);
-}
-
-/*******************************************************************\
-
-Function: round_expr_to_zero
-
-  Inputs:
-    f - expression representing a float
-
- Outputs: expression representing a 32 bit integer
-
- Purpose: round the float to an integer geting closer to 0
-
-\*******************************************************************/
-
-exprt round_expr_to_zero(const exprt &f)
-{
-  return floatbv_typecast_exprt(
-    f,
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    signedbv_typet(32));
+  return add_axioms_from_float(args(f, 1)[0], ref_type);
 }
 
 /*******************************************************************\
 
 Function: string_constraint_generatort::add_axioms_from_float
 
-  Inputs: float expression and Boolean signaling that the argument has
-          double precision
+  Inputs:
+    f - expression representing a float
+    ref_type - refined type for strings
 
  Outputs: a new string expression
 
@@ -253,33 +279,32 @@ Function: string_constraint_generatort::add_axioms_from_float
           with no leading zeroes, followed by '.' ('\u002E'), followed by one
           or more decimal digits representing the fractional part of m.
 
-    TODO: this specification is not correct for negative numbers
+    TODO: this specification is not correct for negative numbers and
+          double precision
 
 \*******************************************************************/
 
 string_exprt string_constraint_generatort::add_axioms_from_float(
-  const exprt &f, const refined_string_typet &ref_type, bool double_precision)
+  const exprt &f, const refined_string_typet &ref_type)
 {
-  // TODO: adapt this for double precision
-  // shited_float is floor(f * 1e5)
-  exprt shifting=single_precision_float(1e5);
-  exprt shifted_float=round_expr_to_zero(
-    floatbv_mult(f, shifting, ieee_floatt::ROUND_TO_ZERO));
-  // fractional_part_shifted is floor(f * 100000) % 100000
-  mod_exprt fractional_part_shifted(
-    shifted_float, from_integer(100000, shifted_float.type()));
+  const floatbv_typet &type=to_floatbv_type(f.type());
+  ieee_float_spect float_spec(type);
 
-  // integer part
-  mod_exprt integer_part(
-    round_expr_to_zero(f), from_integer(10000000, shifted_float.type()));
-  string_exprt integer_part_string_expr=add_axioms_from_int(
-    integer_part, 8, ref_type);
+  // We will look at the first 5 digits of the fractional part.
+  // shifted is floor(f * 1e5)
+  exprt shifting=constant_float(1e5, float_spec);
+  exprt shifted=round_expr_to_zero(floatbv_mult(f, shifting));
+  // fractional_part is floor(f * 100000) % 100000
+  mod_exprt fractional_part(shifted, from_integer(100000, shifted.type()));
+  string_exprt fractional_part_str=
+    add_axioms_for_fractional_part(fractional_part, 6, ref_type);
 
-  string_exprt fractional_part_string_expr=add_axioms_for_fractional_part(
-    fractional_part_shifted, 6, ref_type);
+  exprt integer_part=round_expr_to_zero(f);
+  // We should not need more than 8 characters to represent the integer
+  // part of the float.
+  string_exprt integer_part_str=add_axioms_from_int(integer_part, 8, ref_type);
 
-  return add_axioms_for_concat(
-    integer_part_string_expr, fractional_part_string_expr);
+  return add_axioms_for_concat(integer_part_str, fractional_part_str);
 }
 
 /*******************************************************************\
@@ -391,7 +416,7 @@ Function: string_constraint_generatort::
          $log_10(n) = log_10(m) + log_10(2) * e - d$
          $n = f /10^d = m * 2^e / 10^d = m * 2^e / 10^(floor(log_10(2) * e))$
 
- TODO: this is not precise at the moment
+  TODO: For now we only consider single precision.
 
 \*******************************************************************/
 
@@ -401,22 +426,28 @@ string_exprt string_constraint_generatort::
 {
   ieee_float_spect float_spec=ieee_float_spect::single_precision();
   typet float_type=float_spec.to_type();
+  signedbv_typet int_type(32);
 
-  // `binary_exponent` is $e$ in the formulas
-  exprt binary_exponent=get_exponent(f, float_spec);
+  // This is used for rounding float to integers.
+  exprt round_to_zero_expr=from_integer(ieee_floatt::ROUND_TO_ZERO, int_type);
 
-  // `binary_significand` is $m$ in the formulas
-  // in the range 0x000000 0x0FFFFFF representing a value between 0.0 and 2.0
-  // 1 corresponds to 0x0800000
-  exprt binary_significand=get_significand(f, float_spec);
-  floatbv_typecast_exprt binary_significand_float(
-    binary_significand,
-    from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)),
-    float_type);
+  // `bin_exponent` is $e$ in the formulas
+  exprt bin_exponent=get_exponent(f, float_spec);
+
+  // $m$ from the formula is a value between 0.0 and 2.0 represented
+  // with values in the range 0x000000 0x0FFFFFF so 1 corresponds to 0x0800000.
+  // `bin_significand_int` represents $m * 0x800000$
+  exprt bin_significand_int=
+    get_significand(f, float_spec, unsignedbv_typet(32));
+  // `bin_significand` represents $m$ it is obtained
+  // by multiplying `binary_significand_as_int` by 1/0x800000=1.192092896e-7.
+  exprt bin_significand=floatbv_mult(
+    floatbv_typecast_exprt(bin_significand_int, round_to_zero_expr, float_type),
+    constant_float(1.192092896e-7, float_spec));
 
   // This is a first approximation of the exponent that will adjust
   // if the magnitude we get is greater than 10
-  exprt decimal_exponent_estimate=estimate_decimal_exponent(f, float_spec);
+  exprt dec_exponent_estimate=estimate_decimal_exponent(f, float_spec);
 
   // Table for values of $2^x / 10^(floor(log_10(2)*x))$ where x=Range[0,128]
   std::vector<double> two_power_e_over_ten_power_d_table(
@@ -460,93 +491,73 @@ string_exprt string_constraint_generatort::
   exprt conversion_factor_table_size=from_integer(
     two_power_e_over_ten_power_d_table_negatives.size()+
       two_power_e_over_ten_power_d_table.size(),
-    unsignedbv_typet(32));
+    int_type);
   array_exprt conversion_factor_table(
     array_typet(float_type, conversion_factor_table_size));
   for(const auto &f:two_power_e_over_ten_power_d_table_negatives)
-    conversion_factor_table.copy_to_operands(single_precision_float(f));
+    conversion_factor_table.copy_to_operands(constant_float(f, float_spec));
   for(const auto &f:two_power_e_over_ten_power_d_table)
-    conversion_factor_table.copy_to_operands(single_precision_float(f));
+    conversion_factor_table.copy_to_operands(constant_float(f, float_spec));
 
   // The index in the table, corresponding to exponent e is e+128
-  plus_exprt shifted_index(
-    binary_exponent, from_integer(128, binary_exponent.type()));
+  plus_exprt shifted_index(bin_exponent, from_integer(128, int_type));
 
   // bias_factor is $2^e / 10^(floor(log_10(2)*e))$ that is $2^e/10^d$
   index_exprt conversion_factor(
     conversion_factor_table, shifted_index, float_type);
 
   // `dec_significand` is $n = m * bias_factor$
-  exprt dec_significand=floatbv_mult(
-    conversion_factor, binary_significand_float, ieee_floatt::ROUND_TO_ZERO);
+  exprt dec_significand=floatbv_mult(conversion_factor, bin_significand);
+  exprt dec_significand_int=round_expr_to_zero(dec_significand);
 
-  // 1 corresponds to 0x0800000 so we multiply dec_significand
-  // by 1 / 0x0800000 = 1.192092896e-7
-  dec_significand=floatbv_mult(
-    dec_significand,
-    single_precision_float(1.192092896e-7),
-    ieee_floatt::ROUND_TO_ZERO);
-
-  exprt dec_significand_integer_part=round_expr_to_zero(dec_significand);
-
-  // TODO: if dec_siginificand_integer_part is greater than 10
-  // we need to decrease the decimal exponent
-  // `decimal_exponent` is $d$ in the formulas
+  // `dec_exponent` is $d$ in the formulas
+  // it is obtained from the approximation, checking whether it is not too small
   binary_relation_exprt estimate_too_small(
-    dec_significand_integer_part,
-    ID_ge,
-    from_integer(10, dec_significand_integer_part.type()));
+    dec_significand_int, ID_ge, from_integer(10, int_type));
   if_exprt decimal_exponent(
     estimate_too_small,
-    plus_exprt(decimal_exponent_estimate,
-                from_integer(1, decimal_exponent_estimate.type())),
-    decimal_exponent_estimate);
+    plus_exprt(dec_exponent_estimate, from_integer(1, int_type)),
+    dec_exponent_estimate);
 
+  // `dec_significand` is divided by 10 if it exeeds 10
   dec_significand=if_exprt(
     estimate_too_small,
-    floatbv_mult(dec_significand,
-                 single_precision_float(0.1),
-                 ieee_floatt::ROUND_TO_ZERO),
+    floatbv_mult(dec_significand, constant_float(0.1, float_spec)),
     dec_significand);
+  dec_significand_int=round_expr_to_zero(dec_significand);
 
-  dec_significand_integer_part=round_expr_to_zero(dec_significand);
+  string_exprt string_expr_integer_part=
+    add_axioms_from_int(dec_significand_int, 3, ref_type);
+  minus_exprt fractional_part(
+    dec_significand, floatbv_of_int_expr(dec_significand_int, float_spec));
 
-  string_exprt string_integer_part=add_axioms_from_int(
-    dec_significand_integer_part, 3, ref_type);
-
-  minus_exprt fractional_part(dec_significand,
-    floatbv_typecast_exprt(
-      dec_significand_integer_part,
-      from_integer(ieee_floatt::ROUND_TO_ZERO, unsignedbv_typet(32)), float_type));
-
-  // TODO: adapt this for double precision
   // shifted_float is floor(f * 1e5)
-  exprt shifting=single_precision_float(1e5);
-  exprt shifted_float=round_expr_to_zero(
-    floatbv_mult(fractional_part, shifting, ieee_floatt::ROUND_TO_ZERO));
+  exprt shifting=constant_float(1e5, float_spec);
+  exprt shifted_float=
+    round_expr_to_zero(floatbv_mult(fractional_part, shifting));
 
   // fractional_part_shifted is floor(f * 100000) % 100000
   mod_exprt fractional_part_shifted(
     shifted_float, from_integer(100000, shifted_float.type()));
 
   string_exprt string_fractional_part=add_axioms_for_fractional_part(
-        fractional_part_shifted, 6, ref_type);
+    fractional_part_shifted, 6, ref_type);
 
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
   string_exprt string_expr_with_fractional_part=add_axioms_for_concat(
-        string_integer_part, string_fractional_part);
+    string_expr_integer_part, string_fractional_part);
 
   // string_expr_with_E = concat(string_magnitude, string_lit_E)
   string_exprt string_expr_with_E=add_axioms_for_concat_char(
-      string_expr_with_fractional_part,
-      from_integer('E', ref_type.get_char_type()));
+    string_expr_with_fractional_part,
+    from_integer('E', ref_type.get_char_type()));
 
   // exponent_string = string_of_int(decimal_exponent)
   string_exprt exponent_string=add_axioms_from_int(
     decimal_exponent, 3, ref_type);
 
-  // string_expr = concat(string_expr_withE, exponent_string)
+  // string_expr = concat(string_expr_with_E, exponent_string)
   return add_axioms_for_concat(string_expr_with_E, exponent_string);
 }
 
@@ -570,7 +581,5 @@ string_exprt string_constraint_generatort::
     const function_application_exprt &f)
 {
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
-
-  return add_axioms_from_float_scientific_notation(
-    args(f, 1)[0], ref_type);
+  return add_axioms_from_float_scientific_notation(args(f, 1)[0], ref_type);
 }

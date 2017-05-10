@@ -205,7 +205,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_double(
   string_exprt s1=get_string_expr(args(f, 2)[0]);
   assert(refined_string_typet::is_refined_string_type(f.type()));
   refined_string_typet ref_type=to_refined_string_type(f.type());
-  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type, true);
+  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }
 
@@ -227,7 +227,7 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_float(
   string_exprt s1=get_string_expr(args(f, 2)[0]);
   assert(refined_string_typet::is_refined_string_type(f.type()));
   refined_string_typet ref_type=to_refined_string_type(f.type());
-  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type, false);
+  string_exprt s2=add_axioms_from_float(args(f, 2)[1], ref_type);
   return add_axioms_for_concat(s1, s2);
 }
 
