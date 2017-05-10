@@ -380,6 +380,13 @@ json_objectt json(
         assert(!identifier.components.empty());
         result["data"]=json_stringt(identifier.components.back());
       }
+      else
+      {
+        result["name"]=json_stringt("unknown");
+        result["expr"]=json_stringt(from_expr(expr));
+        result["id"]=json_stringt(expr.id_string());
+       // result["irep"]=json_of_irep(expr);
+      }
     }
     else if(type.id()==ID_bool)
     {
@@ -446,10 +453,21 @@ json_objectt json(
     e["value"]=json(expr.op0(), ns);
     e["name"]=json_stringt(id2string(to_union_expr(expr).get_component_name()));
   }
+  else if(expr.id()==ID_symbol)
+  {
+    result["name"]=json_stringt("symbol");
+    result["value"]=json_stringt(to_symbol_expr(expr).get_identifier().c_str());
+#if 0
+    result["expr"]=json_stringt(from_expr(expr));
+    result["id"]=json_stringt(expr.id_string());
+    result["irep"]=json_of_irep(expr);
+#endif
+  }
   else
   {
     result["name"]=json_stringt("unknown");
     result["expr"]=json_stringt(from_expr(expr));
+    result["id"]=json_stringt(expr.id_string());
    // result["irep"]=json_of_irep(expr);
   }
   return result;
