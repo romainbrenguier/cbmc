@@ -285,7 +285,6 @@ json_objectt json(
   const namespacet &ns)
 {
   json_objectt result;
-
   const typet &type=ns.follow(expr.type());
 
   simplify_expr(expr, ns);
@@ -380,6 +379,13 @@ json_objectt json(
         assert(!identifier.components.empty());
         result["data"]=json_stringt(identifier.components.back());
       }
+      else if(simpl_expr.id()==ID_constant)
+      {
+        const irep_idt &ptr_id=to_constant_expr(simpl_expr).get_value();
+        identifiert identifier(id2string(ptr_id));
+        assert(!identifier.components.empty());
+        result["data"]=json_stringt(identifier.components.back());
+      }
       else
       {
         result["name"]=json_stringt("unknown");
@@ -457,6 +463,16 @@ json_objectt json(
   {
     result["name"]=json_stringt("symbol");
     result["value"]=json_stringt(to_symbol_expr(expr).get_identifier().c_str());
+#if 0
+    result["expr"]=json_stringt(from_expr(expr));
+    result["id"]=json_stringt(expr.id_string());
+    result["irep"]=json_of_irep(expr);
+#endif
+  }
+  else if(expr.id()==ID_constant)
+  {
+    result["name"]=json_stringt("constant");
+    result["value"]=json_stringt(id2string(to_constant_expr(expr).get_value()));
 #if 0
     result["expr"]=json_stringt(from_expr(expr));
     result["id"]=json_stringt(expr.id_string());
