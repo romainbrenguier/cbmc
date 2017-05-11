@@ -60,6 +60,15 @@ static exprt simplify_json_expr(
     // simplify things of the form  &member_expr(object, @class_identifier)
     return simplify_json_expr(src.op0(), ns);
   }
+  else if(src.id()==ID_address_of &&
+          src.operands().size()==1 &&
+          src.op0().id()==ID_index &&
+          to_index_expr(src.op0()).index().id()==ID_constant &&
+          to_constant_expr(to_index_expr(src.op0()).index()).value_is_zero_string())
+  {
+    // simplify things of the form  &array[0]
+    return simplify_json_expr(to_index_expr(src.op0()).array(), ns);
+  }
   else if(src.id()==ID_member &&
           src.operands().size()==1 &&
           id2string(
@@ -129,7 +138,7 @@ json_objectt json_of_irep(const irept &irep)
   json_objectt result;
   if(!irep.id().empty())
   {
-    result["name"]=json_stringt(irep.id_string());
+    result["id"]=json_stringt(irep.id_string());
   }
 
   forall_named_irep(it, irep.get_named_sub())
@@ -386,11 +395,19 @@ json_objectt json(
         assert(!identifier.components.empty());
         result["data"]=json_stringt(identifier.components.back());
       }
+      else if(simpl_expr.id()==ID_address_of && simpl_expr.op0().id()==ID_constant)
+      {
+        const irep_idt &ptr_id=to_constant_expr(simpl_expr.op0()).get_value();
+        identifiert identifier(id2string(ptr_id));
+        assert(!identifier.components.empty());
+        result["data"]=json_stringt(identifier.components.back());
+      }
       else
       {
         result["name"]=json_stringt("unknown");
-        result["expr"]=json_stringt(from_expr(expr));
-        result["id"]=json_stringt(expr.id_string());
+        result["expr"]=json_of_irep(simpl_expr);
+        //json_stringt(simpl_expr.pretty());
+        result["id"]=json_stringt(simpl_expr.id_string());
        // result["irep"]=json_of_irep(expr);
       }
     }
@@ -463,16 +480,6 @@ json_objectt json(
   {
     result["name"]=json_stringt("symbol");
     result["value"]=json_stringt(to_symbol_expr(expr).get_identifier().c_str());
-#if 0
-    result["expr"]=json_stringt(from_expr(expr));
-    result["id"]=json_stringt(expr.id_string());
-    result["irep"]=json_of_irep(expr);
-#endif
-  }
-  else if(expr.id()==ID_constant)
-  {
-    result["name"]=json_stringt("constant");
-    result["value"]=json_stringt(id2string(to_constant_expr(expr).get_value()));
 #if 0
     result["expr"]=json_stringt(from_expr(expr));
     result["id"]=json_stringt(expr.id_string());
