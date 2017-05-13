@@ -510,8 +510,16 @@ void string_refinementt::set_to(const exprt &expr, bool value)
 
     // Preprocessing to remove function applications.
     const exprt &lhs=eq_expr.lhs();
-    debug() << "(sr::set_to) " << from_expr(ns, "", lhs)
-            << " = " << from_expr(ns, "", eq_expr.rhs()) << eom;
+
+    try
+    {
+      debug() << "(sr::set_to) " << from_expr(lhs)
+              << " = " << from_expr(eq_expr.rhs()) << eom;
+    }
+    catch (std::string s)
+    {
+      debug() << "(sr::set_to) Warning: " << s << eom;
+    }
 
     // TODO: See if this happens at all.
     if(lhs.id()!=ID_symbol)
@@ -580,7 +588,14 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   for(std::pair<exprt, bool> &pair : non_string_axioms)
   {
     replace_expr(symbol_resolve, pair.first);
-    debug() << "super::set_to " << from_expr(ns, "", pair.first) << eom;
+    try
+    {
+      debug() << "(super::set_to) " << from_expr(pair.first) << eom;
+    }
+    catch (std::string s)
+    {
+      debug() << "(super::set_to) Warning: " << s << eom;
+    }
     supert::set_to(pair.first, pair.second);
   }
 
