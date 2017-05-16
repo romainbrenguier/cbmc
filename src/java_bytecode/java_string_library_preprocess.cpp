@@ -1676,7 +1676,7 @@ Function: java_string_library_preprocesst::make_object_get_class_code
   Outputs: Code corresponding to
           > Class class1;
           > string_expr1 = substr(this->@class_identifier, 6)
-          > class1.<init>(string_expr1)
+          > class1=Class.forName(string_expr1)
           > return class1
 
   Purpose: Used to provide our own implementation of the
@@ -1728,18 +1728,19 @@ codet java_string_library_preprocesst::make_object_get_class_code(
       symbol_table));
 
   // string1 = (String*) string_expr
-  pointer_typet string_ptr_type(symbol_table.lookup("java::java.lang.String").type);
+  pointer_typet string_ptr_type(
+    symbol_table.lookup("java::java.lang.String").type);
   // pointer_typet string_ptr_type(symbol_typet("java::java.lang.String"));
   exprt string1=allocate_fresh_string(string_ptr_type, loc, symbol_table, code);
   code.copy_to_operands(
     code_assign_string_expr_to_new_java_string(
       string1, string_expr1, loc, symbol_table));
 
-  // > class1 = Class.<init>(string1)
+  // > class1 = Class.forName(string1)
   code_function_callt fun_call;
   fun_call.function()=symbol_exprt(
-    "java::java.lang.Class.<init>:(Ljava/lang/String;)V");
-  fun_call.arguments().push_back(class1);
+    "java::java.lang.Class.forName:(Ljava/lang/String;)Ljava/lang/Class;");
+  fun_call.lhs()=class1;
   fun_call.arguments().push_back(string1);
   code_typet fun_type;
   fun_type.return_type()=string1.type();
