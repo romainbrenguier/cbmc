@@ -133,7 +133,7 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
-  static codet make_object_get_class_code(
+  codet make_object_get_class_code(
     const code_typet &type,
     const source_locationt &loc,
     symbol_tablet &symbol_table);
