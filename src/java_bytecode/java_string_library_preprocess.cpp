@@ -2379,5 +2379,10 @@ void java_string_library_preprocesst::initialize_conversion_table()
       ID_cprover_string_of_int_func;
   conversion_table
     ["java::java.lang.Object.getClass:()Ljava/lang/Class;"]=
-      &java_string_library_preprocesst::make_object_get_class_code;
+      std::bind(
+        &java_string_library_preprocesst::make_object_get_class_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
 }
