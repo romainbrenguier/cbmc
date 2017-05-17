@@ -1525,8 +1525,8 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   code.copy_to_operands(case_list[case_list.size()-1]);
 
   // str = string_expr
-  code.copy_to_operands(code_assign_string_expr_to_java_string(
-    str, string_expr, symbol_table));
+  code.copy_to_operands(code_assign_string_expr_to_new_java_string(
+    str, string_expr, loc, symbol_table));
 
   // Assign string_expr_sym = { string_expr_length, string_expr_content }
   code.copy_to_operands(code_assignt(string_expr_sym, string_expr));
