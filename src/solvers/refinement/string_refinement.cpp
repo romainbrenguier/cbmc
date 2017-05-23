@@ -997,6 +997,32 @@ void string_refinementt::fill_model()
     }
   }
 
+  debug() << "====== Created strings ===========" << eom;
+  for(auto it : generator.created_strings)
+  {
+    replace_expr(symbol_resolve, it);
+    const exprt &econtent=it.content();
+    const exprt &elength=it.length();
+
+    exprt len=supert::get(elength);
+    len=simplify_expr(len, ns);
+    exprt arr=get_array(econtent, len);
+
+    current_model[elength]=len;
+    current_model[econtent]=arr;
+    debug() << from_expr(it) << "=" << from_expr(it);
+
+    if(arr.id()==ID_array)
+      debug() << " = \"" << string_of_array(to_array_expr(arr))
+              << "\" (size:" << from_expr(len) << ")"<< eom;
+    else
+      debug() << " = " << from_expr(arr) << " (size:" << from_expr(len)
+              << ")" << eom;
+    debug() << "" << from_expr(it) << " := "
+            << from_expr(supert::get(it)) << eom;
+    current_model[it]=supert::get(it);
+  }
+
   for(auto it : generator.boolean_symbols)
   {
       debug() << "" << it.get_identifier() << " := "
@@ -1856,7 +1882,7 @@ Function: string_refinementt::get
  Purpose: evaluation of the expression in the current model
 
 \*******************************************************************/
-
+#include<iostream>
 exprt string_refinementt::get(const exprt &expr) const
 {
   exprt ecopy(expr);
