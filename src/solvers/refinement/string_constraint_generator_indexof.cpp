@@ -81,7 +81,7 @@ Function: string_constraint_generatort::add_axioms_for_index_of_string
           than from_index and the string beggining there has prefix substring
 
 \*******************************************************************/
-
+#include<iostream>
 exprt string_constraint_generatort::add_axioms_for_index_of_string(
   const string_exprt &str,
   const string_exprt &substring,
@@ -118,6 +118,35 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
     equal_exprt(str[plus_exprt(qvar, offset)], substring[qvar]));
   axioms.push_back(a3);
 
+  // We make the axioms more precise if the substring is constant
+  bool constant=is_constant_string(substring);
+  std::cout << "substring: " << substring.pretty(10) << std::endl;
+  if(constant)
+  {
+    // a4 : !contains =>
+    // forall 0<=startpos<=length-substring.length.
+    //   exists offset<substring.length. str[startpos+offset]!=substring[offset]
+    symbol_exprt startpos=fresh_univ_index("QA_index_of_string_2", index_type);
+    mp_integer sub_length;
+    assert(!to_integer(substring.length(), sub_length));
+    exprt::operandst disjuncts;
+    for(mp_integer offset=0; offset<sub_length; ++offset)
+    {
+      exprt expr_offset=from_integer(offset, index_type);
+      plus_exprt shifted(expr_offset, startpos);
+      disjuncts.push_back(not_exprt(equal_exprt(
+        str[shifted], substring[expr_offset])));
+    }
+
+    minus_exprt length_diff(str.length(), substring.length());
+    string_constraintt a4(
+      startpos,
+      plus_exprt(from_integer(1, index_type), length_diff),
+      not_exprt(contains),
+      disjunction(disjuncts));
+    axioms.push_back(a4);
+  }
+  assert(false);
   return offset;
 }
 
