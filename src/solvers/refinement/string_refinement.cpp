@@ -498,7 +498,9 @@ void string_refinementt::set_to(const exprt &expr, bool value)
               << from_expr(expr) << " [inconsistent types]" << eom;
       debug() << "lhs has type: " << eq_expr.lhs().type().pretty(12) << eom;
       debug() << "rhs has type: " << eq_expr.rhs().type().pretty(12) << eom;
-      return;
+      // return;
+      // This is a hack to force the type (case of String literal)
+      eq_expr.rhs().type()=eq_expr.lhs().type();
     }
 
     if(expr.type().id()!=ID_bool)
@@ -531,7 +533,7 @@ void string_refinementt::set_to(const exprt &expr, bool value)
         debug() << "(sr::set_to) WARNING: ignoring "
                 << from_expr(expr) << " [inconsistent types after substitution]"
                 << eom;
-        return;
+       return;
       }
       else
       {
@@ -1023,6 +1025,7 @@ void string_refinementt::fill_model()
     current_model[it]=supert::get(it);
   }
 
+  debug() << "====== Boolean symbols ===========" << eom;
   for(auto it : generator.boolean_symbols)
   {
       debug() << "" << it.get_identifier() << " := "
@@ -1030,12 +1033,14 @@ void string_refinementt::fill_model()
       current_model[it]=supert::get(it);
   }
 
+  debug() << "====== Index symbols ===========" << eom;
   for(auto it : generator.index_symbols)
   {
      debug() << "" << it.get_identifier() << " := "
               << from_expr(supert::get(it)) << eom;
      current_model[it]=supert::get(it);
   }
+  debug() << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << eom;
 }
 
 
