@@ -1788,10 +1788,12 @@ codet java_string_library_preprocesst::
   code.add(code_assignt(string_expr_sym, string_expr));
 
   // Assigning to string
+#if 0
   symbolt str_sym=get_fresh_aux_symbol(
     type.return_type(), "tmp_string", "tmp_string", loc, ID_java, symbol_table);
-  // allocate_fresh_string(type.return_type(), loc, symbol_table, code);
   exprt str=str_sym.symbol_expr();
+#endif
+  exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
   code.add(code_assign_string_expr_to_new_java_string(
     str, string_expr, loc, symbol_table));
 
@@ -1838,13 +1840,14 @@ codet java_string_library_preprocesst::make_copy_string_code(
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.add(code_assignt(string_expr_sym, string_expr));
 
-#if 0
+
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
-#endif
-  // Assigning to string
+
+#if 0  // Assigning to string
   symbolt str_sym=get_fresh_aux_symbol(
     type.return_type(), "tmp_string", "tmp_string", loc, ID_java, symbol_table);
   symbol_exprt str=str_sym.symbol_expr();
+#endif
 
   code.add(code_assign_string_expr_to_new_java_string(
     str, string_expr, loc, symbol_table));
