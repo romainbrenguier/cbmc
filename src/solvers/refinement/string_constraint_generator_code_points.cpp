@@ -34,7 +34,7 @@ string_exprt string_constraint_generatort::add_axioms_for_code_point(
   // a2 : code_point>=0x010000 => |res|=2
   // a3 : code_point<0x010000 => res[0]=code_point
   // a4 : code_point>=0x010000 => res[0]=0xD800+(code_point-0x10000)/0x0400
-  // a5 : code_point>=0x010000 => res[1]=0xDC00+(code_point-0x10000)/0x0400
+  // a5 : code_point>=0x010000 => res[1]=0xDC00+(code_point-0x10000)%0x0400
   // For more explenations about this conversion, see:
   //   https://en.wikipedia.org/wiki/UTF-16
 
