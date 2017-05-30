@@ -1757,6 +1757,7 @@ Function:
 
   Outputs: Code corresponding to:
           > string_expr = function_name(args)
+          > string = new String
           > string = string_expr_to_string(string)
           > return string
 
@@ -1788,11 +1789,6 @@ codet java_string_library_preprocesst::
   code.add(code_assignt(string_expr_sym, string_expr));
 
   // Assigning to string
-#if 0
-  symbolt str_sym=get_fresh_aux_symbol(
-    type.return_type(), "tmp_string", "tmp_string", loc, ID_java, symbol_table);
-  exprt str=str_sym.symbol_expr();
-#endif
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
   code.add(code_assign_string_expr_to_new_java_string(
     str, string_expr, loc, symbol_table));
@@ -1812,43 +1808,41 @@ Function:
     loc - location in the source
     symbol_table - symbol table
 
-  Outputs: Code corresponding to:
-          .....
+ Outputs: Code corresponding to:
+          > string_expr = string_to_string_expr(arg0)
+          > string_expr_sym = { string_expr.length; string_expr.content }
+          > str = new String
+          > str = string_expr_to_string(string_expr)
+          > return str
 
-  Purpose: ...
+ Purpose: Generates code for a function which copies a string object to a new
+          string object.
 
 \*******************************************************************/
-#include<iostream>
+
 codet java_string_library_preprocesst::make_copy_string_code(
-     const code_typet &type,
-    const source_locationt &loc,
-    symbol_tablet &symbol_table)
+  const code_typet &type,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
 {
   // Code for the output
   code_blockt code;
 
-  code_typet::parametert op=type.parameters()[0];
-  symbol_exprt arg0(op.get_identifier(), op.type());
-
-  std::cout << "arg0 = " << arg0.pretty() << std::endl;
   // String expression that will hold the result
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
+
+  // Assign the argument to string_expr
+  code_typet::parametert op=type.parameters()[0];
+  symbol_exprt arg0(op.get_identifier(), op.type());
   code.add(code_assign_java_string_to_string_expr(
     string_expr, arg0, symbol_table));
 
-  // Assigning string_expr to symbol for keeping track of it
+  // Assign string_expr to string_expr_sym
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.add(code_assignt(string_expr_sym, string_expr));
 
-
+  // Allocate and assign the string
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
-
-#if 0  // Assigning to string
-  symbolt str_sym=get_fresh_aux_symbol(
-    type.return_type(), "tmp_string", "tmp_string", loc, ID_java, symbol_table);
-  symbol_exprt str=str_sym.symbol_expr();
-#endif
-
   code.add(code_assign_string_expr_to_new_java_string(
     str, string_expr, loc, symbol_table));
 
@@ -1867,9 +1861,13 @@ Function:
     loc - location in the source
     symbol_table - symbol table
 
-  Outputs: Code corresponding to:...
+ Outputs: Code corresponding to:
+           > string_expr = java_string_to_string_expr(arg1)
+           > string_expr_sym = { string_expr.length; string_expr.content }
+           > this = string_expr_to_java_string(string_expr)
 
-  Purpose: .....
+ Purpose: Generates code for a constructor of a string object from another
+          string object.
 
 \*******************************************************************/
 
@@ -1880,13 +1878,13 @@ codet java_string_library_preprocesst::make_copy_constructor_code(
 {
   // Code for the output
   code_blockt code;
-  // TODO: factorize with previous function
-  code_typet::parameterst params=type.parameters();
-  symbol_exprt arg_this(params[0].get_identifier(), params[0].type());
-  symbol_exprt arg1(params[1].get_identifier(), params[1].type());
 
   // String expression that will hold the result
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
+
+  // Assign argument to a string_expr
+  code_typet::parameterst params=type.parameters();
+  symbol_exprt arg1(params[1].get_identifier(), params[1].type());
   code.add(code_assign_java_string_to_string_expr(
     string_expr, arg1, symbol_table));
 
@@ -1894,7 +1892,8 @@ codet java_string_library_preprocesst::make_copy_constructor_code(
   exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.add(code_assignt(string_expr_sym, string_expr));
 
-  // arg_this <- string_expr
+  // Assing string_expr to `this` object
+  symbol_exprt arg_this(params[0].get_identifier(), params[0].type());
   code.add(code_assign_string_expr_to_new_java_string(
     arg_this, string_expr, loc, symbol_table));
 
@@ -1929,7 +1928,6 @@ exprt java_string_library_preprocesst::code_for_function(
   auto it_id=cprover_equivalent_to_java_function.find(function_id);
   if(it_id!=cprover_equivalent_to_java_function.end())
   {
-    std::cout << "Override function " << function_id << std::endl;
     overriden.insert(function_id);
     return make_function_from_call(it_id->second, type, loc, symbol_table);
   }
@@ -2073,9 +2071,14 @@ void java_string_library_preprocesst::initialize_conversion_table()
         std::placeholders::_1,
         std::placeholders::_2,
         std::placeholders::_3);
-  cprover_equivalent_to_java_constructor
+  conversion_table
     ["java::java.lang.String.<init>:(Ljava/lang/StringBuilder;)V"]=
-      ID_cprover_string_copy_func;
+      std::bind(
+        &java_string_library_preprocesst::make_copy_constructor_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   cprover_equivalent_to_java_constructor
     ["java::java.lang.String.<init>:([C)V"]=
       ID_cprover_string_copy_func;
@@ -2242,9 +2245,14 @@ void java_string_library_preprocesst::initialize_conversion_table()
   // Not supported "java.lang.String.valueOf:(LObject;)"
 
   // StringBuilder library
-  cprover_equivalent_to_java_constructor
+  conversion_table
     ["java::java.lang.StringBuilder.<init>:(Ljava/lang/String;)V"]=
-      ID_cprover_string_copy_func;
+      std::bind(
+        &java_string_library_preprocesst::make_copy_constructor_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   cprover_equivalent_to_java_constructor
     ["java::java.lang.StringBuilder.<init>:()V"]=
       ID_cprover_string_empty_string_func;
@@ -2365,16 +2373,26 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuilder.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_string_returning_function
+  conversion_table
     ["java::java.lang.StringBuilder.toString:()Ljava/lang/String;"]=
-      ID_cprover_string_copy_func;
+      std::bind(
+        &java_string_library_preprocesst::make_copy_string_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   // Not supported "java.lang.StringBuilder.trimToSize"
   // TODO clean irep ids from insert_char_array etc...
 
   // StringBuffer library
-  cprover_equivalent_to_java_constructor
+  conversion_table
     ["java::java.lang.StringBuffer.<init>:(Ljava/lang/String;)V"]=
-      ID_cprover_string_copy_func;
+      std::bind(
+        &java_string_library_preprocesst::make_copy_constructor_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   cprover_equivalent_to_java_constructor
     ["java::java.lang.StringBuffer.<init>:()V"]=
       ID_cprover_string_empty_string_func;
@@ -2482,9 +2500,14 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.StringBuffer.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  cprover_equivalent_to_java_string_returning_function
+  conversion_table
     ["java::java.lang.StringBuffer.toString:()Ljava/lang/String;"]=
-      ID_cprover_string_copy_func;
+      std::bind(
+        &java_string_library_preprocesst::make_copy_string_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   // Not supported "java.lang.StringBuffer.trimToSize"
 
   // Other libraries
