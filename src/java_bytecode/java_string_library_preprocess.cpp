@@ -1021,8 +1021,9 @@ Function: java_string_library_preprocesst::
     symbol_table - symbol table
 
   Output: return the following code:
-          > lhs->length=rhs.length
-          > lhs->data=&rhs.data
+          > lhs = { {Object} , length=rhs.length, data=rhs.data}
+
+ Purpose: Assign a string expr to a Java string.
 
 \*******************************************************************/
 
@@ -1034,15 +1035,23 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
   assert(implements_java_char_sequence(lhs.type()));
   dereference_exprt deref(lhs, lhs.type().subtype());
 
-  // Fields of the string object
-  exprt lhs_length=get_length(deref, symbol_table);
-  exprt lhs_data=get_data(deref, symbol_table);
-
-  // Assignments
   code_blockt code;
-  code.add(code_assignt(lhs_length, rhs.length()));
-  code.add(
-    code_assignt(lhs_data, address_of_exprt(rhs.content())));
+
+  // A String has a field Object with @clsid = String and @lock = false:
+  symbolt jlo_symbol=symbol_table.lookup("java::java.lang.Object");
+  const struct_typet &jlo_struct=to_struct_type(jlo_symbol.type);
+  struct_exprt jlo_init(jlo_struct);
+  jlo_init.copy_to_operands(constant_exprt(
+    "java::java.lang.String", jlo_struct.components()[0].type()));
+  jlo_init.copy_to_operands(from_integer(0, jlo_struct.components()[1].type()));
+
+  struct_exprt struct_rhs(deref.type());
+  struct_rhs.copy_to_operands(jlo_init);
+  struct_rhs.copy_to_operands(rhs.length());
+  struct_rhs.copy_to_operands(address_of_exprt(rhs.content()));
+  code.add(code_assignt(
+    dereference_exprt(lhs, lhs.type().subtype()), struct_rhs));
+
   return code;
 }
 
@@ -1058,12 +1067,11 @@ Function: java_string_library_preprocesst::
     symbol_table - symbol table
 
   Output: return the following code:
-          > lhs->length=rhs.length
-          > lhs->data=&rhs.data
+          > data = new array[];
+          > *data = rhs.data;
+          > lhs = { {Object} , length=rhs.length, data=data}
 
-   TODO: We should do
-         > lhs = { {Object} , length=rhs.length, data=rhs.data}
-         instead
+ Purpose: Produce code to assign a string from a string expr
 
 \*******************************************************************/
 
@@ -1099,21 +1107,6 @@ codet java_string_library_preprocesst::
   code.add(code_assignt(
     dereference_exprt(lhs, lhs.type().subtype()), struct_rhs));
 
-#if 0
-  // Fields of the string object
-  exprt lhs_length=get_length(deref, symbol_table);
-  exprt lhs_data=get_data(deref, symbol_table);
-
-  // Assignments
-  code_blockt code;
-  // new array <- malloc(char[])
-  exprt new_array=allocate_fresh_array(
-    get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
-  code.add(code_assignt(
-    dereference_exprt(new_array, new_array.type().subtype()), rhs.content()));
-  code.add(code_assignt(lhs_length, rhs.length()));
-  code.add(code_assignt(lhs_data, new_array));
-#endif
   return code;
 }
 
@@ -2268,18 +2261,27 @@ void java_string_library_preprocesst::initialize_conversion_table()
       "Ljava/lang/StringBuilder;"]=
       ID_cprover_string_concat_func;
   // Not supported: "java.lang.StringBuilder.append:([CII)"
-  // Not supported: "java.lang.StringBuilder.append:(LCharSequence;)"
+
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(Ljava/lang/CharSequence;II)"
+      "Ljava/lang/StringBuilder;"]=
+      ID_cprover_string_concat_func;
+  cprover_equivalent_to_java_assign_and_return_function
+    ["java::java.lang.StringBuilder.append:(Ljava/lang/CharSequence;)"
+      "Ljava/lang/StringBuilder;"]=
+      ID_cprover_string_concat_func;
+
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.append:(D)Ljava/lang/StringBuilder;"]=
       ID_cprover_string_concat_double_func;
-  conversion_table["java::java.lang.StringBuilder.append:"
-                   "(F)Ljava/lang/StringBuilder;"]=
-    std::bind(
-      &java_string_library_preprocesst::make_string_builder_append_float_code,
-      this,
-      std::placeholders::_1,
-      std::placeholders::_2,
-      std::placeholders::_3);
+  conversion_table
+    ["java::java.lang.StringBuilder.append:(F)Ljava/lang/StringBuilder;"]=
+      std::bind(
+        &java_string_library_preprocesst::make_string_builder_append_float_code,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3);
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.append:(I)Ljava/lang/StringBuilder;"]=
       ID_cprover_string_concat_int_func;
