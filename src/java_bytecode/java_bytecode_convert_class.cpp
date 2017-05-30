@@ -158,12 +158,12 @@ void java_bytecode_convert_classt::convert(const classt &c)
       ":"+method.signature;
     // Always run the lazy pre-stage, as it symbol-table
     // registers the function.
-    java_bytecode_convert_method_lazy(
-      *class_symbol,
-      method_identifier,
-      method,
-      symbol_table);
-    lazy_methods[method_identifier]=std::make_pair(class_symbol, &method);
+    if(!string_preprocess.shall_function_be_overriden(method_identifier))
+    {
+      java_bytecode_convert_method_lazy(
+        *class_symbol, method_identifier, method, symbol_table);
+      lazy_methods[method_identifier]=std::make_pair(class_symbol, &method);
+    }
   }
 
   // is this a root class?
