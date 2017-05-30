@@ -81,7 +81,7 @@ Function: string_constraint_generatort::add_axioms_for_index_of_string
           than from_index and the string beggining there has prefix substring
 
 \*******************************************************************/
-#include<iostream>
+
 exprt string_constraint_generatort::add_axioms_for_index_of_string(
   const string_exprt &str,
   const string_exprt &substring,
@@ -92,7 +92,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
   symbol_exprt contains=fresh_boolean("contains_substring");
 
   // We add axioms:
-  // a1 : contains => |str|-|substring|>=offset>=from_index
+  // a1 : contains => from_index <= offset <= |str|-|substring|
   // a2 : !contains => offset=-1
   // a3 : forall 0<=witness<|substring|.
   //        contains => str[witness+offset]=substring[witness]
@@ -100,9 +100,9 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
   implies_exprt a1(
     contains,
     and_exprt(
-      str.axiom_for_is_longer_than(plus_exprt_with_overflow_check(
-        substring.length(), offset)),
-      binary_relation_exprt(offset, ID_ge, from_index)));
+      binary_relation_exprt(from_index, ID_le, offset),
+      binary_relation_exprt(
+        offset, ID_le, minus_exprt(str.length(), substring.length()))));
   axioms.push_back(a1);
 
   implies_exprt a2(
@@ -120,11 +120,11 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
 
   // We make the axioms more precise if the substring is constant
   bool constant=is_constant_string(substring);
-  std::cout << "substring: " << substring.pretty(10) << std::endl;
+  assert(constant);
   if(constant)
   {
     // a4 : !contains =>
-    // forall 0<=startpos<=length-substring.length.
+    // forall from_index<=startpos<=length-substring.length.
     //   exists offset<substring.length. str[startpos+offset]!=substring[offset]
     symbol_exprt startpos=fresh_univ_index("QA_index_of_string_2", index_type);
     mp_integer sub_length;
@@ -141,12 +141,12 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
     minus_exprt length_diff(str.length(), substring.length());
     string_constraintt a4(
       startpos,
+      from_index,
       plus_exprt(from_integer(1, index_type), length_diff),
       not_exprt(contains),
       disjunction(disjuncts));
     axioms.push_back(a4);
   }
-  assert(false);
   return offset;
 }
 
