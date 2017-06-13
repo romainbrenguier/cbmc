@@ -21,7 +21,6 @@ bool java_bytecode_convert_class(
   message_handlert &message_handler,
   size_t max_array_length,
   lazy_methodst &,
-  lazy_methods_modet,
-  java_string_library_preprocesst &string_preprocess);
+  lazy_methods_modet);
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_BYTECODE_CONVERT_CLASS_H

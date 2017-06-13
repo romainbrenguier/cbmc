@@ -25,16 +25,14 @@ void java_bytecode_convert_method(
   symbol_tablet &symbol_table,
   message_handlert &message_handler,
   size_t max_array_length,
-  safe_pointer<ci_lazy_methodst> lazy_methods,
-  java_string_library_preprocesst &string_preprocess);
+  safe_pointer<ci_lazy_methodst> lazy_methods);
 
 inline void java_bytecode_convert_method(
   const symbolt &class_symbol,
   const java_bytecode_parse_treet::methodt &method,
   symbol_tablet &symbol_table,
   message_handlert &message_handler,
-  size_t max_array_length,
-  java_string_library_preprocesst &string_preprocess)
+  size_t max_array_length)
 {
   java_bytecode_convert_method(
     class_symbol,
@@ -42,8 +40,7 @@ inline void java_bytecode_convert_method(
     symbol_table,
     message_handler,
     max_array_length,
-    safe_pointer<ci_lazy_methodst>::create_null(),
-    string_preprocess);
+    safe_pointer<ci_lazy_methodst>::create_null());
 }
 
 void java_bytecode_convert_method_lazy(

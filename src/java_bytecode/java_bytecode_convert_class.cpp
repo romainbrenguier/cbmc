@@ -30,14 +30,12 @@ public:
     message_handlert &_message_handler,
     size_t _max_array_length,
     lazy_methodst& _lazy_methods,
-    lazy_methods_modet _lazy_methods_mode,
-    java_string_library_preprocesst &_string_preprocess):
+    lazy_methods_modet _lazy_methods_mode):
     messaget(_message_handler),
     symbol_table(_symbol_table),
     max_array_length(_max_array_length),
     lazy_methods(_lazy_methods),
-    lazy_methods_mode(_lazy_methods_mode),
-    string_preprocess(_string_preprocess)
+    lazy_methods_mode(_lazy_methods_mode)
   {
   }
 
@@ -49,10 +47,7 @@ public:
     if(loading_success)
       convert(parse_tree.parsed_class);
 
-    if(string_preprocess.is_known_string_type(parse_tree.parsed_class.name))
-      string_preprocess.add_string_type(
-        parse_tree.parsed_class.name, symbol_table);
-    else if(!loading_success)
+    if(!loading_success)
       generate_class_stub(parse_tree.parsed_class.name);
   }
 
@@ -64,7 +59,6 @@ protected:
   const size_t max_array_length;
   lazy_methodst &lazy_methods;
   lazy_methods_modet lazy_methods_mode;
-  java_string_library_preprocesst &string_preprocess;
 
   // conversion
   void convert(const classt &c);
@@ -477,16 +471,14 @@ bool java_bytecode_convert_class(
   message_handlert &message_handler,
   size_t max_array_length,
   lazy_methodst &lazy_methods,
-  lazy_methods_modet lazy_methods_mode,
-  java_string_library_preprocesst &string_preprocess)
+  lazy_methods_modet lazy_methods_mode)
 {
   java_bytecode_convert_classt java_bytecode_convert_class(
     symbol_table,
     message_handler,
     max_array_length,
     lazy_methods,
-    lazy_methods_mode,
-    string_preprocess);
+    lazy_methods_mode);
 
   try
   {

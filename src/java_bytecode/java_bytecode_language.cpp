@@ -511,9 +511,6 @@ bool java_bytecode_languaget::typecheck(
   symbol_tablet &symbol_table,
   const std::string &module)
 {
-  if(string_refinement_enabled)
-    string_preprocess.initialize_conversion_table();
-
   // first convert all
   for(java_class_loadert::class_mapt::const_iterator
       c_it=java_class_loader.class_map.begin();
@@ -531,8 +528,7 @@ bool java_bytecode_languaget::typecheck(
          get_message_handler(),
          max_user_array_length,
          lazy_methods,
-         lazy_methods_mode,
-         string_preprocess))
+         lazy_methods_mode))
       return true;
   }
 
@@ -554,8 +550,7 @@ bool java_bytecode_languaget::typecheck(
         *method_sig.second.second,
         symbol_table,
         get_message_handler(),
-        max_user_array_length,
-        string_preprocess);
+        max_user_array_length);
     }
   }
   // Otherwise our caller is in charge of elaborating methods on demand.
@@ -682,8 +677,7 @@ bool java_bytecode_languaget::do_ci_lazy_method_conversion(
           symbol_table,
           get_message_handler(),
           max_user_array_length,
-          safe_pointer<ci_lazy_methodst>::create_non_null(&lazy_methods),
-          string_preprocess);
+          safe_pointer<ci_lazy_methodst>::create_non_null(&lazy_methods));
         gather_virtual_callsites(
           symbol_table.lookup(mname).value,
           virtual_callsites);
@@ -793,8 +787,7 @@ void java_bytecode_languaget::convert_lazy_method(
     *lazy_method_entry.second,
     symtab,
     get_message_handler(),
-    max_user_array_length,
-    string_preprocess);
+    max_user_array_length);
 }
 
 /*******************************************************************\
@@ -812,12 +805,29 @@ Function: java_bytecode_languaget::replace_string_methods
 void java_bytecode_languaget::replace_string_methods(
   symbol_tablet &context)
 {
+  java_string_library_preprocesst string_preprocess;
+  if(string_refinement_enabled)
+    string_preprocess.initialize_conversion_table();
+
   // Symbols that have code type are potentialy to be replaced
   std::list<symbolt> code_symbols;
+  std::list<symbolt> class_symbols;
   forall_symbols(symbol, context.symbols)
   {
     if(symbol->second.type.id()==ID_code)
       code_symbols.push_back(symbol->second);
+    if(symbol->second.type.id()==ID_struct)
+      class_symbols.push_back(symbol->second);
+  }
+
+  // Types need to be replaced before methods so that string_preprocess
+  // has the right type available
+  for(const auto &symbol : class_symbols)
+  {
+    // symbol.name begins with "java::" so we remove the first 6 characters.
+    std::string stripped_name=id2string(symbol.name).substr(6);
+    if(string_preprocess.is_known_string_type(stripped_name))
+      string_preprocess.add_string_type(stripped_name, context);
   }
 
   for(const auto &symbol : code_symbols)
@@ -831,6 +841,12 @@ void java_bytecode_languaget::replace_string_methods(
       symbolt &symbol=context.lookup(id);
       symbol.value=generated_code;
     }
+
+    // Replacing call if it is a function of the Character library,
+    // returning the same call otherwise
+#if 0
+    c=string_preprocess.replace_character_call(call);
+#endif
   }
 }
 

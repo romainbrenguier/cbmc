@@ -1561,10 +1561,6 @@ codet java_bytecode_convert_methodt::convert_instructions(
 
       call.function().add_source_location()=loc;
 
-      // Replacing call if it is a function of the Character library,
-      // returning the same call otherwise
-      c=string_preprocess.replace_character_call(call);
-
       if(!use_this)
       {
         codet clinit_call=get_clinit_call(arg0.get(ID_C_class));
@@ -2751,8 +2747,7 @@ void java_bytecode_convert_method(
   symbol_tablet &symbol_table,
   message_handlert &message_handler,
   size_t max_array_length,
-  safe_pointer<ci_lazy_methodst> lazy_methods,
-  java_string_library_preprocesst &string_preprocess)
+  safe_pointer<ci_lazy_methodst> lazy_methods)
 {
   static const std::unordered_set<std::string> methods_to_ignore
   {
@@ -2781,8 +2776,7 @@ void java_bytecode_convert_method(
     symbol_table,
     message_handler,
     max_array_length,
-    lazy_methods,
-    string_preprocess);
+    lazy_methods);
 
   java_bytecode_convert_method(class_symbol, method);
 }
