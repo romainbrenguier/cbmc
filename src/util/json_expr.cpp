@@ -274,7 +274,7 @@ json_objectt json(
         type.id()==ID_c_bit_field?type.subtype():
         type;
 
-      languaget *lang;
+      languaget *lang=nullptr;
       if(mode==ID_unknown)
         lang=get_default_language();
       else
@@ -295,6 +295,8 @@ json_objectt json(
         result["data"]=json_stringt(integer2string(i));
       else
         assert(false && "could not convert data to integer");
+
+      delete lang;
     }
     else if(type.id()==ID_c_enum)
     {
