@@ -121,6 +121,9 @@ private:
   void set_to(const exprt &expr, bool value) override;
 
   void add_instantiations();
+  void add_negation_of_not_contains_constraint_to_solver(
+    const string_not_contains_constraintt &axiom, symbol_exprt &univ_var,
+    exprt val, supert &solver);
   void add_negation_of_constraint_to_solver(
     const string_constraintt &axiom, supert &solver);
   void fill_model();
