@@ -923,14 +923,20 @@ void string_refinementt::substitute_array_access(exprt &expr) const
   }
 }
 
-/// negates the constraint and add it to the solver. the intended usage is to
+/// Negates the constraint and adds it to the solver. The intended usage is to
 /// find an assignement of the universal variable that would violate the axiom,
 /// to avoid false positives the symbols other than the universal variable
 /// should have been replaced by there valuation in the current model
-/// \par parameters: a string constraint and a solver for non string expressions
+/// \param axiom: the not_contains constraint to add the negation of
+/// \param val: the existential witness for the axiom
+/// \param solver: the solver
+/// \return: univ_var: the valuation of the universal variable for the negation
+///   of the axiom.
 void string_refinementt::add_negation_of_not_contains_constraint_to_solver(
-  const string_not_contains_constraintt &axiom, symbol_exprt &univ_var,
-  exprt val, supert &solver)
+  const string_not_contains_constraintt &axiom,
+  exprt val,
+  supert &solver,
+  symbol_exprt &univ_var)
 {
   exprt lbu=axiom.univ_lower_bound();
   exprt ubu=axiom.univ_upper_bound();
@@ -970,12 +976,13 @@ void string_refinementt::add_negation_of_not_contains_constraint_to_solver(
     axiom.s1()[val]);
   and_exprt negaxiom(univ_bounds, axiom.premise(), exists_bounds, equal_chars);
 
-  debug() << "(sr::check_axioms) negated axiom: " << from_expr(ns, "", negaxiom) << eom;
+  debug() << "(sr::check_axioms) negated not_contains axiom: "
+          << from_expr(ns, "", negaxiom) << eom;
   substitute_array_access(negaxiom);
   solver << negaxiom;
 }
 
-/// negates the constraint and add it to the solver. the intended usage is to
+/// Negates the constraint and adds it to the solver. The intended usage is to
 /// find an assignement of the universal variable that would violate the axiom,
 /// to avoid false positives the symbols other than the universal variable
 /// should have been replaced by there valuation in the current model
@@ -1064,35 +1071,39 @@ bool string_refinementt::check_axioms()
   }
 
   // Maps from indexes of violated not_contains axiom to a witness of violation
-  std::map<size_t, exprt> violated_not;
+  std::map<std::size_t, exprt> violated_not_contains;
 
   debug() << "there are " << not_contains_axioms.size()
           << " not_contains axioms" << eom;
   for(size_t i=0; i<not_contains_axioms.size(); i++)
   {
     const string_not_contains_constraintt &nc_axiom=not_contains_axioms[i];
-    exprt univ_bound_inf=nc_axiom.univ_lower_bound();
-    exprt univ_bound_sup=nc_axiom.univ_upper_bound();
-    exprt prem=nc_axiom.premise();
-    exprt exists_bound_inf=nc_axiom.exists_lower_bound();
-    exprt exists_bound_sup=nc_axiom.exists_upper_bound();
+    const exprt univ_bound_inf=nc_axiom.univ_lower_bound();
+    const exprt univ_bound_sup=nc_axiom.univ_upper_bound();
+    const exprt prem=nc_axiom.premise();
+    const exprt exists_bound_inf=nc_axiom.exists_lower_bound();
+    const exprt exists_bound_sup=nc_axiom.exists_upper_bound();
     const string_exprt s0=nc_axiom.s0();
     const string_exprt s1=nc_axiom.s1();
 
-    symbol_exprt univ_var=generator.fresh_symbol(
+    symbol_exprt univ_var=generator.fresh_univ_index(
       "not_contains_univ_var", nc_axiom.s0().length().type());
     exprt witness=generator.get_witness_of(nc_axiom, univ_var);
     exprt val=get(witness);
     string_not_contains_constraintt nc_axiom_in_model(
-      get(univ_bound_inf), get(univ_bound_sup), get(prem),
-      get(exists_bound_inf), get(exists_bound_sup),
-      to_string_expr(get(s0)), to_string_expr(get(s1)));
+      get(univ_bound_inf),
+      get(univ_bound_sup),
+      get(prem),
+      get(exists_bound_inf),
+      get(exists_bound_sup),
+      to_string_expr(get(s0)),
+      to_string_expr(get(s1)));
 
     satcheck_no_simplifiert sat_check;
     supert solver(ns, sat_check);
     solver.set_ui(ui);
     add_negation_of_not_contains_constraint_to_solver(
-      nc_axiom_in_model, univ_var, val, solver);
+      nc_axiom_in_model, val, solver, univ_var);
 
     switch(solver())
     {
@@ -1102,7 +1113,7 @@ bool string_refinementt::check_axioms()
         debug() << "string constraint can be violated for "
                 << univ_var.get_identifier()
                 << " = " << from_expr(ns, "", val) << eom;
-        violated_not[i]=val;
+        violated_not_contains[i]=val;
       }
       break;
     case decision_proceduret::resultt::D_UNSATISFIABLE:
@@ -1112,7 +1123,7 @@ bool string_refinementt::check_axioms()
     }
   }
 
-  if(violated.empty() && violated_not.empty())
+  if(violated.empty() && violated_not_contains.empty())
   {
     debug() << "no violated property" << eom;
     return true;
@@ -1121,7 +1132,7 @@ bool string_refinementt::check_axioms()
   {
     debug() << violated.size()
             << " universal string axioms can be violated" << eom;
-    debug() << violated_not.size()
+    debug() << violated_not_contains.size()
             << " not_contains string axioms can be violated" << eom;
 
     if(use_counter_example)
@@ -1168,10 +1179,8 @@ std::map<exprt, int> string_refinementt::map_representation_of_sum(
     to_process.pop_back();
     if(cur.id()==ID_plus)
     {
-      for(const exprt &op : cur.operands())
-      {
+      for(const auto &op : cur.operands())
         to_process.push_back(std::make_pair(op, positive));
-      }
     }
     else if(cur.id()==ID_minus)
     {
