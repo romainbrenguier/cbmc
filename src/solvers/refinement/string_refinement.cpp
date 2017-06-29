@@ -949,18 +949,6 @@ void string_refinementt::add_negation_of_not_contains_constraint_to_solver(
 
   exprt lbe=axiom.exists_lower_bound();
   exprt ube=axiom.exists_upper_bound();
-  if(lbe.id()==ID_constant && ube.id()==ID_constant)
-  {
-    mp_integer lb_int, ub_int;
-    to_integer(to_constant_expr(lbe), lb_int);
-    to_integer(to_constant_expr(ube), ub_int);
-    if(ub_int<=lb_int)
-    {
-      debug() << "empty constraint with current model" << eom;
-      solver << false_exprt();
-      return;
-    }
-  }
 
   if(axiom.premise()==false_exprt())
   {
@@ -975,8 +963,8 @@ void string_refinementt::add_negation_of_not_contains_constraint_to_solver(
     binary_relation_exprt(lbu, ID_le, univ_var),
     binary_relation_exprt(ubu, ID_gt, univ_var));
   and_exprt exists_bounds(
-    binary_relation_exprt(lbu, ID_le, val),
-    binary_relation_exprt(ubu, ID_gt, val));
+    binary_relation_exprt(lbe, ID_le, val),
+    binary_relation_exprt(ube, ID_gt, val));
   equal_exprt equal_chars(
     axiom.s0()[plus_exprt(univ_var, val)],
     axiom.s1()[val]);
