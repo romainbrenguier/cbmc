@@ -55,6 +55,8 @@ private:
     const java_string_library_preprocesst &)=delete;
 
   static bool java_type_matches_tag(const typet &type, const std::string &tag);
+  static bool is_java_cprover_string_pointer_type(const typet &type);
+  static bool is_java_cprover_string_type(const typet &type);
   static bool is_java_string_pointer_type(const typet &type);
   static bool is_java_string_type(const typet &type);
   static bool is_java_string_builder_type(const typet &type);
