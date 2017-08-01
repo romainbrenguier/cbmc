@@ -97,6 +97,7 @@ static array_exprt utf16_to_array(const std::wstring &in)
   return ret;
 }
 
+#include <iostream>
 void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
 {
   const irep_idt value=expr.get(ID_value);
@@ -129,6 +130,8 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
   const auto &jlo_struct=to_struct_type(ns.follow(jlo_symbol));
   struct_exprt jlo_init(jlo_symbol);
   const auto &jls_struct=to_struct_type(ns.follow(string_type));
+
+  std::cout << "STRING TYPE: " << jls_struct.pretty(10) << std::endl;
 
   jlo_init.copy_to_operands(
     constant_exprt(
