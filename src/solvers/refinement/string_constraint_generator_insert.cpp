@@ -150,6 +150,9 @@ string_exprt string_constraint_generatort::add_axioms_for_insert_float(
 string_exprt string_constraint_generatort::add_axioms_for_insert_char_array(
   const function_application_exprt &f)
 {
+  // This is deprecated and should not be used anymore.
+  // The substring function can be used instead.
+  UNREACHABLE;
   exprt offset;
   exprt count;
   if(f.arguments().size()==6)
@@ -170,7 +173,9 @@ string_exprt string_constraint_generatort::add_axioms_for_insert_char_array(
   string_exprt str=get_string_expr(f.arguments()[0]);
   const exprt &length=f.arguments()[2];
   const exprt &data=f.arguments()[3];
-  string_exprt arr=add_axioms_from_char_array(
-    length, data, offset, count);
+  string_exprt arr;
+#if 0
+  string_exprt arr=add_axioms_from_char_array(    length, data, offset, count);
+#endif
   return add_axioms_for_insert(str, arr, f.arguments()[1]);
 }

@@ -384,6 +384,9 @@ string_exprt string_constraint_generatort::add_axioms_from_char(
 string_exprt string_constraint_generatort::add_axioms_for_value_of(
   const function_application_exprt &f)
 {
+  UNREACHABLE;
+  return string_exprt();
+#if 0
   const function_application_exprt::argumentst &args=f.arguments();
   if(args.size()==3)
   {
@@ -415,6 +418,7 @@ string_exprt string_constraint_generatort::add_axioms_for_value_of(
         "case of 3 has been handled"));
     return add_axioms_for_java_char_array(args[0]);
   }
+#endif
 }
 
 /// Add axioms making the return value true if the given string is a correct
