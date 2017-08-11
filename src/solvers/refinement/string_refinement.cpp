@@ -270,11 +270,18 @@ bool string_refinementt::add_axioms_for_string_assigns(
     else if(rhs.id()==ID_if)
     {
       add_symbol_to_symbol_map(lhs, rhs);
+      // prop_conv cannot unpack array of infinite size
+      warning() << "string_refinement: not passing char array to super "
+                << from_expr(ns, "", rhs) << eom;
+      return false;
+#if 0
       return true;
+#endif
     }
     else
     {
-      warning() << "ignoring char array " << from_expr(ns, "", rhs) << eom;
+      warning() << "string_refinement: ignoring char array "
+                << "and passing it to boolbv " << from_expr(ns, "", rhs) << eom;
       return true;
     }
   }
@@ -444,16 +451,18 @@ void string_refinementt::set_to(const exprt &expr, bool value)
 
     if(lhs.type()!=rhs.type())
     {
-      warning() << "ignoring " << from_expr(ns, "", expr)
+      warning() << "string_refinement set_to:"
+                << "ignoring " << from_expr(ns, "", expr)
                 << " [inconsistent types]" << eom;
-      debug() << "lhs has type: " << lhs.type().pretty(12) << eom;
-      debug() << "rhs has type: " << rhs.type().pretty(12) << eom;
+      debug() << "  - lhs_type: " << lhs.type().pretty(12) << eom;
+      debug() << "  - rhs_type: " << rhs.type().pretty(12) << eom;
       return;
     }
 
     // Preprocessing to remove function applications.
-    debug() << "(sr::set_to) " << from_expr(ns, "", lhs)
-            << " = " << from_expr(ns, "", rhs) << eom;
+    debug() << "string_refinement set_to:\n"
+            << "  - lhs: " << from_expr(ns, "", lhs) << "\n"
+            << "  - rhs: " << from_expr(ns, "", rhs) << eom;
 
     const exprt subst_rhs=substitute_function_applications(rhs);
     if(lhs.type()!=subst_rhs.type())
@@ -462,13 +471,15 @@ void string_refinementt::set_to(const exprt &expr, bool value)
          subst_rhs.type().id()!=ID_array ||
          lhs.type().subtype()!=subst_rhs.type().subtype())
       {
-        warning() << "ignoring " << from_expr(ns, "", expr)
+        warning() << "string_refinement set_to:"
+                  << "ignoring " << from_expr(ns, "", expr)
                   << " [inconsistent types after substitution]" << eom;
         return;
       }
       else
       {
-        debug() << "(sr::set_to) accepting arrays with "
+        debug() << "string_refinement set_to:"
+                << " accepting arrays with "
                 << "same subtype but different sizes" << eom;
       }
     }
@@ -501,7 +512,8 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   for(std::pair<exprt, bool> &pair : non_string_axioms)
   {
     replace_expr(symbol_resolve, pair.first);
-    debug() << "super::set_to " << from_expr(ns, "", pair.first) << eom;
+    debug() << "super::set_to " << pair.second << "\n  - "
+            << from_expr(ns, "", pair.first) << eom;
     supert::set_to(pair.first, pair.second);
   }
 
