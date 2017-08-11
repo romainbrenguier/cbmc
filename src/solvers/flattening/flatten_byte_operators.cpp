@@ -19,6 +19,8 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "flatten_byte_operators.h"
 
+#include <iostream>
+
 /// rewrite an object into its individual bytes
 /// \par parameters: src  object to unpack
 /// little_endian  true, iff assumed endianness is little-endian
@@ -61,9 +63,17 @@ static exprt unpack_rec(
       return src;
 
     mp_integer num_elements;
-    if(to_integer(max_bytes, num_elements) &&
-       to_integer(array_type.size(), num_elements))
-      throw "cannot unpack array of non-const size:\n"+type.pretty();
+    bool non_constant=
+      to_integer(max_bytes, num_elements) &&
+      to_integer(array_type.size(), num_elements);
+
+    if(non_constant)
+    {
+      std::cout << "error in unpack_rec, source = "
+                << src.pretty(24) << std::endl;
+    // INVARIANT(!non_constant, "array must be of constant size for unpacking");
+      num_elements=src.operands().size();
+    }
 
     // all array members will have the same structure; do this just
     // once and then replace the dummy symbol by a suitable index
