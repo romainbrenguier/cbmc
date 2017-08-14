@@ -1086,6 +1086,7 @@ void value_sett::get_reference_set_rec(
   insert(dest, exprt(ID_unknown, expr.type()));
 }
 
+#include<iostream>
 void value_sett::assign(
   const exprt &lhs,
   const exprt &rhs,
@@ -1133,9 +1134,14 @@ void value_sett::assign(
       else
       {
         if(!base_type_eq(rhs.type(), type, ns))
+        {
+          std::cout << "  - lhs: " << from_expr(ns, "", lhs) << "\n"
+                    << "  - rhs: " << from_expr(ns, "", rhs) << std::endl;
+
           throw "value_sett::assign type mismatch: "
                 "rhs.type():\n"+rhs.type().pretty()+"\n"+
                 "type:\n"+type.pretty();
+        }
 
         rhs_member=make_member(rhs, name, ns);
 
@@ -1161,9 +1167,14 @@ void value_sett::assign(
     else
     {
       if(!base_type_eq(rhs.type(), type, ns))
+      {
+        std::cout << "  - lhs: " << from_expr(ns, "", lhs) << "\n"
+                  << "  - rhs: " << from_expr(ns, "", rhs) << std::endl;
+
         throw "value_sett::assign type mismatch: "
-          "rhs.type():\n"+rhs.type().pretty()+"\n"+
+        "rhs.type():\n"+rhs.type().pretty()+"\n"+
           "type:\n"+type.pretty();
+      }
 
       if(rhs.id()==ID_array_of)
       {
