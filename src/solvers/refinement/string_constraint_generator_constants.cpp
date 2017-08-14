@@ -22,7 +22,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 string_exprt string_constraint_generatort::add_axioms_for_constant(
   irep_idt sval, const refined_string_typet &ref_type)
 {
-  string_exprt res=fresh_string(ref_type);
+  string_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   std::string c_str=id2string(sval);
   std::wstring str;
 
@@ -71,7 +72,7 @@ string_exprt string_constraint_generatort::empty_string(
   const array_typet &content_type=ref_type.get_content_type();
   array_of_exprt empty_array(
     from_integer(0, ref_type.get_content_type().subtype()), content_type);
-  string_exprt res(size, empty_array, ref_type);
+  string_exprt res(size, empty_array);
   return res;
 }
 

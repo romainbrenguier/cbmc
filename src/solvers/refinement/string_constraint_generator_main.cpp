@@ -115,11 +115,13 @@ plus_exprt string_constraint_generatort::plus_exprt_with_overflow_check(
 /// \par parameters: a type for string
 /// \return a string expression
 string_exprt string_constraint_generatort::fresh_string(
-  const refined_string_typet &type)
+  const typet &index_type, const typet &char_type)
 {
-  symbol_exprt length=fresh_symbol("string_length", type.get_index_type());
-  symbol_exprt content=fresh_symbol("string_content", type.get_content_type());
-  string_exprt str(length, content, type);
+  symbol_exprt length=fresh_symbol("string_length", index_type);
+  refined_string_typet ref_type(length, char_type);
+  symbol_exprt content=fresh_symbol(
+    "string_content", ref_type.get_content_type());
+  string_exprt str(length, content);
   created_strings.insert(str);
   add_default_axioms(str);
   return str;
@@ -195,7 +197,7 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
   }
   else if(string.id()==ID_nondet_symbol)
   {
-    string_exprt s=fresh_string(type);
+    string_exprt s=fresh_string(type.get_index_type(), type.get_char_type());
     add_default_axioms(s);
     return s;
   }
@@ -220,9 +222,9 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
       // condition holds and the 'false' branch otherwise.
       if_exprt if_expr=to_if_expr(s.content());
       string_exprt str_true=add_axioms_for_refined_string(
-        string_exprt(s.length(), if_expr.true_case(), type));
+        string_exprt(s.length(), if_expr.true_case()));
       string_exprt str_false=add_axioms_for_refined_string(
-        string_exprt(s.length(), if_expr.false_case(), type));
+        string_exprt(s.length(), if_expr.false_case()));
       return add_axioms_for_if(if_exprt(if_expr.cond(), str_true, str_false));
     }
     add_default_axioms(s);
@@ -254,7 +256,8 @@ string_exprt string_constraint_generatort::add_axioms_for_if(
   string_exprt f=get_string_expr(expr.false_case());
   const refined_string_typet &ref_type=to_refined_string_type(t.type());
   const typet &index_type=ref_type.get_index_type();
-  string_exprt res=fresh_string(ref_type);
+  string_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
 
   axioms.push_back(
     implies_exprt(expr.cond(), res.axiom_for_has_same_length_as(t)));
@@ -281,7 +284,8 @@ string_exprt string_constraint_generatort::find_or_add_string_of_symbol(
   const symbol_exprt &sym, const refined_string_typet &ref_type)
 {
   irep_idt id=sym.get_identifier();
-  string_exprt str=fresh_string(ref_type);
+  string_exprt str=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   auto entry=unresolved_symbols.insert(std::make_pair(id, str));
   return entry.first->second;
 }
@@ -308,11 +312,12 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     function_application_exprt new_expr(expr);
     // TODO: This part needs some improvement.
     // Stripping the symbol name is not a very robust process.
-    new_expr.function() = symbol_exprt(str_id.substr(0, pos+4));
-    new_expr.type() = refined_string_typet(java_int_type(), java_char_type());
+    const irep_idt function_name=str_id.substr(0, pos+4);
+    new_expr.function()=symbol_exprt(function_name);
+    const auto cache_index=std::make_pair(function_name, expr.arguments());
+    auto res_it=function_application_cache.insert(
+      std::make_pair(cache_index, nil_exprt()));
 
-    auto res_it=function_application_cache.insert(std::make_pair(new_expr,
-                                                                 nil_exprt()));
     if(res_it.second)
     {
       string_exprt res=to_string_expr(
@@ -328,11 +333,12 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
   if(pos!=std::string::npos)
   {
     function_application_exprt new_expr(expr);
-    new_expr.function() = symbol_exprt(str_id.substr(0, pos+4));
-    new_expr.type() = refined_string_typet(java_int_type(), java_char_type());
-
-    auto res_it=function_application_cache.insert(std::make_pair(new_expr,
-                                                                 nil_exprt()));
+    new_expr.function()=symbol_exprt(str_id.substr(0, pos+4));
+    const irep_idt function_name=str_id.substr(0, pos+4);
+    new_expr.function()=symbol_exprt(function_name);
+    const auto cache_index=std::make_pair(function_name, expr.arguments());
+    auto res_it=function_application_cache.insert(
+      std::make_pair(cache_index, nil_exprt()));
     if(res_it.second)
     {
       string_exprt res=to_string_expr(
@@ -347,7 +353,10 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
   // TODO: improve efficiency of this test by either ordering test by frequency
   // or using a map
 
-  auto res_it=function_application_cache.find(expr);
+  auto cache_index=std::make_pair(
+    to_symbol_expr(expr.function()).get_identifier(), expr.arguments());
+  auto res_it=function_application_cache.find(cache_index);
+
   if(res_it!=function_application_cache.end() && res_it->second!=nil_exprt())
     return res_it->second;
 
@@ -484,7 +493,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     msg+=id2string(id);
     DATA_INVARIANT(false, string_refinement_invariantt(msg));
   }
-  function_application_cache[expr]=res;
+  function_application_cache[cache_index]=res;
   return res;
 }
 

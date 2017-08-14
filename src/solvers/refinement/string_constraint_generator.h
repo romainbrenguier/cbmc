@@ -71,7 +71,7 @@ public:
   symbol_exprt fresh_exist_index(const irep_idt &prefix, const typet &type);
   symbol_exprt fresh_univ_index(const irep_idt &prefix, const typet &type);
   symbol_exprt fresh_boolean(const irep_idt &prefix);
-  string_exprt fresh_string(const refined_string_typet &type);
+  string_exprt fresh_string(const typet &index_type, const typet &char_type);
   string_exprt get_string_expr(const exprt &expr);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
@@ -106,7 +106,10 @@ private:
   const std::size_t MAX_FLOAT_LENGTH=15;
   const std::size_t MAX_DOUBLE_LENGTH=30;
 
-  std::map<function_application_exprt, exprt> function_application_cache;
+  // The cache for function application is indexed by a function name and
+  // a vector of arguments
+  std::map<std::pair<irep_idt, exprt::operandst>, exprt>
+    function_application_cache;
 
   static irep_idt extract_java_string(const symbol_exprt &s);
 
@@ -293,7 +296,7 @@ private:
   string_exprt add_axioms_for_value_of(const function_application_exprt &f);
 
   string_exprt add_axioms_for_code_point(
-    const exprt &code_point, const refined_string_typet &ref_type);
+    const exprt &code_point, const typet &index_type, const typet &char_type);
   exprt add_axioms_for_char_pointer(const function_application_exprt &fun);
   string_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);

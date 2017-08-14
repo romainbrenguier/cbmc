@@ -314,7 +314,7 @@ string_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     // TODO: DateTime not implemented
     // For all these unimplemented cases we return a non-deterministic string
     warning() << "unimplemented format specifier: " << fs.conversion << eom;
-    return fresh_string(ref_type);
+    return fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   default:
     error() << "invalid format specifier: " << fs.conversion << eom;
     INVARIANT(
@@ -434,6 +434,6 @@ string_exprt string_constraint_generatort::add_axioms_for_format(
   {
     warning() << "ignoring format function with non constant first argument"
               << eom;
-    return fresh_string(ref_type);
+    return fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   }
 }

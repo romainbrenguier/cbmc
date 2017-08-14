@@ -14,6 +14,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 #include <util/std_expr.h>
 #include <util/arith_tools.h>
+#include <util/refined_string_type.h>
 
 class string_exprt: public struct_exprt
 {
@@ -25,8 +26,8 @@ public:
     operands().resize(2);
   }
 
-  string_exprt(const exprt &_length, const exprt &_content, typet type):
-    struct_exprt(type)
+  string_exprt(const exprt &_length, const exprt &_content):
+    struct_exprt(refined_string_typet(_length, _content.type().subtype()))
   {
     copy_to_operands(_length, _content);
   }

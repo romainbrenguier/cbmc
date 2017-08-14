@@ -28,7 +28,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 class refined_string_typet: public struct_typet
 {
 public:
-  refined_string_typet(const typet &index_type, const typet &char_type);
+  refined_string_typet(const exprt &length, const typet &char_type);
 
   // Type for the content (list of characters) of a string
   const array_typet &get_content_type() const

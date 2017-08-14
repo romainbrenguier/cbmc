@@ -219,7 +219,8 @@ string_exprt string_constraint_generatort::add_axioms_for_fractional_part(
   PRECONDITION(int_expr.type().id()==ID_signedbv);
   PRECONDITION(max_size>=2);
   const typet &type=int_expr.type();
-  string_exprt res=fresh_string(ref_type);
+  string_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   exprt ten=from_integer(10, type);
   const typet &char_type=ref_type.get_char_type();
   const typet &index_type=ref_type.get_index_type();

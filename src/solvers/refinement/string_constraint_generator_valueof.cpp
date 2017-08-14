@@ -79,9 +79,8 @@ string_exprt string_constraint_generatort::add_axioms_from_bool(
 string_exprt string_constraint_generatort::add_axioms_from_bool(
   const exprt &b, const refined_string_typet &ref_type)
 {
-  string_exprt res=fresh_string(ref_type);
   const typet &char_type=ref_type.get_char_type();
-
+  string_exprt res=fresh_string(ref_type.get_index_type(), char_type);
   PRECONDITION(b.type()==bool_typet() || b.type().id()==ID_c_bool);
 
   typecast_exprt eq(b, bool_typet());
@@ -158,7 +157,8 @@ string_exprt string_constraint_generatort::add_axioms_from_int_with_radix(
     max_size=max_printed_string_length(type, to_integer_or_default(radix, 2ul));
   }
   PRECONDITION(max_size<std::numeric_limits<size_t>::max());
-  string_exprt res=fresh_string(ref_type);
+  string_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   const typet &char_type=ref_type.get_char_type();
   const typet &index_type=ref_type.get_index_type();
   exprt zero_char=constant_char('0', char_type);
@@ -293,11 +293,11 @@ exprt string_constraint_generatort::int_of_hex_char(const exprt &chr) const
 string_exprt string_constraint_generatort::add_axioms_from_int_hex(
   const exprt &i, const refined_string_typet &ref_type)
 {
-  string_exprt res=fresh_string(ref_type);
   const typet &type=i.type();
   PRECONDITION(type.id()==ID_signedbv);
   const typet &index_type=ref_type.get_index_type();
   const typet &char_type=ref_type.get_char_type();
+  string_exprt res=fresh_string(index_type, char_type);
   exprt sixteen=from_integer(16, index_type);
   exprt minus_char=constant_char('-', char_type);
   exprt zero_char=constant_char('0', char_type);
@@ -371,7 +371,8 @@ string_exprt string_constraint_generatort::add_axioms_from_char(
 string_exprt string_constraint_generatort::add_axioms_from_char(
   const exprt &c, const refined_string_typet &ref_type)
 {
-  string_exprt res=fresh_string(ref_type);
+  string_exprt res=fresh_string(
+    ref_type.get_char_type(), ref_type.get_index_type());
   and_exprt lemma(equal_exprt(res[0], c), res.axiom_for_has_length(1));
   axioms.push_back(lemma);
   return res;

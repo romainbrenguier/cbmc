@@ -33,7 +33,8 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_substr(
   const exprt &end_index)
 {
   const refined_string_typet &ref_type=to_refined_string_type(s1.type());
-  string_exprt res=fresh_string(ref_type);
+  const string_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
 
   // We add axioms:
   // a1 : end_index > start_index => |res|=|s1|+ end_index - start_index
@@ -196,8 +197,10 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_float(
 string_exprt string_constraint_generatort::add_axioms_for_concat_code_point(
   const function_application_exprt &f)
 {
-  string_exprt s1=get_string_expr(args(f, 2)[0]);
+  PRECONDITION(f.arguments().size()==2);
+  string_exprt s1=get_string_expr(f.arguments()[0]);
   const refined_string_typet &ref_type=to_refined_string_type(s1.type());
-  string_exprt s2=add_axioms_for_code_point(args(f, 2)[1], ref_type);
+  string_exprt s2=add_axioms_for_code_point(
+    f.arguments()[1], ref_type.get_index_type(), ref_type.get_char_type());
   return add_axioms_for_concat(s1, s2);
 }

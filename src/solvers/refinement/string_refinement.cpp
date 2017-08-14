@@ -1758,7 +1758,7 @@ exprt string_refinementt::get(const exprt &expr) const
     const exprt &length=string.length();
 
     const exprt arr=get_array(content, length);
-    ecopy=string_exprt(length, arr, string.type());
+    ecopy=string_exprt(length, arr);
   }
 
   ecopy=supert::get(ecopy);
