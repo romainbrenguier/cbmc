@@ -139,9 +139,11 @@ static void depends_in_symbol_map(const exprt &expr, std::vector<exprt> &accu)
   }
   else
   {
+#if 0
     INVARIANT(
       expr.id()==ID_symbol || expr.id()==ID_array || expr.id()==ID_array_of,
       "leaf in symbol resolve should be a symbol or a constant array");
+#endif
     accu.push_back(expr);
   }
 }

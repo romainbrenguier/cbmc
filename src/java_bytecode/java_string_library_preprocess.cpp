@@ -758,13 +758,15 @@ codet java_string_library_preprocesst::
 /// \param lhs: a string expression
 /// \param rhs: an expression representing a java string
 /// \param symbol_table: symbol table
-/// \return return the following code:
+/// \param code: code block which gets added the following:
 /// ~~~~~~~~~~~~~~~~~~~~~~
 /// int cprover_string_length$i;
 /// cprover_string_length$i=rhs->length;
 /// char cprove_string_array$j[cprover_string_length$i];
 /// cprover_string_array$j=*(rhs->data);
 /// ~~~~~~~~~~~~~~~~~~~~~~
+/// \return a string_exprt containing `cprover_string_length$i` and
+///   `cprover_string_array$j`
 string_exprt java_string_library_preprocesst::
   add_code_assign_java_string_to_string_expr(
     const exprt &rhs,
@@ -795,9 +797,11 @@ string_exprt java_string_library_preprocesst::
   code.add(code_assignt(lhs.length(), rhs_length));
 
   // We always assume data of a String is not null
+#if 0 // We need to adjust the types here
   not_exprt data_not_null(equal_exprt(
     rhs_data, null_pointer_exprt(to_pointer_type(rhs_data.type()))));
   code.add(code_assumet(data_not_null));
+#endif
   // TODO: should be factorized with get_content_of_java_string
   code.add(code_declt(lhs.content()));
   typecast_exprt data_as_array(

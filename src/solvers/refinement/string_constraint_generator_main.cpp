@@ -179,6 +179,7 @@ void string_constraint_generatort::add_default_axioms(
 /// \par parameters: an expression of refined string type
 /// \return a string expression that is linked to the argument through axioms
 ///   that are added to the list
+#include<iostream>
 string_exprt string_constraint_generatort::add_axioms_for_refined_string(
   const exprt &string)
 {
@@ -212,9 +213,11 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
       s.length().id()==ID_symbol || s.length().id()==ID_constant,
       "string length should be a symbol or a constant");
     irep_idt content_id=s.content().id();
+#if 0
     INVARIANT(
       content_id==ID_symbol || content_id==ID_array || content_id==ID_if,
       "string content should be a symbol, a constant array, or an if");
+#endif
     if(content_id==ID_if)
     {
       // If the string content is an if expression, we add axioms ensuring

@@ -91,10 +91,10 @@ static std::string escape_non_alnum(const std::string &toescape)
 /// \return Returns a Java char array containing the same wchars.
 static array_exprt utf16_to_array(const std::wstring &in)
 {
-  const auto jchar=java_char_type();
-  array_exprt ret(array_typet(jchar, infinity_exprt(java_int_type())));
+  array_exprt ret(
+    array_typet(java_char_type(), from_integer(in.length(), java_int_type())));
   for(const auto c : in)
-    ret.copy_to_operands(from_integer(c, jchar));
+    ret.copy_to_operands(from_integer(c, java_char_type()));
   return ret;
 }
 
@@ -150,9 +150,8 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     // Initialize the string with a constant utf-16 array:
     symbolt array_symbol;
     array_symbol.name=escaped_symbol_name+"_constarray";
-    array_symbol.type=array_typet(
-      java_char_type(), infinity_exprt(java_int_type()));
     array_symbol.base_name="Literal_constarray";
+    // TODO: this should be obtained from java_string_library_preprocess
     array_symbol.pretty_name=value;
     array_symbol.mode=ID_java;
     array_symbol.is_type=false;
@@ -160,8 +159,10 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     // These are basically const global data:
     array_symbol.is_static_lifetime=true;
     array_symbol.is_state_var=true;
-    auto literal_array=utf16_to_array(
-      utf8_to_utf16_little_endian(id2string(value)));
+    auto literal_array=utf16_to_array(utf8_to_utf16_little_endian(id2string(value)));
+    array_symbol.type=array_typet(
+      java_char_type(),
+      from_integer(literal_array.operands().size(), java_int_type()));
     array_symbol.value=literal_array;
 
     if(symbol_table.add(array_symbol))
@@ -170,8 +171,9 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     literal_init.copy_to_operands(
       from_integer(literal_array.operands().size(),
                    jls_struct.components()[1].type()));
-    literal_init.copy_to_operands(
-      address_of_exprt(array_symbol.symbol_expr()));
+    literal_init.copy_to_operands(typecast_exprt(
+      address_of_exprt(array_symbol.symbol_expr()),
+      pointer_typet(java_char_type())));
 
     new_symbol.value=literal_init;
   }
