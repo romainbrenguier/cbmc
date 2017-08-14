@@ -80,8 +80,8 @@ private:
 
   character_refine_preprocesst character_preprocess;
 
-  const typet char_type;
   const typet index_type;
+  const typet char_type;
 
   typedef
     std::function<codet(
@@ -214,8 +214,7 @@ private:
 
   string_exprt fresh_string_expr(
     const source_locationt &loc,
-    symbol_tablet &symbol_table,
-    code_blockt &code);
+    symbol_tablet &symbol_table);
 
   exprt add_assignment_to_string_expr_symbol(
     const string_exprt &string_expr,
@@ -253,12 +252,6 @@ private:
     const typet &type,
     symbol_tablet &symbol_table);
 
-  codet code_assign_function_to_string_expr(
-    const string_exprt &string_expr,
-    const irep_idt &function_name,
-    const exprt::operandst &arguments,
-    symbol_tablet &symbol_table);
-
   string_exprt string_expr_of_function_application(
     const irep_idt &function_name,
     const exprt::operandst &arguments,
@@ -281,13 +274,17 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
-  codet code_assign_java_string_to_string_expr(
-    const string_exprt &lhs, const exprt &rhs, symbol_tablet &symbol_table);
+  string_exprt add_code_assign_java_string_to_string_expr(
+    const exprt &rhs,
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
-  codet code_assign_string_literal_to_string_expr(
-    const string_exprt &lhs,
+  string_exprt code_assign_string_literal_to_string_expr(
     const std::string &s,
-    symbol_tablet &symbol_table);
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
   codet make_function_from_call(
     const irep_idt &function_name,
