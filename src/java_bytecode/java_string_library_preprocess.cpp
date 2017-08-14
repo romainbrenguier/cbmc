@@ -804,8 +804,9 @@ string_exprt java_string_library_preprocesst::
 #endif
   // TODO: should be factorized with get_content_of_java_string
   code.add(code_declt(lhs.content()));
-  typecast_exprt data_as_array(
-    rhs_data, array_typet(java_char_type(), lhs.length()));
+  dereference_exprt data_as_array(typecast_exprt(
+    rhs_data, pointer_typet(array_typet(java_char_type(), lhs.length()))),
+    array_typet(java_char_type(), lhs.length()));
   code.add(code_assignt(lhs.content(), data_as_array));
   return lhs;
 }
