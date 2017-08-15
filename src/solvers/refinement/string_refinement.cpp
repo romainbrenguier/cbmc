@@ -716,61 +716,33 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
     return empty_ret;
   }
 
-  std::vector<unsigned> concrete_array(n);
-
   if(arr_val.id()=="array-list")
   {
-    std::set<std::size_t> initialized;
+    std::map<std::size_t, exprt> initial_map;
     for(size_t i=0; i<arr_val.operands().size()/2; i++)
     {
       exprt index=arr_val.operands()[i*2];
       unsigned idx;
       if(!to_unsigned_integer(to_constant_expr(index), idx))
-      {
         if(idx<n)
-        {
-          exprt value=arr_val.operands()[i*2+1];
-          to_unsigned_integer(to_constant_expr(value), concrete_array[idx]);
-          initialized.insert(idx);
-        }
-      }
+          initial_map[idx]=arr_val.operands()[i*2+1];
     }
 
     // Pad the concretized values to the left to assign the uninitialized
     // values of result.
-    fill_in_vector(concrete_array, initialized);
+    ret.operands()=fill_in_map_as_vector(initial_map);
+    return ret;
   }
   else if(arr_val.id()==ID_array)
   {
+    // copy the `n` first elements of `arr_val`
     for(size_t i=0; i<arr_val.operands().size() && i<n; i++)
-    {
-      unsigned c;
-      exprt op=arr_val.operands()[i];
-      if(op.id()==ID_constant)
-      {
-        to_unsigned_integer(to_constant_expr(op), c);
-        concrete_array[i]=c;
-      }
-    }
+      ret.move_to_operands(arr_val.operands()[i]);
+    return ret;
   }
-  else
-  {
-#if 0
-    debug() << "unable to get array-list value of " << from_expr(ns, "", arr)
-            << " of size " << n << eom;
-#endif
-    return array_of_exprt(from_integer(0, char_type), ret_type);
-  }
-
-  for(size_t i=0; i<n; i++)
-  {
-    exprt c_expr=from_integer(concrete_array[i], char_type);
-    ret.move_to_operands(c_expr);
-  }
-
-  return ret;
+  // default return value is an array of `0`s
+  return array_of_exprt(from_integer(0, char_type), ret_type);
 }
-
 
 /// get a model of an array of unknown size and infer the size if possible
 /// \par parameters: an expression representing an array
@@ -882,6 +854,7 @@ exprt string_refinementt::substitute_array_with_expr(
     exprt else_expr=substitute_array_with_expr(with_expr.old(), index);
     const typet &type=then_expr.type();
     CHECK_RETURN(else_expr.type()==type);
+    CHECK_RETURN(index.type()==with_expr.where().type());
     return if_exprt(
       equal_exprt(index, with_expr.where()), then_expr, else_expr, type);
   }
@@ -1137,8 +1110,7 @@ static exprt concretize_array_expression(
   if(expr.id()==ID_index)
   {
     const index_exprt &index_expr=to_index_expr(expr);
-    exprt array_expr=index_expr.array();
-    if(array_expr.id()==ID_with)
+    if(index_expr.array().id()==ID_with)
       return index_exprt(
         fill_in_array_with_expr(index_expr.array(), string_max_length),
         index_expr.index());
