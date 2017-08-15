@@ -1138,6 +1138,33 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
   return negaxiom;
 }
 
+/// Result of the solver `supert` should not be interpreted literally for char
+/// arrays as not all indices are present in the index set.
+/// We populate the values for which the solver has not constraint by padding
+/// the array to the left.
+static exprt interprete_solver_result(
+  const exprt &expr, std::size_t string_max_length)
+{
+  if(expr.id()==ID_index)
+  {
+    const index_exprt &index_expr=to_index_expr(expr);
+    exprt array_expr=index_expr.array();
+    if(array_expr.id()==ID_with)
+      return index_exprt(
+        pad_array_with_expr(index_expr.array(), string_max_length),
+        index_expr.index());
+    else
+      return expr;
+  }
+  else
+  {
+    exprt copy=expr;
+    for(exprt &op : copy.operands())
+      op=interprete_solver_result(op, string_max_length);
+    return copy;
+  }
+}
+
 /// return true if the current model satisfies all the axioms
 /// \return a Boolean
 bool string_refinementt::check_axioms()
