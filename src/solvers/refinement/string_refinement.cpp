@@ -1198,14 +1198,18 @@ bool string_refinementt::check_axioms()
     debug() << "  - negated_axiom:\n"
             << "     " << from_expr(ns, "", negaxiom) << eom;
 
-    substitute_array_access(negaxiom, true);
+    exprt with_concretized_arrays=interprete_solver_result(
+      negaxiom, generator.max_string_length);
+    debug() << "  - negated_axiom_with_concretized_array_access:\n"
+            << "     " << from_expr(ns, "", with_concretized_arrays) << eom;
 
+    substitute_array_access(with_concretized_arrays);
     debug() << "  - negated_axiom_without_array_access:\n"
-            << "     " << from_expr(ns, "", negaxiom) << eom;
+            << "     " << from_expr(ns, "", with_concretized_arrays) << eom;
 
     exprt witness;
 
-    bool is_sat=is_axiom_sat(negaxiom, univ_var, witness);
+    bool is_sat=is_axiom_sat(with_concretized_arrays, univ_var, witness);
 
     if(is_sat)
     {
