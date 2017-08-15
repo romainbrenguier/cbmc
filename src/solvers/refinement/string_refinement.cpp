@@ -896,6 +896,59 @@ exprt string_refinementt::substitute_array_with_expr(
   }
 }
 
+/// Pads an array represented by a list of with_expr by propagating values to
+/// the left.
+exprt pad_array_with_expr(const exprt &expr, std::size_t string_max_length)
+{
+  PRECONDITION(expr.type().id()==ID_array);
+  mp_integer max_index=0;
+  exprt it=expr;
+
+  while(it.id()==ID_with)
+  {
+    with_exprt with_expr=to_with_expr(it);
+    it=with_expr.old();
+    mp_integer index;
+    bool error=to_integer(to_constant_expr(with_expr.where()), index);
+    PRECONDITION(!error);
+    max_index=
+      (!error && index>max_index && max_index<string_max_length)?
+        index:max_index;
+  }
+  // We need a +1 because the maximal index is the length minus 1 and +1 to
+  // store the default value
+  std::vector<exprt> vector(max_index.to_long()+2);
+  std::set<std::size_t> initialized;
+  it=expr;
+  while(it.id()==ID_with)
+  {
+    with_exprt with_expr=to_with_expr(it);
+    const exprt &then_expr=with_expr.new_value();
+    it=with_expr.old();
+    mp_integer index;
+    PRECONDITION(with_expr.where().id()==ID_constant);
+    bool error=to_integer(to_constant_expr(with_expr.where()), index);
+    PRECONDITION(!error);
+    if(index<string_max_length)
+      vector[index.to_long()]=then_expr;
+    initialized.insert(index.to_long());
+  }
+  INVARIANT(it.id()==ID_array_of, "with expression should contain an array_of");
+  const exprt default_value=to_array_of_expr(it).what();
+
+  vector[max_index.to_long()+1]=default_value;
+  pad_vector(vector, initialized);
+
+  exprt ret=array_of_exprt(default_value, to_array_type(expr.type()));
+  typet index_type=to_array_type(expr.type()).size().type();
+  for(std::size_t i=0; i<vector.size(); i++)
+  {
+    exprt i_expr=from_integer(i, index_type);
+    ret=with_exprt(ret, i_expr, vector.at(i));
+  }
+  return ret;
+}
+
 /// create an equivalent expression where array accesses and 'with' expressions
 /// are replaced by 'if' expressions, in particular:
 ///  * for an array access `arr[x]`, where:
