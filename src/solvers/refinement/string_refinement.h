@@ -111,6 +111,7 @@ private:
   typet substitute_java_string_types(typet type);
   exprt substitute_java_strings(exprt expr);
   exprt substitute_array_with_expr(const exprt &expr, const exprt &index) const;
+
   void substitute_array_access(exprt &expr) const;
   void add_symbol_to_symbol_map(const exprt &lhs, const exprt &rhs);
   bool is_char_array(const typet &type) const;
@@ -146,11 +147,6 @@ private:
   bool is_valid_string_constraint(const string_constraintt &expr);
 
   exprt simplify_sum(const exprt &f) const;
-  template <typename T1, typename T2>
-  void pad_vector(
-    std::vector<T1> &result,
-    std::set<T2> &initialized,
-    T1 last_concretized) const;
 
   void concretize_string(const exprt &expr);
   void concretize_results();
@@ -167,36 +163,21 @@ exprt substitute_array_lists(exprt expr, size_t string_max_length);
 /// Utility function for concretization of strings. Copies concretized values to
 /// the left to initialize the unconcretized indices of concrete_array.
 /// \param concrete_array: the vector to populate
-/// \param initialized: the vector containing the indices of the concretized
-///   values
-/// \param last_concretized: initial value of the last concretized index
-template <typename T1, typename T2>
-void string_refinementt::pad_vector(
-  std::vector<T1> &concrete_array,
-  std::set<T2> &initialized,
-  T1 last_concretized) const
+/// \param initialized: set containing the indices of already concrete values
+template <typename T>
+void pad_vector(
+  std::vector<T> &concrete_array,
+  std::set<typename std::vector<T>::size_type> &initialized)
 {
   // Pad the concretized values to the left to assign the uninitialized
   // values of result. The indices greater than concretize_limit are
   // already assigned to last_concretized.
-  for(auto j=initialized.rbegin(); j!=initialized.rend();)
+  for(auto j=initialized.rbegin(); j!=initialized.rend(); ++j)
   {
-    size_t i=*j;
-    // The leftmost index to pad is the value + 1 of the next element in
-    // 'initialized'. Since we cannot use the binary '+' operator on set
-    // iterators, we must increment the iterator here instead of in the
-    // for loop.
-    j++;
-    size_t leftmost_index_to_pad=(j!=initialized.rend()?*(j)+1:0);
+    size_t i=*j-1;
     // pad until we reach the next initialized index (right to left)
-    while(i>leftmost_index_to_pad)
-      concrete_array[(i--)-1]=last_concretized;
-    INVARIANT(
-      i==leftmost_index_to_pad,
-      string_refinement_invariantt("Loop decrements i until it is not greater "
-        " than leftmost_index_to_pad"));
-    if(i>0)
-      last_concretized=concrete_array[i-1];
+    while(initialized.find(i)==initialized.end() && i<*j)
+      concrete_array[i--]=concrete_array[*j];
   }
 }
 #endif
