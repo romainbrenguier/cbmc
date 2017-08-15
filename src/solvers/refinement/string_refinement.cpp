@@ -335,7 +335,7 @@ void string_refinementt::concretize_string(const exprt &expr)
       result.resize(concretize_limit, last_concretized);
 
       // Keep track of the indexes for which we have actual values
-      std::set<size_t> initialized;
+      std::set<std::size_t> initialized;
 
       for(const auto &i : index_set[str.content()])
       {
@@ -362,7 +362,7 @@ void string_refinementt::concretize_string(const exprt &expr)
       // Pad the concretized values to the left to assign the uninitialized
       // values of result. The indices greater than concretize_limit are
       // already assigned to last_concretized.
-      pad_vector(result, initialized, last_concretized);
+      pad_vector(result, initialized);
 
       array_exprt arr(to_array_type(content.type()));
       arr.operands()=result;
@@ -720,7 +720,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 
   if(arr_val.id()=="array-list")
   {
-    std::set<unsigned> initialized;
+    std::set<std::size_t> initialized;
     for(size_t i=0; i<arr_val.operands().size()/2; i++)
     {
       exprt index=arr_val.operands()[i*2];
@@ -738,7 +738,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 
     // Pad the concretized values to the left to assign the uninitialized
     // values of result.
-    pad_vector(concrete_array, initialized, concrete_array[n-1]);
+    pad_vector(concrete_array, initialized);
   }
   else if(arr_val.id()==ID_array)
   {
