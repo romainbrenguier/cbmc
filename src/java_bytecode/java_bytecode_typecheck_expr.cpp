@@ -172,8 +172,7 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
       from_integer(literal_array.operands().size(),
                    jls_struct.components()[1].type()));
     literal_init.copy_to_operands(typecast_exprt(
-      address_of_exprt(array_symbol.symbol_expr()),
-      pointer_typet(java_char_type())));
+      array_symbol.symbol_expr(), pointer_typet(java_char_type())));
 
     new_symbol.value=literal_init;
   }
