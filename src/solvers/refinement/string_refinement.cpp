@@ -473,7 +473,7 @@ void string_refinementt::set_to(const exprt &expr, bool value)
          subst_rhs.type().id()!=ID_array ||
          lhs.type().subtype()!=subst_rhs.type().subtype())
       {
-        warning() << "string_refinement set_to:"
+        warning() << "string_refinement set_to: "
                   << "ignoring " << from_expr(ns, "", expr)
                   << " [inconsistent types after substitution]" << eom;
         debug() << "  - lhs_type: " << lhs.type().pretty(14) << eom;
@@ -483,9 +483,12 @@ void string_refinementt::set_to(const exprt &expr, bool value)
       }
       else
       {
-        debug() << "string_refinement set_to:"
+        warning() << "string_refinement set_to:"
                 << " accepting arrays with "
                 << "same subtype but different sizes" << eom;
+        debug() << "  - lhs_type: " << lhs.type().pretty(14) << eom;
+        debug() << "  - rhs_type: " << rhs.type().pretty(14) << eom;
+        debug() << "  - subst_rhs_type: " << subst_rhs.type().pretty(20) << eom;
       }
     }
 
@@ -1170,21 +1173,22 @@ bool string_refinementt::check_axioms()
 
     exprt negaxiom=negation_of_constraint(axiom_in_model);
 
-    debug() << "  - axiom:\n"
-            << "     " << from_expr(ns, "", axiom) << eom;
-    debug() << "  - axiom_in_model:\n"
-            << "     " << from_expr(ns, "", axiom_in_model) << eom;
-    debug() << "  - negated_axiom:\n"
-            << "     " << from_expr(ns, "", negaxiom) << eom;
+    debug() << "  "<< i << ".\n"
+            << "    - axiom:\n"
+            << "       " << from_expr(ns, "", axiom) << eom;
+    debug() << "    - axiom_in_model:\n"
+            << "       " << from_expr(ns, "", axiom_in_model) << eom;
+    debug() << "    - negated_axiom:\n"
+            << "       " << from_expr(ns, "", negaxiom) << eom;
 
     exprt with_concretized_arrays=concretize_arrays_in_expression(
       negaxiom, generator.max_string_length);
-    debug() << "  - negated_axiom_with_concretized_array_access:\n"
-            << "     " << from_expr(ns, "", with_concretized_arrays) << eom;
+    debug() << "    - negated_axiom_with_concretized_array_access:\n"
+            << "       " << from_expr(ns, "", with_concretized_arrays) << eom;
 
     substitute_array_access(with_concretized_arrays);
-    debug() << "  - negated_axiom_without_array_access:\n"
-            << "     " << from_expr(ns, "", with_concretized_arrays) << eom;
+    debug() << "    - negated_axiom_without_array_access:\n"
+            << "       " << from_expr(ns, "", with_concretized_arrays) << eom;
 
     exprt witness;
 
@@ -1192,13 +1196,13 @@ bool string_refinementt::check_axioms()
 
     if(is_sat)
     {
-      debug() << "  - violated_for: "
+      debug() << "     - violated_for: "
               << univ_var.get_identifier()
               << " = " << from_expr(ns, "", witness) << eom;
       violated[i]=witness;
     }
     else
-      debug() << "  - correct" << eom;
+      debug() << "    - correct" << eom;
   }
 
   // Maps from indexes of violated not_contains axiom to a witness of violation
