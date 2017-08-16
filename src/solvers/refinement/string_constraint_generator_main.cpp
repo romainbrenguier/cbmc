@@ -309,6 +309,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 
   std::string str_id(id.c_str());
 
+#if 0
   size_t pos=str_id.find("func_length");
   if(pos!=std::string::npos)
   {
@@ -362,7 +363,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 
   if(res_it!=function_application_cache.end() && res_it->second!=nil_exprt())
     return res_it->second;
-
+#endif
   exprt res;
 
   if(id==ID_cprover_char_literal_func)
@@ -496,7 +497,17 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     msg+=id2string(id);
     DATA_INVARIANT(false, string_refinement_invariantt(msg));
   }
+#if 0
   function_application_cache[cache_index]=res;
+#endif
+  if(refined_string_typet::is_refined_string_type(res.type()))
+  {
+    string_exprt str=to_string_expr(res);
+    // add constraints on the length and return the array
+    exprt output_size=to_array_type(expr.type()).size();
+    axioms.push_back(str.axiom_for_has_length(output_size));
+    return str.content();
+  }
   return res;
 }
 
