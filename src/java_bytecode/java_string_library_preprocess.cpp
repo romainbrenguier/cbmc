@@ -563,7 +563,7 @@ exprt java_string_library_preprocesst::allocate_fresh_string(
 }
 
 /// declare a new character array and allocate it
-/// \param type: a type for string
+/// \param type: an array type
 /// \param loc: a location in the program
 /// \param symbol_table: symbol table
 /// \param code: code block to which allocation instruction will be added
@@ -574,6 +574,7 @@ exprt java_string_library_preprocesst::allocate_fresh_array(
   symbol_tablet &symbol_table,
   code_blockt &code)
 {
+  PRECONDITION(type.id()==ID_array);
   exprt array=fresh_array(type, loc, symbol_table);
   code.add(code_declt(array));
   allocate_dynamic_object_with_decl(array, symbol_table, loc, code);
@@ -729,8 +730,8 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
 /// \param symbol_table: symbol table
 /// \return return the following code:
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// data = new array[];
-/// *data = rhs.data;
+/// data = new array[rhs.length];
+/// data = rhs.data; // copy fields of the array, not pointer assignment
 /// lhs = { {Object} , length=rhs.length, data=data}
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 codet java_string_library_preprocesst::
@@ -741,14 +742,11 @@ codet java_string_library_preprocesst::
     symbol_tablet &symbol_table)
 {
   PRECONDITION(implements_java_char_sequence(lhs.type()));
-  dereference_exprt deref=checked_dereference(lhs, lhs.type().subtype());
-
   code_blockt code;
+  array_typet array_type(java_char_type(), rhs.length());
   exprt new_array=allocate_fresh_array(
-    get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
-  code.add(code_assignt(
-    dereference_exprt(new_array, new_array.type().subtype()), rhs.content()));
-
+    pointer_typet(array_type), loc, symbol_table, code);
+  code.add(code_assignt(new_array, rhs.content()));
   code.add(code_assign_components_to_java_string(
     lhs, new_array, rhs.length(), symbol_table));
 
@@ -804,9 +802,13 @@ string_exprt java_string_library_preprocesst::
 #endif
   // TODO: should be factorized with get_content_of_java_string
   code.add(code_declt(lhs.content()));
+#if 0
   dereference_exprt data_as_array(typecast_exprt(
     rhs_data, pointer_typet(array_typet(java_char_type(), lhs.length()))),
     array_typet(java_char_type(), lhs.length()));
+#endif
+  typecast_exprt data_as_array(
+    rhs_data, array_typet(java_char_type(), lhs.length()));
   code.add(code_assignt(lhs.content(), data_as_array));
   return lhs;
 }
