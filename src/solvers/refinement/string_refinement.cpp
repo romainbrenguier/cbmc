@@ -476,6 +476,9 @@ void string_refinementt::set_to(const exprt &expr, bool value)
         warning() << "string_refinement set_to:"
                   << "ignoring " << from_expr(ns, "", expr)
                   << " [inconsistent types after substitution]" << eom;
+        debug() << "  - lhs_type: " << lhs.type().pretty(14) << eom;
+        debug() << "  - rhs_type: " << rhs.type().pretty(14) << eom;
+        debug() << "  - subst_rhs_type: " << subst_rhs.type().pretty(20) << eom;
         return;
       }
       else
