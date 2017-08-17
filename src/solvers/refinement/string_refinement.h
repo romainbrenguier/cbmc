@@ -165,7 +165,7 @@ exprt substitute_array_lists(exprt expr, size_t string_max_length);
 /// \param concrete_array: the vector to populate
 /// \param initialized: set containing the indices of already concrete values
 template <typename T>
-void pad_vector(
+void fill_in_vector(
   std::vector<T> &concrete_array,
   std::set<std::size_t> &initialized)
 {
@@ -177,10 +177,37 @@ void pad_vector(
     // an initialized index (or 0) is reached
     std::size_t i=j;
     INVARIANT(
-      initialized.size()>j,
+      concrete_array.size()>j,
       "set of initialized indices should not contain out of bound values");
     while(i!=0 && initialized.find(i)==initialized.end())
       concrete_array[--i]=concrete_array[j];
   }
+}
+
+/// Utility function for concretization of strings. Copies concretized values to
+/// the left to initialize the unconcretized indices of concrete_array.
+/// \param initial_map: map containing the values of already concrete values
+/// \return a populated vector with value from initialized
+template <typename T>
+std::vector<T> fill_in_map_as_vector(std::map<std::size_t, T> &initial_map)
+{
+  std::size_t last_index=initial_map.rbegin()->first;
+  std::vector<T> result(last_index+1);
+  // Pad the concretized values to the left to assign the uninitialized
+  // values of result.
+  for(auto pair=initial_map.rbegin(); pair!=initial_map.rend();)
+  {
+    const std::size_t i=pair->first;
+    const T value=pair->second;
+    // We must increment the iterator here instead of in the for loop so that
+    // we can get the leftmost index_to pad
+    pair++;
+    const std::size_t leftmost_index_to_pad=
+      pair!=initial_map.rend()?pair->first:0;
+    // pad down to the leftmost index to pad
+    for(std::size_t j=i; j+1!=leftmost_index_to_pad; j--)
+      result[j]=value;
+  }
+  return result;
 }
 #endif
