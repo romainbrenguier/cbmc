@@ -473,7 +473,7 @@ string_exprt java_string_library_preprocesst::replace_char_array(
     symbol_table));
 
   // string_expr is `{ rhs->length; string_array }`
-  string_exprt string_expr(get_length(array, symbol_table), char_array);
+  string_exprt string_expr(char_array);
   // string_expr_sym <- { rhs->length; string_array }
   add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
@@ -577,7 +577,9 @@ exprt java_string_library_preprocesst::allocate_fresh_array(
   PRECONDITION(type.id()==ID_array);
   exprt array=fresh_array(type, loc, symbol_table);
   code.add(code_declt(array));
+#if 0 // No need to allocate arrays, declaring them should be enough
   allocate_dynamic_object_with_decl(array, symbol_table, loc, code);
+#endif
   return array;
 }
 
@@ -734,6 +736,7 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
 /// data = rhs.data; // copy fields of the array, not pointer assignment
 /// lhs = { {Object} , length=rhs.length, data=data}
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#include<iostream>
 codet java_string_library_preprocesst::
   code_assign_string_expr_to_new_java_string(
     const exprt &lhs,
@@ -745,7 +748,10 @@ codet java_string_library_preprocesst::
   code_blockt code;
   array_typet array_type(java_char_type(), rhs.length());
   exprt new_array=allocate_fresh_array(
-    pointer_typet(array_type), loc, symbol_table, code);
+    array_type, loc, symbol_table, code);
+  std::cout << "new_array: " << new_array.pretty(10) << std::endl;
+  std::cout << "rhs.content: " << rhs.content().pretty(10) << std::endl;
+
   code.add(code_assignt(new_array, rhs.content()));
   code.add(code_assign_components_to_java_string(
     lhs, new_array, rhs.length(), symbol_table));

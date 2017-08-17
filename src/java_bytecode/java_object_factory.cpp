@@ -252,6 +252,7 @@ void allocate_dynamic_object_with_decl(
   const source_locationt &loc,
   code_blockt &output_code)
 {
+  PRECONDITION(target_expr.type().id()==ID_pointer);
   std::vector<const symbolt *> symbols_created;
   code_blockt tmp_block;
   const typet &allocate_type=target_expr.type().subtype();

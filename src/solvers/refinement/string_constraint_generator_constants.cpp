@@ -57,8 +57,10 @@ string_exprt string_constraint_generatort::add_axioms_for_empty_string(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().empty());
-  PRECONDITION(refined_string_typet::is_refined_string_type(f.type()));
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
+  // PRECONDITION(refined_string_typet::is_refined_string_type(f.type()));
+  PRECONDITION(f.type().id()==ID_array);
+  const array_typet &array_type=to_array_type(f.type());
+  const refined_string_typet ref_type(array_type.size(), array_type.subtype());
   return empty_string(ref_type);
 }
 
@@ -89,6 +91,9 @@ string_exprt string_constraint_generatort::add_axioms_from_literal(
 
   const exprt &arg=args[0];
   irep_idt sval=to_constant_expr(arg).get_value();
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
+  const array_typet &array_type=to_array_type(f.type());
+  const refined_string_typet ref_type(array_type.size(), array_type.subtype());
+
+  // const refined_string_typet &ref_type=to_refined_string_type(f.type());
   return add_axioms_for_constant(sval, ref_type);
 }
