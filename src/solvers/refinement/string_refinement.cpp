@@ -1139,9 +1139,14 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
 
 /// Result of the solver `supert` should not be interpreted literally for char
 /// arrays as not all indices are present in the index set.
-/// We populate the values for which the solver has not constraint by padding
+/// We populate the values for which the solver has no constraint by padding
 /// the array to the left.
-static exprt interprete_solver_result(
+/// For example an expression `ARRAY_OF(0) WITH [1:=2] WITH [4:=3]` would
+/// be interpreted as `{ 2, 2, 3, 3, 3}`.
+/// \param expr: expression to interpret
+/// \param string_max_length: maximum size of arrays to concider
+/// \return the interpreted expression
+static exprt concretize_array_expression(
   const exprt &expr, std::size_t string_max_length)
 {
   if(expr.id()==ID_index)
@@ -1159,7 +1164,7 @@ static exprt interprete_solver_result(
   {
     exprt copy=expr;
     for(exprt &op : copy.operands())
-      op=interprete_solver_result(op, string_max_length);
+      op=concretize_array_expression(op, string_max_length);
     return copy;
   }
 }
@@ -1197,7 +1202,7 @@ bool string_refinementt::check_axioms()
     debug() << "  - negated_axiom:\n"
             << "     " << from_expr(ns, "", negaxiom) << eom;
 
-    exprt with_concretized_arrays=interprete_solver_result(
+    exprt with_concretized_arrays=concretize_array_expression(
       negaxiom, generator.max_string_length);
     debug() << "  - negated_axiom_with_concretized_array_access:\n"
             << "     " << from_expr(ns, "", with_concretized_arrays) << eom;
