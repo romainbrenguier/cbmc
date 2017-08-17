@@ -16,29 +16,33 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/arith_tools.h>
 #include <util/refined_string_type.h>
 
-class string_exprt: public struct_exprt
+class string_exprt: public exprt
 {
 public:
-  string_exprt(): struct_exprt() {}
+  string_exprt(): exprt() {}
 
-  explicit string_exprt(typet type): struct_exprt(type)
+#if 0
+  explicit string_exprt(array_typet type): exprt(type)
+  { }
+#endif
+
+  string_exprt(const exprt &_content): exprt(_content)
   {
-    operands().resize(2);
+    type()=refined_string_typet(
+          _content.type().subtype(), to_array_type(_content.type()).size());
   }
 
-  string_exprt(const exprt &_length, const exprt &_content):
-    struct_exprt(refined_string_typet(_length, _content.type().subtype()))
-  {
-    copy_to_operands(_length, _content);
-  }
+  // type is always an array
+  const array_typet &type() const { return to_array_type(exprt::type()); }
+  array_typet &type() { return to_array_type(exprt::type()); }
 
   // Expression corresponding to the length of the string
-  const exprt &length() const { return op0(); }
-  exprt &length() { return op0(); }
+  const exprt &length() const { return type().size(); }
+  exprt &length() { return type().size(); }
 
   // Expression corresponding to the content (array of characters) of the string
-  const exprt &content() const { return op1(); }
-  exprt &content() { return op1(); }
+  const exprt &content() const { return op0(); }
+  exprt &content() { return op0(); }
 
   static exprt within_bounds(const exprt &idx, const exprt &bound);
 
@@ -54,59 +58,59 @@ public:
   }
 
   // Comparison on the length of the strings
-  binary_relation_exprt axiom_for_is_longer_than(
+  binary_relation_exprt axiom_for_length_ge(
     const string_exprt &rhs) const
   {
     return binary_relation_exprt(length(), ID_ge, rhs.length());
   }
 
-  binary_relation_exprt axiom_for_is_longer_than(
+  binary_relation_exprt axiom_for_length_ge(
     const exprt &rhs) const
   {
     return binary_relation_exprt(length(), ID_ge, rhs);
   }
 
-  binary_relation_exprt axiom_for_is_strictly_longer_than(
+  binary_relation_exprt axiom_for_length_gt(
     const exprt &rhs) const
   {
     return binary_relation_exprt(rhs, ID_lt, length());
   }
 
-  binary_relation_exprt axiom_for_is_strictly_longer_than(
+  binary_relation_exprt axiom_for_length_gt(
     const string_exprt &rhs) const
   {
     return binary_relation_exprt(rhs.length(), ID_lt, length());
   }
 
-  binary_relation_exprt axiom_for_is_strictly_longer_than(mp_integer i) const
+  binary_relation_exprt axiom_for_length_gt(mp_integer i) const
   {
-    return axiom_for_is_strictly_longer_than(from_integer(i, length().type()));
+    return axiom_for_length_gt(from_integer(i, length().type()));
   }
 
-  binary_relation_exprt axiom_for_is_shorter_than(
+  binary_relation_exprt axiom_for_length_le(
     const string_exprt &rhs) const
   {
     return binary_relation_exprt(length(), ID_le, rhs.length());
   }
 
-  binary_relation_exprt axiom_for_is_shorter_than(
+  binary_relation_exprt axiom_for_length_le(
     const exprt &rhs) const
   {
     return binary_relation_exprt(length(), ID_le, rhs);
   }
 
-  binary_relation_exprt axiom_for_is_shorter_than(mp_integer i) const
+  binary_relation_exprt axiom_for_length_le(mp_integer i) const
   {
-    return axiom_for_is_shorter_than(from_integer(i, length().type()));
+    return axiom_for_length_le(from_integer(i, length().type()));
   }
 
-  binary_relation_exprt axiom_for_is_strictly_shorter_than(
+  binary_relation_exprt axiom_for_length_lt(
     const string_exprt &rhs) const
   {
     return binary_relation_exprt(length(), ID_lt, rhs.length());
   }
 
-  binary_relation_exprt axiom_for_is_strictly_shorter_than(
+  binary_relation_exprt axiom_for_length_lt(
     const exprt &rhs) const
   {
     return binary_relation_exprt(length(), ID_lt, rhs);
@@ -133,15 +137,15 @@ public:
 
 inline string_exprt &to_string_expr(exprt &expr)
 {
-  assert(expr.id()==ID_struct);
-  assert(expr.operands().size()==2);
+  PRECONDITION(expr.type().id()==ID_array);
+  PRECONDITION(expr.operands().size()==1);
   return static_cast<string_exprt &>(expr);
 }
 
 inline const string_exprt &to_string_expr(const exprt &expr)
 {
-  assert(expr.id()==ID_struct);
-  assert(expr.operands().size()==2);
+  PRECONDITION(expr.type().id()==ID_array);
+  PRECONDITION(expr.operands().size()==1);
   return static_cast<const string_exprt &>(expr);
 }
 
