@@ -47,14 +47,18 @@ public:
   {
     return size().type();
   }
-
-  static bool is_refined_string_type(const typet &type);
 };
+
+inline bool is_refined_string_type(const typet &type)
+{
+  return
+    type.id()==ID_array && to_array_type(type).subtype().id()==ID_unsignedbv;
+}
 
 extern inline const refined_string_typet &to_refined_string_type(
   const typet &type)
 {
-  PRECONDITION(refined_string_typet::is_refined_string_type(type));
+  PRECONDITION(is_refined_string_type(type));
   return static_cast<const refined_string_typet &>(type);
 }
 

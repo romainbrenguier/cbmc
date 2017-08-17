@@ -118,7 +118,7 @@ string_exprt string_constraint_generatort::fresh_string(
   const typet &index_type, const typet &char_type)
 {
   symbol_exprt length=fresh_symbol("string_length", index_type);
-  refined_string_typet ref_type(length, char_type);
+  refined_string_typet ref_type(char_type, length);
   symbol_exprt content=fresh_symbol(
     "string_content", ref_type.get_content_type());
   string_exprt str(length, content);
@@ -133,7 +133,7 @@ string_exprt string_constraint_generatort::fresh_string(
 /// \return a string expression
 string_exprt string_constraint_generatort::get_string_expr(const exprt &expr)
 {
-  PRECONDITION(refined_string_typet::is_refined_string_type(expr.type()));
+  PRECONDITION(is_refined_string_type(expr.type()));
 
   if(expr.id()==ID_symbol)
   {
@@ -158,9 +158,9 @@ void string_constraint_generatort::add_default_axioms(
   const string_exprt &s)
 {
   axioms.push_back(
-    s.axiom_for_is_longer_than(from_integer(0, s.length().type())));
+    s.axiom_for_length_ge(from_integer(0, s.length().type())));
   if(max_string_length!=std::numeric_limits<size_t>::max())
-    axioms.push_back(s.axiom_for_is_shorter_than(max_string_length));
+    axioms.push_back(s.axiom_for_length_le(max_string_length));
 
   if(force_printable_characters)
   {
@@ -183,7 +183,7 @@ void string_constraint_generatort::add_default_axioms(
 string_exprt string_constraint_generatort::add_axioms_for_refined_string(
   const exprt &string)
 {
-  PRECONDITION(refined_string_typet::is_refined_string_type(string.type()));
+  PRECONDITION(is_refined_string_type(string.type()));
   refined_string_typet type=to_refined_string_type(string.type());
 
   // Function applications should have been removed before
@@ -251,11 +251,9 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
 string_exprt string_constraint_generatort::add_axioms_for_if(
   const if_exprt &expr)
 {
-  PRECONDITION(
-    refined_string_typet::is_refined_string_type(expr.true_case().type()));
+  PRECONDITION(is_refined_string_type(expr.true_case().type()));
   string_exprt t=get_string_expr(expr.true_case());
-  PRECONDITION(
-    refined_string_typet::is_refined_string_type(expr.false_case().type()));
+  PRECONDITION(is_refined_string_type(expr.false_case().type()));
   string_exprt f=get_string_expr(expr.false_case());
   const refined_string_typet &ref_type=to_refined_string_type(t.type());
   const typet &index_type=ref_type.get_index_type();
@@ -500,7 +498,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 #if 0
   function_application_cache[cache_index]=res;
 #endif
-  if(refined_string_typet::is_refined_string_type(res.type()))
+  if(is_refined_string_type(res.type()))
   {
     string_exprt str=to_string_expr(res);
     // add constraints on the length and return the array

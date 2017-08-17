@@ -32,6 +32,12 @@ public:
           _content.type().subtype(), to_array_type(_content.type()).size());
   }
 
+  string_exprt(const exprt &length, const exprt &_content):
+    string_exprt(_content)
+  {
+    PRECONDITION(to_array_type(_content.type()).size()==length);
+  }
+
   // type is always an array
   const array_typet &type() const { return to_array_type(exprt::type()); }
   array_typet &type() { return to_array_type(exprt::type()); }
@@ -41,8 +47,8 @@ public:
   exprt &length() { return type().size(); }
 
   // Expression corresponding to the content (array of characters) of the string
-  const exprt &content() const { return op0(); }
-  exprt &content() { return op0(); }
+  const exprt &content() const { return *this; }
+  exprt &content() { return *this; }
 
   static exprt within_bounds(const exprt &idx, const exprt &bound);
 
@@ -137,15 +143,13 @@ public:
 
 inline string_exprt &to_string_expr(exprt &expr)
 {
-  PRECONDITION(expr.type().id()==ID_array);
-  PRECONDITION(expr.operands().size()==1);
+  PRECONDITION(is_refined_string_type(expr.type()));
   return static_cast<string_exprt &>(expr);
 }
 
 inline const string_exprt &to_string_expr(const exprt &expr)
 {
-  PRECONDITION(expr.type().id()==ID_array);
-  PRECONDITION(expr.operands().size()==1);
+  PRECONDITION(is_refined_string_type(expr.type()));
   return static_cast<const string_exprt &>(expr);
 }
 
