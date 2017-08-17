@@ -167,17 +167,20 @@ exprt substitute_array_lists(exprt expr, size_t string_max_length);
 template <typename T>
 void pad_vector(
   std::vector<T> &concrete_array,
-  std::set<typename std::vector<T>::size_type> &initialized)
+  std::set<std::size_t> &initialized)
 {
   // Pad the concretized values to the left to assign the uninitialized
-  // values of result. The indices greater than concretize_limit are
-  // already assigned to last_concretized.
-  for(auto j=initialized.rbegin(); j!=initialized.rend(); ++j)
+  // values of result.
+  for(const auto &j : initialized)
   {
-    size_t i=*j-1;
-    // pad until we reach the next initialized index (right to left)
-    while(initialized.find(i)==initialized.end() && i<*j)
-      concrete_array[i--]=concrete_array[*j];
+    // Start concretizing from the left of `j` and pad from right to left until
+    // an initialized index (or 0) is reached
+    std::size_t i=j;
+    INVARIANT(
+      initialized.size()>j,
+      "set of initialized indices should not contain out of bound values");
+    while(i!=0 && initialized.find(i)==initialized.end())
+      concrete_array[--i]=concrete_array[j];
   }
 }
 #endif
