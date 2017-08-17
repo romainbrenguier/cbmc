@@ -880,6 +880,7 @@ exprt string_refinementt::substitute_array_with_expr(
 exprt fill_in_array_with_expr(const exprt &expr, std::size_t string_max_length)
 {
   PRECONDITION(expr.type().id()==ID_array);
+  PRECONDITION(expr.id()==ID_with || expr.id()==ID_array_of);
 
   // Nothing to do for empty array
   if(expr.id()==ID_array_of)
