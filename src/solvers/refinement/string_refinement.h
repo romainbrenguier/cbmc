@@ -189,8 +189,12 @@ void fill_in_vector(
 /// \param initial_map: map containing the values of already concrete values
 /// \return a populated vector with value from initialized
 template <typename T>
-std::vector<T> fill_in_map_as_vector(std::map<std::size_t, T> &initial_map)
+std::vector<T> fill_in_map_as_vector(
+  const std::map<std::size_t, T> &initial_map)
 {
+  if(initial_map.empty())
+    return std::vector<T>();
+
   std::size_t last_index=initial_map.rbegin()->first;
   std::vector<T> result(last_index+1);
   // Pad the concretized values to the left to assign the uninitialized
@@ -200,7 +204,7 @@ std::vector<T> fill_in_map_as_vector(std::map<std::size_t, T> &initial_map)
     const std::size_t i=pair->first;
     const T value=pair->second;
     // We must increment the iterator here instead of in the for loop so that
-    // we can get the leftmost index_to pad
+    // we can get the leftmost index to pad
     pair++;
     const std::size_t leftmost_index_to_pad=
       pair!=initial_map.rend()?pair->first:0;
