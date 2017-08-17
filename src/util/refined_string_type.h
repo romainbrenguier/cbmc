@@ -25,16 +25,17 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/expr_util.h>
 
 // Internal type used for string refinement
-class refined_string_typet: public struct_typet
+class refined_string_typet: public array_typet
 {
 public:
-  refined_string_typet(const exprt &length, const typet &char_type);
+  refined_string_typet(const typet &char_type, const exprt &length):
+    array_typet(char_type, length)
+  { }
 
   // Type for the content (list of characters) of a string
   const array_typet &get_content_type() const
   {
-    PRECONDITION(components().size()==2);
-    return to_array_type(components()[1].type());
+    return to_array_type(*this);
   }
 
   const typet &get_char_type() const
@@ -44,16 +45,10 @@ public:
 
   const typet &get_index_type() const
   {
-    PRECONDITION(components().size()==2);
-    return components()[0].type();
+    return size().type();
   }
 
   static bool is_refined_string_type(const typet &type);
-
-  constant_exprt index_of_int(int i) const
-  {
-    return from_integer(i, get_index_type());
-  }
 };
 
 extern inline const refined_string_typet &to_refined_string_type(
