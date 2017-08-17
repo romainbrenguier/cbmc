@@ -362,7 +362,7 @@ void string_refinementt::concretize_string(const exprt &expr)
       // Pad the concretized values to the left to assign the uninitialized
       // values of result. The indices greater than concretize_limit are
       // already assigned to last_concretized.
-      pad_vector(result, initialized);
+      fill_in_vector(result, initialized);
 
       array_exprt arr(to_array_type(content.type()));
       arr.operands()=result;
@@ -738,7 +738,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 
     // Pad the concretized values to the left to assign the uninitialized
     // values of result.
-    pad_vector(concrete_array, initialized);
+    fill_in_vector(concrete_array, initialized);
   }
   else if(arr_val.id()==ID_array)
   {
@@ -896,57 +896,42 @@ exprt string_refinementt::substitute_array_with_expr(
   }
 }
 
-/// Pads an array represented by a list of with_expr by propagating values to
-/// the left.
-exprt pad_array_with_expr(const exprt &expr, std::size_t string_max_length)
+/// Fill an array represented by a list of with_expr by propagating values to
+/// the left. For instance `ARRAY_OF(12) WITH[2:=24] WITH[4:=42]` will give
+/// `{ 24, 24, 24, 42, 42 }`
+/// \param expr: an array expression in the form
+///   `ARRAY_OF(x) WITH [i0:=v0] ... WITH [iN:=vN]`
+/// \param string_max_length: bound on the length of strings
+/// \return an array expression with filled in values, or expr if it is simply
+///   an `ARRAY_OF(x)` expression
+exprt fill_in_array_with_expr(const exprt &expr, std::size_t string_max_length)
 {
   PRECONDITION(expr.type().id()==ID_array);
-  mp_integer max_index=0;
-  exprt it=expr;
 
-  while(it.id()==ID_with)
+  // Nothing to do for empty array
+  if(expr.id()==ID_array_of)
+    return expr;
+
+  // Map of the parts of the array that are initialized
+  std::map<std::size_t, exprt> initial_map;
+
+  for(exprt it=expr; it.id()==ID_with; it=to_with_expr(it).old())
   {
-    with_exprt with_expr=to_with_expr(it);
-    it=with_expr.old();
-    mp_integer index;
-    bool error=to_integer(to_constant_expr(with_expr.where()), index);
-    PRECONDITION(!error);
-    max_index=
-      (!error && index>max_index && max_index<string_max_length)?
-        index:max_index;
-  }
-  // We need a +1 because the maximal index is the length minus 1 and +1 to
-  // store the default value
-  std::vector<exprt> vector(max_index.to_long()+2);
-  std::set<std::size_t> initialized;
-  it=expr;
-  while(it.id()==ID_with)
-  {
-    with_exprt with_expr=to_with_expr(it);
+    // Add to `initial_map` all the pairs (index,value) contained in `WITH`
+    // statements
+    const with_exprt with_expr=to_with_expr(it);
     const exprt &then_expr=with_expr.new_value();
-    it=with_expr.old();
     mp_integer index;
-    PRECONDITION(with_expr.where().id()==ID_constant);
+    PRECONDITION(to_with_expr(it).where().id()==ID_constant);
     bool error=to_integer(to_constant_expr(with_expr.where()), index);
-    PRECONDITION(!error);
+    CHECK_RETURN(!error);
     if(index<string_max_length)
-      vector[index.to_long()]=then_expr;
-    initialized.insert(index.to_long());
+      initial_map[index.to_long()]=then_expr;
   }
-  INVARIANT(it.id()==ID_array_of, "with expression should contain an array_of");
-  const exprt default_value=to_array_of_expr(it).what();
 
-  vector[max_index.to_long()+1]=default_value;
-  pad_vector(vector, initialized);
-
-  exprt ret=array_of_exprt(default_value, to_array_type(expr.type()));
-  typet index_type=to_array_type(expr.type()).size().type();
-  for(std::size_t i=0; i<vector.size(); i++)
-  {
-    exprt i_expr=from_integer(i, index_type);
-    ret=with_exprt(ret, i_expr, vector.at(i));
-  }
-  return ret;
+  array_exprt result(to_array_type(expr.type()));
+  result.operands()=fill_in_map_as_vector(initial_map);
+  return result;
 }
 
 /// create an equivalent expression where array accesses and 'with' expressions
@@ -1155,7 +1140,7 @@ static exprt concretize_array_expression(
     exprt array_expr=index_expr.array();
     if(array_expr.id()==ID_with)
       return index_exprt(
-        pad_array_with_expr(index_expr.array(), string_max_length),
+        fill_in_array_with_expr(index_expr.array(), string_max_length),
         index_expr.index());
     else
       return expr;
