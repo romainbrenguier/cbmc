@@ -160,6 +160,9 @@ private:
 
 exprt substitute_array_lists(exprt expr, size_t string_max_length);
 
+exprt concretize_arrays_in_expression(
+  const exprt &expr, std::size_t string_max_length);
+
 /// Utility function for concretization of strings. Copies concretized values to
 /// the left to initialize the unconcretized indices of concrete_array.
 /// \param concrete_array: the vector to populate
