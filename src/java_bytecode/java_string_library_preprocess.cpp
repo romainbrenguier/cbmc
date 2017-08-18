@@ -442,7 +442,7 @@ static exprt get_content_from_java_string(
   const exprt &length=get_length(expr, symbol_table);
   const exprt &data=get_data(expr, symbol_table);
   const array_typet type(java_char_type(), length);
-  return typecast_exprt(data, type);
+  return typecast_exprt(address_of_exprt                     (data), type);
 }
 
 /// we declare a new `cprover_string` whose contents is deduced from the char
@@ -813,8 +813,12 @@ string_exprt java_string_library_preprocesst::
     rhs_data, pointer_typet(array_typet(java_char_type(), lhs.length()))),
     array_typet(java_char_type(), lhs.length()));
 #endif
+#if 0
   typecast_exprt data_as_array(
     rhs_data, array_typet(java_char_type(), lhs.length()));
+#endif
+  exprt data_as_array=get_content_from_java_string(deref, symbol_table);
+  std::cout << "data_as_array: " << data_as_array.pretty(10) << std::endl;
   code.add(code_assignt(lhs.content(), data_as_array));
   return lhs;
 }
