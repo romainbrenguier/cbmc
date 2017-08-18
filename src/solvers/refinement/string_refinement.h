@@ -170,24 +170,17 @@ exprt concretize_arrays_in_expression(
 template <typename T>
 void fill_in_vector(
   std::vector<T> &concrete_array,
-  std::set<std::size_t> &initialized)
+  const std::set<std::size_t> &initialized)
 {
-  // Pad the concretized values to the left to assign the uninitialized
-  // values of result.
+  PRECONDITION(!initialized.empty());
+  auto it=initialized.begin();
+  PRECONDITION(*initialized.rbegin()==concrete_array.size()-1);
 
-  int last_initialized=-1;
-  for(const auto &j : initialized)
-  {
-    // Start concretizing from the left of `j` and pad from right to left until
-    // an initialized index (or 0) is reached
-    std::size_t i=j;
-    INVARIANT(
-      concrete_array.size()>j,
-      "set of initialized indices should not contain out of bound values");
-    while(i!=0 && i!=last_initialized)
-      concrete_array[--i]=concrete_array[j];
-    last_initialized=j;
-  }
+  for(std::size_t j=0; j<concrete_array.size(); j++)
+    if(*it==j)
+      ++it;
+    else
+      concrete_array[j]=concrete_array[*it];
 }
 
 /// Utility function for concretization of strings. Copies concretized values to
