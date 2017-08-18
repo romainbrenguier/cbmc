@@ -210,9 +210,9 @@ std::vector<T> fill_in_map_as_vector(
     // we can get the leftmost index to pad
     pair++;
     const std::size_t leftmost_index_to_pad=
-      pair!=initial_map.rend()?pair->first:0;
+      pair!=initial_map.rend()?pair->first+1:0;
     // pad down to the leftmost index to pad
-    for(std::size_t j=i; j+1!=leftmost_index_to_pad; j--)
+    for(std::size_t j=i; j+1>leftmost_index_to_pad; j--)
       result[j]=value;
   }
   return result;
