@@ -440,9 +440,10 @@ static exprt get_content_from_java_string(
   const exprt &expr, const symbol_tablet &symbol_table)
 {
   const exprt &length=get_length(expr, symbol_table);
-  const exprt &data=get_data(expr, symbol_table);
+  exprt data=get_data(expr, symbol_table);
   const array_typet type(java_char_type(), length);
-  return typecast_exprt(address_of_exprt                     (data), type);
+  data.type()=type;
+  return data; // typecast_exprt(data, type);
 }
 
 /// we declare a new `cprover_string` whose contents is deduced from the char
@@ -677,7 +678,7 @@ string_exprt java_string_library_preprocesst::
 /// \param symbol_table: symbol table
 /// \return return the following code:
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// lhs = { {Object}, length=rhs_length, data=rhs_array }
+/// lhs = { {Object}, length=rhs_length, data=(char*) rhs_array }
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 codet java_string_library_preprocesst::code_assign_components_to_java_string(
   const exprt &lhs,
@@ -701,7 +702,8 @@ codet java_string_library_preprocesst::code_assign_components_to_java_string(
   struct_exprt struct_rhs(deref.type());
   struct_rhs.copy_to_operands(jlo_init);
   struct_rhs.copy_to_operands(rhs_length);
-  struct_rhs.copy_to_operands(rhs_array);
+  struct_rhs.copy_to_operands(
+    typecast_exprt(rhs_array, pointer_typet(java_char_type())));
   code.add(code_assignt(
     checked_dereference(lhs, lhs.type().subtype()), struct_rhs));
 
@@ -769,6 +771,13 @@ codet java_string_library_preprocesst::
 /// char cprove_string_array$j[cprover_string_length$i];
 /// cprover_string_array$j=*(rhs->data);
 /// ~~~~~~~~~~~~~~~~~~~~~~
+/// Now should add:
+/// ~~~~~~~~~~~~~~~~~~~~~~
+/// int cprover_string_length$i;
+/// cprover_string_length$i=rhs->length;
+/// char cprove_string_array$j[rhs->length];
+/// cprover_string_array$j=*(rhs->data);
+/// ~~~~~~~~~~~~~~~~~~~~~~
 /// \return a string_exprt containing `cprover_string_length$i` and
 ///   `cprover_string_array$j`
 string_exprt java_string_library_preprocesst::
@@ -807,17 +816,9 @@ string_exprt java_string_library_preprocesst::
   code.add(code_assumet(data_not_null));
 #endif
   // TODO: should be factorized with get_content_of_java_string
-  code.add(code_declt(lhs.content()));
-#if 0
-  dereference_exprt data_as_array(typecast_exprt(
-    rhs_data, pointer_typet(array_typet(java_char_type(), lhs.length()))),
-    array_typet(java_char_type(), lhs.length()));
-#endif
-#if 0
-  typecast_exprt data_as_array(
-    rhs_data, array_typet(java_char_type(), lhs.length()));
-#endif
   exprt data_as_array=get_content_from_java_string(deref, symbol_table);
+  lhs.content().type()=data_as_array.type();
+  code.add(code_declt(lhs.content()));
   std::cout << "data_as_array: " << data_as_array.pretty(10) << std::endl;
   code.add(code_assignt(lhs.content(), data_as_array));
   return lhs;
