@@ -24,6 +24,7 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <stack>
 #include <ansi-c/string_constant.h>
 #include <util/cprover_prefix.h>
+#include <util/expr_iterator.h>
 #include <util/replace_expr.h>
 #include <util/refined_string_type.h>
 #include <util/simplify_expr.h>
@@ -1103,26 +1104,17 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
 /// \param expr: expression to interpret
 /// \param string_max_length: maximum size of arrays to consider
 /// \return the interpreted expression
-exprt concretize_arrays_in_expression(
-  const exprt &expr, std::size_t string_max_length)
+exprt concretize_arrays_in_expression(exprt expr, std::size_t string_max_length)
 {
-  if(expr.id()==ID_index)
+  for(auto op=expr.depth_begin(); op!=expr.depth_end(); ++op)
   {
-    const index_exprt &index_expr=to_index_expr(expr);
-    if(index_expr.array().id()==ID_with)
-      return index_exprt(
-        fill_in_array_with_expr(index_expr.array(), string_max_length),
-        index_expr.index());
-    else
-      return expr;
+    if(op->id()==ID_with && op->type().id()==ID_array)
+    {
+      op.mutate()=fill_in_array_with_expr(*op, string_max_length);
+      op.next_sibling_or_parent();
+    }
   }
-  else
-  {
-    exprt copy=expr;
-    for(exprt &op : copy.operands())
-      op=concretize_arrays_in_expression(op, string_max_length);
-    return copy;
-  }
+  return expr;
 }
 
 /// return true if the current model satisfies all the axioms
