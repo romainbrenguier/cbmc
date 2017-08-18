@@ -393,11 +393,13 @@ std::string utf16_constant_array_to_java(
   unsigned int c;
   for(std::size_t i=0; i<arr.operands().size() && i<length; i++)
   {
-    PRECONDITION(arr.operands()[i].id()==ID_constant);
-    bool conversion_failed=to_unsigned_integer(
-      to_constant_expr(arr.operands()[i]), c);
-    INVARIANT(!conversion_failed, "constant should be convertible to unsigned");
-    out[i]=c;
+    if(arr.operands()[i].id()==ID_constant)
+    {
+      bool conversion_failed=to_unsigned_integer(
+            to_constant_expr(arr.operands()[i]), c);
+      INVARIANT(!conversion_failed, "constant should be convertible to unsigned");
+      out[i]=c;
+    }
   }
   return utf16_little_endian_to_java(out);
 }
