@@ -1106,13 +1106,15 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
 /// \return the interpreted expression
 exprt concretize_arrays_in_expression(exprt expr, std::size_t string_max_length)
 {
-  for(auto op=expr.depth_begin(); op!=expr.depth_end(); ++op)
+  for(auto op=expr.depth_begin(); op!=expr.depth_end();)
   {
     if(op->id()==ID_with && op->type().id()==ID_array)
     {
       op.mutate()=fill_in_array_with_expr(*op, string_max_length);
       op.next_sibling_or_parent();
     }
+    else
+      ++op;
   }
   return expr;
 }
