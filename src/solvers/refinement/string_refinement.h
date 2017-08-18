@@ -174,6 +174,8 @@ void fill_in_vector(
 {
   // Pad the concretized values to the left to assign the uninitialized
   // values of result.
+
+  int last_initialized=-1;
   for(const auto &j : initialized)
   {
     // Start concretizing from the left of `j` and pad from right to left until
@@ -182,8 +184,9 @@ void fill_in_vector(
     INVARIANT(
       concrete_array.size()>j,
       "set of initialized indices should not contain out of bound values");
-    while(i!=0 && initialized.find(i)==initialized.end())
+    while(i!=0 && i!=last_initialized)
       concrete_array[--i]=concrete_array[j];
+    last_initialized=j;
   }
 }
 
