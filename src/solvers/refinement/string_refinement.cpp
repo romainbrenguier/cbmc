@@ -895,7 +895,6 @@ exprt fill_in_array_with_expr(const exprt &expr, std::size_t string_max_length)
     const with_exprt with_expr=to_with_expr(it);
     const exprt &then_expr=with_expr.new_value();
     mp_integer index;
-    PRECONDITION(to_with_expr(it).where().id()==ID_constant);
     bool error=to_integer(to_constant_expr(with_expr.where()), index);
     CHECK_RETURN(!error);
     if(index<string_max_length)
