@@ -723,9 +723,8 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
     {
       exprt index=arr_val.operands()[i*2];
       unsigned idx;
-      if(!to_unsigned_integer(to_constant_expr(index), idx))
-        if(idx<n)
-          initial_map[idx]=arr_val.operands()[i*2+1];
+      if(!to_unsigned_integer(to_constant_expr(index), idx) && idx<n)
+        initial_map[idx]=arr_val.operands()[i*2+1];
     }
 
     // Pad the concretized values to the left to assign the uninitialized
