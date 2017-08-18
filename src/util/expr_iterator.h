@@ -97,11 +97,25 @@ public:
     return this->downcast();
   }
 
+  depth_iterator_t &next_sibling_or_parent()
+  {
+    PRECONDITION(!m_stack.empty());
+    while(!m_stack.empty())
+    {
+      m_stack.back().it++;
+      if(m_stack.back().it==m_stack.back().end)
+        m_stack.pop_back();
+      else if(this->downcast().push_expr(*m_stack.back().it))
+        break;
+    }
+    return this->downcast();
+  }
+
   /// Post-increment operator
   /// Expensive copy. Avoid if possible
   depth_iterator_t operator++(int)
   {
-    depth_iterator_t tmp(*this);
+    depth_iterator_t tmp(this->downcast());
     this->operator++();
     return tmp;
   }
