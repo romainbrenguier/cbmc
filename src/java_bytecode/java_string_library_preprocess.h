@@ -34,7 +34,10 @@ class java_string_library_preprocesst:public messaget
 {
 public:
   java_string_library_preprocesst():
-    refined_string_type(java_int_type(), java_char_type()) {}
+    char_type(java_char_type()),
+    index_type(java_int_type()),
+    refined_string_type(index_type, char_type)
+  { }
 
   void initialize_conversion_table();
   void initialize_refined_string_type();
@@ -81,6 +84,8 @@ private:
 
   character_refine_preprocesst character_preprocess;
 
+  const typet char_type;
+  const typet index_type;
   const refined_string_typet refined_string_type;
 
   typedef
@@ -202,13 +207,6 @@ private:
   void declare_function(
     irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
 
-  typet get_data_type(
-    const typet &type, const symbol_tablet &symbol_table);
-  typet get_length_type(
-    const typet &type, const symbol_tablet &symbol_table);
-  exprt get_data(const exprt &expr, const symbol_tablet &symbol_table);
-  exprt get_length(const exprt &expr, const symbol_tablet &symbol_table);
-
   symbol_exprt fresh_string(
     const typet &type,
     const source_locationt &loc,
@@ -224,7 +222,8 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  exprt fresh_string_expr_symbol(
+  exprt add_assignment_to_string_expr_symbol(
+    const string_exprt &string_expr,
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
