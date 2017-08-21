@@ -55,6 +55,7 @@ inline bool operator==(
   const depth_iterator_expr_statet &right)
 { return left.it==right.it && left.expr.get()==right.expr.get(); }
 
+
 /// Depth first search iterator base - iterates over supplied expression
 /// and all its operands recursively.
 /// Base class using CRTP
@@ -99,8 +100,14 @@ public:
   depth_iterator_t &next_sibling_or_parent()
   {
     PRECONDITION(!m_stack.empty());
-    m_stack.back().it=m_stack.back().end;
-    ++(*this);
+    while(!m_stack.empty())
+    {
+      m_stack.back().it++;
+      if(m_stack.back().it==m_stack.back().end)
+        m_stack.pop_back();
+      else if(this->downcast().push_expr(*m_stack.back().it))
+        break;
+    }
     return this->downcast();
   }
 
