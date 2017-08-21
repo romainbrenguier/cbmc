@@ -199,11 +199,7 @@ void java_string_library_preprocesst::add_string_type(
   string_type.components()[1].type()=string_length_type();
   string_type.components()[2].set_name("data");
   string_type.components()[2].set_pretty_name("data");
-  // Use a pointer-to-unbounded-array instead of a pointer-to-char.
-  // Saves some casting in the string refinement algorithm but may
-  // be unnecessary.
-  string_type.components()[2].type()=java_reference_type(
-    array_typet(java_char_type(), infinity_exprt(string_length_type())));
+  string_type.components()[2].type()=pointer_typet(java_char_type());
   string_type.add_base(symbol_typet("java::java.lang.Object"));
   if(class_name!="java.lang.CharSequence")
   {
@@ -304,8 +300,8 @@ exprt java_string_library_preprocesst::convert_exprt_to_string_exprt(
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, init_code);
   code_assign_java_string_to_string_expr(
     string_expr, op_to_process, symbol_table, init_code);
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, init_code);
-  init_code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(
+    string_expr, loc, symbol_table, init_code);
   return string_expr;
 }
 
@@ -417,21 +413,37 @@ typet java_string_library_preprocesst::get_length_type(
 /// \param expr: an expression of structured type with length component
 /// \param symbol_table: symbol table
 /// \return expression representing the "length" member
-exprt java_string_library_preprocesst::get_length(
-  const exprt &expr, const symbol_tablet &symbol_table)
+static exprt get_length(const exprt &expr, const symbol_tablet &symbol_table)
 {
   return member_exprt(
     expr, "length", get_length_type(expr.type(), symbol_table));
 }
 
 /// access data member
-/// \param expr: an expression of structured type with length component
+/// \param expr: an expression of structured type with data component
 /// \param symbol_table: symbol table
 /// \return expression representing the "data" member
-exprt java_string_library_preprocesst::get_data(
-  const exprt &expr, const symbol_tablet &symbol_table)
+static exprt get_data(const exprt &expr, const symbol_tablet &symbol_table)
 {
   return member_exprt(expr, "data", get_data_type(expr.type(), symbol_table));
+}
+
+/// Access data member of a java string and do the necessary conversion to
+/// obtain a valid content value that can be assigned to a refined string
+/// content.
+/// \param expr: an expression of structured type with data and length component
+/// \param symbol_table: symbol table
+/// \return expression representing the "data" member
+static exprt get_content_from_java_string(
+  const exprt &expr, const symbol_tablet &symbol_table)
+{
+  const exprt &length=get_length(expr, symbol_table);
+  const exprt &data=get_data(expr, symbol_table);
+#if 0 // Ultimately we should use the real length
+  const array_typet type(java_char_type(), length);
+#endif
+  const array_typet type(data.type().subtype(), infinity_exprt(length.type()));
+  return typecast_exprt(data, type);
 }
 
 /// we declare a new `cprover_string` whose contents is deduced from the char
@@ -447,33 +459,24 @@ string_exprt java_string_library_preprocesst::replace_char_array(
   symbol_tablet &symbol_table,
   code_blockt &code)
 {
-  refined_string_typet ref_type=refined_string_type;
   dereference_exprt array=
     checked_dereference(array_pointer, array_pointer.type().subtype());
-  exprt array_data=get_data(array, symbol_table);
-  // `deref_array` is *(array_pointer->data)`
-  // No null-pointer-exception check here since all array structures
-  // have non-null data
-  const typet &content_type=ref_type.get_content_type();
-  dereference_exprt deref_array(array_data, array_data.type().subtype());
-
+  const exprt array_data=get_content_from_java_string(array, symbol_table);
   // lhs_deref <- convert_pointer_to_char_array(*(array_pointer->data))
   symbolt sym_char_array=get_fresh_aux_symbol(
-    content_type, "char_array", "char_array", loc, ID_java, symbol_table);
+    array_data.type(), "char_array", "char_array", loc, ID_java, symbol_table);
   symbol_exprt char_array=sym_char_array.symbol_expr();
   code.add(code_assign_function_application(
     char_array,
     ID_cprover_string_array_of_char_pointer_func,
-    {deref_array},
+    {array_data},
     symbol_table));
 
   // string_expr is `{ rhs->length; string_array }`
   string_exprt string_expr(
     get_length(array, symbol_table), char_array, refined_string_type);
   // string_expr_sym <- { rhs->length; string_array }
-  symbol_exprt string_expr_sym=
-    fresh_string(refined_string_type, loc, symbol_table);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   return string_expr;
 }
@@ -502,41 +505,49 @@ symbol_exprt java_string_library_preprocesst::fresh_string(
 string_exprt java_string_library_preprocesst::fresh_string_expr(
   const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
 {
-  refined_string_typet type=refined_string_type;
   symbolt sym_length=get_fresh_aux_symbol(
-    type.get_index_type(),
+    index_type,
     "cprover_string_length",
     "cprover_string_length",
     loc,
     ID_java,
     symbol_table);
   symbol_exprt length_field=sym_length.symbol_expr();
-  symbol_exprt content_field=fresh_array(
-    type.get_content_type(), loc, symbol_table);
-  string_exprt str(length_field, content_field, type);
+#if 0 // Ultimately we should use the actual length
+  array_typet array_type(char_type, length_field);
+#endif
+  array_typet array_type(char_type, infinity_exprt(index_type));
+  symbol_exprt content_field=fresh_array(array_type, loc, symbol_table);
+  string_exprt str(length_field, content_field, refined_string_type);
   code.add(code_declt(length_field));
   code.add(code_declt(content_field));
   return str;
 }
 
-/// add symbols with prefix cprover_string_length and cprover_string_data and
-/// construct a string_expr from them.
+/// Declare a variable with prefix cprover_string and assign a string_exprt to
+/// it, in the given code block.
+/// \param string_expr: string expression on the rhs of the assignement
 /// \param loc: a location in the program
 /// \param symbol_table: symbol table
 /// \param code: code block to which allocation instruction will be added
 /// \return a new expression of refined string type
-exprt java_string_library_preprocesst::fresh_string_expr_symbol(
-  const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
+exprt java_string_library_preprocesst::add_assignment_to_string_expr_symbol(
+  const string_exprt &string_expr,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table,
+  code_blockt &code)
 {
   symbolt sym=get_fresh_aux_symbol(
-    refined_string_type,
+    string_expr.type(),
     "cprover_string",
     "cprover_string",
     loc,
     ID_java,
     symbol_table);
-  code.add(code_declt(sym.symbol_expr()));
-  return sym.symbol_expr();
+  const exprt &symbol_expr=sym.symbol_expr();
+  code.add(code_declt(symbol_expr));
+  code.add(code_assignt(symbol_expr, string_expr));
+  return symbol_expr;
 }
 
 /// declare a new String and allocate it
@@ -806,17 +817,21 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
 
   // Fields of the string object
   exprt rhs_length=get_length(deref, symbol_table);
-  exprt member_data=get_data(deref, symbol_table);
-  dereference_exprt rhs_data(member_data, member_data.type().subtype());
 
   // Assignments
+  code_blockt code;
   code.add(code_assignt(lhs.length(), rhs_length));
 
+#if 0
+  exprt member_data=get_data(deref, symbol_table);
   // We always assume data of a String is not null
   not_exprt data_not_null(equal_exprt(
     member_data, null_pointer_exprt(to_pointer_type(member_data.type()))));
   code.add(code_assumet(data_not_null));
-  code.add(code_assignt(lhs.content(), rhs_data));
+#endif
+  exprt data_as_array=get_content_from_java_string(deref, symbol_table);
+  code.add(code_assignt(lhs.content(), data_as_array));
+  return code;
 }
 
 /// \param lhs: an expression representing a java string
@@ -902,20 +917,18 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   // Case of computerized scientific notation
   condition_list.push_back(binary_relation_exprt(arg, ID_ge, zero));
   string_exprt sci_notation=fresh_string_expr(loc, symbol_table, code);
-  exprt sci_notation_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.add(code_assign_function_to_string_expr(
     sci_notation,
     ID_cprover_string_of_float_scientific_notation_func,
     {arg},
     symbol_table));
   // Assign string_expr_sym = { string_expr_length, string_expr_content }
-  code.add(code_assignt(sci_notation_sym, sci_notation));
+  add_assignment_to_string_expr_symbol(sci_notation, loc, symbol_table, code);
   string_expr_list.push_back(sci_notation);
 
   // Subcase of negative scientific notation
   condition_list.push_back(binary_relation_exprt(arg, ID_lt, zero));
   string_exprt neg_sci_notation=fresh_string_expr(loc, symbol_table, code);
-  exprt neg_sci_notation_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   string_exprt minus_sign=fresh_string_expr(loc, symbol_table, code);
   code.add(code_assign_string_literal_to_string_expr(
     minus_sign, "-", symbol_table));
@@ -924,7 +937,8 @@ codet java_string_library_preprocesst::make_float_to_string_code(
     ID_cprover_string_concat_func,
     {minus_sign, sci_notation},
     symbol_table));
-  code.add(code_assignt(neg_sci_notation_sym, neg_sci_notation));
+  add_assignment_to_string_expr_symbol(
+    neg_sci_notation, loc, symbol_table, code);
   string_expr_list.push_back(neg_sci_notation);
 
   // Case of NaN
@@ -965,10 +979,10 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   condition_list.push_back(is_simple_float);
 
   string_exprt simple_notation=fresh_string_expr(loc, symbol_table, code);
-  exprt simple_notation_sym=fresh_string_expr_symbol(loc, symbol_table, code);
   code.add(code_assign_function_to_string_expr(
     simple_notation, ID_cprover_string_of_float_func, {arg}, symbol_table));
-  code.add(code_assignt(simple_notation_sym, simple_notation));
+  add_assignment_to_string_expr_symbol(
+    simple_notation, loc, symbol_table, code);
   string_expr_list.push_back(simple_notation);
 
   // Case of a negative number in simple notation
@@ -978,14 +992,13 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   condition_list.push_back(is_neg_simple_float);
 
   string_exprt neg_simple_notation=fresh_string_expr(loc, symbol_table, code);
-  exprt neg_simple_notation_sym=
-    fresh_string_expr_symbol(loc, symbol_table, code);
   code.add(code_assign_function_to_string_expr(
     neg_simple_notation,
     ID_cprover_string_concat_func,
     {minus_sign, simple_notation},
     symbol_table));
-  code.add(code_assignt(neg_simple_notation_sym, simple_notation));
+  add_assignment_to_string_expr_symbol(
+    simple_notation, loc, symbol_table, code);
   string_expr_list.push_back(neg_simple_notation);
 
   // Combining all cases
@@ -1059,8 +1072,7 @@ codet java_string_library_preprocesst::make_init_function_from_call(
     arg_this, string_expr, loc, symbol_table));
 
   // string_expr_sym <- {string_expr.length, string_expr.content}
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   return code;
 }
@@ -1142,11 +1154,9 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
 
   // string_expr = {this->length, this->data}
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
-  code_assign_java_string_to_string_expr(
-    string_expr, string_argument, symbol_table, code);
-  exprt string_expr_sym=fresh_string_expr_symbol(
-    loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  code.add(code_assign_java_string_to_string_expr(
+    string_expr, string_argument, symbol_table));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // data = new char[]
   exprt data=allocate_fresh_array(
@@ -1394,15 +1404,10 @@ exprt java_string_library_preprocesst::make_argument_for_format(
       pointer_typet string_pointer=
         java_reference_type(symbol_typet("java::java.lang.String"));
       typecast_exprt arg_i_as_string(arg_i, string_pointer);
-      code_assign_java_string_to_string_expr(
-        to_string_expr(field_expr),
-        arg_i_as_string,
-        symbol_table,
-        code_not_null);
-      exprt arg_i_string_expr_sym=fresh_string_expr_symbol(
-        loc, symbol_table, code_not_null);
-      code_not_null.add(code_assignt(
-        arg_i_string_expr_sym, to_string_expr(field_expr)));
+      code_not_null.add(code_assign_java_string_to_string_expr(
+        to_string_expr(field_expr), arg_i_as_string, symbol_table));
+      add_assignment_to_string_expr_symbol(
+        to_string_expr(field_expr), loc, symbol_table, code_not_null);
     }
     else if(name==ID_int || name==ID_float || name==ID_char || name==ID_boolean)
     {
@@ -1467,8 +1472,7 @@ codet java_string_library_preprocesst::make_string_format_code(
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
   code.add(code_assign_function_to_string_expr(
     string_expr, ID_cprover_string_format_func, processed_args, symbol_table));
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
   exprt java_string=allocate_fresh_string(
     type.return_type(), loc, symbol_table, code);
   code.add(code_assign_string_expr_to_new_java_string(
@@ -1522,8 +1526,7 @@ codet java_string_library_preprocesst::make_object_get_class_code(
       ID_cprover_string_literal_func,
       {class_identifier},
       symbol_table));
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // string_expr1 = substr(string_expr, 6)
   // We do this to remove the "java::" prefix
@@ -1534,8 +1537,7 @@ codet java_string_library_preprocesst::make_object_get_class_code(
       ID_cprover_string_substring_func,
       {string_expr, from_integer(6, java_int_type())},
       symbol_table));
-  exprt string_expr_sym1=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym1, string_expr1));
+  add_assignment_to_string_expr_symbol(string_expr1, loc, symbol_table, code);
 
   // string1 = (String*) string_expr
   pointer_typet string_ptr_type=
@@ -1617,8 +1619,7 @@ codet java_string_library_preprocesst::
     function_name, arguments, loc, symbol_table, code);
 
   // Assign string_expr to symbol to keep track of it
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // Assign to string
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
@@ -1660,8 +1661,7 @@ codet java_string_library_preprocesst::make_copy_string_code(
   code_assign_java_string_to_string_expr(string_expr, arg0, symbol_table, code);
 
   // Assign string_expr to string_expr_sym
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // Allocate and assign the string
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
@@ -1701,8 +1701,7 @@ codet java_string_library_preprocesst::make_copy_constructor_code(
   code_assign_java_string_to_string_expr(string_expr, arg1, symbol_table, code);
 
   // Assign string_expr to symbol to keep track of it
-  exprt string_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(string_expr_sym, string_expr));
+  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // Assign string_expr to `this` object
   symbol_exprt arg_this(params[0].get_identifier(), params[0].type());
@@ -1744,8 +1743,7 @@ codet java_string_library_preprocesst::make_string_length_code(
 
   // Assign str_expr to str_expr_sym for that expression to be present in the
   // symbol table in order to be processed by the string solver
-  exprt str_expr_sym=fresh_string_expr_symbol(loc, symbol_table, code);
-  code.add(code_assignt(str_expr_sym, str_expr));
+  add_assignment_to_string_expr_symbol(str_expr, loc, symbol_table, code);
   code.add(code_returnt(get_length(deref, symbol_table)));
 
   return code;
