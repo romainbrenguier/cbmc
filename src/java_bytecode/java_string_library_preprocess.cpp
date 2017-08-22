@@ -287,14 +287,14 @@ exprt::operandst java_string_library_preprocesst::process_parameters(
   return process_operands(ops, loc, symbol_table, init_code);
 }
 
-/// Creates a string_exprt from the input exprt
+/// Creates a string_exprt from the input exprt representing a char sequence
 /// \param op_to_process: an operand of a type which implements char sequence
 /// \param loc: location in the source
 /// \param symbol_table: symbol table
 /// \param init_code: code block, in which declaration of some arguments may be
 ///   added
 /// \return the processed operand
-exprt java_string_library_preprocesst::process_single_operand(
+exprt java_string_library_preprocesst::convert_exprt_to_string_exprt(
   const exprt &op_to_process,
   const source_locationt &loc,
   symbol_tablet &symbol_table,
@@ -331,7 +331,8 @@ exprt::operandst java_string_library_preprocesst::process_operands(
   for(const auto &p : operands)
   {
     if(implements_java_char_sequence(p.type()))
-      ops.push_back(process_single_operand(p, loc, symbol_table, init_code));
+      ops.push_back(
+        convert_exprt_to_string_exprt(p, loc, symbol_table, init_code));
     else if(is_java_char_array_pointer_type(p.type()))
       ops.push_back(replace_char_array(p, loc, symbol_table, init_code));
     else
@@ -363,13 +364,15 @@ exprt::operandst
   PRECONDITION(implements_java_char_sequence(op0.type()));
 
   exprt::operandst ops;
-  ops.push_back(process_single_operand(op0, loc, symbol_table, init_code));
+  ops.push_back(
+    convert_exprt_to_string_exprt(op0, loc, symbol_table, init_code));
 
   // TODO: Manage the case where we have a non-String Object (this should
   // probably be handled upstream. At any rate, the following code should be
   // protected with assertions on the type of op1.
   typecast_exprt tcast(op1, to_pointer_type(op0.type()));
-  ops.push_back(process_single_operand(tcast, loc, symbol_table, init_code));
+  ops.push_back(
+    convert_exprt_to_string_exprt(tcast, loc, symbol_table, init_code));
   return ops;
 }
 
