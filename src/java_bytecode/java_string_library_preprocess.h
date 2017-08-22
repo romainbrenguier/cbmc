@@ -204,9 +204,6 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  void declare_function(
-    irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
-
   symbol_exprt fresh_string(
     const typet &type,
     const source_locationt &loc,
@@ -239,12 +236,6 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
-
-  exprt make_function_application(
-    const irep_idt &function_name,
-    const exprt::operandst &arguments,
-    const typet &type,
-    symbol_tablet &symbol_table);
 
   codet code_assign_function_application(
     const exprt &lhs,
@@ -344,5 +335,14 @@ private:
 
   exprt get_object_at_index(const exprt &argv, int index);
 };
+
+void declare_function(
+  irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
+
+exprt make_function_application(
+  const irep_idt &function_name,
+  const exprt::operandst &arguments,
+  const typet &type,
+  symbol_tablet &symbol_table);
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARY_PREPROCESS_H

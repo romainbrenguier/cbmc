@@ -248,7 +248,7 @@ symbol_exprt java_string_library_preprocesst::fresh_array(
 /// \param function_name: a name
 /// \param type: a type
 /// \param symbol_table: symbol table
-void java_string_library_preprocesst::declare_function(
+void declare_function(
   irep_idt function_name, const typet &type, symbol_tablet &symbol_table)
 {
   auxiliary_symbolt func_symbol;
@@ -375,8 +375,7 @@ exprt::operandst
 /// \param type: a type containing a "data" component
 /// \param symbol_table: symbol table
 /// \return type of the "data" component
-typet java_string_library_preprocesst::get_data_type(
-  const typet &type, const symbol_tablet &symbol_table)
+static typet get_data_type(const typet &type, const symbol_tablet &symbol_table)
 {
   PRECONDITION(type.id()==ID_struct || type.id()==ID_symbol);
   if(type.id()==ID_symbol)
@@ -394,7 +393,7 @@ typet java_string_library_preprocesst::get_data_type(
 /// \param type: a type containing a "length" component
 /// \param symbol_table: symbol table
 /// \return type of the "length" component
-typet java_string_library_preprocesst::get_length_type(
+static typet get_length_type(
   const typet &type, const symbol_tablet &symbol_table)
 {
   PRECONDITION(type.id()==ID_struct || type.id()==ID_symbol);
@@ -435,15 +434,22 @@ static exprt get_data(const exprt &expr, const symbol_tablet &symbol_table)
 /// \param symbol_table: symbol table
 /// \return expression representing the "data" member
 static exprt get_content_from_java_string(
-  const exprt &expr, const symbol_tablet &symbol_table)
+  const exprt &expr, symbol_tablet &symbol_table)
 {
   const exprt &length=get_length(expr, symbol_table);
-  const exprt &data=get_data(expr, symbol_table);
+  exprt data=get_data(expr, symbol_table);
 #if 0 // Ultimately we should use the real length
   const array_typet type(java_char_type(), length);
 #endif
   const array_typet type(data.type().subtype(), infinity_exprt(length.type()));
-  return typecast_exprt(data, type);
+  data.type()=type;
+  index_exprt deref_data(data, from_integer(0, java_int_type()));
+  exprt app=make_function_application(
+    ID_cprover_string_array_of_char_pointer_func,
+    {deref_data},
+    type,
+    symbol_table);
+  return app;
 }
 
 /// we declare a new `cprover_string` whose contents is deduced from the char
@@ -466,12 +472,16 @@ string_exprt java_string_library_preprocesst::replace_char_array(
   symbolt sym_char_array=get_fresh_aux_symbol(
     array_data.type(), "char_array", "char_array", loc, ID_java, symbol_table);
   symbol_exprt char_array=sym_char_array.symbol_expr();
+#if 0
+  index_exprt deref_array(array_data, from_integer(0, java_char_type()));
+
   code.add(code_assign_function_application(
     char_array,
     ID_cprover_string_array_of_char_pointer_func,
-    {array_data},
+    {deref_array},
     symbol_table));
-
+#endif
+  code.add(code_assignt(char_array, array_data));
   // string_expr is `{ rhs->length; string_array }`
   string_exprt string_expr(
     get_length(array, symbol_table), char_array, refined_string_type);
@@ -591,7 +601,7 @@ exprt java_string_library_preprocesst::allocate_fresh_array(
 /// \param type: return type of the function
 /// \param symbol_table: a symbol table
 /// \return a function application representing: `function_name(arguments)`
-exprt java_string_library_preprocesst::make_function_application(
+exprt make_function_application(
   const irep_idt &function_name,
   const exprt::operandst &arguments,
   const typet &type,
@@ -779,11 +789,14 @@ codet java_string_library_preprocesst::
   dereference_exprt deref=checked_dereference(lhs, lhs.type().subtype());
 
   code_blockt code;
+#if 0
   exprt new_array=allocate_fresh_array(
     get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
   code.add(code_assignt(
     dereference_exprt(new_array, new_array.type().subtype()), rhs.content()));
-
+#endif
+  const typet data_type=get_data_type(deref.type(), symbol_table);
+  typecast_exprt new_array(address_of_exprt(rhs.content()), data_type);
   code.add(code_assign_components_to_java_string(
     lhs, new_array, rhs.length(), symbol_table));
 
@@ -819,7 +832,6 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
   exprt rhs_length=get_length(deref, symbol_table);
 
   // Assignments
-  code_blockt code;
   code.add(code_assignt(lhs.length(), rhs_length));
 
 #if 0
@@ -831,7 +843,6 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
 #endif
   exprt data_as_array=get_content_from_java_string(deref, symbol_table);
   code.add(code_assignt(lhs.content(), data_as_array));
-  return code;
 }
 
 /// \param lhs: an expression representing a java string
@@ -1154,8 +1165,8 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
 
   // string_expr = {this->length, this->data}
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
-  code.add(code_assign_java_string_to_string_expr(
-    string_expr, string_argument, symbol_table));
+  code_assign_java_string_to_string_expr(
+    string_expr, string_argument, symbol_table, code);
   add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // data = new char[]
@@ -1404,8 +1415,11 @@ exprt java_string_library_preprocesst::make_argument_for_format(
       pointer_typet string_pointer=
         java_reference_type(symbol_typet("java::java.lang.String"));
       typecast_exprt arg_i_as_string(arg_i, string_pointer);
-      code_not_null.add(code_assign_java_string_to_string_expr(
-        to_string_expr(field_expr), arg_i_as_string, symbol_table));
+      code_assign_java_string_to_string_expr(
+        to_string_expr(field_expr),
+        arg_i_as_string,
+        symbol_table,
+        code_not_null);
       add_assignment_to_string_expr_symbol(
         to_string_expr(field_expr), loc, symbol_table, code_not_null);
     }
