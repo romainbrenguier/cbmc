@@ -52,7 +52,9 @@ public:
   void add_string_type(const irep_idt &class_name, symbol_tablet &symbol_table);
   bool is_known_string_type(irep_idt class_name);
 
+#ifndef UNIT_TEST
 private:
+#endif
   // We forbid copies of the object
   java_string_library_preprocesst(
     const java_string_library_preprocesst &)=delete;

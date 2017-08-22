@@ -5,6 +5,11 @@ SRC = src/expr/require_expr.cpp \
       src/ansi-c/c_to_expr.cpp \
       unit_tests.cpp \
       catch_example.cpp \
+      util/expr_iterator.cpp \
+      analyses/call_graph.cpp \
+      java_bytecode/java_bytecode_convert_class/convert_abstract_class.cpp \
+      solvers/refinement/string_constraint_generator_valueof/is_digit_with_radix.cpp \
+      solvers/refinement/string_constraint_generator_valueof/get_numeric_value_from_character.cpp \
       # Empty last line
 
 # Test source files
@@ -16,9 +21,11 @@ SRC += unit_tests.cpp \
        analyses/does_remove_const/is_type_at_least_as_const_as.cpp \
        java_bytecode/java_bytecode_convert_class/convert_abstract_class.cpp \
        miniBDD_new.cpp \
+       java_bytecode/java_string_library_preprocess/convert_exprt_to_string_exprt.cpp \
        solvers/refinement/string_constraint_generator_valueof/calculate_max_string_length.cpp \
        solvers/refinement/string_constraint_generator_valueof/get_numeric_value_from_character.cpp \
        solvers/refinement/string_constraint_generator_valueof/is_digit_with_radix.cpp \
+       solvers/refinement/string_constraint_generator_valueof/is_digit_with_radix_lower_case.cpp \
        solvers/refinement/string_constraint_instantiation/instantiate_not_contains.cpp \
        solvers/refinement/string_refinement/concretize_array.cpp \
        solvers/refinement/string_refinement/substitute_array_list.cpp \
