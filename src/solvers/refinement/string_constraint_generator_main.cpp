@@ -516,7 +516,9 @@ exprt string_constraint_generatort::add_axioms_for_char_pointer(
   PRECONDITION(fun.arguments().size()==1);
   const exprt &char_pointer=fun.arguments()[0];
   PRECONDITION(char_pointer.id()==ID_index);
-  return typecast_exprt(char_pointer.op0(), fun.type());
+  exprt array=char_pointer.op0();
+  array.type()=fun.type();
+  return array;
   // TODO: It seems reasonable that the result of the function application
   //       should match the return type of the function. However it is not
   //       clear whether this typecast is properly handled in the string
