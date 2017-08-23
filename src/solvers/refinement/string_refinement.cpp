@@ -124,7 +124,7 @@ void string_refinementt::add_instantiations()
 
 /// List the simple expressions on which the expression depends in the
 /// `symbol_resolve` map. A simple expression is either a symbol or a
-/// constant array
+/// constant array --> TODO: this is no longer true
 /// \param expr: an expression
 static void depends_in_symbol_map(const exprt &expr, std::vector<exprt> &accu)
 {
@@ -139,12 +139,18 @@ static void depends_in_symbol_map(const exprt &expr, std::vector<exprt> &accu)
     string_exprt str=to_string_expr(expr);
     depends_in_symbol_map(str.content(), accu);
   }
-  else
+  else if(expr.id()==ID_symbol || expr.id()==ID_array || expr.id()==ID_array_of)
   {
     INVARIANT(
       expr.id()==ID_symbol || expr.id()==ID_array || expr.id()==ID_array_of,
       "leaf in symbol resolve should be a symbol or a constant array");
     accu.push_back(expr);
+  }
+  else
+  {
+    // TODO: check if this is correct
+    for(auto op : expr.operands())
+      depends_in_symbol_map(op, accu);
   }
 }
 
@@ -158,12 +164,14 @@ void string_refinementt::add_symbol_to_symbol_map(
   const exprt &lhs, const exprt &rhs)
 {
   PRECONDITION(lhs.id()==ID_symbol);
+#if 0
   PRECONDITION(rhs.id()==ID_symbol ||
                rhs.id()==ID_array ||
                rhs.id()==ID_array_of ||
                rhs.id()==ID_if ||
                (rhs.id()==ID_struct &&
                 is_refined_string_type(rhs.type())));
+#endif
 
   // We insert the mapped value of the rhs, if it exists.
   auto it=symbol_resolve.find(rhs);
@@ -279,6 +287,7 @@ bool string_refinementt::add_axioms_for_string_assigns(
       warning() << "ignoring char array " << from_expr(ns, "", rhs) << eom;
       return true;
     }
+    #endif
   }
   if(is_refined_string_type(rhs.type()))
   {
@@ -357,12 +366,13 @@ void string_refinementt::concretize_string(const exprt &expr)
         debug() << "concretize_string: ignoring out of bound index: "
                 << from_expr(ns, "", simple_i) << eom;
       }
+
+      array_exprt arr(to_array_type(content.type()));
+      arr.operands()=fill_in_map_as_vector(map);
+      debug() << "Concretized " << from_expr(ns, "", str.content())
+              << " = " << from_expr(ns, "", arr) << eom;
+      found_content[content]=arr;
     }
-    array_exprt arr(to_array_type(content.type()));
-    arr.operands()=fill_in_map_as_vector(map);
-    debug() << "Concretized " << from_expr(ns, "", str.content())
-            << " = " << from_expr(ns, "", arr) << eom;
-    found_content[content]=arr;
   }
 }
 
@@ -951,6 +961,19 @@ void string_refinementt::substitute_array_access(exprt &expr) const
       return;
     }
 
+    if(index_expr.array().type().id()==ID_pointer)
+    {
+      auto array_index_set=index_set.find(index_expr.array());
+      if(array_index_set!=index_set.end())
+      {
+        for(auto index : array_index_set->second)
+          debug() << "in index set: " << from_expr(ns, "", index) << eom;
+      }
+      else
+        warning() << "no index set for pointer : "
+                  << from_expr(ns, "", index_expr.array()) << eom;
+      return;
+    }
     DATA_INVARIANT(
       index_expr.array().id()==ID_array,
       string_refinement_invariantt("and index expression must be on a symbol, "
@@ -1471,23 +1494,32 @@ void string_refinementt::update_index_set(const std::vector<exprt> &cur)
 /// if expression for instance `cond?array1:(cond2:array2:array3)`.
 /// We return all the array expressions contained in `array_expr`.
 /// \param array_expr : an expression representing an array
-/// \return a vector containing symbols and constant arrays contained in the
-///         expression
-static std::vector<exprt> sub_arrays(const exprt &array_expr)
+/// \param accu: a vector to which symbols and constant arrays contained in the
+///   expression will be appended
+static void sub_arrays(const exprt &array_expr, std::vector<exprt> &accu)
 {
   if(array_expr.id()==ID_if)
   {
-    std::vector<exprt> res1=sub_arrays(to_if_expr(array_expr).true_case());
-    std::vector<exprt> res2=sub_arrays(to_if_expr(array_expr).false_case());
-    res1.insert(res1.end(), res2.begin(), res2.end());
-    return res1;
+    sub_arrays(to_if_expr(array_expr).true_case(), accu);
+    sub_arrays(to_if_expr(array_expr).false_case(), accu);
   }
   else
   {
-    INVARIANT(
-      array_expr.id()==ID_symbol || array_expr.id()==ID_array,
-      "character arrays should be symbol, constant array, or if expression");
-    return std::vector<exprt>(1, array_expr);
+    if(array_expr.type().id()==ID_array)
+    {
+      // TODO: check_that it does not contain any sub_array
+#if 0
+      INVARIANT(
+        array_expr.id()==ID_symbol || array_expr.id()==ID_array,
+        "character arrays should be symbol, constant array, or if expression");
+#endif
+      accu.push_back(array_expr);
+    }
+    else
+    {
+      for(auto op : array_expr.operands())
+        sub_arrays(op, accu);
+    }
   }
 }
 
@@ -1505,7 +1537,8 @@ void string_refinementt::add_to_index_set(const exprt &s, exprt i)
       return;
   }
 
-  std::vector<exprt> subs=sub_arrays(s);
+  std::vector<exprt> subs;
+  sub_arrays(s, subs);
   for(const auto &sub : subs)
     if(index_set[sub].insert(i).second)
       current_index_set[sub].insert(i);
