@@ -266,6 +266,9 @@ bool string_refinementt::add_axioms_for_string_assigns(
   if(is_char_array(rhs.type()))
   {
     set_char_array_equality(lhs, rhs);
+    add_symbol_to_symbol_map(lhs, rhs);
+    return false;
+#if 0
     if(rhs.id() == ID_symbol || rhs.id() == ID_array)
     {
       add_symbol_to_symbol_map(lhs, rhs);
@@ -1169,6 +1172,10 @@ bool string_refinementt::check_axioms()
     debug() << "    - axiom_in_model:\n"
             << "       " << from_expr(ns, "", axiom_in_model) << eom;
     debug() << "    - negated_axiom:\n"
+            << "       " << from_expr(ns, "", negaxiom) << eom;
+
+    negaxiom=simplify_expr(negaxiom, ns);
+    debug() << "    - simplified_negaxiom:\n"
             << "       " << from_expr(ns, "", negaxiom) << eom;
 
     exprt with_concretized_arrays=concretize_arrays_in_expression(
