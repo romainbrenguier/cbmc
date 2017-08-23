@@ -100,7 +100,7 @@ static exprt utf16_to_array(const std::wstring &in)
     array_typet(jchar, from_integer(in.length(), java_int_type())));
   for(const auto c : in)
     ret.copy_to_operands(from_integer(c, jchar));
-  return address_of_exprt(index_exprt(ret, from_integer(0, java_int_type())));
+  return ret;
 }
 
 void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
@@ -175,7 +175,8 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     literal_init.copy_to_operands(
       from_integer(id2string(value).size(), jls_struct.components()[1].type()));
     literal_init.copy_to_operands(typecast_exprt(
-      array_symbol.symbol_expr(), pointer_typet(java_char_type())));
+      address_of_exprt(array_symbol.symbol_expr()),
+      pointer_typet(java_char_type())));
 
     new_symbol.value=literal_init;
   }
