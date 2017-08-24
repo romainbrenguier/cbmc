@@ -796,9 +796,11 @@ codet java_string_library_preprocesst::
     dereference_exprt(new_array, new_array.type().subtype()), rhs.content()));
 #endif
   const typet data_type=get_data_type(deref.type(), symbol_table);
-  typecast_exprt new_array(address_of_exprt(rhs.content()), data_type);
+  address_of_exprt content(index_exprt(rhs.content(), from_integer(0, java_int_type())));
+  exprt tmp_array=fresh_array(data_type, loc, symbol_table);
+  code.add(code_assignt(tmp_array, content));
   code.add(code_assign_components_to_java_string(
-    lhs, new_array, rhs.length(), symbol_table));
+    lhs, tmp_array, rhs.length(), symbol_table));
 
   return code;
 }
@@ -1158,7 +1160,7 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
   const code_typet::parametert &p=type.parameters()[0];
   symbol_exprt string_argument(p.get_identifier(), p.type());
   PRECONDITION(implements_java_char_sequence(string_argument.type()));
-
+  assert(false);
   // lhs = new java::array[char]
   exprt lhs=allocate_fresh_array(
     type.return_type(), loc, symbol_table, code);

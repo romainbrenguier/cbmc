@@ -39,7 +39,7 @@ public:
   void set_mode();
 
   // Should we use counter examples at each iteration?
-  bool use_counter_example;
+  bool use_counter_example=true;
 
   // Should we concretize strings when the solver finished
   bool do_concretizing;
@@ -113,7 +113,6 @@ private:
   exprt substitute_array_with_expr(const exprt &expr, const exprt &index) const;
   void substitute_array_access(exprt &expr) const;
   void add_symbol_to_symbol_map(const exprt &lhs, const exprt &rhs);
-  bool is_char_array(const typet &type) const;
   bool add_axioms_for_string_assigns(const exprt &lhs, const exprt &rhs);
   void set_to(const exprt &expr, bool value) override;
 
@@ -161,6 +160,8 @@ exprt substitute_array_lists(exprt expr, size_t string_max_length);
 
 exprt concretize_arrays_in_expression(
   exprt expr, std::size_t string_max_length);
+
+bool is_char_array_type(const typet &type, const namespacet &ns);
 
 /// Convert index-value map to a vector of values. If a value for an
 /// index is not defined, set it to the value referenced by the next higher

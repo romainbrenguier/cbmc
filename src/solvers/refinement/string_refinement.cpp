@@ -246,13 +246,28 @@ exprt string_refinementt::substitute_function_applications(exprt expr)
 ///
 /// TODO: this is only for java char array and does not work for other languages
 /// \param type: a type
+/// \param ns: name space
 /// \return true if the given type is an array of java characters
-bool string_refinementt::is_char_array(const typet &type) const
+bool is_char_array_type(const typet &type, const namespacet &ns)
 {
   if(type.id()==ID_symbol)
-    return is_char_array(ns.follow(type));
+    return is_char_array_type(ns.follow(type), ns);
 
   return (type.id()==ID_array && type.subtype()==java_char_type());
+}
+
+static bool has_char_array_subtype(const typet &type, const namespacet &ns)
+{
+  if(is_char_array_type(type, ns))
+    return true;
+  auto it=type.subtypes().begin();
+  while(it!=type.subtypes().end())
+  {
+    if(has_char_array_subtype(*it, ns))
+      return true;
+    ++it;
+  }
+  return false;
 }
 
 /// add lemmas to the solver corresponding to the given equation
@@ -263,7 +278,7 @@ bool string_refinementt::is_char_array(const typet &type) const
 bool string_refinementt::add_axioms_for_string_assigns(
   const exprt &lhs, const exprt &rhs)
 {
-  if(is_char_array(rhs.type()))
+  if(is_char_array_type(rhs.type(), ns))
   {
     set_char_array_equality(lhs, rhs);
     add_symbol_to_symbol_map(lhs, rhs);
@@ -294,9 +309,16 @@ bool string_refinementt::add_axioms_for_string_assigns(
   }
   if(is_refined_string_type(rhs.type()))
   {
+    warning() << "add_axioms_for_string_assigns: refined_string_type found"
+              << eom;
     exprt refined_rhs=generator.add_axioms_for_refined_string(rhs);
     add_symbol_to_symbol_map(lhs, refined_rhs);
     return false;
+  }
+  if(has_char_array_subtype(lhs.type(), ns))
+  {
+    warning() << "add_axioms_for_string_assigns: refined_string_type found"
+              << eom;
   }
   // Other cases are to be handled by supert::set_to.
   return true;
@@ -668,6 +690,25 @@ void string_refinementt::add_lemma(
   prop.l_set_to_true(convert(simple_lemma));
 }
 
+/// Get the index set corresponding to one array
+static std::set<exprt> get_index_set(
+  const std::map<exprt, std::set<exprt>> &index_set, const exprt &array)
+{
+  auto pair=index_set.find(array);
+  if(pair!=index_set.end())
+    return pair->second;
+  else if(array.id()==ID_array)
+  {
+    std::set<exprt> set;
+    // for a constant array index set should contain all values from 0 to size-1
+    for(int i=0; i<array.operands().size(); ++i)
+      set.insert(from_integer(i, to_array_type(array.type()).size().type()));
+    return set;
+  }
+  else
+    return std::set<exprt>();
+}
+
 /// get a model of an array and put it in a certain form. If the size cannot be
 /// obtained or if it is too big, return an empty array.
 /// \par parameters: an expression representing an array and an expression
@@ -748,6 +789,38 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
       ret.move_to_operands(arr_val.operands()[i]);
     return ret;
   }
+  else if(arr_val.id()==ID_constant && arr_val.type().id()==ID_pointer)
+  {
+    // simplify_expr does not do this simplification (although from_expr does)
+    if(arr_val.operands().size()==1
+       && arr_val.op0().id()==ID_address_of
+       && arr_val.op0().op0().id()==ID_index
+       && to_index_expr(arr_val.op0().op0()).index().is_zero())
+    {
+      arr_val=to_index_expr(arr_val.op0().op0()).array();
+    }
+    arr_val=simplify_expr(arr_val, ns);
+    auto arr_index_set=get_index_set(index_set, arr_val);
+    if(!arr_index_set.empty())
+    {
+      std::map<std::size_t, exprt> value_map;
+      for(exprt index : arr_index_set)
+      {
+        mp_integer mp_key;
+        to_integer(index, mp_key);
+        exprt val=simplify_expr(get(index_exprt(arr_val, index)), ns);
+        value_map[mp_key.to_long()]=val;
+      }
+
+      std::vector<exprt> concrete_array=fill_in_map_as_vector(value_map);
+      array_exprt arr(ret_type);
+      arr.operands()=concrete_array;
+      return arr;
+    }
+    else
+      warning() << "warning: get_array empty index set for "
+                << from_expr(ns, "", arr_val) << eom;
+  }
   // default return value is an array of `0`s
   return array_of_exprt(from_integer(0, char_type), ret_type);
 }
@@ -796,6 +869,7 @@ void string_refinementt::debug_model()
       string_exprt refined=to_string_expr(it.second);
       debug() << indent << indent << "in_map: "
               << from_expr(ns, "", refined) << eom;
+      while(!replace_expr(symbol_resolve, refined)) ;
       debug() << indent << indent << "resolved: "
               << from_expr(ns, "", refined) << eom;
       const exprt &econtent=refined.content();
@@ -816,17 +890,20 @@ void string_refinementt::debug_model()
     else
     {
       INVARIANT(
-        is_char_array(it.second.type()),
+        is_char_array_type(it.second.type(), ns),
         string_refinement_invariantt("symbol_resolve should only map to "
           "refined_strings or to char_arrays, and refined_strings are already "
           "handled"));
       exprt arr=it.second;
       replace_expr(symbol_resolve, arr);
       debug() << "- " << from_expr(ns, "", to_symbol_expr(it.first)) << ":\n";
-      debug() << indent << indent << "resolved: "
+      debug() << indent << indent << "- resolved: "
               << from_expr(ns, "", arr) << "\n";
       exprt arr_model=get_array(arr);
-      debug() << indent << indent << "char_array: "
+      debug() << indent << indent << "- char_array: "
+              << from_expr(ns, "", arr_model) << eom;
+      arr_model=simplify_expr(arr_model, ns);
+      debug() << indent << indent << "- simplified_char_array: "
               << from_expr(ns, "", arr_model) << eom;
     }
   }
@@ -966,15 +1043,9 @@ void string_refinementt::substitute_array_access(exprt &expr) const
 
     if(index_expr.array().type().id()==ID_pointer)
     {
-      auto array_index_set=index_set.find(index_expr.array());
-      if(array_index_set!=index_set.end())
-      {
-        for(auto index : array_index_set->second)
-          debug() << "in index set: " << from_expr(ns, "", index) << eom;
-      }
-      else
-        warning() << "no index set for pointer : "
-                  << from_expr(ns, "", index_expr.array()) << eom;
+      auto array_index_set=get_index_set(index_set, index_expr.array());
+      for(auto index : array_index_set)
+        debug() << "in index set: " << from_expr(ns, "", index) << eom;
       return;
     }
     DATA_INVARIANT(
@@ -1755,7 +1826,7 @@ exprt string_refinementt::get(const exprt &expr) const
 {
   exprt ecopy(expr);
   replace_expr(symbol_resolve, ecopy);
-  if(is_char_array(ecopy.type()))
+  if(is_char_array_type(ecopy.type(), ns))
   {
     auto it_content=found_content.find(ecopy);
     if(it_content!=found_content.end())

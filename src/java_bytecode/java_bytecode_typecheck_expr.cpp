@@ -165,18 +165,19 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     // These are basically const global data:
     array_symbol.is_static_lifetime=true;
     array_symbol.is_state_var=true;
-    array_symbol.value=typecast_exprt(
-      address_of_exprt(
-        utf16_to_array(utf8_to_utf16_little_endian(id2string(value)))),
-      pointer_typet(java_char_type()));
+    typecast_exprt array_value(
+          address_of_exprt(
+            utf16_to_array(utf8_to_utf16_little_endian(id2string(value)))),
+          pointer_typet(java_char_type()));
+    array_symbol.value=array_value;
 
-    if(symbol_table.add(array_symbol))
+    if(false && symbol_table.add(array_symbol))
       throw "failed to add constarray symbol to symbol table";
 
     literal_init.copy_to_operands(
       from_integer(id2string(value).size(), jls_struct.components()[1].type()));
 
-    literal_init.copy_to_operands(array_symbol.symbol_expr());
+    literal_init.copy_to_operands(array_value); // array_symbol.symbol_expr());
 
     new_symbol.value=literal_init;
   }
