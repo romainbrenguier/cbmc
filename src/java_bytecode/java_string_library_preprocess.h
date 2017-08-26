@@ -249,13 +249,7 @@ private:
     const typet &type,
     symbol_tablet &symbol_table);
 
-  codet code_assign_function_to_string_expr(
-    const string_exprt &string_expr,
-    const irep_idt &function_name,
-    const exprt::operandst &arguments,
-    symbol_tablet &symbol_table);
-
-  string_exprt string_expr_of_function_application(
+  string_exprt string_expr_of_function(
     const irep_idt &function_name,
     const exprt::operandst &arguments,
     const source_locationt &loc,
@@ -280,13 +274,15 @@ private:
   void code_assign_java_string_to_string_expr(
     const string_exprt &lhs,
     const exprt &rhs,
+    const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  codet code_assign_string_literal_to_string_expr(
-    const string_exprt &lhs,
+  string_exprt string_literal_to_string_expr(
     const std::string &s,
-    symbol_tablet &symbol_table);
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
   codet make_function_from_call(
     const irep_idt &function_name,
