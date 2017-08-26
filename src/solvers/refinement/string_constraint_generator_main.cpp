@@ -145,6 +145,31 @@ string_exprt string_constraint_generatort::get_string_expr(const exprt &expr)
   }
 }
 
+/// create a new string_exprt as a conversion of a java string
+/// \par parameters: a java string
+/// \return a string expression
+string_exprt string_constraint_generatort::convert_java_string_to_string_exprt(
+    const exprt &jls)
+{
+  PRECONDITION(jls.id()==ID_struct);
+
+  exprt length(to_struct_expr(jls).op1());
+  // TODO: Add assertion on the type.
+  // assert(length.type()==refined_string_typet::index_type());
+  exprt java_content(to_struct_expr(jls).op2());
+  if(java_content.id()==ID_address_of)
+  {
+    java_content=to_address_of_expr(java_content).object();
+  }
+  else
+  {
+    java_content=dereference_exprt(java_content, java_content.type());
+  }
+  refined_string_typet type(java_int_type(), java_char_type());
+
+  return string_exprt(length, java_content, type);
+}
+
 /// adds standard axioms about the length of the string and its content: * its
 /// length should be positive * it should not exceed max_string_length * if
 /// force_printable_characters is true then all characters should belong to the
@@ -397,34 +422,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_from_literal(expr);
   else if(id==ID_cprover_string_concat_func)
     res=add_axioms_for_concat(expr);
-  else if(id==ID_cprover_string_concat_int_func)
-    res=add_axioms_for_concat_int(expr);
-  else if(id==ID_cprover_string_concat_long_func)
-    res=add_axioms_for_concat_long(expr);
-  else if(id==ID_cprover_string_concat_bool_func)
-      res=add_axioms_for_concat_bool(expr);
-  else if(id==ID_cprover_string_concat_char_func)
-    res=add_axioms_for_concat_char(expr);
-  else if(id==ID_cprover_string_concat_double_func)
-    res=add_axioms_for_concat_double(expr);
-  else if(id==ID_cprover_string_concat_float_func)
-    res=add_axioms_for_concat_float(expr);
-  else if(id==ID_cprover_string_concat_code_point_func)
-    res=add_axioms_for_concat_code_point(expr);
-  else if(id==ID_cprover_string_insert_func)
+   else if(id==ID_cprover_string_insert_func)
     res=add_axioms_for_insert(expr);
-  else if(id==ID_cprover_string_insert_int_func)
-    res=add_axioms_for_insert_int(expr);
-  else if(id==ID_cprover_string_insert_long_func)
-    res=add_axioms_for_insert_long(expr);
-  else if(id==ID_cprover_string_insert_bool_func)
-    res=add_axioms_for_insert_bool(expr);
-  else if(id==ID_cprover_string_insert_char_func)
-    res=add_axioms_for_insert_char(expr);
-  else if(id==ID_cprover_string_insert_double_func)
-    res=add_axioms_for_insert_double(expr);
-  else if(id==ID_cprover_string_insert_float_func)
-    res=add_axioms_for_insert_float(expr);
   else if(id==ID_cprover_string_substring_func)
     res=add_axioms_for_substring(expr);
   else if(id==ID_cprover_string_trim_func)
@@ -435,6 +434,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_to_upper_case(expr);
   else if(id==ID_cprover_string_char_set_func)
     res=add_axioms_for_char_set(expr);
+  else if(id==ID_cprover_string_value_of_func)
+    res=add_axioms_for_value_of(expr);
   else if(id==ID_cprover_string_empty_string_func)
     res=add_axioms_for_empty_string(expr);
   else if(id==ID_cprover_string_copy_func)
@@ -505,6 +506,23 @@ string_exprt string_constraint_generatort::add_axioms_for_copy(
     exprt count=args[2];
     return add_axioms_for_substring(s1, offset, plus_exprt(offset, count));
   }
+}
+
+/// add axioms corresponding to the String.valueOf([C) java function
+/// \par parameters: an expression corresponding to a java object of type char
+///   array
+/// \return a new string expression
+string_exprt string_constraint_generatort::add_axioms_for_java_char_array(
+  const exprt &char_array)
+{
+  string_exprt res=fresh_string(
+    refined_string_typet(java_int_type(), java_char_type()));
+  exprt arr=to_address_of_expr(char_array).object();
+  exprt len=member_exprt(arr, "length", res.length().type());
+  exprt cont=member_exprt(arr, "data", res.content().type());
+  res.length()=len;
+  res.content()=cont;
+  return res;
 }
 
 /// for an expression of the form `array[0]` returns `array`

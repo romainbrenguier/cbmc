@@ -68,9 +68,12 @@ string_exprt string_constraint_generatort::empty_string(
   const refined_string_typet &ref_type)
 {
   exprt size=from_integer(0, ref_type.get_index_type());
-  const array_typet &content_type=ref_type.get_content_type();
+  const typet &content_type=ref_type.get_content_type();
+#if 0
   array_of_exprt empty_array(
     from_integer(0, ref_type.get_content_type().subtype()), content_type);
+#endif
+  null_pointer_exprt empty_array(to_pointer_type(content_type));
   string_exprt res(size, empty_array, ref_type);
   return res;
 }

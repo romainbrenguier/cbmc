@@ -260,6 +260,7 @@ string_exprt string_constraint_generatort::add_axioms_for_format_specifier(
   const struct_exprt &arg,
   const refined_string_typet &ref_type)
 {
+  const string_exprt res=fresh_string(ref_type);
   switch(fs.conversion)
   {
   case format_specifiert::DECIMAL_INTEGER:
@@ -268,11 +269,13 @@ string_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     return add_axioms_from_int_hex(
       get_component_in_struct(arg, ID_int), ref_type);
   case format_specifiert::SCIENTIFIC:
-    return add_axioms_from_float_scientific_notation(
-      get_component_in_struct(arg, ID_float), ref_type);
+    add_axioms_from_float_scientific_notation(
+      res, get_component_in_struct(arg, ID_float), ref_type);
+    return res;
   case format_specifiert::DECIMAL_FLOAT:
-    return add_axioms_for_string_of_float(
-      get_component_in_struct(arg, ID_float), ref_type);
+    add_axioms_for_string_of_float(
+      res, get_component_in_struct(arg, ID_float), ref_type);
+    return res;
   case format_specifiert::CHARACTER:
     return add_axioms_from_char(
       get_component_in_struct(arg, ID_char), ref_type);
@@ -377,7 +380,11 @@ string_exprt string_constraint_generatort::add_axioms_for_format(
   auto it=intermediary_strings.begin();
   string_exprt str=*(it++);
   for(; it!=intermediary_strings.end(); ++it)
-    str=add_axioms_for_concat(str, *it);
+  {
+    const string_exprt fresh=fresh_string(ref_type);
+    const exprt return_code=add_axioms_for_concat(fresh, str, *it);
+    str=fresh;
+  }
   return str;
 }
 

@@ -245,6 +245,7 @@ exprt string_refinementt::substitute_function_applications(exprt expr)
 /// distinguish char array from other types
 ///
 /// TODO: this is only for java char array and does not work for other languages
+///       it should be parametrizable in some way
 /// \param type: a type
 /// \param ns: name space
 /// \return true if the given type is an array of java characters
@@ -253,7 +254,8 @@ bool is_char_array_type(const typet &type, const namespacet &ns)
   if(type.id()==ID_symbol)
     return is_char_array_type(ns.follow(type), ns);
 
-  return (type.id()==ID_array && type.subtype()==java_char_type());
+  return (type.id()==ID_pointer || type.id()==ID_array)
+    && type.subtype()==java_char_type();
 }
 
 static bool has_char_array_subtype(const typet &type, const namespacet &ns)

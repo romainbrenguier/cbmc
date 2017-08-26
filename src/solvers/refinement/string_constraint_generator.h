@@ -74,6 +74,8 @@ public:
   symbol_exprt fresh_boolean(const irep_idt &prefix);
   string_exprt fresh_string(const refined_string_typet &type);
   string_exprt get_string_expr(const exprt &expr);
+  string_exprt convert_java_string_to_string_exprt(
+    const exprt &underlying);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
   // Maps unresolved symbols to the string_exprt that was created for them
@@ -147,31 +149,26 @@ private:
   string_exprt add_axioms_for_empty_string(const function_application_exprt &f);
   string_exprt add_axioms_for_char_set(const function_application_exprt &expr);
   string_exprt add_axioms_for_copy(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat(
-    const string_exprt &s1, const string_exprt &s2);
+  exprt add_axioms_for_concat(
+    const string_exprt &res,
+    const string_exprt &s1,
+    const string_exprt &s2);
   string_exprt add_axioms_for_concat_substr(
+    const string_exprt &res,
     const string_exprt &s1,
     const string_exprt &s2,
     const exprt &start_index,
     const exprt &end_index);
-  string_exprt add_axioms_for_concat(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_int(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_long(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_bool(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_char(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_char(
-    const string_exprt &string_expr, const exprt &char_expr);
-  string_exprt add_axioms_for_concat_double(
-    const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_float(const function_application_exprt &f);
-  string_exprt add_axioms_for_concat_code_point(
-    const function_application_exprt &f);
+  exprt add_axioms_for_concat(const function_application_exprt &f);
   string_exprt add_axioms_for_constant(
     irep_idt sval, const refined_string_typet &ref_type);
-  string_exprt add_axioms_for_delete(
-    const string_exprt &str, const exprt &start, const exprt &end);
-  string_exprt add_axioms_for_delete(const function_application_exprt &expr);
-  string_exprt add_axioms_for_delete_char_at(
+  exprt add_axioms_for_delete(
+    const string_exprt &res,
+    const string_exprt &str,
+    const exprt &start,
+    const exprt &end);
+  exprt add_axioms_for_delete(const function_application_exprt &expr);
+  exprt add_axioms_for_delete_char_at(
     const function_application_exprt &expr);
   string_exprt add_axioms_for_format(const function_application_exprt &f);
   string_exprt add_axioms_for_format(
@@ -188,16 +185,12 @@ private:
     const struct_exprt &arg,
     const refined_string_typet &ref_type);
 
-  string_exprt add_axioms_for_insert(
-    const string_exprt &s1, const string_exprt &s2, const exprt &offset);
-  string_exprt add_axioms_for_insert(const function_application_exprt &f);
-  string_exprt add_axioms_for_insert_int(const function_application_exprt &f);
-  string_exprt add_axioms_for_insert_long(const function_application_exprt &f);
-  string_exprt add_axioms_for_insert_bool(const function_application_exprt &f);
-  string_exprt add_axioms_for_insert_char(const function_application_exprt &f);
-  string_exprt add_axioms_for_insert_double(
-    const function_application_exprt &f);
-  string_exprt add_axioms_for_insert_float(const function_application_exprt &f);
+  exprt add_axioms_for_insert(
+    const string_exprt &res,
+    const string_exprt &s1,
+    const string_exprt &s2,
+    const exprt &offset);
+  exprt add_axioms_for_insert(const function_application_exprt &f);
   string_exprt add_axioms_from_literal(const function_application_exprt &f);
   string_exprt add_axioms_from_int(const function_application_exprt &f);
   string_exprt add_axioms_from_int(
@@ -220,6 +213,12 @@ private:
   string_exprt add_axioms_from_char(const function_application_exprt &f);
   string_exprt add_axioms_from_char(
     const exprt &i, const refined_string_typet &ref_type);
+  string_exprt add_axioms_from_char_array(const function_application_exprt &f);
+  string_exprt add_axioms_from_char_array(
+    const exprt &length,
+    const exprt &data,
+    const exprt &offset,
+    const exprt &count);
   exprt add_axioms_for_index_of(
     const string_exprt &str,
     const exprt &c,
@@ -254,21 +253,21 @@ private:
   // and minus infinity the string are "Infinity" and "-Infinity respectively
   // otherwise the string contains only characters in [0123456789.] and '-' at
   // the start for negative number
-  string_exprt add_axioms_for_string_of_float(
+  exprt add_axioms_for_string_of_float(
     const function_application_exprt &f);
-  string_exprt add_axioms_for_string_of_float(
-    const exprt &f, const refined_string_typet &ref_type);
+  exprt add_axioms_for_string_of_float(
+    const string_exprt &res, const exprt &f, const refined_string_typet &ref_type);
 
   string_exprt add_axioms_for_fractional_part(
     const exprt &i, size_t max_size, const refined_string_typet &ref_type);
-  string_exprt add_axioms_from_float_scientific_notation(
-    const exprt &f, const refined_string_typet &ref_type);
-  string_exprt add_axioms_from_float_scientific_notation(
+  exprt add_axioms_from_float_scientific_notation(
+    const string_exprt &res, const exprt &f, const refined_string_typet &ref_type);
+  exprt add_axioms_from_float_scientific_notation(
     const function_application_exprt &f);
 
   // Add axioms corresponding to the String.valueOf(D) java function
   // TODO: the specifications is only partial
-  string_exprt add_axioms_from_double(const function_application_exprt &f);
+  exprt add_axioms_from_double(const function_application_exprt &f);
 
   string_exprt add_axioms_for_replace(const function_application_exprt &f);
   string_exprt add_axioms_for_set_length(const function_application_exprt &f);
@@ -288,8 +287,13 @@ private:
     const string_exprt &expr);
   string_exprt add_axioms_for_trim(const function_application_exprt &expr);
 
+  // Add axioms corresponding to the String.valueOf([CII) function
+  // TODO: not working correctly at the moment
+  string_exprt add_axioms_for_value_of(const function_application_exprt &f);
+
   string_exprt add_axioms_for_code_point(
     const exprt &code_point, const refined_string_typet &ref_type);
+  string_exprt add_axioms_for_java_char_array(const exprt &char_array);
   exprt add_axioms_for_char_pointer(const function_application_exprt &fun);
   string_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);
@@ -370,6 +374,7 @@ exprt get_numeric_value_from_character(
   const bool strict_formatting,
   unsigned long radix_ul);
 size_t max_printed_string_length(const typet &type, unsigned long ul_radix);
+unsigned long to_integer_or_default(const exprt &expr, unsigned long def);
 std::string utf16_constant_array_to_java(
   const array_exprt &arr, unsigned length);
 

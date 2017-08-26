@@ -394,44 +394,55 @@ string_exprt string_constraint_generatort::add_axioms_for_replace(
 }
 
 /// add axioms corresponding to the StringBuilder.deleteCharAt java function
-/// \par parameters: function application with two arguments, the first is a
-///   string
-/// and the second is an index
-/// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_delete_char_at(
+/// \param f: function application with two arguments, the first is a
+///   string and the second is an index
+/// \return an expression whose value is non null to signal an exception
+exprt string_constraint_generatort::add_axioms_for_delete_char_at(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 2)[0]);
+  PRECONDITION(f.arguments().size()==4);
+  const string_exprt res(f.arguments()[0], f.arguments()[1]);
+  const string_exprt str=get_string_expr(f.arguments()[2]);
   exprt index_one=from_integer(1, str.length().type());
   return add_axioms_for_delete(
+    res,
     str,
-    args(f, 2)[1],
-    plus_exprt_with_overflow_check(args(f, 2)[1], index_one));
+    f.arguments()[3],
+    plus_exprt_with_overflow_check(f.arguments()[3], index_one));
 }
 
-/// add axioms stating that the returned string corresponds to the input one
+/// add axioms stating that `res` corresponds to the input `str`
 /// where we removed characters between the positions start (included) and end
 /// (not included)
-/// \par parameters: a string expression, a start index and an end index
-/// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_delete(
-  const string_exprt &str, const exprt &start, const exprt &end)
+/// \param res: a string expression
+/// \param str: a string expression
+/// \param start: a start index
+/// \param end: an end index
+/// \return a expression different from zero to signal an exception
+exprt string_constraint_generatort::add_axioms_for_delete(
+  const string_exprt &res,
+  const string_exprt &str,
+  const exprt &start,
+  const exprt &end)
 {
   PRECONDITION(start.type()==str.length().type());
   PRECONDITION(end.type()==str.length().type());
   string_exprt str1=add_axioms_for_substring(
     str, from_integer(0, str.length().type()), start);
   string_exprt str2=add_axioms_for_substring(str, end, str.length());
-  return add_axioms_for_concat(str1, str2);
+  return add_axioms_for_concat(res, str1, str2);
 }
 
 /// add axioms corresponding to the StringBuilder.delete java function
-/// \par parameters: function application with three arguments: a string
-/// expression, a start index and an end index
-/// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_delete(
+/// \param f: function application with three arguments: a string
+///   expression, a start index and an end index
+/// \return an integer expression whose value is different from 0 to signal
+///   an exception
+exprt string_constraint_generatort::add_axioms_for_delete(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
-  return add_axioms_for_delete(str, args(f, 3)[1], args(f, 3)[2]);
+  PRECONDITION(f.arguments().size()==5);
+  const string_exprt res(f.arguments()[0], f.arguments()[1]);
+  const string_exprt arg=get_string_expr(args(f, 3)[0]);
+  return add_axioms_for_delete(res, arg, f.arguments()[3], f.arguments()[4]);
 }
