@@ -14,6 +14,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 #include <util/std_expr.h>
 #include <util/arith_tools.h>
+#include <util/refined_string_type.h>
 
 class string_exprt: public struct_exprt
 {
@@ -30,6 +31,11 @@ public:
   {
     copy_to_operands(_length, _content);
   }
+
+  string_exprt(const exprt &_length, const exprt &_content):
+    string_exprt(
+      _length, _content, refined_string_typet(_length.type(), _content.type()))
+  { }
 
   // Expression corresponding to the length of the string
   const exprt &length() const { return op0(); }
