@@ -20,7 +20,6 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #ifndef CPROVER_SOLVERS_REFINEMENT_STRING_REFINEMENT_H
 #define CPROVER_SOLVERS_REFINEMENT_STRING_REFINEMENT_H
 
-#include <limits>
 #include <util/string_expr.h>
 #include <util/replace_expr.h>
 #include <solvers/refinement/string_constraint.h>
@@ -28,8 +27,43 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <solvers/refinement/string_refinement_invariant.h>
 
 #define MAX_NB_REFINEMENT 100
+#define CHARACTER_FOR_UNKNOWN '?'
 
-class string_refinementt final: public bv_refinementt
+/// Similar interface to union-find for expressions, with a function for
+/// replacing sub-expressions by their result for find.
+class union_find_replacet
+{
+public:
+  /// return true if unmodified
+  bool replace_expr(exprt &expr) const
+  {
+    bool unchanged=::replace_expr(map_, expr);
+    while(!unchanged && !::replace_expr(map_, expr))
+      continue;
+    return unchanged;
+  }
+
+  exprt find_expr(exprt expr) const
+  {
+    replace_expr(expr);
+    return expr;
+  }
+
+  exprt add_symbol(const exprt &expr, const exprt &dst);
+
+  std::vector<std::pair<exprt, exprt>> to_vector()
+  {
+    std::vector<std::pair<exprt, exprt>> equations;
+    for(const auto &pair : map_)
+      equations.emplace_back(pair.first, find_expr(pair.second));
+    return equations;
+  }
+
+private:
+  replace_mapt map_;
+};
+
+class string_refinementt: public bv_refinementt
 {
 public:
   /// string_refinementt constructor arguments
@@ -71,9 +105,6 @@ private:
   // Base class
   typedef bv_refinementt supert;
 
-  typedef std::set<exprt> expr_sett;
-  typedef std::list<exprt> exprt_listt;
-
   string_refinementt(const infot &, bool);
   bvt convert_bool_bv(const exprt &boole, const exprt &orig);
 
@@ -82,10 +113,10 @@ private:
   string_constraint_generatort generator;
 
   const bool non_empty_string;
-  expr_sett nondet_arrays;
+  std::set<exprt> nondet_arrays;
 
   // Simple constraints that have been given to the solver
-  expr_sett seen_instances;
+  std::set<exprt> seen_instances;
 
   std::vector<string_constraintt> universal_axioms;
 
@@ -96,16 +127,20 @@ private:
 
   // See the definition in the PASS article
   // Warning: this is indexed by array_expressions and not string expressions
-  std::map<exprt, expr_sett> current_index_set;
-  std::map<exprt, expr_sett> index_set;
-  replace_mapt symbol_resolve;
-  std::map<exprt, exprt_listt> reverse_symbol_resolve;
+  std::map<exprt, std::vector<exprt>> current_index_set_;
+  std::map<exprt, std::set<exprt>> index_set_;
+  union_find_replacet symbol_resolve;
+
+  std::vector<equal_exprt> equations_;
   std::list<std::pair<exprt, bool>> non_string_axioms;
 
   // Length of char arrays found during concretization
   std::map<exprt, exprt> found_length;
   // Content of char arrays found during concretization
   std::map<exprt, array_exprt> found_content;
+
+  // Map pointers to array symbols
+  std::map<exprt, symbol_exprt> pointer_map;
 
   void add_equivalence(const irep_idt & lhs, const exprt & rhs);
 
@@ -120,8 +155,6 @@ private:
   exprt substitute_java_strings(exprt expr);
   exprt substitute_array_with_expr(const exprt &expr, const exprt &index) const;
   void substitute_array_access(exprt &expr) const;
-  void add_symbol_to_symbol_map(const exprt &lhs, const exprt &rhs);
-  bool is_char_array(const typet &type) const;
   bool add_axioms_for_string_assigns(const exprt &lhs, const exprt &rhs);
   void set_to(const exprt &expr, bool value) override;
 
@@ -159,16 +192,19 @@ private:
   void concretize_results();
   void concretize_lengths();
 
-  exprt get_array(const exprt &arr, const exprt &size) const;
   exprt get_array(const exprt &arr) const;
+  exprt get_char_array_in_model(exprt arr) const;
+  exprt get_char_pointer_in_model(const exprt &ptr) const;
 
-  std::string string_of_array(const array_exprt &arr);
+  std::string string_of_array(const array_exprt &arr) const;
 };
 
 exprt substitute_array_lists(exprt expr, size_t string_max_length);
 
 exprt concretize_arrays_in_expression(
   exprt expr, std::size_t string_max_length);
+
+bool is_char_array_type(const typet &type, const namespacet &ns);
 
 /// Convert index-value map to a vector of values. If a value for an
 /// index is not defined, set it to the value referenced by the next higher

@@ -1,6 +1,6 @@
 public class test
 {
-    public static String main()
+    public static String main(int i)
     {
         Object t[] = new Object[5];
         t[0] = "world!";
@@ -9,8 +9,10 @@ public class test
         {
             s.append((String) t[0]);
         }
-        assert(s.toString().equals("Hello world!"));
-        assert(!s.toString().equals("Hello world!"));
+	if(i==0)
+	  assert(s.toString().equals("Hello world!"));
+	else
+	  assert(!s.toString().equals("Hello world!"));
         return s.toString();
     }
 }

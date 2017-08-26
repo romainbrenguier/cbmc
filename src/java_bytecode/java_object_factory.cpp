@@ -31,6 +31,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "java_types.h"
 #include "java_utils.h"
+#include "java_string_library_preprocess.h"
 
 static symbolt &new_tmp_symbol(
   symbol_tablet &symbol_table,
@@ -504,6 +505,99 @@ public:
   }
 };
 
+/// Initialize a nondeterministic String
+/// \param expr: the expression to initialize
+/// \param tmp_object: the actual object
+/// \param loc: location in the source
+/// \param symbol_table: the symbol table
+/// \return code for initialization of the strings
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// struct java.lang.String { struct @java.lang.Object;
+///   int length; char *data; } tmp_object_factory$1;
+/// arg = &tmp_object_factory$1;
+/// tmp_object_factory$1.@java.lang.Object.@class_identifier =
+///   "java::java.lang.String";
+/// tmp_object_factory$1.@java.lang.Object.@lock = false;
+/// tmp_object_factory$1.length = NONDET(int);
+/// char tmp_object_factory$2[tmp_object_factory$1.length];
+/// tmp_object_factory$1.data = tmp_object_factory$2;
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// Unit tests in `unit/java_bytecode/java_object_factory/` ensure
+/// it is the case.
+codet gen_nondet_string_init(
+  const exprt &expr,
+  const exprt &tmp_object,
+  const source_locationt &loc,
+  symbol_tablet &symbol_table)
+{
+  PRECONDITION(
+    java_string_library_preprocesst::
+      implements_java_char_sequence(expr.type()));
+
+  const namespacet ns(symbol_table);
+  code_blockt code;
+
+  // `obj` is `*expr`
+  const dereference_exprt obj(expr, expr.type().subtype());
+  const irep_idt &class_id=to_symbol_type(obj.type()).get_identifier();
+
+  // length_expr = nondet(int);
+  typet const_size_type=java_int_type();
+  const symbolt length_sym=new_tmp_symbol(symbol_table, loc, const_size_type);
+  const symbol_exprt length_expr=length_sym.symbol_expr();
+  const side_effect_expr_nondett nondet_length(length_expr.type());
+  code.add(code_declt(length_expr));
+  code.add(code_assignt(length_expr, nondet_length));
+
+  // assume (length_expr >= 0);
+  code.add(code_assumet(binary_relation_exprt(
+    length_expr, ID_ge, from_integer(0, java_int_type()))));
+
+  // data_expr = nondet(char*)
+  const array_typet array_type(java_char_type(), length_expr);
+  const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type);
+  const symbol_exprt data_expr=data_sym.symbol_expr();
+  side_effect_expr_nondett nondet_data(data_expr.type());
+  code.add(code_declt(data_expr));
+  code.add(code_assignt(data_expr, nondet_data));
+
+  // the literal with @clsid = String and @lock = false:
+  const symbol_typet jlo_symbol("java::java.lang.Object");
+  const struct_typet jlo_type=to_struct_type(ns.follow(jlo_symbol));
+  struct_exprt jlo_init(jlo_symbol);
+
+  struct_exprt struct_expr(tmp_object.type());
+  const constant_exprt class_id_expr(class_id, jlo_type.components()[0].type());
+  jlo_init.copy_to_operands(class_id_expr);
+  jlo_init.copy_to_operands(from_integer(false, jlo_type.components()[1].type()));
+  struct_expr.copy_to_operands(jlo_init);
+  struct_expr.copy_to_operands(length_expr);
+  const address_of_exprt first_index(index_exprt(
+       data_expr, from_integer(0, java_int_type())));
+  struct_expr.copy_to_operands(first_index);
+
+  symbolt &return_sym=get_fresh_aux_symbol(
+        java_int_type(),
+        "return_array",
+        "return_array",
+        loc,
+        ID_java,
+        symbol_table);
+  const exprt return_expr=return_sym.symbol_expr();
+  code.add(code_declt(return_expr));
+  code.add(code_assign_function_application(
+    return_expr,
+    "cprover_associate_pointer_to_array",
+    {data_expr, first_index},
+    symbol_table));
+
+  // tmp_object = struct_expr;
+  code.add(code_assignt(tmp_object, struct_expr));
+  // expr = &tmp_object;
+  code.add(code_assignt(expr, address_of_exprt(tmp_object), loc));
+  return code;
+}
+
 /// Initializes a pointer \p expr of type \p pointer_type to a primitive-typed
 /// value or an object tree.  It allocates child objects as necessary and
 /// nondet-initializes their members, or if MUST_UPDATE_IN_PLACE is set,
@@ -544,6 +638,7 @@ void java_object_factoryt::gen_nondet_pointer_init(
   const update_in_placet &update_in_place)
 {
   PRECONDITION(expr.type().id()==ID_pointer);
+
 
   const pointer_typet &replacement_pointer_type=
     pointer_type_selector.convert_pointer_type(pointer_type, ns);
@@ -633,32 +728,44 @@ void java_object_factoryt::gen_nondet_pointer_init(
   // vector of assignments that create a new object (recursively initializes it)
   // and asign to `expr` the address of such object
   code_blockt non_null_inst;
-  gen_pointer_target_init(
-    non_null_inst,
-    expr,
-    subtype,
-    alloc_type,
-    depth,
-    update_in_placet::NO_UPDATE_IN_PLACE);
+
+  if(java_string_library_preprocesst::implements_java_char_sequence(
+       expr.type()))
+  {
+    const dereference_exprt obj(expr, expr.type().subtype());
+
+    const struct_typet struct_type=
+      (obj.type().id()!=ID_struct)?
+      to_struct_type(ns.follow(to_symbol_type(obj.type()))):
+      to_struct_type(obj.type());
+    const symbolt tmp_object_sym=new_tmp_symbol(symbol_table, loc, struct_type);
+    const symbol_exprt tmp_object=tmp_object_sym.symbol_expr();
+    // struct java.lang.String tmp_object;
+    assignments.add(code_declt(tmp_object));
+
+    assignments.add(gen_nondet_string_init(expr, tmp_object, loc, symbol_table));
+  }
+  else
+  {
+    gen_pointer_target_init(
+      non_null_inst,
+      expr,
+      subtype,
+      alloc_type,
+      depth,
+      update_in_placet::NO_UPDATE_IN_PLACE);
+  }
 
   auto set_null_inst=get_null_assignment(expr, pointer_type);
 
   // Determine whether the pointer can be null. In particular:
   // - the 'data' of a String should not be null.
   // - the pointers inside the java.lang.Class class shall not be null
-  bool not_null=
-    !allow_null ||
-    ((class_identifier=="java.lang.String" ||
-      class_identifier=="java.lang.StringBuilder" ||
-      class_identifier=="java.lang.StringBuffer" ||
-      class_identifier=="java.lang.CharSequence") &&
-     subtype.id()==ID_array) ||
-    class_identifier=="java.lang.Class";
+  const bool not_null=!allow_null || class_identifier=="java.lang.Class";
 
   // Alternatively, if this is a void* we *must* initialise with null:
   // (This can currently happen for some cases of #exception_value)
-  bool must_be_null=
-    subtype==empty_typet();
+  const bool must_be_null=subtype==empty_typet();
 
   if(must_be_null)
   {

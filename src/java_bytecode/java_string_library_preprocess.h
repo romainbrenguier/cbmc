@@ -55,14 +55,6 @@ public:
   void add_string_type(const irep_idt &class_name, symbol_tablet &symbol_table);
   bool is_known_string_type(irep_idt class_name);
 
-#ifndef UNIT_TEST
-private:
-#endif
-  // We forbid copies of the object
-  java_string_library_preprocesst(
-    const java_string_library_preprocesst &)=delete;
-
-  static bool java_type_matches_tag(const typet &type, const std::string &tag);
   static bool is_java_string_pointer_type(const typet &type);
   static bool is_java_string_type(const typet &type);
   static bool is_java_string_builder_type(const typet &type);
@@ -81,6 +73,15 @@ private:
       is_java_string_buffer_pointer_type(type) ||
       is_java_string_pointer_type(type);
   }
+
+#ifndef UNIT_TEST
+private:
+#endif
+  // We forbid copies of the object
+  java_string_library_preprocesst(
+    const java_string_library_preprocesst &)=delete;
+
+  static bool java_type_matches_tag(const typet &type, const std::string &tag);
 
   character_refine_preprocesst character_preprocess;
 
@@ -167,7 +168,7 @@ private:
   codet code_for_scientific_notation(
     const exprt &arg,
     const ieee_float_spect &float_spec,
-    const string_exprt &string_expr,
+    const refined_string_exprt &string_expr,
     const exprt &tmp_string,
     const refined_string_typet &refined_string_type,
     const source_locationt &loc,
@@ -198,14 +199,11 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &init_code);
 
-  string_exprt replace_char_array(
+  refined_string_exprt replace_char_array(
     const exprt &array_pointer,
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
-
-  void declare_function(
-    irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
 
   symbol_exprt fresh_string(
     const typet &type,
@@ -217,13 +215,12 @@ private:
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
-  string_exprt fresh_string_expr(
+  refined_string_exprt decl_string_expr(
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  exprt add_assignment_to_string_expr_symbol(
-    const string_exprt &string_expr,
+  refined_string_exprt nondet_string_expr(
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
@@ -240,31 +237,13 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  exprt make_function_application(
-    const irep_idt &function_name,
-    const exprt::operandst &arguments,
-    const typet &type,
-    symbol_tablet &symbol_table);
-
-  codet code_assign_function_application(
-    const exprt &lhs,
-    const irep_idt &function_name,
-    const exprt::operandst &arguments,
-    symbol_tablet &symbol_table);
-
   codet code_return_function_application(
     const irep_idt &function_name,
     const exprt::operandst &arguments,
     const typet &type,
     symbol_tablet &symbol_table);
 
-  codet code_assign_function_to_string_expr(
-    const string_exprt &string_expr,
-    const irep_idt &function_name,
-    const exprt::operandst &arguments,
-    symbol_tablet &symbol_table);
-
-  string_exprt string_expr_of_function_application(
+  refined_string_exprt string_expr_of_function(
     const irep_idt &function_name,
     const exprt::operandst &arguments,
     const source_locationt &loc,
@@ -278,24 +257,26 @@ private:
     symbol_tablet &symbol_table);
 
   codet code_assign_string_expr_to_java_string(
-    const exprt &lhs, const string_exprt &rhs, symbol_tablet &symbol_table);
+    const exprt &lhs, const refined_string_exprt &rhs, symbol_tablet &symbol_table);
 
   codet code_assign_string_expr_to_new_java_string(
     const exprt &lhs,
-    const string_exprt &rhs,
+    const refined_string_exprt &rhs,
     const source_locationt &loc,
     symbol_tablet &symbol_table);
 
   void code_assign_java_string_to_string_expr(
-    const string_exprt &lhs,
+    const refined_string_exprt &lhs,
     const exprt &rhs,
+    const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  codet code_assign_string_literal_to_string_expr(
-    const string_exprt &lhs,
+  refined_string_exprt string_literal_to_string_expr(
     const std::string &s,
-    symbol_tablet &symbol_table);
+    const source_locationt &loc,
+    symbol_tablet &symbol_table,
+    code_blockt &code);
 
   codet make_function_from_call(
     const irep_idt &function_name,
@@ -344,5 +325,21 @@ private:
 
   exprt get_object_at_index(const exprt &argv, int index);
 };
+
+void declare_function(
+  irep_idt function_name, const typet &type, symbol_tablet &symbol_table);
+
+exprt make_function_application(
+  const irep_idt &function_name,
+  const exprt::operandst &arguments,
+  const typet &type,
+  symbol_tablet &symbol_table);
+
+
+codet code_assign_function_application(
+  const exprt &lhs,
+  const irep_idt &function_name,
+  const exprt::operandst &arguments,
+  symbol_tablet &symbol_table);
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARY_PREPROCESS_H

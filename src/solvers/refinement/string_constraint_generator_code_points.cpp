@@ -12,23 +12,14 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 #include <solvers/refinement/string_constraint_generator.h>
 
-/*******************************************************************    \
-
-Function: string_constraint_generatort::add_axioms_for_code_point
-
-  Inputs: an expression representing a java code point
-
- Outputs: a new string expression
-
- Purpose: add axioms for the conversion of an integer representing a java
-          code point to a utf-16 string
-
-\*******************************************************************/
-
-string_exprt string_constraint_generatort::add_axioms_for_code_point(
-  const exprt &code_point, const refined_string_typet &ref_type)
+/// add axioms for the conversion of an integer representing a java
+/// code point to a utf-16 string
+/// \param code_point an expression representing a java code point
+/// \return an expression
+exprt string_constraint_generatort::add_axioms_for_code_point(
+  const array_string_exprt &res, const exprt &code_point)
 {
-  string_exprt res=fresh_string(ref_type);
+  const typet &char_type=res.content().type().subtype();
   const typet &type=code_point.type();
   PRECONDITION(type.id()==ID_signedbv);
 
@@ -53,7 +44,7 @@ string_exprt string_constraint_generatort::add_axioms_for_code_point(
   implies_exprt a2(not_exprt(small), res.axiom_for_has_length(2));
   m_axioms.push_back(a2);
 
-  typecast_exprt code_point_as_char(code_point, ref_type.get_char_type());
+  typecast_exprt code_point_as_char(code_point, char_type);
   implies_exprt a3(small, equal_exprt(res[0], code_point_as_char));
   m_axioms.push_back(a3);
 
@@ -61,13 +52,13 @@ string_exprt string_constraint_generatort::add_axioms_for_code_point(
     hexD800, div_exprt(minus_exprt(code_point, hex010000), hex0400));
   implies_exprt a4(
     not_exprt(small),
-    equal_exprt(res[0], typecast_exprt(first_char, ref_type.get_char_type())));
+    equal_exprt(res[0], typecast_exprt(first_char, char_type)));
   m_axioms.push_back(a4);
 
   plus_exprt second_char(hexDC00, mod_exprt(code_point, hex0400));
   implies_exprt a5(
     not_exprt(small),
-    equal_exprt(res[1], typecast_exprt(second_char, ref_type.get_char_type())));
+    equal_exprt(res[1], typecast_exprt(second_char, char_type)));
   m_axioms.push_back(a5);
 
   return res;
@@ -125,21 +116,22 @@ exprt pair_value(exprt char1, exprt char2, typet return_type)
 exprt string_constraint_generatort::add_axioms_for_code_point_at(
   const function_application_exprt &f)
 {
-  typet return_type=f.type();
+  const typet &return_type=f.type();
   PRECONDITION(return_type.id()==ID_signedbv);
-  string_exprt str=get_string_expr(args(f, 2)[0]);
-  const exprt &pos=args(f, 2)[1];
+  PRECONDITION(f.arguments().size()==2);
+  const array_string_exprt str=get_string_expr(f.arguments()[0]);
+  const exprt &pos=f.arguments()[1];
 
-  symbol_exprt result=fresh_symbol("char", return_type);
-  exprt index1=from_integer(1, str.length().type());
+  const symbol_exprt result=fresh_symbol("char", return_type);
+  const exprt index1=from_integer(1, str.length().type());
   const exprt &char1=str[pos];
   const exprt &char2=str[plus_exprt_with_overflow_check(pos, index1)];
-  exprt char1_as_int=typecast_exprt(char1, return_type);
-  exprt char2_as_int=typecast_exprt(char2, return_type);
-  exprt pair=pair_value(char1_as_int, char2_as_int, return_type);
-  exprt is_low=is_low_surrogate(
+  const typecast_exprt char1_as_int(char1, return_type);
+  const typecast_exprt char2_as_int(char2, return_type);
+  const exprt pair=pair_value(char1_as_int, char2_as_int, return_type);
+  const exprt is_low=is_low_surrogate(
     str[plus_exprt_with_overflow_check(pos, index1)]);
-  exprt return_pair=and_exprt(is_high_surrogate(str[pos]), is_low);
+  const and_exprt return_pair(is_high_surrogate(str[pos]), is_low);
 
   m_axioms.push_back(implies_exprt(return_pair, equal_exprt(result, pair)));
   m_axioms.push_back(
@@ -159,17 +151,17 @@ exprt string_constraint_generatort::add_axioms_for_code_point_before(
   typet return_type=f.type();
   PRECONDITION(return_type.id()==ID_signedbv);
   symbol_exprt result=fresh_symbol("char", return_type);
-  string_exprt str=get_string_expr(args[0]);
+  array_string_exprt str=get_string_expr(args[0]);
 
   const exprt &char1=
     str[minus_exprt(args[1], from_integer(2, str.length().type()))];
   const exprt &char2=
     str[minus_exprt(args[1], from_integer(1, str.length().type()))];
-  exprt char1_as_int=typecast_exprt(char1, return_type);
-  exprt char2_as_int=typecast_exprt(char2, return_type);
+  const typecast_exprt char1_as_int(char1, return_type);
+  const typecast_exprt char2_as_int(char2, return_type);
 
-  exprt pair=pair_value(char1_as_int, char2_as_int, return_type);
-  exprt return_pair=and_exprt(
+  const exprt pair=pair_value(char1_as_int, char2_as_int, return_type);
+  const and_exprt return_pair(
     is_high_surrogate(char1), is_low_surrogate(char2));
 
   m_axioms.push_back(implies_exprt(return_pair, equal_exprt(result, pair)));
@@ -186,13 +178,14 @@ exprt string_constraint_generatort::add_axioms_for_code_point_before(
 exprt string_constraint_generatort::add_axioms_for_code_point_count(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
-  const exprt &begin=args(f, 3)[1];
-  const exprt &end=args(f, 3)[2];
+  PRECONDITION(f.arguments().size()==3);
+  const array_string_exprt str=get_string_expr(f.arguments()[0]);
+  const exprt &begin=f.arguments()[1];
+  const exprt &end=f.arguments()[2];
   const typet &return_type=f.type();
-  symbol_exprt result=fresh_symbol("code_point_count", return_type);
-  minus_exprt length(end, begin);
-  div_exprt minimum(length, from_integer(2, length.type()));
+  const symbol_exprt result=fresh_symbol("code_point_count", return_type);
+  const minus_exprt length(end, begin);
+  const div_exprt minimum(length, from_integer(2, length.type()));
   m_axioms.push_back(binary_relation_exprt(result, ID_le, length));
   m_axioms.push_back(binary_relation_exprt(result, ID_ge, minimum));
 
@@ -208,14 +201,15 @@ exprt string_constraint_generatort::add_axioms_for_code_point_count(
 exprt string_constraint_generatort::add_axioms_for_offset_by_code_point(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
-  const exprt &index=args(f, 3)[1];
-  const exprt &offset=args(f, 3)[2];
+  PRECONDITION(f.arguments().size()==3);
+  const array_string_exprt str=get_string_expr(f.arguments()[0]);
+  const exprt &index=f.arguments()[1];
+  const exprt &offset=f.arguments()[2];
   const typet &return_type=f.type();
-  symbol_exprt result=fresh_symbol("offset_by_code_point", return_type);
+  const symbol_exprt result=fresh_symbol("offset_by_code_point", return_type);
 
-  exprt minimum=plus_exprt_with_overflow_check(index, offset);
-  exprt maximum=plus_exprt_with_overflow_check(
+  const exprt minimum=plus_exprt_with_overflow_check(index, offset);
+  const exprt maximum=plus_exprt_with_overflow_check(
     index, plus_exprt_with_overflow_check(offset, offset));
   m_axioms.push_back(binary_relation_exprt(result, ID_le, maximum));
   m_axioms.push_back(binary_relation_exprt(result, ID_ge, minimum));

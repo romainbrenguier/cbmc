@@ -890,10 +890,12 @@ typet interpretert::concretize_type(const typet &type)
     const exprt &size_expr=static_cast<const exprt &>(type.find(ID_size));
     mp_vectort computed_size;
     evaluate(size_expr, computed_size);
+
     if(computed_size.size()==1 &&
        computed_size[0]>=0)
     {
-      result() << "Concretized array with size " << computed_size[0]
+      result() << "interpretert::concretize_type: Concretized array with size "
+               << computed_size[0]
                << eom;
       return
         array_typet(

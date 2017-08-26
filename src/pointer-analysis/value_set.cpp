@@ -1086,6 +1086,7 @@ void value_sett::get_reference_set_rec(
   insert(dest, exprt(ID_unknown, expr.type()));
 }
 
+#include <iostream>
 void value_sett::assign(
   const exprt &lhs,
   const exprt &rhs,
@@ -1093,11 +1094,14 @@ void value_sett::assign(
   bool is_simplified,
   bool add_to_sets)
 {
-  #if 0
-  std::cout << "ASSIGN LHS: " << from_expr(ns, "", lhs) << '\n';
-  std::cout << "ASSIGN RHS: " << from_expr(ns, "", rhs) << '\n';
-  output(ns, std::cout);
-  #endif
+#if 1
+  std::cout << "ASSIGN LHS: " << from_expr(ns, "", lhs) << " : "
+            << from_type(ns, "", lhs.type()) << '\n';
+  std::cout << "ASSIGN RHS: " << from_expr(ns, "", rhs) << " : "
+            << from_type(ns, "", rhs.type()) << '\n';
+  std::cout << "--------------------------------------------\n";
+  // output(ns, std::cout);
+#endif
 
   const typet &type=ns.follow(lhs.type());
 
@@ -1161,9 +1165,12 @@ void value_sett::assign(
     else
     {
       if(!base_type_eq(rhs.type(), type, ns))
+      {
+        assert(false);
         throw "value_sett::assign type mismatch: "
           "rhs.type():\n"+rhs.type().pretty()+"\n"+
           "type:\n"+type.pretty();
+      }
 
       if(rhs.id()==ID_array_of)
       {

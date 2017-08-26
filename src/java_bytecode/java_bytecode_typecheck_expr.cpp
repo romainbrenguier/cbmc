@@ -58,7 +58,7 @@ void java_bytecode_typecheckt::typecheck_expr(exprt &expr)
 
 void java_bytecode_typecheckt::typecheck_expr_java_new(side_effect_exprt &expr)
 {
-  assert(expr.operands().empty());
+  PRECONDITION(expr.operands().empty());
   typet &type=expr.type();
   typecheck_type(type);
 }
@@ -66,7 +66,7 @@ void java_bytecode_typecheckt::typecheck_expr_java_new(side_effect_exprt &expr)
 void java_bytecode_typecheckt::typecheck_expr_java_new_array(
   side_effect_exprt &expr)
 {
-  assert(expr.operands().size()>=1); // one per dimension
+  PRECONDITION(expr.operands().size()>=1); // one per dimension
   typet &type=expr.type();
   typecheck_type(type);
 }
@@ -96,7 +96,8 @@ static std::string escape_non_alnum(const std::string &toescape)
 static array_exprt utf16_to_array(const std::wstring &in)
 {
   const auto jchar=java_char_type();
-  array_exprt ret(array_typet(jchar, infinity_exprt(java_int_type())));
+  array_exprt ret(
+    array_typet(jchar, from_integer(in.length(), java_int_type())));
   for(const auto c : in)
     ret.copy_to_operands(from_integer(c, jchar));
   return ret;
@@ -150,13 +151,14 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
   {
     struct_exprt literal_init(new_symbol.type);
     literal_init.move_to_operands(jlo_init);
+    literal_init.copy_to_operands(
+      from_integer(id2string(value).size(), jls_struct.components()[1].type()));
 
     // Initialize the string with a constant utf-16 array:
     symbolt array_symbol;
     array_symbol.name=escaped_symbol_name+"_constarray";
-    array_symbol.type=array_typet(
-      java_char_type(), infinity_exprt(java_int_type()));
     array_symbol.base_name="Literal_constarray";
+    // TODO: this should be obtained from java_string_library_preprocess
     array_symbol.pretty_name=value;
     array_symbol.mode=ID_java;
     array_symbol.is_type=false;
@@ -164,18 +166,20 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     // These are basically const global data:
     array_symbol.is_static_lifetime=true;
     array_symbol.is_state_var=true;
-    auto literal_array=utf16_to_array(
-      utf8_to_utf16_little_endian(id2string(value)));
-    array_symbol.value=literal_array;
+    array_symbol.value=utf16_to_array(utf8_to_utf16_little_endian(id2string(value)));
+    array_symbol.type=array_symbol.value.type();
 
     if(symbol_table.add(array_symbol))
       throw "failed to add constarray symbol to symbol table";
 
-    literal_init.copy_to_operands(
-      from_integer(literal_array.operands().size(),
-                   jls_struct.components()[1].type()));
-    literal_init.copy_to_operands(
-      address_of_exprt(array_symbol.symbol_expr()));
+#if 0
+    const symbol_exprt array_expr=array_symbol.symbol_expr();
+#else
+    const exprt array_expr=array_symbol.value;
+#endif
+    const address_of_exprt first_index(
+      index_exprt(array_expr, from_integer(0, java_int_type())));
+    literal_init.copy_to_operands(first_index);
 
     new_symbol.value=literal_init;
   }
@@ -225,7 +229,7 @@ void java_bytecode_typecheckt::typecheck_expr_symbol(symbol_exprt &expr)
 
   if(s_it==symbol_table.symbols.end())
   {
-    assert(has_prefix(id2string(identifier), "java::"));
+    PRECONDITION(has_prefix(id2string(identifier), "java::"));
 
     // no, create the symbol
     symbolt new_symbol;
@@ -254,7 +258,7 @@ void java_bytecode_typecheckt::typecheck_expr_symbol(symbol_exprt &expr)
   else
   {
     // yes!
-    assert(!s_it->second.is_type);
+    PRECONDITION(!s_it->second.is_type);
 
     const symbolt &symbol=s_it->second;
 

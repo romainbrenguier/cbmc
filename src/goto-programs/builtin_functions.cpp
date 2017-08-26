@@ -569,35 +569,15 @@ void goto_convertt::do_java_new(
   const side_effect_exprt &rhs,
   goto_programt &dest)
 {
-  if(lhs.is_nil())
-  {
-    error().source_location=lhs.find_source_location();
-    error() << "do_java_new without lhs is yet to be implemented" << eom;
-    throw 0;
-  }
-
+  PRECONDITION(!lhs.is_nil());
+  PRECONDITION(rhs.operands().empty());
+  PRECONDITION(rhs.type().id()==ID_pointer);
   source_locationt location=rhs.source_location();
-
-  assert(rhs.operands().empty());
-
-  if(rhs.type().id()!=ID_pointer)
-  {
-    error().source_location=rhs.find_source_location();
-    error() << "do_java_new returns pointer" << eom;
-    throw 0;
-  }
-
   typet object_type=rhs.type().subtype();
 
   // build size expression
   exprt object_size=size_of_expr(object_type, ns);
-
-  if(object_size.is_nil())
-  {
-    error().source_location=rhs.find_source_location();
-    error() << "do_java_new got nil object_size" << eom;
-    throw 0;
-  }
+  CHECK_RETURN(object_size.is_not_nil());
 
   // we produce a malloc side-effect, which stays
   side_effect_exprt malloc_expr(ID_malloc);
@@ -696,7 +676,6 @@ void goto_convertt::do_java_new_array(
   // Allocate a (struct realtype**) instead of a (void**) if possible.
   const irept &given_element_type=object_type.find(ID_C_element_type);
   typet allocate_data_type;
-  exprt cast_data_member;
   if(given_element_type.is_not_nil())
   {
     allocate_data_type=
