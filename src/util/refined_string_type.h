@@ -32,7 +32,7 @@ public:
   refined_string_typet(const typet &index_type, const typet &char_type);
 
   // Type for the content (list of characters) of a string
-  const array_typet &get_content_type() const
+  const typet &get_content_type() const
   {
     PRECONDITION(components().size()==2);
     return to_array_type(components()[1].type());
