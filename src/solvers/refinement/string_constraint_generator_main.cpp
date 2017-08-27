@@ -197,6 +197,7 @@ void string_constraint_generatort::add_default_axioms(
   }
 }
 
+#include <iostream>
 /// obtain a refined string expression corresponding to a expression of type
 /// string
 /// \par parameters: an expression of refined string type
@@ -234,11 +235,12 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
     INVARIANT(
       s.length().id()==ID_symbol || s.length().id()==ID_constant,
       "string length should be a symbol or a constant");
-    irep_idt content_id=s.content().id();
+    irep_idt c_id=s.content().id();
     INVARIANT(
-      content_id==ID_symbol || content_id==ID_array || content_id==ID_if,
-      "string content should be a symbol, a constant array, or an if");
-    if(content_id==ID_if)
+      c_id==ID_symbol || c_id==ID_array || c_id==ID_if || c_id==ID_address_of,
+      "string content should be a symbol, a constant array, an if, or "
+      "an address");
+    if(c_id==ID_if)
     {
       // If the string content is an if expression, we add axioms ensuring
       // the content is the same as the content in the 'true' branch when the
@@ -259,7 +261,7 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
       false,
       string_refinement_invariantt("add_axioms_for_refined_string:\n"+
         string.pretty()+"\nwhich is not a function application, a symbol, a "+
-        "struct or an if expression"));
+        "struct, an if or an address of expression"));
     // For the compiler
     throw 0;
   }

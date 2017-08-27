@@ -1679,7 +1679,7 @@ void string_refinementt::update_index_set(const exprt &formula)
       const exprt &s=cur.op0();
       const exprt &i=cur.op1();
       DATA_INVARIANT(
-        s.type().id()==ID_array,
+        s.type().id()==ID_array || s.type().id()==ID_pointer,
         string_refinement_invariantt("index expressions must index on arrays"));
       exprt simplified=simplify_sum(i);
       add_to_index_set(s, simplified);
