@@ -358,7 +358,6 @@ exprt::operandst
   const exprt &op1=operands[1];
   PRECONDITION(implements_java_char_sequence(op0.type()));
 
-  exprt::operandst ops;
   ops.push_back(
     convert_exprt_to_string_exprt(op0, loc, symbol_table, init_code));
 
