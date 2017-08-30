@@ -992,6 +992,34 @@ exprt fill_in_array_with_expr(const exprt &expr, std::size_t string_max_length)
   return result;
 }
 
+/// Fill an array represented by an array_expr by propagating values to
+/// the left for unknown values. For instance `{ 24 , * , * , 42, * }` will give
+/// `{ 24, 42, 42, 42, 0 }`
+/// \param expr: an array expression
+/// \param string_max_length: bound on the length of strings
+/// \return an array expression with filled in values
+exprt fill_in_array_expr(const array_exprt &expr, std::size_t string_max_length)
+{
+  PRECONDITION(expr.type().id()==ID_array);
+  array_typet array_type=to_array_type(expr.type());
+
+  // Map of the parts of the array that are initialized
+  std::map<std::size_t, exprt> initial_map;
+  
+  // Default value is 0
+  // initial_map[expr.operands().size()-1]=from_integer(0, array_type.subtype());
+    
+  for(std::size_t i=0; i<expr.operands().size(); ++i)
+  {
+    if(i<string_max_length && expr.operands()[i].id()!=ID_unknown)
+      initial_map[i]=expr.operands()[i];
+  }
+
+  array_exprt result(array_type);
+  result.operands()=fill_in_map_as_vector(initial_map);
+  return result;
+}
+
 /// create an equivalent expression where array accesses and 'with' expressions
 /// are replaced by 'if' expressions, in particular:
 ///  * for an array access `arr[x]`, where:
@@ -1205,6 +1233,11 @@ exprt concretize_arrays_in_expression(exprt expr, std::size_t string_max_length)
     if(it->id()==ID_with && it->type().id()==ID_array)
     {
       it.mutate()=fill_in_array_with_expr(*it, string_max_length);
+      it.next_sibling_or_parent();
+    }
+    else if(it->id()==ID_array && it->type().id()==ID_array)
+    {
+      it.mutate()=fill_in_array_expr(to_array_expr(*it), string_max_length);
       it.next_sibling_or_parent();
     }
     else
