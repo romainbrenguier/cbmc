@@ -457,10 +457,10 @@ void string_refinementt::set_to(const exprt &expr, bool value)
     const exprt &rhs=eq_expr.rhs();
 
     // The assignment of a string equality to false is not supported.
-    PRECONDITION(value || !is_char_array(rhs.type()));
+    PRECONDITION(value || !is_char_array_type(rhs.type(), ns));
     PRECONDITION(value || !is_refined_string_type(rhs.type()));
 
-    PRECONDITION(lhs.id()==ID_symbol || !is_char_array(rhs.type()));
+    PRECONDITION(lhs.id()==ID_symbol || !is_char_array_type(rhs.type(), ns));
     PRECONDITION(lhs.id()==ID_symbol || !is_refined_string_type(rhs.type()));
 
     // If lhs is not a symbol, let supert::set_to() handle it.
