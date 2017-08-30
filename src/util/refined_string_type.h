@@ -35,7 +35,7 @@ public:
   const typet &get_content_type() const
   {
     PRECONDITION(components().size()==2);
-    return to_array_type(components()[1].type());
+    return components()[1].type();
   }
 
   const typet &get_char_type() const
