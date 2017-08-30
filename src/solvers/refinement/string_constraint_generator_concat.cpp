@@ -34,8 +34,6 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_substr(
   const exprt &start_index,
   const exprt &end_index)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(s1.type());
-
   // We add axioms:
   // a1 : end_index > start_index => |res|=|s1|+ end_index - start_index
   // a2 : end_index <= start_index => res = s1

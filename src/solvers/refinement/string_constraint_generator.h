@@ -74,8 +74,6 @@ public:
   symbol_exprt fresh_boolean(const irep_idt &prefix);
   string_exprt fresh_string(const refined_string_typet &type);
   string_exprt get_string_expr(const exprt &expr);
-  string_exprt convert_java_string_to_string_exprt(
-    const exprt &underlying);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
   // Maps unresolved symbols to the string_exprt that was created for them

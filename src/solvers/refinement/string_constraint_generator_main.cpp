@@ -145,31 +145,6 @@ string_exprt string_constraint_generatort::get_string_expr(const exprt &expr)
   }
 }
 
-/// create a new string_exprt as a conversion of a java string
-/// \par parameters: a java string
-/// \return a string expression
-string_exprt string_constraint_generatort::convert_java_string_to_string_exprt(
-    const exprt &jls)
-{
-  PRECONDITION(jls.id()==ID_struct);
-
-  exprt length(to_struct_expr(jls).op1());
-  // TODO: Add assertion on the type.
-  // assert(length.type()==refined_string_typet::index_type());
-  exprt java_content(to_struct_expr(jls).op2());
-  if(java_content.id()==ID_address_of)
-  {
-    java_content=to_address_of_expr(java_content).object();
-  }
-  else
-  {
-    java_content=dereference_exprt(java_content, java_content.type());
-  }
-  refined_string_typet type(java_int_type(), java_char_type());
-
-  return string_exprt(length, java_content, type);
-}
-
 /// adds standard axioms about the length of the string and its content: * its
 /// length should be positive * it should not exceed max_string_length * if
 /// force_printable_characters is true then all characters should belong to the
@@ -526,17 +501,25 @@ string_exprt string_constraint_generatort::add_axioms_for_java_char_array(
 }
 
 /// for an expression of the form `array[0]` returns `array`
-/// \par parameters: an expression of type char
-/// \return an array expression
+/// \param fun: a function application with two arguments: a char pointer and
+///   an array
+/// \return an integer expression
 exprt string_constraint_generatort::add_axioms_for_char_pointer(
   const function_application_exprt &fun)
 {
-  PRECONDITION(fun.arguments().size()==1);
+  PRECONDITION(fun.arguments().size()==2);
   const exprt &char_pointer=fun.arguments()[0];
+  const exprt &char_array=fun.arguments()[1];
   // PRECONDITION(char_pointer.id()==ID_index);
+  /*
   exprt array=char_pointer;//.op0();
-  array.type()=fun.type();
-  return array;
+  array.type()=fun.type();*/
+  equal_exprt pointer_equality(
+    char_pointer,
+    address_of_exprt(
+      index_exprt(char_array, from_integer(0, java_int_type()))));
+  // axioms.push_back(pointer_equality);
+  return from_integer(0, java_int_type());
   // TODO: It seems reasonable that the result of the function application
   //       should match the return type of the function. However it is not
   //       clear whether this typecast is properly handled in the string
@@ -601,10 +584,11 @@ exprt string_constraint_generatort::add_axioms_for_char_literal(
 exprt string_constraint_generatort::add_axioms_for_char_at(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 2)[0]);
+  PRECONDITION(f.arguments().size()==2);
+  string_exprt str=get_string_expr(f.arguments()[0]);
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   symbol_exprt char_sym=fresh_symbol("char", ref_type.get_char_type());
-  axioms.push_back(equal_exprt(char_sym, str[args(f, 2)[1]]));
+  axioms.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
 }
 
