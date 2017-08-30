@@ -436,8 +436,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_to_upper_case(expr);
   else if(id==ID_cprover_string_char_set_func)
     res=add_axioms_for_char_set(expr);
-  else if(id==ID_cprover_string_value_of_func)
-    res=add_axioms_for_value_of(expr);
   else if(id==ID_cprover_string_empty_string_func)
     res=add_axioms_for_empty_string(expr);
   else if(id==ID_cprover_string_copy_func)
