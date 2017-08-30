@@ -21,6 +21,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "expr.h"
 #include "mp_arith.h"
+#include "invariant.h"
 
 class constant_exprt;
 
@@ -969,7 +970,7 @@ public:
 */
 inline const array_typet &to_array_type(const typet &type)
 {
-  assert(type.id()==ID_array);
+  PRECONDITION(type.id()==ID_array);
   return static_cast<const array_typet &>(type);
 }
 
@@ -978,7 +979,7 @@ inline const array_typet &to_array_type(const typet &type)
 */
 inline array_typet &to_array_type(typet &type)
 {
-  assert(type.id()==ID_array);
+  PRECONDITION(type.id()==ID_array);
   return static_cast<array_typet &>(type);
 }
 
