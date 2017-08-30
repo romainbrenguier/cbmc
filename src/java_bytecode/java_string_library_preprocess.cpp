@@ -875,11 +875,12 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
     loc,
     ID_java,
     symbol_table);
-  symbol_exprt return_code("return_code", java_int_type());
+  symbol_exprt return_code=return_code_sym.symbol_expr();
+  code.add(code_declt(return_code));
   code.add(code_assign_function_application(
     return_code,
     ID_cprover_string_array_of_char_pointer_func,
-    {data_as_array},
+    {data_as_array, lhs.content() },
     symbol_table));
 }
 
