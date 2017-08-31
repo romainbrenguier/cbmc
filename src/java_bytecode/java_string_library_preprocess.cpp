@@ -302,6 +302,8 @@ exprt java_string_library_preprocesst::convert_exprt_to_string_exprt(
     string_expr, op_to_process, loc, symbol_table, init_code);
   add_assignment_to_string_expr_symbol(
     string_expr, loc, symbol_table, init_code);
+  string_expr.content()=address_of_exprt(index_exprt(
+    string_expr.content(), from_integer(0, java_int_type())));
   return string_expr;
 }
 
@@ -546,7 +548,9 @@ string_exprt java_string_library_preprocesst::fresh_string_expr(
 #endif
   string_exprt str(length_field, content_field, refined_string_type);
   code.add(code_declt(length_field));
+#if 1 // do not declare so that it does not get allocated
   code.add(code_declt(content_field));
+#endif
   return str;
 }
 
@@ -719,7 +723,8 @@ string_exprt java_string_library_preprocesst::string_expr_of_function(
   // args is { str.length, str.content, arguments... }
   exprt::operandst args;
   args.push_back(string_expr.length());
-  args.push_back(string_expr.content());
+  args.push_back(address_of_exprt(index_exprt(
+    string_expr.content(), from_integer(0, java_int_type()))));
   args.insert(args.end(), arguments.begin(), arguments.end());
 
   // return_code = <function_name>_data(args)
@@ -855,7 +860,10 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
   exprt rhs_length=get_length(deref, symbol_table);
 
   // Assignments
+#if 0
   code.add(code_assignt(lhs.length(), rhs_length));
+#endif
+  code.add(code_assumet(equal_exprt(lhs.length(), rhs_length)));
 
 #if 0
   exprt member_data=get_data(deref, symbol_table);
@@ -878,9 +886,10 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
   symbol_exprt return_code=return_code_sym.symbol_expr();
   code.add(code_declt(return_code));
   code.add(code_assign_function_application(
-    return_code,
+     return_code,
     ID_cprover_string_array_of_char_pointer_func,
-    {data_as_array, lhs.content() },
+    {data_as_array,
+     address_of_exprt(index_exprt(lhs.content(), from_integer(0, java_int_type()))) },
     symbol_table));
 }
 

@@ -28,6 +28,38 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 
 #define MAX_NB_REFINEMENT 100
 
+class symbol_solvert
+{
+public:
+  /// return true if unmodified
+  bool replace_expr(exprt &expr) const
+  {
+    bool unchanged=::replace_expr(m_symbol_resolve, expr);
+    while(!unchanged && !::replace_expr(m_symbol_resolve, expr));
+    return unchanged;
+  }
+
+  exprt add_symbol(const exprt &expr, const exprt &dst);
+
+  void debug(std::ostream &out, const namespacet &ns) const
+  {
+    std::string spaces="                                             ";
+    for(auto pair : m_symbol_resolve)
+    {
+      exprt expr=pair.first;
+      std::string s_expr=from_expr(ns, "", expr);
+      out << "symbol_solvert: " << s_expr
+          << spaces.substr(0, spaces.size()-s_expr.size()) << " --> ";
+      replace_expr(expr);
+      out << from_expr(ns, "", expr) << std::endl;
+    }
+  }
+
+private:
+  replace_mapt m_symbol_resolve;
+  std::map<exprt, std::list<exprt>> m_reverse_symbol_resolve;
+};
+
 class string_refinementt: public bv_refinementt
 {
 public:
@@ -58,8 +90,6 @@ public:
   exprt get(const exprt &expr) const override;
 
 protected:
-  typedef std::set<exprt> expr_sett;
-  typedef std::list<exprt> exprt_listt;
 
   decision_proceduret::resultt dec_solve() override;
 
@@ -74,10 +104,10 @@ private:
   string_constraint_generatort generator;
 
   bool non_empty_string;
-  expr_sett nondet_arrays;
+  std::set<exprt> nondet_arrays;
 
   // Simple constraints that have been given to the solver
-  expr_sett seen_instances;
+  std::set<exprt> seen_instances;
 
   std::vector<string_constraintt> universal_axioms;
 
@@ -88,16 +118,19 @@ private:
 
   // See the definition in the PASS article
   // Warning: this is indexed by array_expressions and not string expressions
-  std::map<exprt, expr_sett> current_index_set;
-  std::map<exprt, expr_sett> index_set;
-  replace_mapt symbol_resolve;
-  std::map<exprt, exprt_listt> reverse_symbol_resolve;
+  std::map<exprt, std::vector<exprt>> m_current_index_set;
+  std::map<exprt, std::set<exprt>> m_index_set;
+  symbol_solvert m_symbol_resolve;
+
   std::list<std::pair<exprt, bool>> non_string_axioms;
 
   // Length of char arrays found during concretization
   std::map<exprt, exprt> found_length;
   // Content of char arrays found during concretization
   std::map<exprt, array_exprt> found_content;
+
+  // Map pointers to array symbols
+  std::map<exprt, symbol_exprt> pointer_map;
 
   void add_equivalence(const irep_idt & lhs, const exprt & rhs);
 
@@ -112,7 +145,6 @@ private:
   exprt substitute_java_strings(exprt expr);
   exprt substitute_array_with_expr(const exprt &expr, const exprt &index) const;
   void substitute_array_access(exprt &expr) const;
-  void add_symbol_to_symbol_map(const exprt &lhs, const exprt &rhs);
   bool add_axioms_for_string_assigns(const exprt &lhs, const exprt &rhs);
   void set_to(const exprt &expr, bool value) override;
 
@@ -150,7 +182,6 @@ private:
   void concretize_results();
   void concretize_lengths();
 
-  exprt get_array(const exprt &arr, const exprt &size) const;
   exprt get_array(const exprt &arr) const;
 
   std::string string_of_array(const array_exprt &arr);

@@ -518,7 +518,7 @@ exprt string_constraint_generatort::add_axioms_for_char_pointer(
     char_pointer,
     address_of_exprt(
       index_exprt(char_array, from_integer(0, java_int_type()))));
-  // axioms.push_back(pointer_equality);
+  axioms.push_back(pointer_equality);
   return from_integer(0, java_int_type());
   // TODO: It seems reasonable that the result of the function application
   //       should match the return type of the function. However it is not

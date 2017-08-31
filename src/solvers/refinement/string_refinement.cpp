@@ -34,6 +34,9 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <langapi/language_util.h>
 #include <java_bytecode/java_types.h>
 
+#include <util/ssa_expr.h> // for char array pointer
+
+
 string_refinementt::string_refinementt(
   const namespacet &_ns,
   propt &_prop,
@@ -75,18 +78,13 @@ void string_refinementt::display_index_set()
 {
   std::size_t count=0;
   std::size_t count_current=0;
-  for(const auto &i : index_set)
+  for(const auto &i : m_index_set)
   {
     const exprt &s=i.first;
     debug() << "IS(" << from_expr(ns, "", s) << ")=={" << eom;
 
     for(auto j : i.second)
     {
-      if(current_index_set[i.first].find(j)!=current_index_set[i.first].end())
-      {
-        count_current++;
-        debug() << "**";
-      }
       debug() << "  " << from_expr(ns, "", j) << ";" << eom;
       count++;
     }
@@ -102,7 +100,7 @@ void string_refinementt::add_instantiations()
 {
   debug() << "string_constraint_generatort::add_instantiations: "
           << "going through the current index set:" << eom;
-  for(const auto &i : current_index_set)
+  for(const auto &i : m_current_index_set)
   {
     const exprt &s=i.first;
     debug() << "IS(" << from_expr(ns, "", s) << ")=={";
@@ -148,6 +146,7 @@ static void depends_in_symbol_map(const exprt &expr, std::vector<exprt> &accu)
   }
   else
   {
+    accu.push_back(expr);
     // TODO: check if this is correct
     for(auto op : expr.operands())
       depends_in_symbol_map(op, accu);
@@ -156,14 +155,14 @@ static void depends_in_symbol_map(const exprt &expr, std::vector<exprt> &accu)
 
 /// keeps a map of symbols to expressions, such as none of the mapped values
 /// exist as a key
-/// \param lhs: a symbol expression
+/// \param lhs: an expression
 /// \param rhs: an expression to map it to, which should be either a symbol
 ///             a string_exprt, an array_exprt, an array_of_exprt or an
 ///             if_exprt with branches of the previous kind
-void string_refinementt::add_symbol_to_symbol_map(
-  const exprt &lhs, const exprt &rhs)
+/// \return the new mapped value
+exprt symbol_solvert::add_symbol(const exprt &lhs, const exprt &rhs)
 {
-  PRECONDITION(lhs.id()==ID_symbol);
+//  PRECONDITION(lhs.id()==ID_symbol);
 #if 0
   PRECONDITION(rhs.id()==ID_symbol ||
                rhs.id()==ID_array ||
@@ -174,28 +173,31 @@ void string_refinementt::add_symbol_to_symbol_map(
 #endif
 
   // We insert the mapped value of the rhs, if it exists.
-  auto it=symbol_resolve.find(rhs);
-  const exprt &new_rhs=it!=symbol_resolve.end()?it->second:rhs;
-  symbol_resolve[lhs]=new_rhs;
+  auto it=m_symbol_resolve.find(rhs);
+  const exprt &new_rhs=it!=m_symbol_resolve.end()?it->second:rhs;
+  m_symbol_resolve[lhs]=new_rhs;
 
+#if 0
   // List the leaves of new_rhs
   std::vector<exprt> leaves;
   depends_in_symbol_map(new_rhs, leaves);
 
-  const auto &symbols_to_update_with_new_rhs=reverse_symbol_resolve[lhs];
+  const auto &symbols_to_update_with_new_rhs=m_reverse_symbol_resolve[lhs];
 
   // We need to update all the symbols which depend on lhs
   for(const exprt &item : symbols_to_update_with_new_rhs)
-    replace_expr(symbol_resolve, symbol_resolve[item]);
+    ::replace_expr(m_symbol_resolve, m_symbol_resolve[item]);
 
   // Every time a symbol at the leaves is updated we need to update lhs
   // and the symbols that depend on it
   for(const auto &leaf : leaves)
   {
-    reverse_symbol_resolve[leaf].push_back(lhs);
+    m_reverse_symbol_resolve[leaf].push_back(lhs);
     for(const exprt &item : symbols_to_update_with_new_rhs)
-      reverse_symbol_resolve[leaf].push_back(item);
+      m_reverse_symbol_resolve[leaf].push_back(item);
   }
+#endif
+  return new_rhs;
 }
 
 /// add axioms if the rhs is a character array
@@ -272,6 +274,15 @@ static bool has_char_array_subtype(const typet &type, const namespacet &ns)
   return false;
 }
 
+static bool has_char_array_subexpr(const exprt &expr, const namespacet &ns)
+{
+
+  for(auto it=expr.depth_begin(); it!=expr.depth_end(); ++it)
+    if(is_char_array_type(it->type(), ns))
+      return true;
+  return false;
+}
+
 /// add lemmas to the solver corresponding to the given equation
 /// \param lhs: left hand side of an equality expression
 /// \param rhs: right and side of the equality
@@ -283,7 +294,7 @@ bool string_refinementt::add_axioms_for_string_assigns(
   if(is_char_array_type(rhs.type(), ns))
   {
     set_char_array_equality(lhs, rhs);
-    add_symbol_to_symbol_map(lhs, rhs);
+    m_symbol_resolve.add_symbol(lhs, rhs);
     return false;
 #if 0
     if(rhs.id() == ID_symbol || rhs.id() == ID_array)
@@ -314,7 +325,7 @@ bool string_refinementt::add_axioms_for_string_assigns(
     warning() << "add_axioms_for_string_assigns: refined_string_type found"
               << eom;
     exprt refined_rhs=generator.add_axioms_for_refined_string(rhs);
-    add_symbol_to_symbol_map(lhs, refined_rhs);
+    m_symbol_resolve.add_symbol(lhs, refined_rhs);
     return false;
   }
   if(has_char_array_subtype(lhs.type(), ns))
@@ -364,19 +375,19 @@ void string_refinementt::concretize_string(const exprt &expr)
     const string_exprt str=to_string_expr(expr);
     const exprt length=get(str.length());
     exprt content=str.content();
-    replace_expr(symbol_resolve, content);
+    m_symbol_resolve.replace_expr(content);
     found_length[content]=length;
     const auto string_length=expr_cast<std::size_t>(length);
     INVARIANT(
       string_length<=generator.max_string_length,
       string_refinement_invariantt("string length must be less than the max "
         "length"));
-    if(index_set[str.content()].empty())
+    if(m_index_set[str.content()].empty())
       return;
 
     std::map<std::size_t, exprt> map;
 
-    for(const auto &i : index_set[str.content()])
+    for(const auto &i : m_index_set[str.content()])
     {
       const exprt simple_i=simplify_expr(get(i), ns);
       mp_integer mpi_index;
@@ -408,25 +419,30 @@ void string_refinementt::concretize_string(const exprt &expr)
 /// map `found_length`
 void string_refinementt::concretize_results()
 {
-  for(const auto &it : symbol_resolve)
+  UNREACHABLE;
+#if 0
+  for(const auto &it : m_symbol_resolve)
     concretize_string(it.second);
   for(const auto &it : generator.created_strings)
     concretize_string(it);
   add_instantiations();
+#endif
 }
 
 /// For each string whose length has been solved, add constants to the map
 /// `found_length`
 void string_refinementt::concretize_lengths()
 {
-  for(const auto &it : symbol_resolve)
+  UNREACHABLE;
+#if 0
+  for(const auto &it : m_symbol_resolve)
   {
     if(is_refined_string_type(it.second.type()))
     {
       string_exprt str=to_string_expr(it.second);
       exprt length=get(str.length());
       exprt content=str.content();
-      replace_expr(symbol_resolve, content);
+      replace_expr(m_symbol_resolve, content);
       found_length[content]=length;
      }
   }
@@ -437,10 +453,75 @@ void string_refinementt::concretize_lengths()
       string_exprt str=to_string_expr(it);
       exprt length=get(str.length());
       exprt content=str.content();
-      replace_expr(symbol_resolve, content);
+      replace_expr(m_symbol_resolve, content);
       found_length[content]=length;
      }
   }
+#endif
+}
+
+/// Replace all pointer accesses by char_array access for some symbol.
+/// These symbol are either found by symbol_resolve or a new one is created
+/// \return true if a pointer was replaced
+#include <iostream>
+bool replace_char_pointers_by_char_arrays(
+  exprt &expr,
+  string_constraint_generatort &generator,
+  symbol_solvert &symbol_resolve)
+{
+  bool replaced=false;
+
+  for(auto it=expr.depth_begin(); it!=expr.depth_end();)
+  {
+#if 0
+    if(it->id()==ID_index)
+    {
+      index_exprt index_expr=to_index_expr(*it);
+      if(index_expr.array().type().id()==ID_pointer)
+      {
+        replaced=true;
+        symbol_exprt array_sym=generator.fresh_symbol(
+              "data_array",
+              array_typet(java_char_type(), from_integer(100, java_int_type())));
+
+        exprt new_value=
+          symbol_resolve.add_symbol(index_expr.array(), array_sym);
+        it.mutate()=index_exprt(new_value, index_expr.index());
+        it.next_sibling_or_parent();
+      }
+      else
+        ++it;
+    }
+#endif
+    if(it->type().id()==ID_pointer)
+    {
+      if(it->id()==ID_array)
+        ++it;
+      else if(it->id()==ID_address_of
+              && it->op0().id()==ID_index
+              && it->op0().op0().id()==ID_array)
+      {
+        // We have to be carreful not to replace constants
+        PRECONDITION(it->op0().op1().is_zero());
+        it.mutate()=it->op0().op0();
+        it.next_sibling_or_parent();
+      }
+      else
+      {
+        replaced=true;
+        symbol_exprt length_sym=
+            generator.fresh_symbol("data_length", java_int_type());
+        symbol_exprt array_sym=generator.fresh_symbol(
+              "data_array", array_typet(java_char_type(), length_sym));
+
+        it.mutate()=symbol_resolve.add_symbol(*it, array_sym);
+        it.next_sibling_or_parent();
+      }
+    }
+    else
+      ++it;
+  }
+  return replaced;
 }
 
 /// add lemmas representing the setting of an expression to a given value
@@ -453,8 +534,9 @@ void string_refinementt::set_to(const exprt &expr, bool value)
   if(expr.id()==ID_equal)
   {
     equal_exprt eq_expr=to_equal_expr(expr);
+
     const exprt &lhs=eq_expr.lhs();
-    const exprt &rhs=eq_expr.rhs();
+     exprt rhs=eq_expr.rhs();
 
     // The assignment of a string equality to false is not supported.
     PRECONDITION(value || !is_char_array_type(rhs.type(), ns));
@@ -466,6 +548,7 @@ void string_refinementt::set_to(const exprt &expr, bool value)
     // If lhs is not a symbol, let supert::set_to() handle it.
     if(lhs.id()!=ID_symbol)
     {
+      PRECONDITION(!has_char_array_subexpr(lhs, ns));
       non_string_axioms.push_back(std::make_pair(expr, value));
       return;
     }
@@ -479,10 +562,25 @@ void string_refinementt::set_to(const exprt &expr, bool value)
       return;
     }
 
-    // Preprocessing to remove function applications.
     debug() << "(sr::set_to) " << from_expr(ns, "", lhs)
             << " = " << from_expr(ns, "", rhs) << eom;
 
+    // Preprocessing to remove function applications.
+    if(rhs.id()==ID_function_application)
+    {
+      const function_application_exprt &fun=to_function_application_expr(rhs);
+      const exprt &name=fun.function();
+      const irep_idt &id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
+        to_symbol_expr(name).get_identifier();
+      if(id==ID_cprover_string_array_of_char_pointer_func)
+      {
+        PRECONDITION(fun.arguments().size()==2);
+        m_symbol_resolve.add_symbol(fun.arguments()[1], fun.arguments()[0]);
+        return;
+      }
+    }
+
+    replace_char_pointers_by_char_arrays(rhs, generator, m_symbol_resolve);
     const exprt subst_rhs=substitute_function_applications(rhs);
     if(lhs.type()!=subst_rhs.type())
     {
@@ -501,8 +599,29 @@ void string_refinementt::set_to(const exprt &expr, bool value)
       }
     }
 
-    if(value && !add_axioms_for_string_assigns(lhs, subst_rhs))
-      return;
+    if(has_char_array_subexpr(subst_rhs, ns))
+    {
+      if(subst_rhs.id()!=ID_struct)
+      {
+        warning() << "warning: ignoring char array contained in expression: "
+                  << from_expr(ns, "", subst_rhs)
+                  << " [not a struct assignment]" << eom;
+      }
+      else
+      {
+        struct_typet struct_type=to_struct_type(subst_rhs.type());
+        for(auto comp : struct_type.components())
+        {
+          if(is_char_array_type(comp.type(), ns))
+          {
+            member_exprt lhs_data(lhs, comp.get_name(), comp.type());
+            exprt rhs_data=simplify_expr(
+                  member_exprt(subst_rhs, comp.get_name(), comp.type()), ns);
+            m_symbol_resolve.add_symbol(lhs_data, rhs_data);
+          }
+        }
+      }
+    }
 
     // Push the substituted equality to the list of axioms to be given to
     // supert::set_to.
@@ -524,18 +643,21 @@ void string_refinementt::set_to(const exprt &expr, bool value)
 /// \return result of the decision procedure
 decision_proceduret::resultt string_refinementt::dec_solve()
 {
+  m_symbol_resolve.debug(debug(), ns);
   // Substitute all symbols to char arrays in the axioms to give to
   // supert::set_to().
   for(std::pair<exprt, bool> &pair : non_string_axioms)
   {
-    replace_expr(symbol_resolve, pair.first);
+    m_symbol_resolve.replace_expr(pair.first);
     debug() << "super::set_to " << from_expr(ns, "", pair.first) << eom;
     supert::set_to(pair.first, pair.second);
   }
 
   for(exprt &axiom : generator.axioms)
   {
-    replace_expr(symbol_resolve, axiom);
+
+    m_symbol_resolve.replace_expr(axiom);
+    replace_char_pointers_by_char_arrays(axiom, generator, m_symbol_resolve);
     if(axiom.id()==ID_string_constraint)
     {
       string_constraintt c=to_string_constraint(axiom);
@@ -609,12 +731,12 @@ decision_proceduret::resultt string_refinementt::dec_solve()
       // the property we are checking by adding more indices to the index set,
       // and instantiating universal formulas with this indices.
       // We will then relaunch the solver with these added lemmas.
-      current_index_set.clear();
+      m_current_index_set.clear();
       update_index_set(cur);
       cur.clear();
       add_instantiations();
 
-      if(current_index_set.empty())
+      if(m_current_index_set.empty())
       {
         debug() << "current index set is empty" << eom;
         if(do_concretizing)
@@ -687,6 +809,7 @@ void string_refinementt::add_lemma(
     return;
   }
 
+  m_symbol_resolve.replace_expr(simple_lemma);
   debug() << "adding lemma " << from_expr(ns, "", simple_lemma) << eom;
 
   prop.l_set_to_true(convert(simple_lemma));
@@ -716,9 +839,11 @@ static std::set<exprt> get_index_set(
 /// \par parameters: an expression representing an array and an expression
 /// representing an integer
 /// \return an array expression or an array_of_exprt
-exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
+#include <iostream>
+exprt string_refinementt::get_array(const exprt &arr) const
 {
-  exprt arr_val=simplify_expr(get_array(arr), ns);
+  const exprt &size=to_array_type(arr.type()).size();
+  exprt arr_val=simplify_expr(supert::get(arr), ns);
   exprt size_val=supert::get(size);
   size_val=simplify_expr(size_val, ns);
   typet char_type=arr.type().subtype();
@@ -728,19 +853,15 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 
   if(size_val.id()!=ID_constant)
   {
-#if 0
     debug() << "(sr::get_array) string of unknown size: "
             << from_expr(ns, "", size_val) << eom;
-#endif
     return empty_ret;
   }
 
   unsigned n;
   if(to_unsigned_integer(to_constant_expr(size_val), n))
   {
-#if 0
     debug() << "(sr::get_array) size is not valid" << eom;
-#endif
     return empty_ret;
   }
 
@@ -749,17 +870,13 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
 
   if(n>generator.max_string_length)
   {
-#if 0
     debug() << "(sr::get_array) long string (size=" << n << ")" << eom;
-#endif
     return empty_ret;
   }
 
   if(n==0)
   {
-#if 0
     debug() << "(sr::get_array) empty string" << eom;
-#endif
     return empty_ret;
   }
 
@@ -802,7 +919,7 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
       arr_val=to_index_expr(arr_val.op0().op0()).array();
     }
     arr_val=simplify_expr(arr_val, ns);
-    auto arr_index_set=get_index_set(index_set, arr_val);
+    auto arr_index_set=get_index_set(m_index_set, arr_val);
     if(!arr_index_set.empty())
     {
       std::map<std::size_t, exprt> value_map;
@@ -827,21 +944,6 @@ exprt string_refinementt::get_array(const exprt &arr, const exprt &size) const
   return array_of_exprt(from_integer(0, char_type), ret_type);
 }
 
-/// get a model of an array of unknown size and infer the size if possible
-/// \par parameters: an expression representing an array
-/// \return an expression
-exprt string_refinementt::get_array(const exprt &arr) const
-{
-  exprt arr_model=supert::get(arr);
-  if(arr_model.id()==ID_array)
-  {
-    array_typet &arr_type=to_array_type(arr_model.type());
-    arr_type.size()=from_integer(
-      arr_model.operands().size(), arr_type.size().type());
-  }
-  return arr_model;
-}
-
 /// convert the content of a string to a more readable representation. This
 /// should only be used for debugging.
 /// \par parameters: a constant array expression and a integer expression
@@ -863,7 +965,32 @@ std::string string_refinementt::string_of_array(const array_exprt &arr)
 void string_refinementt::debug_model()
 {
   const std::string indent("  ");
-  for(auto it : symbol_resolve)
+  std::set<exprt> char_array_in_axioms;
+  for(const auto &lem : universal_axioms)
+    for(auto it=lem.depth_begin(); it!=lem.depth_end(); ++it)
+      if(is_char_array_type(it->type(), ns))
+        char_array_in_axioms.insert(*it);
+
+  for(exprt arr : char_array_in_axioms)
+  {
+    debug() << "- " << from_expr(ns, "", arr) << ":\n";
+    m_symbol_resolve.replace_expr(arr);
+    debug() << indent << indent << "- resolved: "
+            << from_expr(ns, "", arr) << "\n";
+    debug() << indent << indent << "- type: "
+            << from_type(ns, "", arr.type()) << eom;
+    exprt arr_model=get_array(arr);
+    debug() << indent << indent << "- char_array: "
+            << from_expr(ns, "", arr_model) << eom;
+    arr_model=simplify_expr(arr_model, ns);
+    debug() << indent << indent << "- simplified_char_array: "
+            << from_expr(ns, "", arr_model) << eom;
+    debug() << indent << indent << "- type: "
+            << from_type(ns, "", arr_model.type()) << eom;
+  }
+
+#if 0
+  for(auto it : m_symbol_resolve)
   {
     if(is_refined_string_type(it.second.type()))
     {
@@ -871,7 +998,7 @@ void string_refinementt::debug_model()
       string_exprt refined=to_string_expr(it.second);
       debug() << indent << indent << "in_map: "
               << from_expr(ns, "", refined) << eom;
-      while(!replace_expr(symbol_resolve, refined)) ;
+      while(!replace_expr(m_symbol_resolve, refined)) ;
       debug() << indent << indent << "resolved: "
               << from_expr(ns, "", refined) << eom;
       const exprt &econtent=refined.content();
@@ -897,7 +1024,7 @@ void string_refinementt::debug_model()
           "refined_strings or to char_arrays, and refined_strings are already "
           "handled"));
       exprt arr=it.second;
-      replace_expr(symbol_resolve, arr);
+      replace_expr(m_symbol_resolve, arr);
       debug() << "- " << from_expr(ns, "", to_symbol_expr(it.first)) << ":\n";
       debug() << indent << indent << "- resolved: "
               << from_expr(ns, "", arr) << "\n";
@@ -909,7 +1036,7 @@ void string_refinementt::debug_model()
               << from_expr(ns, "", arr_model) << eom;
     }
   }
-
+#endif
   for(auto it : generator.boolean_symbols)
   {
       debug() << " - " << it.get_identifier() << ": "
@@ -1005,10 +1132,10 @@ exprt fill_in_array_expr(const array_exprt &expr, std::size_t string_max_length)
 
   // Map of the parts of the array that are initialized
   std::map<std::size_t, exprt> initial_map;
-  
+
   // Default value is 0
   // initial_map[expr.operands().size()-1]=from_integer(0, array_type.subtype());
-    
+
   for(std::size_t i=0; i<expr.operands().size(); ++i)
   {
     if(i<string_max_length && expr.operands()[i].id()!=ID_unknown)
@@ -1073,7 +1200,7 @@ void string_refinementt::substitute_array_access(exprt &expr) const
 
     if(index_expr.array().type().id()==ID_pointer)
     {
-      auto array_index_set=get_index_set(index_set, index_expr.array());
+      auto array_index_set=get_index_set(m_index_set, index_expr.array());
       for(auto index : array_index_set)
         debug() << "in index set: " << from_expr(ns, "", index) << eom;
       return;
@@ -1250,6 +1377,7 @@ exprt concretize_arrays_in_expression(exprt expr, std::size_t string_max_length)
 /// \return a Boolean
 bool string_refinementt::check_axioms()
 {
+  m_symbol_resolve.debug(debug(), ns);
   debug() << "string_refinementt::check_axioms:" << eom;
   debug_model();
 
@@ -1377,7 +1505,7 @@ bool string_refinementt::check_axioms()
         exprt premise(axiom.premise());
         exprt body(axiom.body());
         implies_exprt instance(premise, body);
-        replace_expr(symbol_resolve, instance);
+        m_symbol_resolve.replace_expr(instance);
         replace_expr(axiom.univ_var(), val, instance);
         debug() << "adding counter example " << from_expr(ns, "", instance)
                 << eom;
@@ -1653,8 +1781,8 @@ void string_refinementt::add_to_index_set(const exprt &s, exprt i)
   std::vector<exprt> subs;
   sub_arrays(s, subs);
   for(const auto &sub : subs)
-    if(index_set[sub].insert(i).second)
-      current_index_set[sub].insert(i);
+    if(m_index_set[sub].insert(i).second)
+      m_current_index_set[sub].push_back(i);
 }
 
 void string_refinementt::initial_index_set(const string_constraintt &axiom)
@@ -1805,11 +1933,10 @@ std::vector<exprt> string_refinementt::instantiate_not_contains(
 
   debug() << "instantiate not contains " << from_expr(ns, "", s0) << " : "
           << from_expr(ns, "", s1) << eom;
-  const expr_sett index_set0=index_set[s0.content()];
-  const expr_sett index_set1=index_set[s1.content()];
+  const std::set<exprt> index_set0=m_index_set[s0.content()];
+  const std::set<exprt> index_set1=m_index_set[s1.content()];
 
-  return ::instantiate_not_contains(
-    axiom, index_set0, index_set1, generator);
+  return ::instantiate_not_contains(axiom, index_set0, index_set1, generator);
 }
 
 /// Replace array-lists by 'with' expressions.
@@ -1860,25 +1987,14 @@ exprt substitute_array_lists(exprt expr, size_t string_max_length)
 exprt string_refinementt::get(const exprt &expr) const
 {
   exprt ecopy(expr);
-  replace_expr(symbol_resolve, ecopy);
+  m_symbol_resolve.replace_expr(ecopy);
   if(is_char_array_type(ecopy.type(), ns))
   {
     auto it_content=found_content.find(ecopy);
     if(it_content!=found_content.end())
       return it_content->second;
 
-    auto it=found_length.find(ecopy);
-    if(it!=found_length.end())
-      return get_array(ecopy, it->second);
-  }
-  else if(is_refined_string_type(ecopy.type()) && ecopy.id()==ID_struct)
-  {
-    const string_exprt &string=to_string_expr(ecopy);
-    const exprt &content=string.content();
-    const exprt &length=string.length();
-
-    const exprt arr=get_array(content, length);
-    ecopy=string_exprt(length, arr, string.type());
+    return get_array(ecopy);
   }
 
   ecopy=supert::get(ecopy);

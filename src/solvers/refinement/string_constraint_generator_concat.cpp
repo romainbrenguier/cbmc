@@ -96,6 +96,7 @@ exprt string_constraint_generatort::add_axioms_for_concat(
   string_exprt s2=get_string_expr(args[3]);
   PRECONDITION(s1.type()==s2.type());
   string_exprt out=string_exprt(args[0], args[1], s1.type());
+  axioms.push_back(equal_exprt(to_array_type(out.type()).size(), out.length()));
   if(args.size()==6)
     return add_axioms_for_concat_substr(out, s1, s2, args[2], args[3]);
   else // args.size()==4
