@@ -125,24 +125,29 @@ char_array_exprt string_constraint_generatort::fresh_string(
   return str;
 }
 
-#include <iostream>
+// Associate a char array to a char pointer. The size of the char array is a
+// variable with no constraint.
 char_array_exprt
   string_constraint_generatort::associate_char_array_to_char_pointer(
     const exprt &char_pointer, const typet &char_array_type)
 {
-  std::cout << "associate char pointer : "
-            << char_pointer.pretty() << std::endl;
-  std::cout << "with char array type: "
-            << char_array_type.pretty() << std::endl;
-
   PRECONDITION(char_pointer.type().id()==ID_pointer);
   PRECONDITION(char_array_type.id()==ID_array);
-  symbol_exprt array_sym=fresh_symbol("char_array", char_array_type);
-  auto insert_result=m_arrays_of_pointers.insert(
-    std::make_pair(char_pointer, array_sym));
-  index_exprt first(array_sym, from_integer(0, unsignedbv_typet(32)));
-  // axioms.push_back(equal_exprt(char_pointer, address_of_exprt(first)));
-  return to_char_array_expr(insert_result.first->second);
+  if(char_pointer.id()==ID_address_of
+     && (char_pointer.op0().id()==ID_index
+         && char_pointer.op0().op0().id()==ID_array))
+  {
+    return to_char_array_expr(char_pointer.op0().op0());
+  }
+  else
+  {
+    symbol_exprt array_sym=fresh_symbol("char_array", char_array_type);
+    auto insert_result=m_arrays_of_pointers.insert(
+          std::make_pair(char_pointer, array_sym));
+    index_exprt first(array_sym, from_integer(0, unsignedbv_typet(32)));
+    // axioms.push_back(equal_exprt(char_pointer, address_of_exprt(first)));
+    return to_char_array_expr(insert_result.first->second);
+  }
 }
 
 /// casts an expression to a string expression, or fetches the actual
@@ -212,7 +217,6 @@ char_array_exprt string_constraint_generatort::char_array_of_string_expr(
   return array;
 }
 
-#include <iostream>
 /// obtain a refined string expression corresponding to a expression of type
 /// string
 /// \par parameters: an expression of refined string type
@@ -400,7 +404,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_from_literal(expr);
   else if(id==ID_cprover_string_concat_func)
     res=add_axioms_for_concat(expr);
-   else if(id==ID_cprover_string_insert_func)
+  else if(id==ID_cprover_string_insert_func)
     res=add_axioms_for_insert(expr);
   else if(id==ID_cprover_string_substring_func)
     res=add_axioms_for_substring(expr);
@@ -512,11 +516,13 @@ exprt string_constraint_generatort::add_axioms_for_char_pointer(
   const exprt &char_pointer=fun.arguments()[0];
   const exprt &char_array=fun.arguments()[1];
 
+#if 0
   equal_exprt pointer_equality(
     char_pointer,
     address_of_exprt(
       index_exprt(char_array, from_integer(0, java_int_type()))));
- // axioms.push_back(pointer_equality);
+  axioms.push_back(pointer_equality);
+#endif
   return from_integer(0, java_int_type());
   // TODO: It seems reasonable that the result of the function application
   //       should match the return type of the function. However it is not

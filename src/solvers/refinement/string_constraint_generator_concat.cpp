@@ -70,13 +70,11 @@ exprt string_constraint_generatort::add_axioms_for_concat_substr(
 /// \param s2: the string expression to append to the first one
 /// \return an integer expression
 
-#include<iostream>
 exprt string_constraint_generatort::add_axioms_for_concat(
   const char_array_exprt &res,
   const char_array_exprt &s1,
   const char_array_exprt &s2)
 {
-  std::cout << "s1 : " << s1.pretty() << std::endl;
   exprt index_zero=from_integer(0, s2.length().type());
   return add_axioms_for_concat_substr(res, s1, s2, index_zero, s2.length());
 }

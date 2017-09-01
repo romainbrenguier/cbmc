@@ -38,7 +38,7 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 
 
 char_array_exprt::char_array_exprt(exprt l, exprt c, typet t):
-  exprt(to_char_array_expr(string_exprt(l,c,t)))
+  exprt(to_char_array_expr(string_exprt(l, c, t)))
 { }
 
 /// keeps a map of symbols to expressions, such as none of the mapped values
@@ -204,9 +204,7 @@ bool is_char_array_type(const typet &type, const namespacet &ns)
   if(type.id()==ID_symbol)
     return is_char_array_type(ns.follow(type), ns);
 
-  return (// type.id()==ID_pointer ||
-          type.id()==ID_array)
-    && type.subtype()==java_char_type();
+  return type.id()==ID_array && type.subtype()==java_char_type();
 }
 
 bool is_char_pointer_type(const typet &type)
@@ -230,7 +228,6 @@ static bool has_char_array_subtype(const typet &type, const namespacet &ns)
 
 static bool has_char_array_subexpr(const exprt &expr, const namespacet &ns)
 {
-
   for(auto it=expr.depth_begin(); it!=expr.depth_end(); ++it)
     if(is_char_array_type(it->type(), ns))
       return true;
@@ -712,7 +709,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
       else
       {
         debug() << "check_SAT: the model is correct" << eom;
-        concretize_lengths();
+        // concretize_lengths();no need to concretize when the model is correct
         return resultt::D_SATISFIABLE;
       }
 
@@ -829,7 +826,6 @@ static std::set<exprt> get_index_set(
 /// \par parameters: an expression representing an array and an expression
 /// representing an integer
 /// \return an array expression or an array_of_exprt
-#include <iostream>
 exprt string_refinementt::get_array(const exprt &arr) const
 {
   const exprt &size=to_array_type(arr.type()).size();
@@ -1122,10 +1118,6 @@ exprt fill_in_array_expr(const array_exprt &expr, std::size_t string_max_length)
 
   // Map of the parts of the array that are initialized
   std::map<std::size_t, exprt> initial_map;
-
-  // Default value is 0
-  // initial_map[expr.operands().size()-1]=from_integer(0, array_type.subtype());
-
   for(std::size_t i=0; i<expr.operands().size(); ++i)
   {
     if(i<string_max_length && expr.operands()[i].id()!=ID_unknown)
