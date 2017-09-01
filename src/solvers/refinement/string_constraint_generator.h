@@ -33,7 +33,7 @@ public:
   // string constraints for different string functions and add them
   // to the axiom list.
 
-  string_constraint_generatort(namespacet _ns):
+  explicit string_constraint_generatort(namespacet _ns):
     max_string_length(std::numeric_limits<size_t>::max()),
     force_printable_characters(false),
     ns(_ns)
@@ -72,17 +72,17 @@ public:
   symbol_exprt fresh_exist_index(const irep_idt &prefix, const typet &type);
   symbol_exprt fresh_univ_index(const irep_idt &prefix, const typet &type);
   symbol_exprt fresh_boolean(const irep_idt &prefix);
-  string_exprt fresh_string(const refined_string_typet &type);
-  string_exprt get_string_expr(const exprt &expr);
+  char_array_exprt fresh_string(const refined_string_typet &type);
+  char_array_exprt get_string_expr(const exprt &expr);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
   // Maps unresolved symbols to the string_exprt that was created for them
-  std::map<irep_idt, string_exprt> unresolved_symbols;
+  std::map<irep_idt, char_array_exprt> unresolved_symbols;
 
   // Set of strings that have been created by the generator
-  std::set<string_exprt> created_strings;
+  std::set<char_array_exprt> created_strings;
 
-  string_exprt find_or_add_string_of_symbol(
+  char_array_exprt find_or_add_string_of_symbol(
     const symbol_exprt &sym,
     const refined_string_typet &ref_type);
 
@@ -96,6 +96,9 @@ public:
 
   // Used by format function
   class format_specifiert;
+
+
+  char_array_exprt char_array_of_string_expr(const string_exprt &expr);
 
 private:
   // The integer with the longest string is Integer.MIN_VALUE which is -2^31,
@@ -112,7 +115,7 @@ private:
 
   static irep_idt extract_java_string(const symbol_exprt &s);
 
-  void add_default_axioms(const string_exprt &s);
+  void add_default_axioms(const char_array_exprt &s);
   exprt axiom_for_is_positive_index(const exprt &x);
 
   // The following functions add axioms for the returned value
@@ -134,42 +137,45 @@ private:
   exprt add_axioms_for_hash_code(const function_application_exprt &f);
   // To each string on which hash_code was called we associate a symbol
   // representing the return value of the hash_code function.
-  std::map<string_exprt, exprt> hash_code_of_string;
+  std::map<char_array_exprt, exprt> hash_code_of_string;
 
   exprt add_axioms_for_is_empty(const function_application_exprt &f);
   exprt add_axioms_for_is_prefix(
-    const string_exprt &prefix, const string_exprt &str, const exprt &offset);
+    const char_array_exprt &prefix,
+    const char_array_exprt &str, const exprt &offset);
   exprt add_axioms_for_is_prefix(
     const function_application_exprt &f, bool swap_arguments=false);
   exprt add_axioms_for_is_suffix(
     const function_application_exprt &f, bool swap_arguments=false);
   exprt add_axioms_for_length(const function_application_exprt &f);
-  string_exprt add_axioms_for_empty_string(const function_application_exprt &f);
-  string_exprt add_axioms_for_char_set(const function_application_exprt &expr);
-  string_exprt add_axioms_for_copy(const function_application_exprt &f);
+  char_array_exprt add_axioms_for_empty_string(
+    const function_application_exprt &f);
+  char_array_exprt add_axioms_for_char_set(
+    const function_application_exprt &expr);
+  char_array_exprt add_axioms_for_copy(const function_application_exprt &f);
   exprt add_axioms_for_concat(
-    const string_exprt &res,
-    const string_exprt &s1,
-    const string_exprt &s2);
-  string_exprt add_axioms_for_concat_substr(
-    const string_exprt &res,
-    const string_exprt &s1,
-    const string_exprt &s2,
+    const char_array_exprt &res,
+    const char_array_exprt &s1,
+    const char_array_exprt &s2);
+  exprt add_axioms_for_concat_substr(
+    const char_array_exprt &res,
+    const char_array_exprt &s1,
+    const char_array_exprt &s2,
     const exprt &start_index,
     const exprt &end_index);
   exprt add_axioms_for_concat(const function_application_exprt &f);
-  string_exprt add_axioms_for_constant(
+  char_array_exprt add_axioms_for_constant(
     irep_idt sval, const refined_string_typet &ref_type);
   exprt add_axioms_for_delete(
-    const string_exprt &res,
-    const string_exprt &str,
+    const char_array_exprt &res,
+    const char_array_exprt &str,
     const exprt &start,
     const exprt &end);
   exprt add_axioms_for_delete(const function_application_exprt &expr);
   exprt add_axioms_for_delete_char_at(
     const function_application_exprt &expr);
-  string_exprt add_axioms_for_format(const function_application_exprt &f);
-  string_exprt add_axioms_for_format(
+  char_array_exprt add_axioms_for_format(const function_application_exprt &f);
+  char_array_exprt add_axioms_for_format(
     const std::string &s,
     const exprt::operandst &args,
     const refined_string_typet &ref_type);
@@ -178,54 +184,55 @@ private:
   bool add_axioms_for_format_specifier_is_correct(
     const std::string &s);
 
-  string_exprt add_axioms_for_format_specifier(
+  char_array_exprt add_axioms_for_format_specifier(
     const format_specifiert &fs,
     const struct_exprt &arg,
     const refined_string_typet &ref_type);
 
   exprt add_axioms_for_insert(
-    const string_exprt &res,
-    const string_exprt &s1,
-    const string_exprt &s2,
+    const char_array_exprt &res,
+    const char_array_exprt &s1,
+    const char_array_exprt &s2,
     const exprt &offset);
   exprt add_axioms_for_insert(const function_application_exprt &f);
-  string_exprt add_axioms_from_literal(const function_application_exprt &f);
-  string_exprt add_axioms_from_int(const function_application_exprt &f);
-  string_exprt add_axioms_from_int(
+  char_array_exprt add_axioms_from_literal(const function_application_exprt &f);
+  char_array_exprt add_axioms_from_int(const function_application_exprt &f);
+  char_array_exprt add_axioms_from_int(
     const exprt &input_int,
     const refined_string_typet &ref_type,
     size_t max_size=0);
-  string_exprt add_axioms_from_int_with_radix(
+  char_array_exprt add_axioms_from_int_with_radix(
     const exprt &input_int,
     const exprt &radix,
     const refined_string_typet &ref_type,
     size_t max_size=0);
-  string_exprt add_axioms_from_int_hex(
+  char_array_exprt add_axioms_from_int_hex(
     const exprt &i, const refined_string_typet &ref_type);
-  string_exprt add_axioms_from_int_hex(const function_application_exprt &f);
-  string_exprt add_axioms_from_long(const function_application_exprt &f);
-  string_exprt add_axioms_from_long(const exprt &i, size_t max_size);
-  string_exprt add_axioms_from_bool(const function_application_exprt &f);
-  string_exprt add_axioms_from_bool(
+  char_array_exprt add_axioms_from_int_hex(const function_application_exprt &f);
+  char_array_exprt add_axioms_from_long(const function_application_exprt &f);
+  char_array_exprt add_axioms_from_long(const exprt &i, size_t max_size);
+  char_array_exprt add_axioms_from_bool(const function_application_exprt &f);
+  char_array_exprt add_axioms_from_bool(
     const exprt &i, const refined_string_typet &ref_type);
-  string_exprt add_axioms_from_char(const function_application_exprt &f);
-  string_exprt add_axioms_from_char(
+  char_array_exprt add_axioms_from_char(const function_application_exprt &f);
+  char_array_exprt add_axioms_from_char(
     const exprt &i, const refined_string_typet &ref_type);
-  string_exprt add_axioms_from_char_array(const function_application_exprt &f);
-  string_exprt add_axioms_from_char_array(
+  char_array_exprt add_axioms_from_char_array(
+    const function_application_exprt &f);
+  char_array_exprt add_axioms_from_char_array(
     const exprt &length,
     const exprt &data,
     const exprt &offset,
     const exprt &count);
   exprt add_axioms_for_index_of(
-    const string_exprt &str,
+    const char_array_exprt &str,
     const exprt &c,
     const exprt &from_index);
 
   // Add axioms corresponding to the String.indexOf:(String;I) java function
   exprt add_axioms_for_index_of_string(
-    const string_exprt &haystack,
-    const string_exprt &needle,
+    const char_array_exprt &haystack,
+    const char_array_exprt &needle,
     const exprt &from_index);
 
   // Add axioms corresponding to the String.indexOf java functions
@@ -233,13 +240,13 @@ private:
 
   // Add axioms corresponding to the String.lastIndexOf:(String;I) java function
   exprt add_axioms_for_last_index_of_string(
-    const string_exprt &haystack,
-    const string_exprt &needle,
+    const char_array_exprt &haystack,
+    const char_array_exprt &needle,
     const exprt &from_index);
 
   // Add axioms corresponding to the String.lastIndexOf:(CI) java function
   exprt add_axioms_for_last_index_of(
-    const string_exprt &str,
+    const char_array_exprt &str,
     const exprt &c,
     const exprt &from_index);
 
@@ -254,12 +261,15 @@ private:
   exprt add_axioms_for_string_of_float(
     const function_application_exprt &f);
   exprt add_axioms_for_string_of_float(
-    const string_exprt &res, const exprt &f, const refined_string_typet &ref_type);
+    const char_array_exprt &res,
+    const exprt &f,
+    const refined_string_typet &ref_type);
 
-  string_exprt add_axioms_for_fractional_part(
+  char_array_exprt add_axioms_for_fractional_part(
     const exprt &i, size_t max_size, const refined_string_typet &ref_type);
   exprt add_axioms_from_float_scientific_notation(
-    const string_exprt &res, const exprt &f, const refined_string_typet &ref_type);
+    const char_array_exprt &res, const exprt &f,
+    const refined_string_typet &ref_type);
   exprt add_axioms_from_float_scientific_notation(
     const function_application_exprt &f);
 
@@ -267,33 +277,35 @@ private:
   // TODO: the specifications is only partial
   exprt add_axioms_from_double(const function_application_exprt &f);
 
-  string_exprt add_axioms_for_replace(const function_application_exprt &f);
-  string_exprt add_axioms_for_set_length(const function_application_exprt &f);
+  char_array_exprt add_axioms_for_replace(const function_application_exprt &f);
+  char_array_exprt add_axioms_for_set_length(
+    const function_application_exprt &f);
 
   // TODO: the specification may not be correct for the case where the
   // string is shorter than end. An actual java program should throw an
   // exception in that case
-  string_exprt add_axioms_for_substring(
-    const string_exprt &str, const exprt &start, const exprt &end);
-  string_exprt add_axioms_for_substring(const function_application_exprt &expr);
+  char_array_exprt add_axioms_for_substring(
+    const char_array_exprt &str, const exprt &start, const exprt &end);
+  char_array_exprt add_axioms_for_substring(
+    const function_application_exprt &expr);
 
-  string_exprt add_axioms_for_to_lower_case(
+  char_array_exprt add_axioms_for_to_lower_case(
     const function_application_exprt &expr);
-  string_exprt add_axioms_for_to_upper_case(
+  char_array_exprt add_axioms_for_to_upper_case(
     const function_application_exprt &expr);
-  string_exprt add_axioms_for_to_upper_case(
-    const string_exprt &expr);
-  string_exprt add_axioms_for_trim(const function_application_exprt &expr);
+  char_array_exprt add_axioms_for_to_upper_case(
+    const char_array_exprt &expr);
+  char_array_exprt add_axioms_for_trim(const function_application_exprt &expr);
 
   // Add axioms corresponding to the String.valueOf([CII) function
   // TODO: not working correctly at the moment
-  string_exprt add_axioms_for_value_of(const function_application_exprt &f);
+  char_array_exprt add_axioms_for_value_of(const function_application_exprt &f);
 
-  string_exprt add_axioms_for_code_point(
+  char_array_exprt add_axioms_for_code_point(
     const exprt &code_point, const refined_string_typet &ref_type);
-  string_exprt add_axioms_for_java_char_array(const exprt &char_array);
+  char_array_exprt add_axioms_for_java_char_array(const exprt &char_array);
   exprt add_axioms_for_char_pointer(const function_application_exprt &fun);
-  string_exprt add_axioms_for_if(const if_exprt &expr);
+  char_array_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);
 
   // Add axioms corresponding the String.codePointCount java function
@@ -313,13 +325,13 @@ private:
     const exprt &input_int,
     const typet &type,
     const bool strict_formatting,
-    const string_exprt &str,
+    const char_array_exprt &str,
     const std::size_t max_string_length,
     const exprt &radix,
     const unsigned long radix_ul);
   void add_axioms_for_correct_number_format(
     const exprt &input_int,
-    const string_exprt &str,
+    const char_array_exprt &str,
     const exprt &radix_as_char,
     const unsigned long radix_ul,
     const std::size_t max_size,
@@ -334,7 +346,7 @@ private:
   symbol_exprt add_axioms_for_intern(const function_application_exprt &f);
 
   // Pool used for the intern method
-  std::map<string_exprt, symbol_exprt> intern_of_string;
+  std::map<char_array_exprt, symbol_exprt> intern_of_string;
 
   // Tells which language is used. C and Java are supported
   irep_idt mode;
@@ -348,16 +360,21 @@ private:
     return args;
   }
 
-private:
   // Helper functions
   exprt int_of_hex_char(const exprt &chr) const;
   exprt is_high_surrogate(const exprt &chr) const;
   exprt is_low_surrogate(const exprt &chr) const;
   exprt character_equals_ignore_case(
     exprt char1, exprt char2, exprt char_a, exprt char_A, exprt char_Z);
-  bool is_constant_string(const string_exprt &expr) const;
-  string_exprt empty_string(const refined_string_typet &ref_type);
+  bool is_constant_string(const char_array_exprt &expr) const;
+  char_array_exprt empty_string(const refined_string_typet &ref_type);
   unsigned long to_integer_or_default(const exprt &expr, unsigned long def);
+
+
+  // Associate a finite array to each char pointer
+  std::map<exprt, exprt> m_arrays_of_pointers;
+  char_array_exprt associate_char_array_to_char_pointer(
+    const exprt &char_pointer, const typet &char_array_type);
 };
 
 exprt is_digit_with_radix(

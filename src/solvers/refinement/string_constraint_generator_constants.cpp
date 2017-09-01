@@ -19,10 +19,10 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// string constant
 /// \par parameters: a string constant
 /// \return a string expression
-string_exprt string_constraint_generatort::add_axioms_for_constant(
+char_array_exprt string_constraint_generatort::add_axioms_for_constant(
   irep_idt sval, const refined_string_typet &ref_type)
 {
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
   std::string c_str=id2string(sval);
   std::wstring str;
 
@@ -52,7 +52,7 @@ string_exprt string_constraint_generatort::add_axioms_for_constant(
 /// add axioms to say that the returned string expression is empty
 /// \par parameters: function application without argument
 /// \return string expression
-string_exprt string_constraint_generatort::add_axioms_for_empty_string(
+char_array_exprt string_constraint_generatort::add_axioms_for_empty_string(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().empty());
@@ -64,7 +64,7 @@ string_exprt string_constraint_generatort::add_axioms_for_empty_string(
 /// Generate a string expression representing the empty string
 /// \param ref_type: a refined string type
 /// \return a string expression
-string_exprt string_constraint_generatort::empty_string(
+char_array_exprt string_constraint_generatort::empty_string(
   const refined_string_typet &ref_type)
 {
   exprt size=from_integer(0, ref_type.get_index_type());
@@ -74,7 +74,7 @@ string_exprt string_constraint_generatort::empty_string(
     from_integer(0, ref_type.get_content_type().subtype()), content_type);
 #endif
   null_pointer_exprt empty_array(to_pointer_type(content_type));
-  string_exprt res(size, empty_array, ref_type);
+  char_array_exprt res(size, empty_array, ref_type);
   return res;
 }
 
@@ -83,7 +83,7 @@ string_exprt string_constraint_generatort::empty_string(
 /// \param f: function application with an argument which is a string literal
 /// that is a constant with a string value.
 /// \return string expression
-string_exprt string_constraint_generatort::add_axioms_from_literal(
+char_array_exprt string_constraint_generatort::add_axioms_from_literal(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();

@@ -114,34 +114,61 @@ plus_exprt string_constraint_generatort::plus_exprt_with_overflow_check(
 /// construct a string expression whose length and content are new variables
 /// \par parameters: a type for string
 /// \return a string expression
-string_exprt string_constraint_generatort::fresh_string(
+char_array_exprt string_constraint_generatort::fresh_string(
   const refined_string_typet &type)
 {
   symbol_exprt length=fresh_symbol("string_length", type.get_index_type());
   symbol_exprt content=fresh_symbol("string_content", type.get_content_type());
-  string_exprt str(length, content, type);
+  char_array_exprt str(length, content, type);
   created_strings.insert(str);
   add_default_axioms(str);
   return str;
+}
+
+#include <iostream>
+char_array_exprt
+  string_constraint_generatort::associate_char_array_to_char_pointer(
+    const exprt &char_pointer, const typet &char_array_type)
+{
+  std::cout << "associate char pointer : "
+            << char_pointer.pretty() << std::endl;
+  std::cout << "with char array type: "
+            << char_array_type.pretty() << std::endl;
+
+  PRECONDITION(char_pointer.type().id()==ID_pointer);
+  PRECONDITION(char_array_type.id()==ID_array);
+  symbol_exprt array_sym=fresh_symbol("char_array", char_array_type);
+  auto insert_result=m_arrays_of_pointers.insert(
+    std::make_pair(char_pointer, array_sym));
+  index_exprt first(array_sym, from_integer(0, unsignedbv_typet(32)));
+  // axioms.push_back(equal_exprt(char_pointer, address_of_exprt(first)));
+  return to_char_array_expr(insert_result.first->second);
 }
 
 /// casts an expression to a string expression, or fetches the actual
 /// string_exprt in the case of a symbol.
 /// \par parameters: an expression of refined string type
 /// \return a string expression
-string_exprt string_constraint_generatort::get_string_expr(const exprt &expr)
+char_array_exprt string_constraint_generatort::get_string_expr(
+  const exprt &expr)
 {
   PRECONDITION(is_refined_string_type(expr.type()));
 
+  // Force char array type for content
+  refined_string_typet ref_type=to_refined_string_type(expr.type());
+  ref_type.components()[1].type()=
+    array_typet(ref_type.get_char_type(), member_exprt(expr, "length"));
+
   if(expr.id()==ID_symbol)
   {
-    return find_or_add_string_of_symbol(
-      to_symbol_expr(expr),
-      to_refined_string_type(expr.type()));
+    return find_or_add_string_of_symbol(to_symbol_expr(expr), ref_type);
   }
   else
   {
-    return to_string_expr(expr);
+    char_array_exprt str=char_array_of_string_expr(to_string_expr(expr));
+  /*  str.content()=associate_char_array_to_char_pointer(
+      str.content(), ref_type.get_content_type());*/
+    return str;
   }
 }
 
@@ -153,7 +180,7 @@ string_exprt string_constraint_generatort::get_string_expr(const exprt &expr)
 /// \return a string expression that is linked to the argument through axioms
 ///   that are added to the list
 void string_constraint_generatort::add_default_axioms(
-  const string_exprt &s)
+  const char_array_exprt &s)
 {
   axioms.push_back(
     s.axiom_for_length_ge(from_integer(0, s.length().type())));
@@ -172,6 +199,19 @@ void string_constraint_generatort::add_default_axioms(
   }
 }
 
+char_array_exprt string_constraint_generatort::char_array_of_string_expr(
+  const string_exprt &expr)
+{
+  // Force char array type for content
+  refined_string_typet ref_type=to_refined_string_type(expr.type());
+  ref_type.components()[1].type()=
+    array_typet(ref_type.get_char_type(), expr.length());
+  string_exprt str=to_string_expr(expr);
+  char_array_exprt array=associate_char_array_to_char_pointer(
+    str.content(), ref_type.get_content_type());
+  return array;
+}
+
 #include <iostream>
 /// obtain a refined string expression corresponding to a expression of type
 /// string
@@ -183,20 +223,22 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
 {
   PRECONDITION(is_refined_string_type(string.type()));
   refined_string_typet type=to_refined_string_type(string.type());
-
+  UNREACHABLE;
+  return to_string_expr(string);
+#if 0
   // Function applications should have been removed before
   PRECONDITION(string.id()!=ID_function_application);
 
   if(string.id()==ID_symbol)
   {
     const symbol_exprt &sym=to_symbol_expr(string);
-    string_exprt s=find_or_add_string_of_symbol(sym, type);
+    char_array_exprt s=find_or_add_string_of_symbol(sym, type);
     add_default_axioms(s);
     return s;
   }
   else if(string.id()==ID_nondet_symbol)
   {
-    string_exprt s=fresh_string(type);
+    char_array_exprt s=fresh_string(type);
     add_default_axioms(s);
     return s;
   }
@@ -240,30 +282,31 @@ string_exprt string_constraint_generatort::add_axioms_for_refined_string(
     // For the compiler
     throw 0;
   }
+#endif
 }
 
 /// add axioms for an if expression which should return a string
 /// \par parameters: an if expression
 /// \return a string expression
-string_exprt string_constraint_generatort::add_axioms_for_if(
+char_array_exprt string_constraint_generatort::add_axioms_for_if(
   const if_exprt &expr)
 {
   PRECONDITION(is_refined_string_type(expr.true_case().type()));
-  string_exprt t=get_string_expr(expr.true_case());
+  char_array_exprt t=get_string_expr(expr.true_case());
   PRECONDITION(is_refined_string_type(expr.false_case().type()));
-  string_exprt f=get_string_expr(expr.false_case());
+  char_array_exprt f=get_string_expr(expr.false_case());
   const refined_string_typet &ref_type=to_refined_string_type(t.type());
   const typet &index_type=ref_type.get_index_type();
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
 
   axioms.push_back(
-    implies_exprt(expr.cond(), res.axiom_for_has_same_length_as(t)));
+    implies_exprt(expr.cond(), equal_exprt(res.length(), t.length())));
   symbol_exprt qvar=fresh_univ_index("QA_string_if_true", index_type);
   equal_exprt qequal(res[qvar], t[qvar]);
   string_constraintt sc1(qvar, t.length(), implies_exprt(expr.cond(), qequal));
   axioms.push_back(sc1);
-  axioms.push_back(
-    implies_exprt(not_exprt(expr.cond()), res.axiom_for_has_same_length_as(f)));
+  axioms.push_back(implies_exprt(
+    not_exprt(expr.cond()), equal_exprt(res.length(), f.length())));
   symbol_exprt qvar2=fresh_univ_index("QA_string_if_false", index_type);
   equal_exprt qequal2(res[qvar2], f[qvar2]);
   string_constraintt sc2(qvar2, f.length(), or_exprt(expr.cond(), qequal2));
@@ -277,11 +320,11 @@ string_exprt string_constraint_generatort::add_axioms_for_if(
 /// c, adds it to the table and returns it.
 /// \par parameters: a symbol expression
 /// \return a string expression
-string_exprt string_constraint_generatort::find_or_add_string_of_symbol(
+char_array_exprt string_constraint_generatort::find_or_add_string_of_symbol(
   const symbol_exprt &sym, const refined_string_typet &ref_type)
 {
   irep_idt id=sym.get_identifier();
-  string_exprt str=fresh_string(ref_type);
+  char_array_exprt str=fresh_string(ref_type);
   auto entry=unresolved_symbols.insert(std::make_pair(id, str));
   return entry.first->second;
 }
@@ -301,48 +344,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     to_symbol_expr(name).get_identifier();
 
   std::string str_id(id.c_str());
-
-  size_t pos=str_id.find("func_length");
-  if(pos!=std::string::npos)
-  {
-    function_application_exprt new_expr(expr);
-    // TODO: This part needs some improvement.
-    // Stripping the symbol name is not a very robust process.
-    new_expr.function()=symbol_exprt(str_id.substr(0, pos+4));
-    new_expr.type()=refined_string_typet(java_int_type(), java_char_type());
-
-    auto res_it=function_application_cache.insert(std::make_pair(new_expr,
-                                                                 nil_exprt()));
-    if(res_it.second)
-    {
-      string_exprt res=to_string_expr(
-        add_axioms_for_function_application(new_expr));
-      res_it.first->second=res;
-      return res.length();
-    }
-    else
-      return to_string_expr(res_it.first->second).length();
-  }
-
-  pos = str_id.find("func_data");
-  if(pos!=std::string::npos)
-  {
-    function_application_exprt new_expr(expr);
-    new_expr.function()=symbol_exprt(str_id.substr(0, pos+4));
-    new_expr.type()=refined_string_typet(java_int_type(), java_char_type());
-
-    auto res_it=function_application_cache.insert(std::make_pair(new_expr,
-                                                                 nil_exprt()));
-    if(res_it.second)
-    {
-      string_exprt res=to_string_expr(
-        add_axioms_for_function_application(new_expr));
-      res_it.first->second=res;
-      return res.content();
-    }
-    else
-      return to_string_expr(res_it.first->second).content();
-  }
 
   // TODO: improve efficiency of this test by either ordering test by frequency
   // or using a map
@@ -461,13 +462,13 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 /// \par parameters: function application with one argument, which is a string,
 /// or three arguments: string, integer offset and count
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_copy(
+char_array_exprt string_constraint_generatort::add_axioms_for_copy(
   const function_application_exprt &f)
 {
   const auto &args=f.arguments();
   if(args.size()==1)
   {
-    string_exprt s1=get_string_expr(args[0]);
+    char_array_exprt s1=get_string_expr(args[0]);
     return s1;
   }
   else
@@ -476,7 +477,7 @@ string_exprt string_constraint_generatort::add_axioms_for_copy(
       args.size()==3,
       string_refinement_invariantt("f must have 1 or 3 arguments and the case "
         "of 3 arguments is already handled"));
-    string_exprt s1=get_string_expr(args[0]);
+    char_array_exprt s1=get_string_expr(args[0]);
     exprt offset=args[1];
     exprt count=args[2];
     return add_axioms_for_substring(s1, offset, plus_exprt(offset, count));
@@ -487,10 +488,10 @@ string_exprt string_constraint_generatort::add_axioms_for_copy(
 /// \par parameters: an expression corresponding to a java object of type char
 ///   array
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_java_char_array(
+char_array_exprt string_constraint_generatort::add_axioms_for_java_char_array(
   const exprt &char_array)
 {
-  string_exprt res=fresh_string(
+  char_array_exprt res=fresh_string(
     refined_string_typet(java_int_type(), java_char_type()));
   exprt arr=to_address_of_expr(char_array).object();
   exprt len=member_exprt(arr, "length", res.length().type());
@@ -510,15 +511,12 @@ exprt string_constraint_generatort::add_axioms_for_char_pointer(
   PRECONDITION(fun.arguments().size()==2);
   const exprt &char_pointer=fun.arguments()[0];
   const exprt &char_array=fun.arguments()[1];
-  // PRECONDITION(char_pointer.id()==ID_index);
-  /*
-  exprt array=char_pointer;//.op0();
-  array.type()=fun.type();*/
+
   equal_exprt pointer_equality(
     char_pointer,
     address_of_exprt(
       index_exprt(char_array, from_integer(0, java_int_type()))));
-  axioms.push_back(pointer_equality);
+ // axioms.push_back(pointer_equality);
   return from_integer(0, java_int_type());
   // TODO: It seems reasonable that the result of the function application
   //       should match the return type of the function. However it is not
@@ -532,7 +530,7 @@ exprt string_constraint_generatort::add_axioms_for_char_pointer(
 exprt string_constraint_generatort::add_axioms_for_length(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 1)[0]);
+  char_array_exprt str=get_string_expr(args(f, 1)[0]);
   return str.length();
 }
 
@@ -585,9 +583,10 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==2);
-  string_exprt str=get_string_expr(f.arguments()[0]);
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  symbol_exprt char_sym=fresh_symbol("char", ref_type.get_char_type());
+  char_array_exprt str=get_string_expr(f.arguments()[0]);
+  // const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  symbol_exprt char_sym=fresh_symbol("char", str.type().subtype());
+  // ref_type.get_char_type());
   axioms.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
 }
@@ -598,6 +597,6 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
 exprt string_constraint_generatort::add_axioms_for_to_char_array(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 1)[0]);
+  char_array_exprt str=get_string_expr(args(f, 1)[0]);
   return str.content();
 }

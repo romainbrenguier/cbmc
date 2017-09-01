@@ -27,12 +27,12 @@ std::vector<exprt> instantiate_not_contains(
   const string_not_contains_constraintt &axiom,
   const std::set<exprt> &index_set0,
   const std::set<exprt> &index_set1,
-  const string_constraint_generatort &generator)
+  string_constraint_generatort &generator)
 {
   std::vector<exprt> lemmas;
 
-  const string_exprt s0=to_string_expr(axiom.s0());
-  const string_exprt s1=to_string_expr(axiom.s1());
+  const char_array_exprt s0=axiom.s0();
+  const char_array_exprt s1=axiom.s1();
 
   for(const auto &i0 : index_set0)
     for(const auto &i1 : index_set1)

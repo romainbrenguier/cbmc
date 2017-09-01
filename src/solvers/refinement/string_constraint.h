@@ -1,7 +1,7 @@
 /*******************************************************************\
 
-Module: Defines string constraints. These are formulas talking about strings. 
-        We implemented two forms of constraints: `string_constraintt` 
+Module: Defines string constraints. These are formulas talking about strings.
+        We implemented two forms of constraints: `string_constraintt`
         are formulas of the form $\forall univ_var \in [lb,ub[. prem => body$,
         and not_contains_constraintt of the form:
         $\forall x in [lb,ub[. p(x) => \exists y in [lb,ub[. s1[x+y] != s2[y]$.
@@ -26,6 +26,129 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/refined_string_type.h>
 #include <util/string_expr.h>
 #include <langapi/language_util.h>
+
+class char_array_exprt : public exprt
+{
+public:
+  char_array_exprt(exprt l, exprt c, typet t);
+
+  exprt &length()
+  {
+    return to_array_type(type()).size();
+  }
+
+  const exprt &length() const
+  {
+    return to_array_type(type()).size();
+  }
+
+  exprt &content()
+  {
+    return *this;
+  }
+
+  const exprt &content() const
+  {
+    return *this;
+  }
+
+  exprt operator[](const exprt &i) const
+  {
+    return index_exprt(content(), i);
+  }
+
+  index_exprt operator[] (int i) const
+  {
+    return index_exprt(content(), from_integer(i, length().type()));
+  }
+
+  // Comparison on the length of the strings
+  binary_relation_exprt axiom_for_length_ge(
+    const string_exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_ge, rhs.length());
+  }
+
+  binary_relation_exprt axiom_for_length_ge(
+    const exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_ge, rhs);
+  }
+
+  binary_relation_exprt axiom_for_length_gt(
+    const exprt &rhs) const
+  {
+    return binary_relation_exprt(rhs, ID_lt, length());
+  }
+
+  binary_relation_exprt axiom_for_length_gt(
+    const string_exprt &rhs) const
+  {
+    return binary_relation_exprt(rhs.length(), ID_lt, length());
+  }
+
+  binary_relation_exprt axiom_for_length_gt(mp_integer i) const
+  {
+    return axiom_for_length_gt(from_integer(i, length().type()));
+  }
+
+  binary_relation_exprt axiom_for_length_le(
+    const string_exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_le, rhs.length());
+  }
+
+  binary_relation_exprt axiom_for_length_le(
+    const exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_le, rhs);
+  }
+
+  binary_relation_exprt axiom_for_length_le(mp_integer i) const
+  {
+    return axiom_for_length_le(from_integer(i, length().type()));
+  }
+
+  binary_relation_exprt axiom_for_length_lt(
+    const string_exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_lt, rhs.length());
+  }
+
+  binary_relation_exprt axiom_for_length_lt(
+    const exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_lt, rhs);
+  }
+
+  equal_exprt axiom_for_has_same_length_as(
+    const string_exprt &rhs) const
+  {
+    return equal_exprt(length(), rhs.length());
+  }
+
+  equal_exprt axiom_for_has_length(const exprt &rhs) const
+  {
+    return equal_exprt(length(), rhs);
+  }
+
+  equal_exprt axiom_for_has_length(mp_integer i) const
+  {
+    return axiom_for_has_length(from_integer(i, length().type()));
+  }
+};
+
+inline char_array_exprt &to_char_array_expr(exprt &expr)
+{
+  PRECONDITION(expr.type().id()==ID_array);
+  return static_cast<char_array_exprt &>(expr);
+}
+
+inline const char_array_exprt &to_char_array_expr(const exprt &expr)
+{
+  PRECONDITION(expr.type().id()==ID_array);
+  return static_cast<const char_array_exprt &>(expr);
+}
 
 /*! \brief Universally quantified string constraint
 
@@ -168,8 +291,8 @@ public:
     exprt premise,
     exprt exists_bound_inf,
     exprt exists_bound_sup,
-    const string_exprt &s0,
-    const string_exprt &s1):
+    const char_array_exprt &s0,
+    const char_array_exprt &s1):
   exprt(ID_string_not_contains_constraint)
   {
     copy_to_operands(univ_lower_bound, univ_bound_sup, premise);
@@ -202,14 +325,14 @@ public:
     return operands()[4];
   }
 
-  const string_exprt &s0() const
+  const char_array_exprt &s0() const
   {
-    return to_string_expr(operands()[5]);
+    return to_char_array_expr(operands()[5]);
   }
 
-  const string_exprt &s1() const
+  const char_array_exprt &s1() const
   {
-    return to_string_expr(operands()[6]);
+    return to_char_array_expr(operands()[6]);
   }
 };
 

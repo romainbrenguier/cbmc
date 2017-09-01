@@ -37,6 +37,26 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <util/ssa_expr.h> // for char array pointer
 
 
+char_array_exprt::char_array_exprt(exprt l, exprt c, typet t):
+  exprt(to_char_array_expr(string_exprt(l,c,t)))
+{ }
+
+/// keeps a map of symbols to expressions, such as none of the mapped values
+/// exist as a key
+/// \param lhs: an expression of type char array
+/// \param rhs: an expression to map it to, which should be either a symbol
+///             a string_exprt, an array_exprt, an array_of_exprt or an
+///             if_exprt with branches of the previous kind
+/// \return the new mapped value
+exprt symbol_solvert::add_symbol(const exprt &lhs, const exprt &rhs)
+{
+  // We insert the mapped value of the rhs, if it exists.
+  auto it=m_symbol_resolve.find(rhs);
+  const exprt &new_rhs=it!=m_symbol_resolve.end()?it->second:rhs;
+  m_symbol_resolve[lhs]=new_rhs;
+  return new_rhs;
+}
+
 string_refinementt::string_refinementt(
   const namespacet &_ns,
   propt &_prop,
@@ -120,86 +140,6 @@ void string_refinementt::add_instantiations()
   }
 }
 
-/// List the simple expressions on which the expression depends in the
-/// `symbol_resolve` map. A simple expression is either a symbol or a
-/// constant array --> TODO: this is no longer true
-/// \param expr: an expression
-static void depends_in_symbol_map(const exprt &expr, std::vector<exprt> &accu)
-{
-  if(expr.id()==ID_if)
-  {
-    if_exprt if_expr=to_if_expr(expr);
-    depends_in_symbol_map(if_expr.true_case(), accu);
-    depends_in_symbol_map(if_expr.false_case(), accu);
-  }
-  else if(expr.id()==ID_struct)
-  {
-    string_exprt str=to_string_expr(expr);
-    depends_in_symbol_map(str.content(), accu);
-  }
-  else if(expr.id()==ID_symbol || expr.id()==ID_array || expr.id()==ID_array_of)
-  {
-    INVARIANT(
-      expr.id()==ID_symbol || expr.id()==ID_array || expr.id()==ID_array_of,
-      "leaf in symbol resolve should be a symbol or a constant array");
-    accu.push_back(expr);
-  }
-  else
-  {
-    accu.push_back(expr);
-    // TODO: check if this is correct
-    for(auto op : expr.operands())
-      depends_in_symbol_map(op, accu);
-  }
-}
-
-/// keeps a map of symbols to expressions, such as none of the mapped values
-/// exist as a key
-/// \param lhs: an expression
-/// \param rhs: an expression to map it to, which should be either a symbol
-///             a string_exprt, an array_exprt, an array_of_exprt or an
-///             if_exprt with branches of the previous kind
-/// \return the new mapped value
-exprt symbol_solvert::add_symbol(const exprt &lhs, const exprt &rhs)
-{
-//  PRECONDITION(lhs.id()==ID_symbol);
-#if 0
-  PRECONDITION(rhs.id()==ID_symbol ||
-               rhs.id()==ID_array ||
-               rhs.id()==ID_array_of ||
-               rhs.id()==ID_if ||
-               (rhs.id()==ID_struct &&
-                is_refined_string_type(rhs.type())));
-#endif
-
-  // We insert the mapped value of the rhs, if it exists.
-  auto it=m_symbol_resolve.find(rhs);
-  const exprt &new_rhs=it!=m_symbol_resolve.end()?it->second:rhs;
-  m_symbol_resolve[lhs]=new_rhs;
-
-#if 0
-  // List the leaves of new_rhs
-  std::vector<exprt> leaves;
-  depends_in_symbol_map(new_rhs, leaves);
-
-  const auto &symbols_to_update_with_new_rhs=m_reverse_symbol_resolve[lhs];
-
-  // We need to update all the symbols which depend on lhs
-  for(const exprt &item : symbols_to_update_with_new_rhs)
-    ::replace_expr(m_symbol_resolve, m_symbol_resolve[item]);
-
-  // Every time a symbol at the leaves is updated we need to update lhs
-  // and the symbols that depend on it
-  for(const auto &leaf : leaves)
-  {
-    m_reverse_symbol_resolve[leaf].push_back(lhs);
-    for(const exprt &item : symbols_to_update_with_new_rhs)
-      m_reverse_symbol_resolve[leaf].push_back(item);
-  }
-#endif
-  return new_rhs;
-}
-
 /// add axioms if the rhs is a character array
 /// \par parameters: the rhs and lhs of an equality over character arrays
 void string_refinementt::set_char_array_equality(
@@ -226,13 +166,14 @@ void string_refinementt::set_char_array_equality(
 /// remove functions applications and create the necessary axioms
 /// \par parameters: an expression containing function applications
 /// \return an expression containing no function application
-exprt string_refinementt::substitute_function_applications(exprt expr)
+static exprt substitute_function_applications(
+  exprt expr, string_constraint_generatort &generator)
 {
   for(size_t i=0; i<expr.operands().size(); ++i)
   {
     // TODO: only copy when necessary
     exprt op(expr.operands()[i]);
-    expr.operands()[i]=substitute_function_applications(op);
+    expr.operands()[i]=substitute_function_applications(op, generator);
   }
 
   if(expr.id()==ID_function_application)
@@ -242,6 +183,13 @@ exprt string_refinementt::substitute_function_applications(exprt expr)
   }
 
   return expr;
+}
+
+static void substitute_function_applications_in_equations(
+  std::vector<equal_exprt> &equations, string_constraint_generatort &generator)
+{
+  for(equal_exprt &eq : equations)
+    eq.rhs()=substitute_function_applications(eq.rhs(), generator);
 }
 
 /// distinguish char array from other types
@@ -256,8 +204,14 @@ bool is_char_array_type(const typet &type, const namespacet &ns)
   if(type.id()==ID_symbol)
     return is_char_array_type(ns.follow(type), ns);
 
-  return (type.id()==ID_pointer || type.id()==ID_array)
+  return (// type.id()==ID_pointer ||
+          type.id()==ID_array)
     && type.subtype()==java_char_type();
+}
+
+bool is_char_pointer_type(const typet &type)
+{
+  return type.id()==ID_pointer && type.subtype()==java_char_type();
 }
 
 static bool has_char_array_subtype(const typet &type, const namespacet &ns)
@@ -283,58 +237,12 @@ static bool has_char_array_subexpr(const exprt &expr, const namespacet &ns)
   return false;
 }
 
-/// add lemmas to the solver corresponding to the given equation
-/// \param lhs: left hand side of an equality expression
-/// \param rhs: right and side of the equality
-/// \return true if the assignemnt needs to be handled by the parent class
-///         via `set_to`
-bool string_refinementt::add_axioms_for_string_assigns(
-  const exprt &lhs, const exprt &rhs)
+static bool has_char_pointer_subexpr(const exprt &expr)
 {
-  if(is_char_array_type(rhs.type(), ns))
-  {
-    set_char_array_equality(lhs, rhs);
-    m_symbol_resolve.add_symbol(lhs, rhs);
-    return false;
-#if 0
-    if(rhs.id() == ID_symbol || rhs.id() == ID_array)
-    {
-      add_symbol_to_symbol_map(lhs, rhs);
-      return false;
-    }
-    else if(rhs.id()==ID_nondet_symbol)
-    {
-      add_symbol_to_symbol_map(
-        lhs, generator.fresh_symbol("nondet_array", lhs.type()));
-      return false;
-    }
-    else if(rhs.id()==ID_if)
-    {
-      add_symbol_to_symbol_map(lhs, rhs);
+  for(auto it=expr.depth_begin(); it!=expr.depth_end(); ++it)
+    if(is_char_pointer_type(it->type()))
       return true;
-    }
-    else
-    {
-      warning() << "ignoring char array " << from_expr(ns, "", rhs) << eom;
-      return true;
-    }
-    #endif
-  }
-  if(is_refined_string_type(rhs.type()))
-  {
-    warning() << "add_axioms_for_string_assigns: refined_string_type found"
-              << eom;
-    exprt refined_rhs=generator.add_axioms_for_refined_string(rhs);
-    m_symbol_resolve.add_symbol(lhs, refined_rhs);
-    return false;
-  }
-  if(has_char_array_subtype(lhs.type(), ns))
-  {
-    warning() << "add_axioms_for_string_assigns: refined_string_type found"
-              << eom;
-  }
-  // Other cases are to be handled by supert::set_to.
-  return true;
+  return false;
 }
 
 /// Convert exprt to a specific type. Throw bad_cast if conversion
@@ -461,9 +369,9 @@ void string_refinementt::concretize_lengths()
 }
 
 /// Replace all pointer accesses by char_array access for some symbol.
-/// These symbol are either found by symbol_resolve or a new one is created
+/// These symbol are either found by symbol_resolve or a new one is created.
+/// THis should preserve the type
 /// \return true if a pointer was replaced
-#include <iostream>
 bool replace_char_pointers_by_char_arrays(
   exprt &expr,
   string_constraint_generatort &generator,
@@ -473,26 +381,6 @@ bool replace_char_pointers_by_char_arrays(
 
   for(auto it=expr.depth_begin(); it!=expr.depth_end();)
   {
-#if 0
-    if(it->id()==ID_index)
-    {
-      index_exprt index_expr=to_index_expr(*it);
-      if(index_expr.array().type().id()==ID_pointer)
-      {
-        replaced=true;
-        symbol_exprt array_sym=generator.fresh_symbol(
-              "data_array",
-              array_typet(java_char_type(), from_integer(100, java_int_type())));
-
-        exprt new_value=
-          symbol_resolve.add_symbol(index_expr.array(), array_sym);
-        it.mutate()=index_exprt(new_value, index_expr.index());
-        it.next_sibling_or_parent();
-      }
-      else
-        ++it;
-    }
-#endif
     if(it->type().id()==ID_pointer)
     {
       if(it->id()==ID_array)
@@ -503,7 +391,7 @@ bool replace_char_pointers_by_char_arrays(
       {
         // We have to be carreful not to replace constants
         PRECONDITION(it->op0().op1().is_zero());
-        it.mutate()=it->op0().op0();
+        // it.mutate()=address_of_exprt(it->op0().op0());
         it.next_sibling_or_parent();
       }
       else
@@ -514,7 +402,9 @@ bool replace_char_pointers_by_char_arrays(
         symbol_exprt array_sym=generator.fresh_symbol(
               "data_array", array_typet(java_char_type(), length_sym));
 
-        it.mutate()=symbol_resolve.add_symbol(*it, array_sym);
+        address_of_exprt new_pointer(index_exprt(
+          array_sym, from_integer(0, java_int_type())));
+        it.mutate()=symbol_resolve.add_symbol(*it, new_pointer);
         it.next_sibling_or_parent();
       }
     }
@@ -524,118 +414,208 @@ bool replace_char_pointers_by_char_arrays(
   return replaced;
 }
 
-/// add lemmas representing the setting of an expression to a given value
-/// \par parameters: an expression and the value to set it to
+///
+void associate_char_array_to_char_pointers(
+  exprt &expr,
+  string_constraint_generatort &generator,
+  std::map<exprt, exprt> &array_of_pointers)
+{
+  for(auto it=expr.depth_begin(); it!=expr.depth_end();)
+  {
+    if(it->type().id()==ID_pointer)
+    {
+      if(it->id()==ID_array)
+        ++it;
+      else if(it->id()==ID_address_of
+              && it->op0().id()==ID_index
+              && it->op0().op0().id()==ID_array)
+      {
+        // We have to be carreful not to replace constants
+        PRECONDITION(it->op0().op1().is_zero());
+        // it.mutate()=address_of_exprt(it->op0().op0());
+        it.next_sibling_or_parent();
+      }
+      else
+      {
+        symbol_exprt length_sym=
+            generator.fresh_symbol("data_length", java_int_type());
+        symbol_exprt array_sym=generator.fresh_symbol(
+              "data_array", array_typet(java_char_type(), length_sym));
+
+        array_of_pointers.insert(std::make_pair(*it, array_sym));
+        it.next_sibling_or_parent();
+      }
+    }
+    else
+      ++it;
+  }
+}
+
+void replace_char_pointers_by_char_arrays_in_equations(
+  std::vector<equal_exprt> &equations,
+  string_constraint_generatort &generator,
+  symbol_solvert &symbol_resolve)
+{
+  for(equal_exprt &eq : equations)
+    replace_char_pointers_by_char_arrays(eq, generator, symbol_resolve);
+}
+
+void replace_symbols_in_equations(
+  const symbol_solvert &solver,
+  std::vector<equal_exprt> &equations)
+{
+  for(equal_exprt &eq : equations)
+    solver.replace_expr(eq);
+}
+
+#if 0
+void old_set_to(const exprt &expr, bool value)
+{
+  const exprt &lhs=eq_expr.lhs();
+   exprt rhs=eq_expr.rhs();
+
+  // The assignment of a string equality to false is not supported.
+  PRECONDITION(value || !is_char_array_type(rhs.type(), ns));
+  PRECONDITION(value || !is_refined_string_type(rhs.type()));
+
+  PRECONDITION(lhs.id()==ID_symbol || !is_char_array_type(rhs.type(), ns));
+  PRECONDITION(lhs.id()==ID_symbol || !is_refined_string_type(rhs.type()));
+
+  // If lhs is not a symbol, let supert::set_to() handle it.
+  if(lhs.id()!=ID_symbol)
+  {
+    PRECONDITION(!has_char_array_subexpr(lhs, ns));
+    non_string_axioms.push_back(std::make_pair(expr, value));
+    return;
+  }
+
+  if(lhs.type()!=rhs.type())
+  {
+    warning() << "ignoring " << from_expr(ns, "", expr)
+              << " [inconsistent types]" << eom;
+    debug() << "lhs has type: " << lhs.type().pretty(12) << eom;
+    debug() << "rhs has type: " << rhs.type().pretty(12) << eom;
+    return;
+  }
+
+  debug() << "(sr::set_to) " << from_expr(ns, "", lhs)
+          << " = " << from_expr(ns, "", rhs) << eom;
+
+  // Preprocessing to remove function applications.
+  if(rhs.id()==ID_function_application)
+  {
+    const function_application_exprt &fun=to_function_application_expr(rhs);
+    const exprt &name=fun.function();
+    const irep_idt &id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
+      to_symbol_expr(name).get_identifier();
+    if(id==ID_cprover_string_array_of_char_pointer_func)
+    {
+      PRECONDITION(fun.arguments().size()==2);
+      m_symbol_resolve.add_symbol(fun.arguments()[1], fun.arguments()[0]);
+      return;
+    }
+  }
+
+  replace_char_pointers_by_char_arrays(rhs, generator, m_symbol_resolve);
+  const exprt subst_rhs=substitute_function_applications(rhs);
+  if(lhs.type()!=subst_rhs.type())
+  {
+    if(lhs.type().id()!=ID_array ||
+       subst_rhs.type().id()!=ID_array ||
+       lhs.type().subtype()!=subst_rhs.type().subtype())
+    {
+      warning() << "ignoring " << from_expr(ns, "", expr)
+                << " [inconsistent types after substitution]" << eom;
+      return;
+    }
+    else
+    {
+      debug() << "(sr::set_to) accepting arrays with "
+              << "same subtype but different sizes" << eom;
+    }
+  }
+
+
+
+  // Push the substituted equality to the list of axioms to be given to
+  // supert::set_to.
+  non_string_axioms.push_back(
+    std::make_pair(equal_exprt(lhs, subst_rhs), value));
+
+}
+#endif
+
+/// Add equation to `m_equation_list` or give them to `supert::set_to`
+/// \param expr: an expression
+/// \param value: the value to set it to
 void string_refinementt::set_to(const exprt &expr, bool value)
 {
   PRECONDITION(expr.type().id()==ID_bool);
   PRECONDITION(equality_propagation);
 
-  if(expr.id()==ID_equal)
+  if(expr.id()==ID_equal && value)
   {
-    equal_exprt eq_expr=to_equal_expr(expr);
+    const equal_exprt &eq_expr=to_equal_expr(expr);
+    m_equations.push_back(eq_expr);
+  }
+  else
+  {
+    if(has_char_array_subexpr(expr, ns))
+      warning() << "warning non string equation has char array subexpr";
+    supert::set_to(expr, value);
+  }
+}
 
-    const exprt &lhs=eq_expr.lhs();
-     exprt rhs=eq_expr.rhs();
-
-    // The assignment of a string equality to false is not supported.
-    PRECONDITION(value || !is_char_array_type(rhs.type(), ns));
-    PRECONDITION(value || !is_refined_string_type(rhs.type()));
-
-    PRECONDITION(lhs.id()==ID_symbol || !is_char_array_type(rhs.type(), ns));
-    PRECONDITION(lhs.id()==ID_symbol || !is_refined_string_type(rhs.type()));
-
-    // If lhs is not a symbol, let supert::set_to() handle it.
-    if(lhs.id()!=ID_symbol)
+/// Add correspondance for each char pointer in the equation
+#include<iostream>
+symbol_solvert symbol_solver_from_equations(
+  const std::vector<equal_exprt> &equations, const namespacet &ns)
+{
+  symbol_solvert solver;
+  for(const equal_exprt &eq : equations)
+  {
+    const exprt &lhs=eq.lhs();
+    const exprt &rhs=eq.rhs();
+    PRECONDITION(lhs.id()==ID_symbol);
+    PRECONDITION(lhs.type()==rhs.type());
+    if(is_char_pointer_type(rhs.type()))
     {
-      PRECONDITION(!has_char_array_subexpr(lhs, ns));
-      non_string_axioms.push_back(std::make_pair(expr, value));
-      return;
+      solver.add_symbol(lhs, rhs);
     }
-
-    if(lhs.type()!=rhs.type())
+    else if(rhs.id()==ID_function_application)
     {
-      warning() << "ignoring " << from_expr(ns, "", expr)
-                << " [inconsistent types]" << eom;
-      debug() << "lhs has type: " << lhs.type().pretty(12) << eom;
-      debug() << "rhs has type: " << rhs.type().pretty(12) << eom;
-      return;
+      // ignore function application
     }
-
-    debug() << "(sr::set_to) " << from_expr(ns, "", lhs)
-            << " = " << from_expr(ns, "", rhs) << eom;
-
-    // Preprocessing to remove function applications.
-    if(rhs.id()==ID_function_application)
+    else if(has_char_pointer_subexpr(rhs))
     {
-      const function_application_exprt &fun=to_function_application_expr(rhs);
-      const exprt &name=fun.function();
-      const irep_idt &id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
-        to_symbol_expr(name).get_identifier();
-      if(id==ID_cprover_string_array_of_char_pointer_func)
+      if(rhs.id()!=ID_struct)
+        std::cout << "non struct with char pointer subexpr "
+                << from_expr(ns, "", rhs) << std::endl;
+      PRECONDITION(rhs.id()==ID_struct);
+      struct_typet struct_type=to_struct_type(rhs.type());
+      for(auto comp : struct_type.components())
       {
-        PRECONDITION(fun.arguments().size()==2);
-        m_symbol_resolve.add_symbol(fun.arguments()[1], fun.arguments()[0]);
-        return;
-      }
-    }
-
-    replace_char_pointers_by_char_arrays(rhs, generator, m_symbol_resolve);
-    const exprt subst_rhs=substitute_function_applications(rhs);
-    if(lhs.type()!=subst_rhs.type())
-    {
-      if(lhs.type().id()!=ID_array ||
-         subst_rhs.type().id()!=ID_array ||
-         lhs.type().subtype()!=subst_rhs.type().subtype())
-      {
-        warning() << "ignoring " << from_expr(ns, "", expr)
-                  << " [inconsistent types after substitution]" << eom;
-        return;
-      }
-      else
-      {
-        debug() << "(sr::set_to) accepting arrays with "
-                << "same subtype but different sizes" << eom;
-      }
-    }
-
-    if(has_char_array_subexpr(subst_rhs, ns))
-    {
-      if(subst_rhs.id()!=ID_struct)
-      {
-        warning() << "warning: ignoring char array contained in expression: "
-                  << from_expr(ns, "", subst_rhs)
-                  << " [not a struct assignment]" << eom;
-      }
-      else
-      {
-        struct_typet struct_type=to_struct_type(subst_rhs.type());
-        for(auto comp : struct_type.components())
+        if(is_char_pointer_type(comp.type()))
         {
-          if(is_char_array_type(comp.type(), ns))
-          {
-            member_exprt lhs_data(lhs, comp.get_name(), comp.type());
-            exprt rhs_data=simplify_expr(
-                  member_exprt(subst_rhs, comp.get_name(), comp.type()), ns);
-            m_symbol_resolve.add_symbol(lhs_data, rhs_data);
-          }
+          member_exprt lhs_data(lhs, comp.get_name(), comp.type());
+          exprt rhs_data=simplify_expr(
+                member_exprt(rhs, comp.get_name(), comp.type()), ns);
+          solver.add_symbol(lhs_data, rhs_data);
         }
       }
     }
+  }
+  return solver;
+}
 
-    // Push the substituted equality to the list of axioms to be given to
-    // supert::set_to.
-    non_string_axioms.push_back(
-      std::make_pair(equal_exprt(lhs, subst_rhs), value));
-  }
-  // Push the unmodified equality to the list of axioms to be given to
-  // supert::set_to.
-  else
-  {
-    // TODO: Verify that the expression contains no string.
-    // This will be easy once exprt iterators will have been implemented.
-    non_string_axioms.push_back(std::make_pair(expr, value));
-  }
+void output_equations(
+  std::ostream &output,
+  const std::vector<equal_exprt> &equations,
+  const namespacet &ns)
+{
+  for(const equal_exprt &eq : equations)
+    output << "  * " << from_expr(ns, "", eq.lhs())
+           << " == " << from_expr(ns, "", eq.rhs()) << std::endl;
 }
 
 /// use a refinement loop to instantiate universal axioms, call the sat solver,
@@ -643,24 +623,34 @@ void string_refinementt::set_to(const exprt &expr, bool value)
 /// \return result of the decision procedure
 decision_proceduret::resultt string_refinementt::dec_solve()
 {
-  m_symbol_resolve.debug(debug(), ns);
-  // Substitute all symbols to char arrays in the axioms to give to
-  // supert::set_to().
-  for(std::pair<exprt, bool> &pair : non_string_axioms)
+  std::vector<equal_exprt> equations=m_equations;
+  debug() << "dec_solve: Initial set of equations" << eom;
+  output_equations(debug(), equations, ns);
+
+  debug() << "dec_solve: Build symbol solver from equations" << eom;
+  symbol_solvert symbol_solver=symbol_solver_from_equations(equations, ns);
+  symbol_solver.debug(debug(), ns);
+
+  debug() << "dec_solve: Replacing char array symbols" << eom;
+  replace_symbols_in_equations(symbol_solver, equations);
+  output_equations(debug(), equations, ns);
+
+  debug() << "dec_solve: Replace function applications" << eom;
+  substitute_function_applications_in_equations(equations, generator);
+  output_equations(debug(), equations, ns);
+
+  for(exprt &eq : equations)
   {
-    m_symbol_resolve.replace_expr(pair.first);
-    debug() << "super::set_to " << from_expr(ns, "", pair.first) << eom;
-    supert::set_to(pair.first, pair.second);
+    debug() << "dec_solve: set_to " << from_expr(ns, "", eq) << eom;
+    supert::set_to(eq, true);
   }
 
   for(exprt &axiom : generator.axioms)
   {
-
-    m_symbol_resolve.replace_expr(axiom);
-    replace_char_pointers_by_char_arrays(axiom, generator, m_symbol_resolve);
     if(axiom.id()==ID_string_constraint)
     {
       string_constraintt c=to_string_constraint(axiom);
+      debug() << "string_constraintt: " << from_expr(ns, "", c) << eom;
       DATA_INVARIANT(
         is_valid_string_constraint(c),
         string_refinement_invariantt(
@@ -698,7 +688,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
     else
     {
       debug() << "check_SAT: the model is correct" << eom;
-      concretize_lengths();
+      //  concretize_lengths(); no need to concretize when the model is correct
       return resultt::D_SATISFIABLE;
     }
   }
@@ -1448,8 +1438,8 @@ bool string_refinementt::check_axioms()
     const exprt prem=nc_axiom.premise();
     const exprt exists_bound_inf=nc_axiom.exists_lower_bound();
     const exprt exists_bound_sup=nc_axiom.exists_upper_bound();
-    const string_exprt s0=nc_axiom.s0();
-    const string_exprt s1=nc_axiom.s1();
+    const char_array_exprt s0=nc_axiom.s0();
+    const char_array_exprt s1=nc_axiom.s1();
 
     symbol_exprt univ_var=generator.fresh_univ_index(
       "not_contains_univ_var", nc_axiom.s0().length().type());
@@ -1459,8 +1449,8 @@ bool string_refinementt::check_axioms()
       get(prem),
       get(exists_bound_inf),
       get(exists_bound_sup),
-      to_string_expr(get(s0)),
-      to_string_expr(get(s1)));
+      to_char_array_expr(get(s0)),
+      to_char_array_expr(get(s1)));
 
     exprt negaxiom=negation_of_not_contains_constraint(
       nc_axiom_in_model, univ_var);

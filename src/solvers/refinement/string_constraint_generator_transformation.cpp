@@ -22,13 +22,13 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 ///        is a string `s1` and the second an integer `k` which should have
 ///        same type as the string length
 /// \return a new string expression `res`
-string_exprt string_constraint_generatort::add_axioms_for_set_length(
+char_array_exprt string_constraint_generatort::add_axioms_for_set_length(
   const function_application_exprt &f)
 {
-  string_exprt s1=get_string_expr(args(f, 2)[0]);
+  char_array_exprt s1=get_string_expr(args(f, 2)[0]);
   exprt k=args(f, 2)[1];
   const refined_string_typet &ref_type=to_refined_string_type(s1.type());
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
 
   // We add axioms:
   // a1 : |res|=k
@@ -66,12 +66,12 @@ string_exprt string_constraint_generatort::add_axioms_for_set_length(
 ///   index
 /// argument and an optional end index argument
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_substring(
+char_array_exprt string_constraint_generatort::add_axioms_for_substring(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size()>=2);
-  string_exprt str=get_string_expr(args[0]);
+  char_array_exprt str=get_string_expr(args[0]);
   exprt i(args[1]);
   exprt j;
   if(args.size()==3)
@@ -95,14 +95,14 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
 ///   an
 /// expression for the end index
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_substring(
-  const string_exprt &str, const exprt &start, const exprt &end)
+char_array_exprt string_constraint_generatort::add_axioms_for_substring(
+  const char_array_exprt &str, const exprt &start, const exprt &end)
 {
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &index_type=ref_type.get_index_type();
   PRECONDITION(start.type()==index_type);
   PRECONDITION(end.type()==index_type);
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
 
   // We add axioms:
   // a1 : start < end => |res| = end - start
@@ -134,13 +134,13 @@ string_exprt string_constraint_generatort::add_axioms_for_substring(
 /// add axioms corresponding to the String.trim java function
 /// \par parameters: function application with one string argument
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_trim(
+char_array_exprt string_constraint_generatort::add_axioms_for_trim(
   const function_application_exprt &expr)
 {
-  string_exprt str=get_string_expr(args(expr, 1)[0]);
+  char_array_exprt str=get_string_expr(args(expr, 1)[0]);
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &index_type=ref_type.get_index_type();
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
   symbol_exprt idx=fresh_exist_index("index_trim", index_type);
   exprt space_char=constant_char(' ', ref_type.get_char_type());
 
@@ -210,14 +210,14 @@ string_exprt string_constraint_generatort::add_axioms_for_trim(
 /// add axioms corresponding to the String.toLowerCase java function
 /// \par parameters: function application with one string argument
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
+char_array_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
   const function_application_exprt &expr)
 {
-  string_exprt str=get_string_expr(args(expr, 1)[0]);
+  char_array_exprt str=get_string_expr(args(expr, 1)[0]);
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &char_type=ref_type.get_char_type();
   const typet &index_type=ref_type.get_index_type();
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
   const exprt char_A=constant_char('A', char_type);
   const exprt char_Z=constant_char('Z', char_type);
 
@@ -234,7 +234,7 @@ string_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
   // where diff is the difference between lower case and upper case characters:
   // diff = 'a'-'A' = 0x20
 
-  exprt a1=res.axiom_for_has_same_length_as(str);
+  equal_exprt a1(res.length(), str.length());
   axioms.push_back(a1);
 
   symbol_exprt idx=fresh_univ_index("QA_lower_case", index_type);
@@ -276,13 +276,13 @@ string_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
 /// add axioms corresponding to the String.toUpperCase java function
 /// \par parameters: function application with one string argument
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
-  const string_exprt &str)
+char_array_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
+  const char_array_exprt &str)
 {
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &char_type=ref_type.get_char_type();
   const typet &index_type=ref_type.get_index_type();
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
   exprt char_z=constant_char('z', char_type);
@@ -298,7 +298,7 @@ string_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
   // Note that index expressions are only allowed in the body of universal
   // axioms, so we use a trivial premise and push our premise into the body.
 
-  exprt a1=res.axiom_for_has_same_length_as(str);
+  equal_exprt a1(res.length(), str.length());
   axioms.push_back(a1);
 
   symbol_exprt idx1=fresh_univ_index("QA_upper_case1", index_type);
@@ -325,10 +325,10 @@ string_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
 /// add axioms corresponding to the String.toUpperCase java function
 /// \param expr: function application with one string argument
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
+char_array_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
   const function_application_exprt &expr)
 {
-  string_exprt str=get_string_expr(args(expr, 1)[0]);
+  char_array_exprt str=get_string_expr(args(expr, 1)[0]);
   return add_axioms_for_to_upper_case(str);
 }
 
@@ -339,12 +339,12 @@ string_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
 ///   string
 /// the second an index and the third a character
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_char_set(
+char_array_exprt string_constraint_generatort::add_axioms_for_char_set(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
+  char_array_exprt str=get_string_expr(args(f, 3)[0]);
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
   with_exprt sarrnew(str.content(), args(f, 3)[1], args(f, 3)[2]);
 
   // We add axiom:
@@ -354,7 +354,7 @@ string_exprt string_constraint_generatort::add_axioms_for_char_set(
     binary_relation_exprt(args(f, 3)[1], ID_lt, str.length()),
     and_exprt(
       equal_exprt(res.content(), sarrnew),
-      res.axiom_for_has_same_length_as(str)));
+      equal_exprt(res.length(), str.length())));
   axioms.push_back(a1);
   return res;
 }
@@ -364,14 +364,14 @@ string_exprt string_constraint_generatort::add_axioms_for_char_set(
 ///   string,
 /// the second and the third are characters
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_replace(
+char_array_exprt string_constraint_generatort::add_axioms_for_replace(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
+  char_array_exprt str=get_string_expr(args(f, 3)[0]);
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const exprt &old_char=args(f, 3)[1];
   const exprt &new_char=args(f, 3)[2];
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
 
   // We add axioms:
   // a1 : |res| = |str|
@@ -379,7 +379,7 @@ string_exprt string_constraint_generatort::add_axioms_for_replace(
   //    str[qvar]=oldChar => res[qvar]=newChar
   //    !str[qvar]=oldChar => res[qvar]=str[qvar]
 
-  axioms.push_back(res.axiom_for_has_same_length_as(str));
+  axioms.push_back(equal_exprt(res.length(), str.length()));
 
   symbol_exprt qvar=fresh_univ_index("QA_replace", ref_type.get_index_type());
   implies_exprt case1(
@@ -401,8 +401,9 @@ exprt string_constraint_generatort::add_axioms_for_delete_char_at(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==4);
-  const string_exprt res(f.arguments()[0], f.arguments()[1]);
-  const string_exprt str=get_string_expr(f.arguments()[2]);
+  const char_array_exprt res=char_array_of_string_expr(string_exprt(
+                            f.arguments()[0], f.arguments()[1]));
+  const char_array_exprt str=get_string_expr(f.arguments()[2]);
   exprt index_one=from_integer(1, str.length().type());
   return add_axioms_for_delete(
     res,
@@ -420,16 +421,16 @@ exprt string_constraint_generatort::add_axioms_for_delete_char_at(
 /// \param end: an end index
 /// \return a expression different from zero to signal an exception
 exprt string_constraint_generatort::add_axioms_for_delete(
-  const string_exprt &res,
-  const string_exprt &str,
+  const char_array_exprt &res,
+  const char_array_exprt &str,
   const exprt &start,
   const exprt &end)
 {
   PRECONDITION(start.type()==str.length().type());
   PRECONDITION(end.type()==str.length().type());
-  string_exprt str1=add_axioms_for_substring(
+  char_array_exprt str1=add_axioms_for_substring(
     str, from_integer(0, str.length().type()), start);
-  string_exprt str2=add_axioms_for_substring(str, end, str.length());
+  char_array_exprt str2=add_axioms_for_substring(str, end, str.length());
   return add_axioms_for_concat(res, str1, str2);
 }
 
@@ -442,7 +443,8 @@ exprt string_constraint_generatort::add_axioms_for_delete(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==5);
-  const string_exprt res(f.arguments()[0], f.arguments()[1]);
-  const string_exprt arg=get_string_expr(args(f, 3)[0]);
+  const char_array_exprt res=char_array_of_string_expr(string_exprt(
+       f.arguments()[0], f.arguments()[1]));
+  const char_array_exprt arg=get_string_expr(args(f, 3)[0]);
   return add_axioms_for_delete(res, arg, f.arguments()[3], f.arguments()[4]);
 }

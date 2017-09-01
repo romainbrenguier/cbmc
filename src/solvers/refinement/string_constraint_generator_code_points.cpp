@@ -25,10 +25,10 @@ Function: string_constraint_generatort::add_axioms_for_code_point
 
 \*******************************************************************/
 
-string_exprt string_constraint_generatort::add_axioms_for_code_point(
+char_array_exprt string_constraint_generatort::add_axioms_for_code_point(
   const exprt &code_point, const refined_string_typet &ref_type)
 {
-  string_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(ref_type);
   const typet &type=code_point.type();
   PRECONDITION(type.id()==ID_signedbv);
 
@@ -127,7 +127,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_at(
 {
   typet return_type=f.type();
   PRECONDITION(return_type.id()==ID_signedbv);
-  string_exprt str=get_string_expr(args(f, 2)[0]);
+  char_array_exprt str=get_string_expr(args(f, 2)[0]);
   const exprt &pos=args(f, 2)[1];
 
   symbol_exprt result=fresh_symbol("char", return_type);
@@ -159,7 +159,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_before(
   typet return_type=f.type();
   PRECONDITION(return_type.id()==ID_signedbv);
   symbol_exprt result=fresh_symbol("char", return_type);
-  string_exprt str=get_string_expr(args[0]);
+  char_array_exprt str=get_string_expr(args[0]);
 
   const exprt &char1=
     str[minus_exprt(args[1], from_integer(2, str.length().type()))];
@@ -186,7 +186,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_before(
 exprt string_constraint_generatort::add_axioms_for_code_point_count(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
+  char_array_exprt str=get_string_expr(args(f, 3)[0]);
   const exprt &begin=args(f, 3)[1];
   const exprt &end=args(f, 3)[2];
   const typet &return_type=f.type();
@@ -208,7 +208,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_count(
 exprt string_constraint_generatort::add_axioms_for_offset_by_code_point(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 3)[0]);
+  char_array_exprt str=get_string_expr(args(f, 3)[0]);
   const exprt &index=args(f, 3)[1];
   const exprt &offset=args(f, 3)[2];
   const typet &return_type=f.type();

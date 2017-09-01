@@ -22,7 +22,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \param from_index: an expression representing an index in the string
 /// \return a integer expression
 exprt string_constraint_generatort::add_axioms_for_index_of(
-  const string_exprt &str, const exprt &c, const exprt &from_index)
+  const char_array_exprt &str, const exprt &c, const exprt &from_index)
 {
   const typet &index_type=str.length().type();
   symbol_exprt index=fresh_exist_index("index_of", index_type);
@@ -77,8 +77,8 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 /// \return an integer expression representing the first index of needle in
 ///   haystack after from_index, or -1 if there is none
 exprt string_constraint_generatort::add_axioms_for_index_of_string(
-  const string_exprt &haystack,
-  const string_exprt &needle,
+  const char_array_exprt &haystack,
+  const char_array_exprt &needle,
   const exprt &from_index)
 {
   const typet &index_type=haystack.length().type();
@@ -153,8 +153,8 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
 /// \return an integer expression representing the last index of needle in
 ///   haystack before or at from_index, or -1 if there is none
 exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
-  const string_exprt &haystack,
-  const string_exprt &needle,
+  const char_array_exprt &haystack,
+  const char_array_exprt &needle,
   const exprt &from_index)
 {
   const typet &index_type=haystack.length().type();
@@ -231,7 +231,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
-  string_exprt str=get_string_expr(args[0]);
+  char_array_exprt str=get_string_expr(args[0]);
   const exprt &c=args[1];
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   PRECONDITION(f.type()==ref_type.get_index_type());
@@ -255,7 +255,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
       is_refined_string_type(c.type()),
       string_refinement_invariantt("c can only be a (un)signedbv or a refined "
         "string and the (un)signedbv case is already handled"));
-    string_exprt sub=get_string_expr(c);
+    char_array_exprt sub=get_string_expr(c);
     return add_axioms_for_index_of_string(str, sub, from_index);
   }
 }
@@ -269,7 +269,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 /// \return an integer expression representing the last index of c in str before
 ///   or at from_index, or -1 if there is none
 exprt string_constraint_generatort::add_axioms_for_last_index_of(
-  const string_exprt &str, const exprt &c, const exprt &from_index)
+  const char_array_exprt &str, const exprt &c, const exprt &from_index)
 {
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   const typet &index_type=ref_type.get_index_type();
@@ -330,7 +330,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
-  string_exprt str=get_string_expr(args[0]);
+  char_array_exprt str=get_string_expr(args[0]);
   exprt c=args[1];
   const refined_string_typet &ref_type=to_refined_string_type(str.type());
   exprt from_index;
@@ -350,7 +350,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   }
   else
   {
-    string_exprt sub=get_string_expr(c);
+    char_array_exprt sub=get_string_expr(c);
     return add_axioms_for_last_index_of_string(str, sub, from_index);
   }
 }

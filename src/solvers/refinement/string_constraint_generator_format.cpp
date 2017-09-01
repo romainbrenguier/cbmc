@@ -255,12 +255,12 @@ static exprt get_component_in_struct(
 /// \param arg: a struct containing the possible value of the argument to format
 /// \param ref_type: a type  for refined string type
 /// \return String expression representing the output of String.format.
-string_exprt string_constraint_generatort::add_axioms_for_format_specifier(
+char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
   const format_specifiert &fs,
   const struct_exprt &arg,
   const refined_string_typet &ref_type)
 {
-  const string_exprt res=fresh_string(ref_type);
+  const char_array_exprt res=fresh_string(ref_type);
   switch(fs.conversion)
   {
   case format_specifiert::DECIMAL_INTEGER:
@@ -303,7 +303,7 @@ string_exprt string_constraint_generatort::add_axioms_for_format_specifier(
   {
     string_constraint_generatort::format_specifiert fs_lower=fs;
     fs_lower.conversion=tolower(fs.conversion);
-    string_exprt lower_case=add_axioms_for_format_specifier(
+    char_array_exprt lower_case=add_axioms_for_format_specifier(
       fs_lower, arg, ref_type);
     return add_axioms_for_to_upper_case(lower_case);
   }
@@ -332,13 +332,13 @@ string_exprt string_constraint_generatort::add_axioms_for_format_specifier(
 /// \param args: a vector of arguments
 /// \param ref_type: a type  for refined string type
 /// \return String expression representing the output of String.format.
-string_exprt string_constraint_generatort::add_axioms_for_format(
+char_array_exprt string_constraint_generatort::add_axioms_for_format(
   const std::string &s,
   const exprt::operandst &args,
   const refined_string_typet &ref_type)
 {
   const std::vector<format_elementt> format_strings=parse_format_string(s);
-  std::vector<string_exprt> intermediary_strings;
+  std::vector<char_array_exprt> intermediary_strings;
   std::size_t arg_count=0;
 
   for(const format_elementt &fe : format_strings)
@@ -378,10 +378,10 @@ string_exprt string_constraint_generatort::add_axioms_for_format(
     return empty_string(ref_type);
 
   auto it=intermediary_strings.begin();
-  string_exprt str=*(it++);
+  char_array_exprt str=*(it++);
   for(; it!=intermediary_strings.end(); ++it)
   {
-    const string_exprt fresh=fresh_string(ref_type);
+    const char_array_exprt fresh=fresh_string(ref_type);
     const exprt return_code=add_axioms_for_concat(fresh, str, *it);
     str=fresh;
   }
@@ -418,11 +418,11 @@ std::string utf16_constant_array_to_java(
 ///   String.format function on the given arguments, assuming the first argument
 ///   in the function application is a constant. Otherwise the first argument is
 ///   returned.
-string_exprt string_constraint_generatort::add_axioms_for_format(
+char_array_exprt string_constraint_generatort::add_axioms_for_format(
   const function_application_exprt &f)
 {
   PRECONDITION(!f.arguments().empty());
-  string_exprt s1=get_string_expr(f.arguments()[0]);
+  char_array_exprt s1=get_string_expr(f.arguments()[0]);
   const refined_string_typet &ref_type=to_refined_string_type(f.type());
   unsigned int length;
 

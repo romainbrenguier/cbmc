@@ -122,6 +122,7 @@ private:
   std::map<exprt, std::set<exprt>> m_index_set;
   symbol_solvert m_symbol_resolve;
 
+  std::vector<equal_exprt> m_equations;
   std::list<std::pair<exprt, bool>> non_string_axioms;
 
   // Length of char arrays found during concretization

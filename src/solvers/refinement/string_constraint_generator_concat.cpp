@@ -21,16 +21,16 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// If `end_index > |s2|` and/or `start_index < 0`, the appended string will
 /// be of length `end_index - start_index` and padded with non-deterministic
 /// values.
-/// \param
+/// \param res: an array of character
 /// \param s1: string expression
 /// \param s2: string expression
 /// \param start_index: expression representing an integer
 /// \param end_index: expression representing an integer
 /// \return a new string expression
-string_exprt string_constraint_generatort::add_axioms_for_concat_substr(
-  const string_exprt &res,
-  const string_exprt &s1,
-  const string_exprt &s2,
+exprt string_constraint_generatort::add_axioms_for_concat_substr(
+  const char_array_exprt &res,
+  const char_array_exprt &s1,
+  const char_array_exprt &s2,
   const exprt &start_index,
   const exprt &end_index)
 {
@@ -60,7 +60,8 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_substr(
   string_constraintt a4(idx2, minus_exprt(end_index, start_index), res_eq);
   axioms.push_back(a4);
 
-  return res;
+  // We should have a enum type for the possible error codes
+  return from_integer(0, res.length().type());
 }
 
 /// Add axioms to say that `s0` is equal to the concatenation of `s1` and `s2`.
@@ -68,11 +69,14 @@ string_exprt string_constraint_generatort::add_axioms_for_concat_substr(
 /// \param s1: the string expression to append to
 /// \param s2: the string expression to append to the first one
 /// \return an integer expression
+
+#include<iostream>
 exprt string_constraint_generatort::add_axioms_for_concat(
-  const string_exprt &res,
-  const string_exprt &s1,
-  const string_exprt &s2)
+  const char_array_exprt &res,
+  const char_array_exprt &s1,
+  const char_array_exprt &s2)
 {
+  std::cout << "s1 : " << s1.pretty() << std::endl;
   exprt index_zero=from_integer(0, s2.length().type());
   return add_axioms_for_concat_substr(res, s1, s2, index_zero, s2.length());
 }
@@ -92,11 +96,10 @@ exprt string_constraint_generatort::add_axioms_for_concat(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size()==4 || args.size()==6);
-  string_exprt s1=get_string_expr(args[2]);
-  string_exprt s2=get_string_expr(args[3]);
-  PRECONDITION(s1.type()==s2.type());
-  string_exprt out=string_exprt(args[0], args[1], s1.type());
-  axioms.push_back(equal_exprt(to_array_type(out.type()).size(), out.length()));
+  char_array_exprt s1=char_array_of_string_expr(to_string_expr(args[2]));
+  char_array_exprt s2=char_array_of_string_expr(to_string_expr(args[3]));
+  char_array_exprt out=char_array_of_string_expr(
+        string_exprt(args[0], args[1], args[2].type()));
   if(args.size()==6)
     return add_axioms_for_concat_substr(out, s1, s2, args[2], args[3]);
   else // args.size()==4

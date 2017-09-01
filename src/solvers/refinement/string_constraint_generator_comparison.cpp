@@ -26,8 +26,8 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   symbol_exprt eq=fresh_boolean("equal");
   typecast_exprt tc_eq(eq, f.type());
 
-  string_exprt s1=get_string_expr(args(f, 2)[0]);
-  string_exprt s2=get_string_expr(args(f, 2)[1]);
+  char_array_exprt s1=get_string_expr(args(f, 2)[0]);
+  char_array_exprt s2=get_string_expr(args(f, 2)[1]);
   typet index_type=s1.length().type();
 
   // We want to write:
@@ -38,7 +38,7 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   // a3 : !eq => s1.length!=s2.length
   //       || (witness<s1.length &&s1[witness]!=s2[witness])
 
-  implies_exprt a1(eq, s1.axiom_for_has_same_length_as(s2));
+  implies_exprt a1(eq, equal_exprt(s1.length(), s2.length()));
   axioms.push_back(a1);
 
   symbol_exprt qvar=fresh_univ_index("QA_equal", index_type);
@@ -102,8 +102,8 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
 
   symbol_exprt eq=fresh_boolean("equal_ignore_case");
   typecast_exprt tc_eq(eq, f.type());
-  string_exprt s1=get_string_expr(args(f, 2)[0]);
-  string_exprt s2=get_string_expr(args(f, 2)[1]);
+  char_array_exprt s1=get_string_expr(args(f, 2)[0]);
+  char_array_exprt s2=get_string_expr(args(f, 2)[1]);
   typet char_type=to_refined_string_type(s1.type()).get_char_type();
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
@@ -116,7 +116,7 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   //  eq => char_equal_ignore_case(s1[qvar],s2[qvar]);
   // a3 : !eq => |s1|!=s2 || (0 <=witness<|s1| &&!char_equal_ignore_case)
 
-  implies_exprt a1(eq, s1.axiom_for_has_same_length_as(s2));
+  implies_exprt a1(eq, equal_exprt(s1.length(), s2.length()));
   axioms.push_back(a1);
 
   symbol_exprt qvar=fresh_univ_index("QA_equal_ignore_case", index_type);
@@ -151,7 +151,7 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
 exprt string_constraint_generatort::add_axioms_for_hash_code(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 1)[0]);
+  char_array_exprt str=get_string_expr(args(f, 1)[0]);
   typet return_type=f.type();
   typet index_type=str.length().type();
 
@@ -188,8 +188,8 @@ exprt string_constraint_generatort::add_axioms_for_hash_code(
 exprt string_constraint_generatort::add_axioms_for_compare_to(
   const function_application_exprt &f)
 {
-  string_exprt s1=get_string_expr(args(f, 2)[0]);
-  string_exprt s2=get_string_expr(args(f, 2)[1]);
+  char_array_exprt s1=get_string_expr(args(f, 2)[0]);
+  char_array_exprt s2=get_string_expr(args(f, 2)[1]);
   const typet &return_type=f.type();
   symbol_exprt res=fresh_symbol("compare_to", return_type);
   typet index_type=s1.length().type();
@@ -210,7 +210,7 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
   PRECONDITION(return_type.id()==ID_signedbv);
 
   equal_exprt res_null=equal_exprt(res, from_integer(0, return_type));
-  implies_exprt a1(res_null, s1.axiom_for_has_same_length_as(s2));
+  implies_exprt a1(res_null, equal_exprt(s1.length(), s2.length()));
   axioms.push_back(a1);
 
   symbol_exprt i=fresh_univ_index("QA_compare_to", index_type);
@@ -259,7 +259,7 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
 symbol_exprt string_constraint_generatort::add_axioms_for_intern(
   const function_application_exprt &f)
 {
-  string_exprt str=get_string_expr(args(f, 1)[0]);
+  char_array_exprt str=get_string_expr(args(f, 1)[0]);
   // For now we only enforce content equality and not pointer equality
   const typet &return_type=f.type();
 
@@ -291,9 +291,9 @@ symbol_exprt string_constraint_generatort::add_axioms_for_intern(
         or_exprt(
           equal_exprt(it.second, intern),
           or_exprt(
-            not_exprt(str.axiom_for_has_same_length_as(it.first)),
+            not_exprt(equal_exprt(str.length(), it.first.length())),
             and_exprt(
-              str.axiom_for_has_same_length_as(it.first),
+              equal_exprt(str.length(), it.first.length()),
               and_exprt(
                 not_exprt(equal_exprt(str[i], it.first[i])),
                 and_exprt(str.axiom_for_length_gt(i),
