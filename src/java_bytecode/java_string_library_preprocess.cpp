@@ -302,8 +302,6 @@ exprt java_string_library_preprocesst::convert_exprt_to_string_exprt(
     string_expr, op_to_process, loc, symbol_table, init_code);
   add_assignment_to_string_expr_symbol(
     string_expr, loc, symbol_table, init_code);
-  string_expr.content()=address_of_exprt(index_exprt(
-    string_expr.content(), from_integer(0, java_int_type())));
   return string_expr;
 }
 
@@ -527,8 +525,7 @@ string_exprt java_string_library_preprocesst::fresh_string_expr(
     ID_java,
     symbol_table);
   symbol_exprt length_field=sym_length.symbol_expr();
- // Ultimately we should use the actual length
-  array_typet array_type(char_type, length_field);
+  pointer_typet array_type(java_char_type());
   symbolt sym_content=get_fresh_aux_symbol(
     array_type,
     "cprover_string_content",
@@ -537,20 +534,9 @@ string_exprt java_string_library_preprocesst::fresh_string_expr(
     ID_java,
     symbol_table);
   symbol_exprt content_field=sym_content.symbol_expr();
-#if 0 // Using infinite arrays leads to problems
-  array_typet array_type(char_type, infinity_exprt(index_type));
-#endif
-#if 0
-  pointer_typet array_type(char_type);
-#endif
-#if 0 // no allocation requiered for array
-  exprt content_field=allocate_fresh_array(array_type, loc, symbol_table, code);
-#endif
   string_exprt str(length_field, content_field, refined_string_type);
   code.add(code_declt(length_field));
-#if 1 // do not declare so that it does not get allocated
   code.add(code_declt(content_field));
-#endif
   return str;
 }
 
@@ -710,21 +696,12 @@ string_exprt java_string_library_preprocesst::string_expr_of_function(
   exprt return_code=return_code_sym.symbol_expr();
   code.add(code_declt(return_code));
 
-#if 0 // Should be handled by fresh_string_expr
-  // char tmp_array[100];
-  array_typet array_type(java_char_type(), from_integer(100, java_int_type()));
-  symbol_exprt tmp_array("tmp_array", array_type);
-  code.add(code_declt(tmp_array));
-#endif
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
-  // str.content = tmp_array
-  // code.add(code_assignt(string_expr.content(), tmp_array));
 
   // args is { str.length, str.content, arguments... }
   exprt::operandst args;
   args.push_back(string_expr.length());
-  args.push_back(address_of_exprt(index_exprt(
-    string_expr.content(), from_integer(0, java_int_type()))));
+  args.push_back(string_expr.content());
   args.insert(args.end(), arguments.begin(), arguments.end());
 
   // return_code = <function_name>_data(args)
@@ -786,7 +763,7 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
   symbol_tablet &symbol_table)
 {
   return code_assign_components_to_java_string(
-    lhs, address_of_exprt(rhs.content()), rhs.length(), symbol_table);
+    lhs, rhs.content(), rhs.length(), symbol_table);
 }
 
 /// Produce code for an assignment of a string from a string expr.
@@ -807,27 +784,8 @@ codet java_string_library_preprocesst::
     const source_locationt &loc,
     symbol_tablet &symbol_table)
 {
-  PRECONDITION(implements_java_char_sequence(lhs.type()));
-  dereference_exprt deref=checked_dereference(lhs, lhs.type().subtype());
-
-  code_blockt code;
-#if 0
-  exprt new_array=allocate_fresh_array(
-    get_data_type(deref.type(), symbol_table), loc, symbol_table, code);
-  code.add(code_assignt(
-    dereference_exprt(new_array, new_array.type().subtype()), rhs.content()));
-#endif
-  const typet data_type=get_data_type(deref.type(), symbol_table);
-  // Not necessary if content is already a pointer
-  address_of_exprt content(index_exprt(rhs.content(), from_integer(0, java_int_type())));
-#if 0 // Not necessary if the content is an array
-  exprt tmp_array=allocate_fresh_array(data_type, loc, symbol_table, code);
-  code.add(code_assignt(tmp_array, rhs.content()));
-#endif
-  code.add(code_assign_components_to_java_string(
-    lhs, content, rhs.length(), symbol_table));
-
-  return code;
+  return code_assign_components_to_java_string(
+    lhs, rhs.content(), rhs.length(), symbol_table);
 }
 
 /// \param lhs: a string expression
@@ -885,12 +843,15 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
     symbol_table);
   symbol_exprt return_code=return_code_sym.symbol_expr();
   code.add(code_declt(return_code));
+  code.add(code_assignt(lhs.content(), data_as_array));
+#if 0
   code.add(code_assign_function_application(
-     return_code,
+    return_code,
     ID_cprover_string_array_of_char_pointer_func,
     {data_as_array,
      address_of_exprt(index_exprt(lhs.content(), from_integer(0, java_int_type()))) },
     symbol_table));
+#endif
 }
 
 /// Create a string expression whose value is given by a literal
@@ -1202,7 +1163,7 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
   const code_typet::parametert &p=type.parameters()[0];
   symbol_exprt string_argument(p.get_identifier(), p.type());
   PRECONDITION(implements_java_char_sequence(string_argument.type()));
-  assert(false);
+  UNREACHABLE;
   // lhs = new java::array[char]
   exprt lhs=allocate_fresh_array(
     type.return_type(), loc, symbol_table, code);
