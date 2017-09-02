@@ -1146,11 +1146,8 @@ codet java_string_library_preprocesst::make_assign_function_from_call(
 /// \return Code corresponding to
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// lhs = new java::array[char]
-/// string_expr = {length=this->length, content=*(this->data)}
-/// data = new char[]
-/// *data = string_expr.content
-/// lhs->data = &data[0]
-/// lhs->length = string_expr.length
+/// lhs->data = this->data
+/// lhs->length = this->length
 /// return lhs
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 codet java_string_library_preprocesst::make_string_to_char_array_code(
@@ -1163,36 +1160,39 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
   const code_typet::parametert &p=type.parameters()[0];
   symbol_exprt string_argument(p.get_identifier(), p.type());
   PRECONDITION(implements_java_char_sequence(string_argument.type()));
-  UNREACHABLE;
   // lhs = new java::array[char]
-  exprt lhs=allocate_fresh_array(
-    type.return_type(), loc, symbol_table, code);
+  exprt lhs=allocate_fresh_array(type.return_type(), loc, symbol_table, code);
 
-  // string_expr = {this->length, this->data}
   string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
   code_assign_java_string_to_string_expr(
     string_expr, string_argument, loc, symbol_table, code);
-  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   // data = new char[]
+  string_exprt string_expr2=fresh_string_expr(loc, symbol_table, code);
+#if 0
   exprt data=allocate_fresh_array(
     java_reference_type(string_expr.content().type()), loc, symbol_table, code);
+#endif
 
-  // *data = string_expr.content
-  dereference_exprt deref_data(data, data.type().subtype());
-  code.add(code_assignt(deref_data, string_expr.content()));
+  // return_code=cprover_copy(length, data, string_expr)
+  symbolt return_code_sym=get_fresh_aux_symbol(
+    java_int_type(),
+    std::string("return_code_copy"),
+    std::string("return_code_copy"),
+    loc,
+    ID_java,
+    symbol_table);
+  exprt return_code=return_code_sym.symbol_expr();
+  code.add(code_declt(return_code));
 
-  // lhs->data = &data[0]
-  dereference_exprt deref_lhs=checked_dereference(lhs, lhs.type().subtype());
-  exprt lhs_data=get_data(deref_lhs, symbol_table);
-  index_exprt first_elt(
-    deref_data, from_integer(0, java_int_type()), java_char_type());
-  code.add(code_assignt(lhs_data, address_of_exprt(first_elt)));
+  dereference_exprt deref(lhs, lhs.type().subtype());
+  code.add(code_assign_function_application(
+    return_code, ID_cprover_string_copy_func,
+  {string_expr2.length(), string_expr2.content(), string_expr},
+    symbol_table));
 
-  // lhs->length = string_expr.length
-  exprt lhs_length=get_length(deref_lhs, symbol_table);
-  code.add(code_assignt(lhs_length, string_expr.length()));
-
+  code.add(code_assignt(member_exprt(deref, "data"), string_expr2.content()));
+  code.add(code_assignt(member_exprt(deref, "length"), string_expr2.length()));
   // return lhs
   code.add(code_returnt(lhs));
   return code;
