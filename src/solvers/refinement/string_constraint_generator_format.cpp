@@ -305,7 +305,9 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     fs_lower.conversion=tolower(fs.conversion);
     char_array_exprt lower_case=add_axioms_for_format_specifier(
       fs_lower, arg, ref_type);
-    return add_axioms_for_to_upper_case(lower_case);
+    char_array_exprt res=fresh_string(ref_type);
+    add_axioms_for_to_upper_case(res, lower_case);
+    return res;
   }
   case format_specifiert::OCTAL_INTEGER:
     // TODO: conversion of octal not implemented
@@ -375,7 +377,11 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format(
           fe.get_format_text().get_content(), ref_type));
 
   if(intermediary_strings.empty())
-    return empty_string(ref_type);
+    return to_char_array_expr(array_exprt(
+      array_typet(ref_type.get_char_type(),
+                  from_integer(0, ref_type.get_index_type()))));
+
+
 
   auto it=intermediary_strings.begin();
   char_array_exprt str=*(it++);

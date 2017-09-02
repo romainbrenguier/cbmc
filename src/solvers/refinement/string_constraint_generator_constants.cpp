@@ -52,30 +52,13 @@ char_array_exprt string_constraint_generatort::add_axioms_for_constant(
 /// add axioms to say that the returned string expression is empty
 /// \par parameters: function application without argument
 /// \return string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_empty_string(
+exprt string_constraint_generatort::add_axioms_for_empty_string(
   const function_application_exprt &f)
 {
-  PRECONDITION(f.arguments().empty());
-  PRECONDITION(is_refined_string_type(f.type()));
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return empty_string(ref_type);
-}
-
-/// Generate a string expression representing the empty string
-/// \param ref_type: a refined string type
-/// \return a string expression
-char_array_exprt string_constraint_generatort::empty_string(
-  const refined_string_typet &ref_type)
-{
-  exprt size=from_integer(0, ref_type.get_index_type());
-  const typet &content_type=ref_type.get_content_type();
-#if 0
-  array_of_exprt empty_array(
-    from_integer(0, ref_type.get_content_type().subtype()), content_type);
-#endif
-  null_pointer_exprt empty_array(to_pointer_type(content_type));
-  char_array_exprt res(size, empty_array, ref_type);
-  return res;
+  PRECONDITION(f.arguments().size()==2);
+  exprt length=f.arguments()[0];
+  axioms.push_back(equal_exprt(length, from_integer(0, length.type())));
+  return from_integer(0, length.type());
 }
 
 /// add axioms to say that the returned string expression is equal to the string

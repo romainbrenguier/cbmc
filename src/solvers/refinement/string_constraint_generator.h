@@ -99,6 +99,8 @@ public:
 
 
   char_array_exprt char_array_of_string_expr(const string_exprt &expr);
+  char_array_exprt char_array_of_pointer(
+    const exprt &pointer, const exprt &length);
 
 private:
   // The integer with the longest string is Integer.MIN_VALUE which is -2^31,
@@ -148,10 +150,10 @@ private:
   exprt add_axioms_for_is_suffix(
     const function_application_exprt &f, bool swap_arguments=false);
   exprt add_axioms_for_length(const function_application_exprt &f);
-  char_array_exprt add_axioms_for_empty_string(
+  exprt add_axioms_for_empty_string(
     const function_application_exprt &f);
-  char_array_exprt add_axioms_for_char_set(
-    const function_application_exprt &expr);
+  exprt add_axioms_for_char_set(
+    const function_application_exprt &f);
   char_array_exprt add_axioms_for_copy(const function_application_exprt &f);
   exprt add_axioms_for_concat(
     const char_array_exprt &res,
@@ -289,12 +291,10 @@ private:
   char_array_exprt add_axioms_for_substring(
     const function_application_exprt &expr);
 
-  char_array_exprt add_axioms_for_to_lower_case(
-    const function_application_exprt &expr);
-  char_array_exprt add_axioms_for_to_upper_case(
-    const function_application_exprt &expr);
-  char_array_exprt add_axioms_for_to_upper_case(
-    const char_array_exprt &expr);
+  exprt add_axioms_for_to_lower_case(const function_application_exprt &f);
+  exprt add_axioms_for_to_upper_case(const function_application_exprt &f);
+  exprt add_axioms_for_to_upper_case(
+    const char_array_exprt &res, const char_array_exprt &expr);
   char_array_exprt add_axioms_for_trim(const function_application_exprt &expr);
 
   // Add axioms corresponding to the String.valueOf([CII) function
@@ -304,7 +304,6 @@ private:
   char_array_exprt add_axioms_for_code_point(
     const exprt &code_point, const refined_string_typet &ref_type);
   char_array_exprt add_axioms_for_java_char_array(const exprt &char_array);
-  exprt add_axioms_for_char_pointer(const function_application_exprt &fun);
   char_array_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);
 
@@ -367,9 +366,7 @@ private:
   exprt character_equals_ignore_case(
     exprt char1, exprt char2, exprt char_a, exprt char_A, exprt char_Z);
   bool is_constant_string(const char_array_exprt &expr) const;
-  char_array_exprt empty_string(const refined_string_typet &ref_type);
   unsigned long to_integer_or_default(const exprt &expr, unsigned long def);
-
 
   // Associate a finite array to each char pointer
   std::map<exprt, exprt> m_arrays_of_pointers;

@@ -118,8 +118,9 @@ char_array_exprt string_constraint_generatort::fresh_string(
   const refined_string_typet &type)
 {
   symbol_exprt length=fresh_symbol("string_length", type.get_index_type());
-  symbol_exprt content=fresh_symbol("string_content", type.get_content_type());
-  char_array_exprt str(length, content, type);
+  array_typet array_type(type.get_char_type(), length);
+  symbol_exprt content=fresh_symbol("string_content", array_type);
+  char_array_exprt str=to_char_array_expr(content);
   created_strings.insert(str);
   add_default_axioms(str);
   return str;
@@ -214,6 +215,15 @@ char_array_exprt string_constraint_generatort::char_array_of_string_expr(
   string_exprt str=to_string_expr(expr);
   char_array_exprt array=associate_char_array_to_char_pointer(
     str.content(), ref_type.get_content_type());
+  return array;
+}
+
+char_array_exprt string_constraint_generatort::char_array_of_pointer(
+  const exprt &pointer, const exprt &length)
+{
+  array_typet array_type(pointer.type().subtype(), length);
+  char_array_exprt array=
+    associate_char_array_to_char_pointer(pointer, array_type);
   return array;
 }
 
@@ -446,8 +456,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_replace(expr);
   else if(id==ID_cprover_string_intern_func)
     res=add_axioms_for_intern(expr);
-  else if(id==ID_cprover_string_array_of_char_pointer_func)
-    res=add_axioms_for_char_pointer(expr);
   else if(id==ID_cprover_string_format_func)
     res=add_axioms_for_format(expr);
   else
@@ -503,31 +511,6 @@ char_array_exprt string_constraint_generatort::add_axioms_for_java_char_array(
   res.length()=len;
   res.content()=cont;
   return res;
-}
-
-/// for an expression of the form `array[0]` returns `array`
-/// \param fun: a function application with two arguments: a char pointer and
-///   an array
-/// \return an integer expression
-exprt string_constraint_generatort::add_axioms_for_char_pointer(
-  const function_application_exprt &fun)
-{
-  PRECONDITION(fun.arguments().size()==2);
-  const exprt &char_pointer=fun.arguments()[0];
-  const exprt &char_array=fun.arguments()[1];
-
-#if 0
-  equal_exprt pointer_equality(
-    char_pointer,
-    address_of_exprt(
-      index_exprt(char_array, from_integer(0, java_int_type()))));
-  axioms.push_back(pointer_equality);
-#endif
-  return from_integer(0, java_int_type());
-  // TODO: It seems reasonable that the result of the function application
-  //       should match the return type of the function. However it is not
-  //       clear whether this typecast is properly handled in the string
-  //       refinement. We need regression tests that use that function.
 }
 
 /// add axioms corresponding to the String.length java function

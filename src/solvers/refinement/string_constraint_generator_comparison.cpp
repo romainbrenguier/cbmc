@@ -81,7 +81,7 @@ exprt string_constraint_generatort::character_equals_ignore_case(
   // p2 : (is_up1&&'a'-'A'+char1=char2)
   // p3 : (is_up2&&'a'-'A'+char2=char1)
   equal_exprt p1(char1, char2);
-  minus_exprt diff=minus_exprt(char_a, char_A);
+  minus_exprt diff(char_a, char_A);
 
   // Overflow is not a problem here because is_upper_case conditions
   // ensure that we are within a safe range.
@@ -104,7 +104,7 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   typecast_exprt tc_eq(eq, f.type());
   char_array_exprt s1=get_string_expr(args(f, 2)[0]);
   char_array_exprt s2=get_string_expr(args(f, 2)[1]);
-  typet char_type=to_refined_string_type(s1.type()).get_char_type();
+  typet char_type=s1.content().type().subtype();
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
   exprt char_Z=constant_char('Z', char_type);

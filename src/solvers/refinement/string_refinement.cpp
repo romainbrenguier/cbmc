@@ -36,11 +36,6 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 
 #include <util/ssa_expr.h> // for char array pointer
 
-
-char_array_exprt::char_array_exprt(exprt l, exprt c, typet t):
-  exprt(to_char_array_expr(string_exprt(l, c, t)))
-{ }
-
 /// keeps a map of symbols to expressions, such as none of the mapped values
 /// exist as a key
 /// \param lhs: an expression of type char array

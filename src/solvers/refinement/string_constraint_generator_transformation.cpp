@@ -210,17 +210,20 @@ char_array_exprt string_constraint_generatort::add_axioms_for_trim(
 /// add axioms corresponding to the String.toLowerCase java function
 /// \par parameters: function application with one string argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
-  const function_application_exprt &expr)
+exprt string_constraint_generatort::add_axioms_for_to_lower_case(
+  const function_application_exprt &f)
 {
-  char_array_exprt str=get_string_expr(args(expr, 1)[0]);
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
+  PRECONDITION(f.arguments().size()==3);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  const char_array_exprt str=
+    char_array_of_string_expr(to_string_expr(f.arguments()[2]));
+  const refined_string_typet &ref_type=
+    to_refined_string_type(f.arguments()[2].type());
   const typet &char_type=ref_type.get_char_type();
   const typet &index_type=ref_type.get_index_type();
-  char_array_exprt res=fresh_string(ref_type);
   const exprt char_A=constant_char('A', char_type);
   const exprt char_Z=constant_char('Z', char_type);
-
 
   // TODO: for now, only characters in Basic Latin and Latin-1 supplement
   // are supported (up to 0x100), we should add others using case mapping
@@ -270,19 +273,18 @@ char_array_exprt string_constraint_generatort::add_axioms_for_to_lower_case(
   string_constraintt a2(idx, res.length(), conditional_convert);
   axioms.push_back(a2);
 
-  return res;
+  return from_integer(0, f.type());
 }
 
 /// add axioms corresponding to the String.toUpperCase java function
 /// \par parameters: function application with one string argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
+exprt string_constraint_generatort::add_axioms_for_to_upper_case(
+  const char_array_exprt &res,
   const char_array_exprt &str)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  const typet &char_type=ref_type.get_char_type();
-  const typet &index_type=ref_type.get_index_type();
-  char_array_exprt res=fresh_string(ref_type);
+  const typet &char_type=str.content().type().subtype();
+  const typet &index_type=str.length().type();
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
   exprt char_z=constant_char('z', char_type);
@@ -319,17 +321,20 @@ char_array_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
   implies_exprt body2(is_not_lower_case, eq);
   string_constraintt a3(idx2, res.length(), body2);
   axioms.push_back(a3);
-  return res;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// add axioms corresponding to the String.toUpperCase java function
 /// \param expr: function application with one string argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
-  const function_application_exprt &expr)
+exprt string_constraint_generatort::add_axioms_for_to_upper_case(
+  const function_application_exprt &f)
 {
-  char_array_exprt str=get_string_expr(args(expr, 1)[0]);
-  return add_axioms_for_to_upper_case(str);
+  PRECONDITION(f.arguments().size()==3);
+  char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  char_array_exprt str=get_string_expr(f.arguments()[2]);
+  return add_axioms_for_to_upper_case(res, str);
 }
 
 /// add axioms corresponding stating that the result is similar to that of the
@@ -339,7 +344,7 @@ char_array_exprt string_constraint_generatort::add_axioms_for_to_upper_case(
 ///   string
 /// the second an index and the third a character
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_char_set(
+exprt string_constraint_generatort::add_axioms_for_char_set(
   const function_application_exprt &f)
 {
   char_array_exprt str=get_string_expr(args(f, 3)[0]);

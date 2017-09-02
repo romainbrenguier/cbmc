@@ -27,11 +27,9 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/string_expr.h>
 #include <langapi/language_util.h>
 
-class char_array_exprt : public exprt
+class char_array_exprt: public exprt
 {
 public:
-  char_array_exprt(exprt l, exprt c, typet t);
-
   exprt &length()
   {
     return to_array_type(type()).size();
