@@ -118,7 +118,7 @@ exprt string_constraint_generatort::add_axioms_for_substring(
                         equal_exprt(res[idx],
                         str[plus_exprt(start, idx)]));
   axioms.push_back(a4);
-  return res;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// add axioms corresponding to the String.trim java function

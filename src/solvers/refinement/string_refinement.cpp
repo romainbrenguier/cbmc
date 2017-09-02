@@ -601,10 +601,10 @@ symbol_solvert symbol_solver_from_equations(
       else
       {
 // #ifdef DEBUG
-        std::cout << "non struct with char pointer subexpr "
+        std::cout << "WARNING: non struct with char pointer subexpr "
                   << from_expr(ns, "", rhs) << std::endl;
 // #endif
-        UNREACHABLE;
+        // UNREACHABLE;
       }
     }
   }
@@ -664,8 +664,8 @@ decision_proceduret::resultt string_refinementt::dec_solve()
     {
       string_not_contains_constraintt nc_axiom=
         to_string_not_contains_constraint(axiom);
-      refined_string_typet rtype=to_refined_string_type(nc_axiom.s0().type());
-      const typet &index_type=rtype.get_index_type();
+      array_typet rtype=to_array_type(nc_axiom.s0().type());
+      const typet &index_type=rtype.subtype();
       array_typet witness_type(index_type, infinity_exprt(index_type));
       generator.witness[nc_axiom]=
         generator.fresh_symbol("not_contains_witness", witness_type);

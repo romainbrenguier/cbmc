@@ -74,13 +74,11 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
-  char_array_exprt s0=get_string_expr(args[swap_arguments?1:0]);
-  char_array_exprt s1=get_string_expr(args[swap_arguments?0:1]);
-  exprt offset;
-  if(args.size()==2)
-    offset=from_integer(0, s0.length().type());
-  else if(args.size()==3)
-    offset=args[2];
+  PRECONDITION(args.size()==2||args.size()==3);
+  const char_array_exprt s0=get_string_expr(args[swap_arguments?1:0]);
+  const char_array_exprt s1=get_string_expr(args[swap_arguments?0:1]);
+  const exprt offset=
+    args.size()==2?from_integer(0, s0.length().type()):args[2];
   return typecast_exprt(add_axioms_for_is_prefix(s0, s1, offset), f.type());
 }
 
@@ -92,13 +90,13 @@ exprt string_constraint_generatort::add_axioms_for_is_empty(
   const function_application_exprt &f)
 {
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
-
+  PRECONDITION(f.arguments().size()==1);
   // We add axioms:
   // a1 : is_empty => |s0| = 0
   // a2 : s0 => is_empty
 
   symbol_exprt is_empty=fresh_boolean("is_empty");
-  char_array_exprt s0=get_string_expr(args(f, 1)[0]);
+  char_array_exprt s0=get_string_expr(f.arguments()[0]);
   axioms.push_back(implies_exprt(is_empty, s0.axiom_for_has_length(0)));
   axioms.push_back(implies_exprt(s0.axiom_for_has_length(0), is_empty));
   return typecast_exprt(is_empty, f.type());

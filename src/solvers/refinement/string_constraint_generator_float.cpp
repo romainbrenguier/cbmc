@@ -207,7 +207,10 @@ exprt string_constraint_generatort::add_axioms_for_string_of_float(
   mod_exprt integer_part(round_expr_to_zero(f), max_non_exponent_notation);
   // We should not need more than 8 characters to represent the integer
   // part of the float.
-  char_array_exprt integer_part_str=add_axioms_from_int(integer_part, ref_type, 8);
+  char_array_exprt integer_part_str=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+  exprt return_code1=
+    add_axioms_from_int(integer_part_str, integer_part, 8);
 
   return add_axioms_for_concat(res, integer_part_str, fractional_part_str);
 }
@@ -413,8 +416,13 @@ exprt string_constraint_generatort::
     dec_significand);
   dec_significand_int=round_expr_to_zero(dec_significand);
 
+  const typet &index_type=ref_type.get_index_type();
+  const typet &char_type=ref_type.get_char_type();
+
   char_array_exprt string_expr_integer_part=
-    add_axioms_from_int(dec_significand_int, ref_type, 3);
+    fresh_string(index_type, char_type);
+  exprt return_code1=add_axioms_from_int(
+    string_expr_integer_part, dec_significand_int, 3);
   minus_exprt fractional_part(
     dec_significand, floatbv_of_int_expr(dec_significand_int, float_spec));
 
@@ -436,8 +444,8 @@ exprt string_constraint_generatort::
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
   char_array_exprt string_expr_with_fractional_part=
-    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
-  exprt return_code1=add_axioms_for_concat(
+    fresh_string(index_type, char_type);
+  exprt return_code2=add_axioms_for_concat(
     string_expr_with_fractional_part,
     string_expr_integer_part, string_fractional_part);
 
@@ -445,12 +453,13 @@ exprt string_constraint_generatort::
   const char_array_exprt stringE=add_axioms_for_constant("E", ref_type);
   char_array_exprt string_expr_with_E=fresh_string(
     ref_type.get_index_type(), ref_type.get_char_type());
-  exprt return_code2=add_axioms_for_concat(
+  exprt return_code3=add_axioms_for_concat(
     string_expr_with_E, string_expr_with_fractional_part, stringE);
 
   // exponent_string = string_of_int(decimal_exponent)
-  char_array_exprt exponent_string=
-    add_axioms_from_int(decimal_exponent, ref_type, 3);
+  char_array_exprt exponent_string=fresh_string(index_type, char_type);
+  exprt return_code4=
+    add_axioms_from_int(exponent_string, decimal_exponent, 3);
 
   // string_expr = concat(string_expr_with_E, exponent_string)
   return add_axioms_for_concat(res, string_expr_with_E, exponent_string);

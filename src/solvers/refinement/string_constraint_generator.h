@@ -199,27 +199,25 @@ private:
     const exprt &offset);
   exprt add_axioms_for_insert(const function_application_exprt &f);
   char_array_exprt add_axioms_from_literal(const function_application_exprt &f);
-  char_array_exprt add_axioms_from_int(const function_application_exprt &f);
-  char_array_exprt add_axioms_from_int(
+  exprt add_axioms_from_int(const function_application_exprt &f);
+  exprt add_axioms_from_int(
+    const char_array_exprt &res,
     const exprt &input_int,
-    const refined_string_typet &ref_type,
     size_t max_size=0);
-  char_array_exprt add_axioms_from_int_with_radix(
+  exprt add_axioms_from_int_with_radix(
+    const char_array_exprt &res,
     const exprt &input_int,
     const exprt &radix,
-    const refined_string_typet &ref_type,
     size_t max_size=0);
-  char_array_exprt add_axioms_from_int_hex(
-    const exprt &i, const refined_string_typet &ref_type);
-  char_array_exprt add_axioms_from_int_hex(const function_application_exprt &f);
-  char_array_exprt add_axioms_from_long(const function_application_exprt &f);
+  exprt add_axioms_from_int_hex(const char_array_exprt &res, const exprt &i);
+  exprt add_axioms_from_int_hex(const function_application_exprt &f);
+  exprt add_axioms_from_long(const function_application_exprt &f);
   char_array_exprt add_axioms_from_long(const exprt &i, size_t max_size);
-  char_array_exprt add_axioms_from_bool(const function_application_exprt &f);
-  char_array_exprt add_axioms_from_bool(
-    const exprt &i, const refined_string_typet &ref_type);
-  char_array_exprt add_axioms_from_char(const function_application_exprt &f);
-  char_array_exprt add_axioms_from_char(
-    const exprt &i, const refined_string_typet &ref_type);
+  exprt add_axioms_from_bool(const function_application_exprt &f);
+  exprt add_axioms_from_bool(const char_array_exprt &res, const exprt &i);
+  exprt add_axioms_from_char(const function_application_exprt &f);
+  exprt add_axioms_from_char(const char_array_exprt &res,
+    const exprt &i);
   char_array_exprt add_axioms_from_char_array(
     const function_application_exprt &f);
   char_array_exprt add_axioms_from_char_array(

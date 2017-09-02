@@ -22,53 +22,45 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// Add axioms corresponding to the String.valueOf(I) java function.
 /// \param expr: function application with one integer argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_int(
-  const function_application_exprt &expr)
+exprt string_constraint_generatort::add_axioms_from_int(
+  const function_application_exprt &f)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(expr.type());
-  PRECONDITION(expr.arguments().size()>=1);
-  if(expr.arguments().size()==1)
-  {
-    return add_axioms_from_int(expr.arguments()[0], ref_type);
-  }
-  else
-  {
-    return add_axioms_from_int_with_radix(
-      expr.arguments()[0],
-      expr.arguments()[1],
-      ref_type);
-  }
+  PRECONDITION(f.arguments().size()==3||f.arguments().size()==4);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  if(f.arguments().size()==2)
+    return add_axioms_from_int_with_radix(res, f.arguments()[2], f.arguments()[3]);
+  else // f.arguments.size()==1
+    return add_axioms_from_int(res, f.arguments()[2]);
 }
 
 /// Add axioms corresponding to the String.valueOf(J) java function.
 /// \param expr: function application with one long argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_long(
-  const function_application_exprt &expr)
+exprt string_constraint_generatort::add_axioms_from_long(
+  const function_application_exprt &f)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(expr.type());
-  PRECONDITION(expr.arguments().size()>=1);
-  if(expr.arguments().size()==1)
-  {
-    return add_axioms_from_int(expr.arguments()[0], ref_type);
-  }
-  else
-  {
+  PRECONDITION(f.arguments().size()==3||f.arguments().size()==4);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  PRECONDITION(f.arguments().size()>=1);
+  if(f.arguments().size()==2)
     return add_axioms_from_int_with_radix(
-      expr.arguments()[0],
-      expr.arguments()[1],
-      ref_type);
-  }
+      res, f.arguments()[0], f.arguments()[1]);
+  else
+    return add_axioms_from_int(res, f.arguments()[0]);
 }
 
 /// Add axioms corresponding to the String.valueOf(Z) java function.
 /// \param f: function application with a Boolean argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_bool(
+exprt string_constraint_generatort::add_axioms_from_bool(
   const function_application_exprt &f)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_bool(args(f, 1)[0], ref_type);
+  PRECONDITION(f.arguments().size()==3);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  return add_axioms_from_bool(res, f.arguments()[2]);
 }
 
 /// Add axioms stating that the returned string equals "true" when the Boolean
@@ -76,13 +68,10 @@ char_array_exprt string_constraint_generatort::add_axioms_from_bool(
 /// \param b: Boolean expression
 /// \param ref_type: type of refined string expressions
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_bool(
-  const exprt &b, const refined_string_typet &ref_type)
+exprt string_constraint_generatort::add_axioms_from_bool(
+  const char_array_exprt &res, const exprt &b)
 {
-  char_array_exprt res=
-    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
-  const typet &char_type=ref_type.get_char_type();
-
+  const typet &char_type=res.content().type().subtype();
   PRECONDITION(b.type()==bool_typet() || b.type().id()==ID_c_bool);
 
   typecast_exprt eq(b, bool_typet());
@@ -126,13 +115,14 @@ char_array_exprt string_constraint_generatort::add_axioms_from_bool(
 /// \param max_size: a maximal size for the string representation (default 0,
 ///   which is interpreted to mean "as large as is needed for this type")
 /// \return a string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_int(
+exprt string_constraint_generatort::add_axioms_from_int(
+  const char_array_exprt &res,
   const exprt &input_int,
-  const refined_string_typet &ref_type,
   size_t max_size)
 {
   const constant_exprt radix=from_integer(10, input_int.type());
-  return add_axioms_from_int_with_radix(input_int, radix, ref_type, max_size);
+  return add_axioms_from_int_with_radix(
+    res, input_int, radix, max_size);
 }
 
 /// Add axioms enforcing that the string corresponds to the result
@@ -144,10 +134,10 @@ char_array_exprt string_constraint_generatort::add_axioms_from_int(
 /// \param max_size: a maximal size for the string representation (default 0,
 ///   which is interpreted to mean "as large as is needed for this type")
 /// \return a string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_int_with_radix(
+exprt string_constraint_generatort::add_axioms_from_int_with_radix(
+  const char_array_exprt &res,
   const exprt &input_int,
   const exprt &radix,
-  const refined_string_typet &ref_type,
   size_t max_size)
 {
   PRECONDITION(max_size==0 || max_size<std::numeric_limits<size_t>::max());
@@ -165,26 +155,24 @@ char_array_exprt string_constraint_generatort::add_axioms_from_int_with_radix(
     CHECK_RETURN(max_size<std::numeric_limits<size_t>::max());
   }
 
-  char_array_exprt str=
-    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
-  const typet &char_type=ref_type.get_char_type();
+  const typet &char_type=res.content().type().subtype();
   exprt radix_as_char=typecast_exprt(radix, char_type);
   exprt radix_input_type=typecast_exprt(radix, type);
   const bool strict_formatting=true;
 
   add_axioms_for_correct_number_format(
-    input_int, str, radix_as_char, radix_ul, max_size, strict_formatting);
+    input_int, res, radix_as_char, radix_ul, max_size, strict_formatting);
 
   add_axioms_for_characters_in_integer_string(
     input_int,
     type,
     strict_formatting,
-    str,
+    res,
     max_size,
     radix_input_type,
     radix_ul);
 
-  return str;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// Returns the integer value represented by the character.
@@ -207,15 +195,13 @@ exprt string_constraint_generatort::int_of_hex_char(const exprt &chr) const
 /// \param i: an integer argument
 /// \param ref_type: type of refined string expressions
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_int_hex(
-  const exprt &i, const refined_string_typet &ref_type)
+exprt string_constraint_generatort::add_axioms_from_int_hex(
+  const char_array_exprt &res, const exprt &i)
 {
-  char_array_exprt res=
-    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   const typet &type=i.type();
   PRECONDITION(type.id()==ID_signedbv);
-  const typet &index_type=ref_type.get_index_type();
-  const typet &char_type=ref_type.get_char_type();
+  const typet &index_type=res.length().type();
+  const typet &char_type=res.content().type().subtype();
   exprt sixteen=from_integer(16, index_type);
   exprt minus_char=constant_char('-', char_type);
   exprt zero_char=constant_char('0', char_type);
@@ -264,21 +250,25 @@ char_array_exprt string_constraint_generatort::add_axioms_from_int_hex(
 /// add axioms corresponding to the Integer.toHexString(I) java function
 /// \param f: function application with an integer argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_int_hex(
+exprt string_constraint_generatort::add_axioms_from_int_hex(
   const function_application_exprt &f)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_int_hex(args(f, 1)[0], ref_type);
+  PRECONDITION(f.arguments().size()==3);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  return add_axioms_from_int_hex(res, f.arguments()[2]);
 }
 
 /// Add axioms corresponding to the String.valueOf(C) java function.
 /// \param f: function application one char argument
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_char(
+exprt string_constraint_generatort::add_axioms_from_char(
   const function_application_exprt &f)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_from_char(args(f, 1)[0], ref_type);
+  PRECONDITION(f.arguments().size()==3);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  return add_axioms_from_char(res, f.arguments()[2]);
 }
 
 /// Add axioms stating that the returned string has length 1 and the character
@@ -286,14 +276,12 @@ char_array_exprt string_constraint_generatort::add_axioms_from_char(
 /// \param c: one expression of type char
 /// \param ref_type: type of refined string expressions
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_char(
-  const exprt &c, const refined_string_typet &ref_type)
+exprt string_constraint_generatort::add_axioms_from_char(
+  const char_array_exprt &res, const exprt &c)
 {
-  char_array_exprt res=fresh_string(
-    ref_type.get_index_type(), ref_type.get_char_type());
   and_exprt lemma(equal_exprt(res[0], c), res.axiom_for_has_length(1));
   axioms.push_back(lemma);
-  return res;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// Add axioms making the return value true if the given string is a correct
@@ -315,9 +303,8 @@ void string_constraint_generatort::add_axioms_for_correct_number_format(
   const std::size_t max_size,
   const bool strict_formatting)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  const typet &char_type=ref_type.get_char_type();
-  const typet &index_type=ref_type.get_index_type();
+  const typet &char_type=str.content().type().subtype();
+  const typet &index_type=str.length().type();
 
   const exprt &chr=str[0];
   const equal_exprt starts_with_minus(chr, constant_char('-', char_type));
@@ -403,8 +390,7 @@ void string_constraint_generatort::add_axioms_for_characters_in_integer_string(
   const exprt &radix,
   const unsigned long radix_ul)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  const typet &char_type=ref_type.get_char_type();
+  const typet &char_type=str.content().type().subtype();
 
   const equal_exprt starts_with_minus(str[0], constant_char('-', char_type));
   const constant_exprt zero_expr=from_integer(0, type);
@@ -495,8 +481,7 @@ exprt string_constraint_generatort::add_axioms_for_parse_int(
   PRECONDITION((radix_ul>=2 && radix_ul<=36) || radix_ul==0);
 
   const symbol_exprt input_int=fresh_symbol("parsed_int", type);
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  const typet &char_type=ref_type.get_char_type();
+  const typet &char_type=str.content().type().subtype();
   const typecast_exprt radix_as_char(radix, char_type);
   const bool strict_formatting=false;
 

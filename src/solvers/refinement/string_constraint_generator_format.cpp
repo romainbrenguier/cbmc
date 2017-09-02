@@ -262,13 +262,17 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
 {
   const char_array_exprt res=
     fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+  exprt return_code;
   switch(fs.conversion)
   {
   case format_specifiert::DECIMAL_INTEGER:
-    return add_axioms_from_int(get_component_in_struct(arg, ID_int), ref_type);
+    return_code=
+      add_axioms_from_int(res, get_component_in_struct(arg, ID_int));
+    return res;
   case format_specifiert::HEXADECIMAL_INTEGER:
-    return add_axioms_from_int_hex(
-      get_component_in_struct(arg, ID_int), ref_type);
+    return_code=
+      add_axioms_from_int_hex(res, get_component_in_struct(arg, ID_int));
+    return res;
   case format_specifiert::SCIENTIFIC:
     add_axioms_from_float_scientific_notation(
       res, get_component_in_struct(arg, ID_float), ref_type);
@@ -278,16 +282,19 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
       res, get_component_in_struct(arg, ID_float), ref_type);
     return res;
   case format_specifiert::CHARACTER:
-    return add_axioms_from_char(
-      get_component_in_struct(arg, ID_char), ref_type);
+    return_code=
+      add_axioms_from_char(res, get_component_in_struct(arg, ID_char));
+    return res;
   case format_specifiert::BOOLEAN:
-    return add_axioms_from_bool(
-      get_component_in_struct(arg, ID_boolean), ref_type);
+    return_code=add_axioms_from_bool(
+      res, get_component_in_struct(arg, ID_boolean));
+    return res;
   case format_specifiert::STRING:
     return get_string_expr(get_component_in_struct(arg, "string_expr"));
   case format_specifiert::HASHCODE:
-    return add_axioms_from_int(
-      get_component_in_struct(arg, "hashcode"), ref_type);
+    return_code=add_axioms_from_int(
+      res, get_component_in_struct(arg, "hashcode"));
+    return res;
   case format_specifiert::LINE_SEPARATOR:
     // TODO: the constant should depend on the system: System.lineSeparator()
     return add_axioms_for_constant("\n", ref_type);

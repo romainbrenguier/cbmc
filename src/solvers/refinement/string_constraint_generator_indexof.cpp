@@ -231,23 +231,19 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
-  char_array_exprt str=get_string_expr(args[0]);
+  PRECONDITION(args.size()==2 || args.size()==3);
+  const char_array_exprt str=get_string_expr(args[0]);
   const exprt &c=args[1];
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  PRECONDITION(f.type()==ref_type.get_index_type());
-  exprt from_index;
-
-  if(args.size()==2)
-    from_index=from_integer(0, ref_type.get_index_type());
-  else if(args.size()==3)
-    from_index=args[2];
-  else
-    UNREACHABLE;
+  const typet &index_type=str.length().type();
+  const typet &char_type=str.content().type().subtype();
+  PRECONDITION(f.type()==index_type);
+  const exprt from_index=
+    args.size()==2?from_integer(0, index_type):args[2];
 
   if(c.type().id()==ID_unsignedbv || c.type().id()==ID_signedbv)
   {
     return add_axioms_for_index_of(
-      str, typecast_exprt(c, ref_type.get_char_type()), from_index);
+      str, typecast_exprt(c, char_type), from_index);
   }
   else
   {
@@ -271,8 +267,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 exprt string_constraint_generatort::add_axioms_for_last_index_of(
   const char_array_exprt &str, const exprt &c, const exprt &from_index)
 {
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  const typet &index_type=ref_type.get_index_type();
+  const typet &index_type=str.length().type();
   symbol_exprt index=fresh_exist_index("last_index_of", index_type);
   symbol_exprt contains=fresh_boolean("contains_in_last_index_of");
 
@@ -330,27 +325,26 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
-  char_array_exprt str=get_string_expr(args[0]);
-  exprt c=args[1];
-  const refined_string_typet &ref_type=to_refined_string_type(str.type());
-  exprt from_index;
-  PRECONDITION(f.type()==ref_type.get_index_type());
+  PRECONDITION(args.size()==2||args.size()==3);
+  const char_array_exprt str=get_string_expr(args[0]);
+  const exprt c=args[1];
+  const typet &index_type=str.length().type();
+  const typet &char_type=str.content().type().subtype();
+  PRECONDITION(f.type()==index_type);
 
-  if(args.size()==2)
-    from_index=minus_exprt(str.length(), from_integer(1, str.length().type()));
-  else if(args.size()==3)
-    from_index=args[2];
-  else
-    UNREACHABLE;
+  const exprt from_index=
+    args.size()==2?
+    minus_exprt(str.length(), from_integer(1, index_type)):
+    args[2];
 
   if(c.type().id()==ID_unsignedbv || c.type().id()==ID_signedbv)
   {
     return add_axioms_for_last_index_of(
-      str, typecast_exprt(c, ref_type.get_char_type()), from_index);
+      str, typecast_exprt(c, char_type), from_index);
   }
   else
   {
-    char_array_exprt sub=get_string_expr(c);
+    const char_array_exprt sub=get_string_expr(c);
     return add_axioms_for_last_index_of_string(str, sub, from_index);
   }
 }
