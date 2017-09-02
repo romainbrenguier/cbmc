@@ -225,10 +225,10 @@ char_array_exprt string_constraint_generatort::add_axioms_for_fractional_part(
   PRECONDITION(int_expr.type().id()==ID_signedbv);
   PRECONDITION(max_size>=2);
   const typet &type=int_expr.type();
-  char_array_exprt res=fresh_string(ref_type);
-  exprt ten=from_integer(10, type);
   const typet &char_type=ref_type.get_char_type();
   const typet &index_type=ref_type.get_index_type();
+  char_array_exprt res=fresh_string(index_type, char_type);
+  exprt ten=from_integer(10, type);
   exprt zero_char=constant_char('0', char_type);
   exprt nine_char=constant_char('9', char_type);
   exprt max=from_integer(max_size, index_type);
@@ -436,14 +436,15 @@ exprt string_constraint_generatort::
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
   char_array_exprt string_expr_with_fractional_part=
-    fresh_string(to_refined_string_type(string_expr_integer_part.type()));
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   exprt return_code1=add_axioms_for_concat(
     string_expr_with_fractional_part,
     string_expr_integer_part, string_fractional_part);
 
   // string_expr_with_E = concat(string_fraction, string_lit_E)
   const char_array_exprt stringE=add_axioms_for_constant("E", ref_type);
-  char_array_exprt string_expr_with_E=fresh_string(ref_type);
+  char_array_exprt string_expr_with_E=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   exprt return_code2=add_axioms_for_concat(
     string_expr_with_E, string_expr_with_fractional_part, stringE);
 

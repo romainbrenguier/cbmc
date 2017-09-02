@@ -115,10 +115,10 @@ plus_exprt string_constraint_generatort::plus_exprt_with_overflow_check(
 /// \par parameters: a type for string
 /// \return a string expression
 char_array_exprt string_constraint_generatort::fresh_string(
-  const refined_string_typet &type)
+  const typet &index_type, const typet &char_type)
 {
-  symbol_exprt length=fresh_symbol("string_length", type.get_index_type());
-  array_typet array_type(type.get_char_type(), length);
+  symbol_exprt length=fresh_symbol("string_length", index_type);
+  array_typet array_type(char_type, length);
   symbol_exprt content=fresh_symbol("string_content", array_type);
   char_array_exprt str=to_char_array_expr(content);
   created_strings.insert(str);
@@ -309,9 +309,9 @@ char_array_exprt string_constraint_generatort::add_axioms_for_if(
   char_array_exprt t=get_string_expr(expr.true_case());
   PRECONDITION(is_refined_string_type(expr.false_case().type()));
   char_array_exprt f=get_string_expr(expr.false_case());
-  const refined_string_typet &ref_type=to_refined_string_type(t.type());
-  const typet &index_type=ref_type.get_index_type();
-  char_array_exprt res=fresh_string(ref_type);
+  const typet &char_type=t.content().type().subtype();
+  const typet &index_type=t.length().type();
+  char_array_exprt res=fresh_string(index_type, char_type);
 
   axioms.push_back(
     implies_exprt(expr.cond(), equal_exprt(res.length(), t.length())));
@@ -338,7 +338,8 @@ char_array_exprt string_constraint_generatort::find_or_add_string_of_symbol(
   const symbol_exprt &sym, const refined_string_typet &ref_type)
 {
   irep_idt id=sym.get_identifier();
-  char_array_exprt str=fresh_string(ref_type);
+  char_array_exprt str=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   auto entry=unresolved_symbols.insert(std::make_pair(id, str));
   return entry.first->second;
 }
@@ -356,15 +357,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 
   const irep_idt &id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
     to_symbol_expr(name).get_identifier();
-
-  std::string str_id(id.c_str());
-
-  // TODO: improve efficiency of this test by either ordering test by frequency
-  // or using a map
-
-  auto res_it=function_application_cache.find(expr);
-  if(res_it!=function_application_cache.end() && res_it->second!=nil_exprt())
-    return res_it->second;
 
   exprt res;
 
@@ -465,7 +457,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     msg+=id2string(id);
     DATA_INVARIANT(false, string_refinement_invariantt(msg));
   }
-  function_application_cache[expr]=res;
   return res;
 }
 
@@ -474,26 +465,17 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
 /// \par parameters: function application with one argument, which is a string,
 /// or three arguments: string, integer offset and count
 /// \return a new string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_copy(
+exprt string_constraint_generatort::add_axioms_for_copy(
   const function_application_exprt &f)
 {
   const auto &args=f.arguments();
-  if(args.size()==1)
-  {
-    char_array_exprt s1=get_string_expr(args[0]);
-    return s1;
-  }
-  else
-  {
-    INVARIANT(
-      args.size()==3,
-      string_refinement_invariantt("f must have 1 or 3 arguments and the case "
-        "of 3 arguments is already handled"));
-    char_array_exprt s1=get_string_expr(args[0]);
-    exprt offset=args[1];
-    exprt count=args[2];
-    return add_axioms_for_substring(s1, offset, plus_exprt(offset, count));
-  }
+  PRECONDITION(args.size()==3||args.size()==5);
+  const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
+  const char_array_exprt str=get_string_expr(args[2]);
+  const typet index_type=str.length().type();
+  const exprt offset=args.size()==3?from_integer(0, index_type):args[3];
+  const exprt count=args.size()==3?str.length():args[4];
+  return add_axioms_for_substring(res, str, offset, plus_exprt(offset, count));
 }
 
 /// add axioms corresponding to the String.valueOf([C) java function
@@ -503,8 +485,7 @@ char_array_exprt string_constraint_generatort::add_axioms_for_copy(
 char_array_exprt string_constraint_generatort::add_axioms_for_java_char_array(
   const exprt &char_array)
 {
-  char_array_exprt res=fresh_string(
-    refined_string_typet(java_int_type(), java_char_type()));
+  char_array_exprt res=fresh_string(java_int_type(), java_char_type());
   exprt arr=to_address_of_expr(char_array).object();
   exprt len=member_exprt(arr, "length", res.length().type());
   exprt cont=member_exprt(arr, "data", res.content().type());

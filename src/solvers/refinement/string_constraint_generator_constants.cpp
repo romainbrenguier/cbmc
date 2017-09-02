@@ -22,7 +22,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 char_array_exprt string_constraint_generatort::add_axioms_for_constant(
   irep_idt sval, const refined_string_typet &ref_type)
 {
-  char_array_exprt res=fresh_string(ref_type);
+  char_array_exprt res=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   std::string c_str=id2string(sval);
   std::wstring str;
 

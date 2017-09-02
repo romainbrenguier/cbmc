@@ -260,7 +260,8 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
   const struct_exprt &arg,
   const refined_string_typet &ref_type)
 {
-  const char_array_exprt res=fresh_string(ref_type);
+  const char_array_exprt res=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   switch(fs.conversion)
   {
   case format_specifiert::DECIMAL_INTEGER:
@@ -305,7 +306,8 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     fs_lower.conversion=tolower(fs.conversion);
     char_array_exprt lower_case=add_axioms_for_format_specifier(
       fs_lower, arg, ref_type);
-    char_array_exprt res=fresh_string(ref_type);
+    char_array_exprt res=
+      fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
     add_axioms_for_to_upper_case(res, lower_case);
     return res;
   }
@@ -319,7 +321,7 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     // TODO: DateTime not implemented
     // For all these unimplemented cases we return a non-deterministic string
     warning() << "unimplemented format specifier: " << fs.conversion << eom;
-    return fresh_string(ref_type);
+    return fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   default:
     error() << "invalid format specifier: " << fs.conversion << eom;
     INVARIANT(
@@ -385,10 +387,13 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format(
 
   auto it=intermediary_strings.begin();
   char_array_exprt str=*(it++);
+  exprt return_code=from_integer(0, unsignedbv_typet(32));
   for(; it!=intermediary_strings.end(); ++it)
   {
-    const char_array_exprt fresh=fresh_string(ref_type);
-    const exprt return_code=add_axioms_for_concat(fresh, str, *it);
+    const char_array_exprt fresh=
+      fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+    return_code=
+      bitor_exprt(return_code, add_axioms_for_concat(fresh, str, *it));
     str=fresh;
   }
   return str;
@@ -447,6 +452,6 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format(
   {
     warning() << "ignoring format function with non constant first argument"
               << eom;
-    return fresh_string(ref_type);
+    return fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   }
 }

@@ -24,15 +24,24 @@ exprt string_constraint_generatort::add_axioms_for_insert(
   const exprt &offset)
 {
   PRECONDITION(offset.type()==s1.length().type());
-  char_array_exprt pref=add_axioms_for_substring(
-    s1, from_integer(0, offset.type()), offset);
-  char_array_exprt suf=add_axioms_for_substring(s1, offset, s1.length());
-  char_array_exprt concat1=fresh_string(to_refined_string_type(s1.type()));
-  exprt return_code1=add_axioms_for_concat(concat1, pref, s2);
-  exprt return_code2=add_axioms_for_concat(res, concat1, suf);
+  const typet &index_type=s1.length().type();
+  const typet &char_type=s1.content().type().subtype();
+  char_array_exprt pref=fresh_string(index_type, char_type);
+  exprt return_code1=add_axioms_for_substring(
+    pref, s1, from_integer(0, offset.type()), offset);
+  char_array_exprt suf=fresh_string(index_type, char_type);
+  exprt return_code2=add_axioms_for_substring(
+    suf, s1, offset, s1.length());
+  char_array_exprt concat1=fresh_string(index_type, char_type);
+  exprt return_code3=add_axioms_for_concat(concat1, pref, s2);
+  exprt return_code4=add_axioms_for_concat(res, concat1, suf);
   return if_exprt(
     equal_exprt(return_code1, from_integer(0, return_code1.type())),
-    return_code2,
+    if_exprt(equal_exprt(return_code2, from_integer(0, return_code1.type())),
+      if_exprt(equal_exprt(return_code3, from_integer(0, return_code1.type())),
+               return_code4,
+               return_code3),
+             return_code2),
     return_code1);
 }
 
@@ -55,8 +64,15 @@ exprt string_constraint_generatort::add_axioms_for_insert(
   {
     const exprt &start=f.arguments()[5];
     const exprt &end=f.arguments()[6];
-    char_array_exprt substring=add_axioms_for_substring(s2, start, end);
-    return add_axioms_for_insert(res, s1, substring, offset);
+    const typet &char_type=s1.content().type().subtype();
+    const typet &index_type=s1.length().type();
+    char_array_exprt substring=fresh_string(index_type, char_type);
+    exprt return_code1=add_axioms_for_substring(substring, s2, start, end);
+    exprt return_code2=add_axioms_for_insert(res, s1, substring, offset);
+    return
+      if_exprt(equal_exprt(return_code1, from_integer(0, return_code1.type())),
+               return_code2,
+               return_code1);
   }
   else // 5 arguments
   {

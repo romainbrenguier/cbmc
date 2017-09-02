@@ -79,7 +79,8 @@ char_array_exprt string_constraint_generatort::add_axioms_from_bool(
 char_array_exprt string_constraint_generatort::add_axioms_from_bool(
   const exprt &b, const refined_string_typet &ref_type)
 {
-  char_array_exprt res=fresh_string(ref_type);
+  char_array_exprt res=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   const typet &char_type=ref_type.get_char_type();
 
   PRECONDITION(b.type()==bool_typet() || b.type().id()==ID_c_bool);
@@ -164,7 +165,8 @@ char_array_exprt string_constraint_generatort::add_axioms_from_int_with_radix(
     CHECK_RETURN(max_size<std::numeric_limits<size_t>::max());
   }
 
-  char_array_exprt str=fresh_string(ref_type);
+  char_array_exprt str=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   const typet &char_type=ref_type.get_char_type();
   exprt radix_as_char=typecast_exprt(radix, char_type);
   exprt radix_input_type=typecast_exprt(radix, type);
@@ -208,7 +210,8 @@ exprt string_constraint_generatort::int_of_hex_char(const exprt &chr) const
 char_array_exprt string_constraint_generatort::add_axioms_from_int_hex(
   const exprt &i, const refined_string_typet &ref_type)
 {
-  char_array_exprt res=fresh_string(ref_type);
+  char_array_exprt res=
+    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
   const typet &type=i.type();
   PRECONDITION(type.id()==ID_signedbv);
   const typet &index_type=ref_type.get_index_type();
@@ -286,7 +289,8 @@ char_array_exprt string_constraint_generatort::add_axioms_from_char(
 char_array_exprt string_constraint_generatort::add_axioms_from_char(
   const exprt &c, const refined_string_typet &ref_type)
 {
-  char_array_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   and_exprt lemma(equal_exprt(res[0], c), res.axiom_for_has_length(1));
   axioms.push_back(lemma);
   return res;

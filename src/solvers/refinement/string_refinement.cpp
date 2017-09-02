@@ -568,7 +568,11 @@ symbol_solvert symbol_solver_from_equations(
   {
     const exprt &lhs=eq.lhs();
     const exprt &rhs=eq.rhs();
-    PRECONDITION(lhs.id()==ID_symbol);
+    if(lhs.id()!=ID_symbol)
+    {
+      std::cout << "WARNING lhs = " << lhs.pretty() << std::endl;
+      continue;
+    }
     PRECONDITION(lhs.type()==rhs.type());
     if(is_char_pointer_type(rhs.type()))
     {
@@ -580,20 +584,27 @@ symbol_solvert symbol_solver_from_equations(
     }
     else if(has_char_pointer_subexpr(rhs))
     {
-      if(rhs.id()!=ID_struct)
-        std::cout << "non struct with char pointer subexpr "
-                << from_expr(ns, "", rhs) << std::endl;
-      PRECONDITION(rhs.id()==ID_struct);
-      struct_typet struct_type=to_struct_type(rhs.type());
-      for(auto comp : struct_type.components())
+      if(rhs.type().id()==ID_struct)
       {
-        if(is_char_pointer_type(comp.type()))
+        struct_typet struct_type=to_struct_type(rhs.type());
+        for(auto comp : struct_type.components())
         {
-          member_exprt lhs_data(lhs, comp.get_name(), comp.type());
-          exprt rhs_data=simplify_expr(
-                member_exprt(rhs, comp.get_name(), comp.type()), ns);
-          solver.add_symbol(lhs_data, rhs_data);
+          if(is_char_pointer_type(comp.type()))
+          {
+            member_exprt lhs_data(lhs, comp.get_name(), comp.type());
+            exprt rhs_data=simplify_expr(
+                  member_exprt(rhs, comp.get_name(), comp.type()), ns);
+            solver.add_symbol(lhs_data, rhs_data);
+          }
         }
+      }
+      else
+      {
+// #ifdef DEBUG
+        std::cout << "non struct with char pointer subexpr "
+                  << from_expr(ns, "", rhs) << std::endl;
+// #endif
+        UNREACHABLE;
       }
     }
   }

@@ -72,7 +72,8 @@ public:
   symbol_exprt fresh_exist_index(const irep_idt &prefix, const typet &type);
   symbol_exprt fresh_univ_index(const irep_idt &prefix, const typet &type);
   symbol_exprt fresh_boolean(const irep_idt &prefix);
-  char_array_exprt fresh_string(const refined_string_typet &type);
+  char_array_exprt fresh_string(
+    const typet &index_type, const typet &char_type);
   char_array_exprt get_string_expr(const exprt &expr);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
@@ -154,7 +155,7 @@ private:
     const function_application_exprt &f);
   exprt add_axioms_for_char_set(
     const function_application_exprt &f);
-  char_array_exprt add_axioms_for_copy(const function_application_exprt &f);
+  exprt add_axioms_for_copy(const function_application_exprt &f);
   exprt add_axioms_for_concat(
     const char_array_exprt &res,
     const char_array_exprt &s1,
@@ -173,7 +174,7 @@ private:
     const char_array_exprt &str,
     const exprt &start,
     const exprt &end);
-  exprt add_axioms_for_delete(const function_application_exprt &expr);
+  exprt add_axioms_for_delete(const function_application_exprt &f);
   exprt add_axioms_for_delete_char_at(
     const function_application_exprt &expr);
   char_array_exprt add_axioms_for_format(const function_application_exprt &f);
@@ -279,23 +280,25 @@ private:
   // TODO: the specifications is only partial
   exprt add_axioms_from_double(const function_application_exprt &f);
 
-  char_array_exprt add_axioms_for_replace(const function_application_exprt &f);
+  exprt add_axioms_for_replace(const function_application_exprt &f);
   char_array_exprt add_axioms_for_set_length(
     const function_application_exprt &f);
 
   // TODO: the specification may not be correct for the case where the
   // string is shorter than end. An actual java program should throw an
   // exception in that case
-  char_array_exprt add_axioms_for_substring(
-    const char_array_exprt &str, const exprt &start, const exprt &end);
-  char_array_exprt add_axioms_for_substring(
-    const function_application_exprt &expr);
+  exprt add_axioms_for_substring(
+    const char_array_exprt &res,
+    const char_array_exprt &str,
+    const exprt &start,
+    const exprt &end);
+  exprt add_axioms_for_substring(const function_application_exprt &f);
 
   exprt add_axioms_for_to_lower_case(const function_application_exprt &f);
   exprt add_axioms_for_to_upper_case(const function_application_exprt &f);
   exprt add_axioms_for_to_upper_case(
     const char_array_exprt &res, const char_array_exprt &expr);
-  char_array_exprt add_axioms_for_trim(const function_application_exprt &expr);
+  exprt add_axioms_for_trim(const function_application_exprt &f);
 
   // Add axioms corresponding to the String.valueOf([CII) function
   // TODO: not working correctly at the moment

@@ -28,7 +28,8 @@ Function: string_constraint_generatort::add_axioms_for_code_point
 char_array_exprt string_constraint_generatort::add_axioms_for_code_point(
   const exprt &code_point, const refined_string_typet &ref_type)
 {
-  char_array_exprt res=fresh_string(ref_type);
+  char_array_exprt res=fresh_string(
+    ref_type.get_index_type(), ref_type.get_char_type());
   const typet &type=code_point.type();
   PRECONDITION(type.id()==ID_signedbv);
 
