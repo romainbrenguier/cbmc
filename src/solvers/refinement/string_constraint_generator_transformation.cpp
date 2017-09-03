@@ -130,7 +130,7 @@ exprt string_constraint_generatort::add_axioms_for_trim(
   PRECONDITION(f.arguments().size()==3);
   const char_array_exprt str=get_string_expr(f.arguments()[2]);
   const typet &index_type=str.length().type();
-  const typet &char_type=str.content().type();
+  const typet &char_type=str.content().type().subtype();
   const char_array_exprt res=fresh_string(index_type, char_type);
   const symbol_exprt idx=fresh_exist_index("index_trim", index_type);
   const exprt space_char=from_integer(' ', char_type);
