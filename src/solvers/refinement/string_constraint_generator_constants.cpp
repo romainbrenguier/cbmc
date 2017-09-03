@@ -19,11 +19,11 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// string constant
 /// \par parameters: a string constant
 /// \return a string expression
-char_array_exprt string_constraint_generatort::add_axioms_for_constant(
-  irep_idt sval, const refined_string_typet &ref_type)
+exprt string_constraint_generatort::add_axioms_for_constant(
+  const char_array_exprt &res, irep_idt sval)
 {
-  char_array_exprt res=
-    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+  const typet &index_type=res.length().type();
+  const typet &char_type=res.content().type().subtype();
   std::string c_str=id2string(sval);
   std::wstring str;
 
@@ -38,16 +38,16 @@ char_array_exprt string_constraint_generatort::add_axioms_for_constant(
 
   for(std::size_t i=0; i<str.size(); i++)
   {
-    exprt idx=from_integer(i, ref_type.get_index_type());
-    exprt c=from_integer(str[i], ref_type.get_char_type());
-    equal_exprt lemma(res[idx], c);
+    const exprt idx=from_integer(i, index_type);
+    const exprt c=from_integer(str[i], char_type);
+    const equal_exprt lemma(res[idx], c);
     axioms.push_back(lemma);
   }
 
-  exprt s_length=from_integer(str.size(), ref_type.get_index_type());
+  const exprt s_length=from_integer(str.size(), index_type);
 
   axioms.push_back(res.axiom_for_has_length(s_length));
-  return res;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// add axioms to say that the returned string expression is empty
@@ -67,14 +67,13 @@ exprt string_constraint_generatort::add_axioms_for_empty_string(
 /// \param f: function application with an argument which is a string literal
 /// that is a constant with a string value.
 /// \return string expression
-char_array_exprt string_constraint_generatort::add_axioms_from_literal(
+exprt string_constraint_generatort::add_axioms_from_literal(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
-  PRECONDITION(args.size()==1); // Bad args to string literal?
-
-  const exprt &arg=args[0];
+  PRECONDITION(args.size()==3); // Bad args to string literal?
+  const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
+  const exprt &arg=args[2];
   irep_idt sval=to_constant_expr(arg).get_value();
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
-  return add_axioms_for_constant(sval, ref_type);
+  return add_axioms_for_constant(res, sval);
 }

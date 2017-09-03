@@ -167,8 +167,7 @@ private:
     const exprt &start_index,
     const exprt &end_index);
   exprt add_axioms_for_concat(const function_application_exprt &f);
-  char_array_exprt add_axioms_for_constant(
-    irep_idt sval, const refined_string_typet &ref_type);
+  exprt add_axioms_for_constant(const char_array_exprt &res, irep_idt sval);
   exprt add_axioms_for_delete(
     const char_array_exprt &res,
     const char_array_exprt &str,
@@ -177,11 +176,11 @@ private:
   exprt add_axioms_for_delete(const function_application_exprt &f);
   exprt add_axioms_for_delete_char_at(
     const function_application_exprt &expr);
-  char_array_exprt add_axioms_for_format(const function_application_exprt &f);
-  char_array_exprt add_axioms_for_format(
+  exprt add_axioms_for_format(const function_application_exprt &f);
+  exprt add_axioms_for_format(
+    const char_array_exprt &res,
     const std::string &s,
-    const exprt::operandst &args,
-    const refined_string_typet &ref_type);
+    const exprt::operandst &args);
   exprt add_axioms_for_format_specifier_is_correct(
     const function_application_exprt &expr);
   bool add_axioms_for_format_specifier_is_correct(
@@ -190,7 +189,8 @@ private:
   char_array_exprt add_axioms_for_format_specifier(
     const format_specifiert &fs,
     const struct_exprt &arg,
-    const refined_string_typet &ref_type);
+    const typet &index_type,
+    const typet &char_type);
 
   exprt add_axioms_for_insert(
     const char_array_exprt &res,
@@ -198,7 +198,13 @@ private:
     const char_array_exprt &s2,
     const exprt &offset);
   exprt add_axioms_for_insert(const function_application_exprt &f);
-  char_array_exprt add_axioms_from_literal(const function_application_exprt &f);
+  exprt add_axioms_for_insert_char(const function_application_exprt &f);
+  exprt add_axioms_for_insert_int(const function_application_exprt &f);
+  exprt add_axioms_for_insert_long(const function_application_exprt &f);
+  exprt add_axioms_for_insert_bool(const function_application_exprt &f);
+  exprt add_axioms_for_insert_float(const function_application_exprt &f);
+  exprt add_axioms_for_insert_double(const function_application_exprt &f);
+  exprt add_axioms_from_literal(const function_application_exprt &f);
   exprt add_axioms_from_int(const function_application_exprt &f);
   exprt add_axioms_from_int(
     const char_array_exprt &res,
@@ -262,15 +268,12 @@ private:
   exprt add_axioms_for_string_of_float(
     const function_application_exprt &f);
   exprt add_axioms_for_string_of_float(
-    const char_array_exprt &res,
-    const exprt &f,
-    const refined_string_typet &ref_type);
+    const char_array_exprt &res, const exprt &f);
 
-  char_array_exprt add_axioms_for_fractional_part(
-    const exprt &i, size_t max_size, const refined_string_typet &ref_type);
+  exprt add_axioms_for_fractional_part(
+    const char_array_exprt &res, const exprt &i, size_t max_size);
   exprt add_axioms_from_float_scientific_notation(
-    const char_array_exprt &res, const exprt &f,
-    const refined_string_typet &ref_type);
+    const char_array_exprt &res, const exprt &f);
   exprt add_axioms_from_float_scientific_notation(
     const function_application_exprt &f);
 

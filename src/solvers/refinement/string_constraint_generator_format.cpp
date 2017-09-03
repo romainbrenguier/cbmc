@@ -258,10 +258,11 @@ static exprt get_component_in_struct(
 char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
   const format_specifiert &fs,
   const struct_exprt &arg,
-  const refined_string_typet &ref_type)
+  const typet &index_type,
+  const typet &char_type)
 {
   const char_array_exprt res=
-    fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+    fresh_string(index_type, char_type);
   exprt return_code;
   switch(fs.conversion)
   {
@@ -275,11 +276,11 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     return res;
   case format_specifiert::SCIENTIFIC:
     add_axioms_from_float_scientific_notation(
-      res, get_component_in_struct(arg, ID_float), ref_type);
+      res, get_component_in_struct(arg, ID_float));
     return res;
   case format_specifiert::DECIMAL_FLOAT:
     add_axioms_for_string_of_float(
-      res, get_component_in_struct(arg, ID_float), ref_type);
+      res, get_component_in_struct(arg, ID_float));
     return res;
   case format_specifiert::CHARACTER:
     return_code=
@@ -297,9 +298,11 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     return res;
   case format_specifiert::LINE_SEPARATOR:
     // TODO: the constant should depend on the system: System.lineSeparator()
-    return add_axioms_for_constant("\n", ref_type);
+    return_code=add_axioms_for_constant(res, "\n");
+    return res;
   case format_specifiert::PERCENT_SIGN:
-    return add_axioms_for_constant("%", ref_type);
+    return_code=add_axioms_for_constant(res, "%");
+    return res;
   case format_specifiert::SCIENTIFIC_UPPER:
   case format_specifiert::GENERAL_UPPER:
   case format_specifiert::HEXADECIMAL_FLOAT_UPPER:
@@ -311,10 +314,8 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
   {
     string_constraint_generatort::format_specifiert fs_lower=fs;
     fs_lower.conversion=tolower(fs.conversion);
-    char_array_exprt lower_case=add_axioms_for_format_specifier(
-      fs_lower, arg, ref_type);
-    char_array_exprt res=
-      fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+    const char_array_exprt lower_case=add_axioms_for_format_specifier(
+      fs_lower, arg, index_type, char_type);
     add_axioms_for_to_upper_case(res, lower_case);
     return res;
   }
@@ -328,7 +329,7 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
     // TODO: DateTime not implemented
     // For all these unimplemented cases we return a non-deterministic string
     warning() << "unimplemented format specifier: " << fs.conversion << eom;
-    return fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+    return fresh_string(index_type, char_type);
   default:
     error() << "invalid format specifier: " << fs.conversion << eom;
     INVARIANT(
@@ -343,14 +344,16 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format_specifier(
 /// \param args: a vector of arguments
 /// \param ref_type: a type  for refined string type
 /// \return String expression representing the output of String.format.
-char_array_exprt string_constraint_generatort::add_axioms_for_format(
+exprt string_constraint_generatort::add_axioms_for_format(
+  const char_array_exprt &res,
   const std::string &s,
-  const exprt::operandst &args,
-  const refined_string_typet &ref_type)
+  const exprt::operandst &args)
 {
   const std::vector<format_elementt> format_strings=parse_format_string(s);
   std::vector<char_array_exprt> intermediary_strings;
   std::size_t arg_count=0;
+  const typet &char_type=res.content().type().subtype();
+  const typet &index_type=res.length().type();
 
   for(const format_elementt &fe : format_strings)
     if(fe.is_format_specifier())
@@ -378,32 +381,33 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format(
         }
       }
       intermediary_strings.push_back(
-        add_axioms_for_format_specifier(fs, arg, ref_type));
+        add_axioms_for_format_specifier(fs, arg, index_type, char_type));
     }
     else
-      intermediary_strings.push_back(
-        add_axioms_for_constant(
-          fe.get_format_text().get_content(), ref_type));
+    {
+      const char_array_exprt str=fresh_string(index_type, char_type);
+      const exprt return_code=
+        add_axioms_for_constant(str, fe.get_format_text().get_content());
+      intermediary_strings.push_back(str);
+    }
 
   if(intermediary_strings.empty())
     return to_char_array_expr(array_exprt(
-      array_typet(ref_type.get_char_type(),
-                  from_integer(0, ref_type.get_index_type()))));
-
-
+      array_typet(char_type, from_integer(0, index_type))));
 
   auto it=intermediary_strings.begin();
   char_array_exprt str=*(it++);
-  exprt return_code=from_integer(0, unsignedbv_typet(32));
+  exprt return_code=from_integer(0, signedbv_typet(32));
   for(; it!=intermediary_strings.end(); ++it)
   {
-    const char_array_exprt fresh=
-      fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+    const char_array_exprt fresh=fresh_string(index_type, char_type);
     return_code=
       bitor_exprt(return_code, add_axioms_for_concat(fresh, str, *it));
     str=fresh;
   }
-  return str;
+  // Copy
+  add_axioms_for_substring(res, str, from_integer(0, index_type), str.length());
+  return return_code;
 }
 
 /// Construct a string from a constant array.
@@ -436,12 +440,13 @@ std::string utf16_constant_array_to_java(
 ///   String.format function on the given arguments, assuming the first argument
 ///   in the function application is a constant. Otherwise the first argument is
 ///   returned.
-char_array_exprt string_constraint_generatort::add_axioms_for_format(
+exprt string_constraint_generatort::add_axioms_for_format(
   const function_application_exprt &f)
 {
-  PRECONDITION(!f.arguments().empty());
-  char_array_exprt s1=get_string_expr(f.arguments()[0]);
-  const refined_string_typet &ref_type=to_refined_string_type(f.type());
+  PRECONDITION(f.arguments().size()>=3);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  const char_array_exprt s1=get_string_expr(f.arguments()[2]);
   unsigned int length;
 
   if(s1.length().id()==ID_constant &&
@@ -452,13 +457,14 @@ char_array_exprt string_constraint_generatort::add_axioms_for_format(
       to_array_expr(s1.content()), length);
     // List of arguments after s
     std::vector<exprt> args(
-      std::next(f.arguments().begin()), f.arguments().end());
-    return add_axioms_for_format(s, args, ref_type);
+      std::next(std::next(std::next(f.arguments().begin()))),
+      f.arguments().end());
+    return add_axioms_for_format(res, s, args);
   }
   else
   {
     warning() << "ignoring format function with non constant first argument"
               << eom;
-    return fresh_string(ref_type.get_index_type(), ref_type.get_char_type());
+    return from_integer(1, f.type());
   }
 }

@@ -408,6 +408,18 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_concat(expr);
   else if(id==ID_cprover_string_insert_func)
     res=add_axioms_for_insert(expr);
+  else if(id==ID_cprover_string_insert_char_func)
+    res=add_axioms_for_insert_char(expr);
+  else if(id==ID_cprover_string_insert_int_func)
+    res=add_axioms_for_insert_int(expr);
+  else if(id==ID_cprover_string_insert_long_func)
+    res=add_axioms_for_insert_long(expr);
+  else if(id==ID_cprover_string_insert_bool_func)
+    res=add_axioms_for_insert_bool(expr);
+  else if(id==ID_cprover_string_insert_float_func)
+    res=add_axioms_for_insert_float(expr);
+  else if(id==ID_cprover_string_insert_double_func)
+    res=add_axioms_for_insert_double(expr);
   else if(id==ID_cprover_string_substring_func)
     res=add_axioms_for_substring(expr);
   else if(id==ID_cprover_string_trim_func)
