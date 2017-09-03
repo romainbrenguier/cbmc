@@ -372,11 +372,11 @@ exprt string_constraint_generatort::add_axioms_for_replace(
 {
   PRECONDITION(f.arguments().size()==5);
   char_array_exprt str=get_string_expr(f.arguments()[2]);
-  const typet &char_type=str.content().type().subtype();
-  const typet &index_type=str.length().type();
+  char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const exprt &old_char=f.arguments()[3];
   const exprt &new_char=f.arguments()[4];
-  char_array_exprt res=fresh_string(index_type, char_type);
+  const typet &index_type=str.length().type();
 
   // We add axioms:
   // a1 : |res| = |str|

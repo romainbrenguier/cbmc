@@ -25,12 +25,13 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 exprt string_constraint_generatort::add_axioms_from_int(
   const function_application_exprt &f)
 {
-  PRECONDITION(f.arguments().size()==3||f.arguments().size()==4);
+  PRECONDITION(f.arguments().size()==3 || f.arguments().size()==4);
   const char_array_exprt res=
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  if(f.arguments().size()==2)
-    return add_axioms_from_int_with_radix(res, f.arguments()[2], f.arguments()[3]);
-  else // f.arguments.size()==1
+  if(f.arguments().size()==4)
+    return
+      add_axioms_from_int_with_radix(res, f.arguments()[2], f.arguments()[3]);
+  else // f.arguments.size()==3
     return add_axioms_from_int(res, f.arguments()[2]);
 }
 
@@ -40,13 +41,13 @@ exprt string_constraint_generatort::add_axioms_from_int(
 exprt string_constraint_generatort::add_axioms_from_long(
   const function_application_exprt &f)
 {
-  PRECONDITION(f.arguments().size()==3||f.arguments().size()==4);
+  PRECONDITION(f.arguments().size()==3 || f.arguments().size()==4);
   const char_array_exprt res=
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   PRECONDITION(f.arguments().size()>=1);
-  if(f.arguments().size()==2)
+  if(f.arguments().size()==4)
     return add_axioms_from_int_with_radix(
-      res, f.arguments()[0], f.arguments()[1]);
+      res, f.arguments()[2], f.arguments()[3]);
   else
     return add_axioms_from_int(res, f.arguments()[0]);
 }
