@@ -182,13 +182,14 @@ bool string_constraint_generatort::is_constant_string(
 exprt string_constraint_generatort::add_axioms_for_contains(
   const function_application_exprt &f)
 {
+  PRECONDITION(f.arguments().size()==2);
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
-  char_array_exprt s0=get_string_expr(args(f, 2)[0]);
-  char_array_exprt s1=get_string_expr(args(f, 2)[1]);
-
-  symbol_exprt contains=fresh_boolean("contains");
-  const refined_string_typet ref_type=to_refined_string_type(s0.type());
-  const typet &index_type=ref_type.get_index_type();
+  const char_array_exprt s0=get_string_expr(f.arguments()[0]);
+  const char_array_exprt s1=get_string_expr(f.arguments()[1]);
+  const typet &index_type=s0.length().type();
+  const symbol_exprt contains=fresh_boolean("contains");
+  const symbol_exprt startpos=
+    fresh_exist_index("startpos_contains", index_type);
 
   // We add axioms:
   // a1 : contains ==> |s0| >= |s1|
@@ -199,10 +200,9 @@ exprt string_constraint_generatort::add_axioms_for_contains(
   //      (forall startpos <= |s0| - |s1|.
   //         exists witness < |s1|. s1[witness] != s0[witness + startpos])
 
-  implies_exprt a1(contains, s0.axiom_for_length_ge(s1));
+  const implies_exprt a1(contains, s0.axiom_for_length_ge(s1));
   axioms.push_back(a1);
 
-  symbol_exprt startpos=fresh_exist_index("startpos_contains", index_type);
   minus_exprt length_diff(s0.length(), s1.length());
   and_exprt bounds(
     axiom_for_is_positive_index(startpos),

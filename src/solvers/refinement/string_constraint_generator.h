@@ -167,6 +167,7 @@ private:
     const exprt &start_index,
     const exprt &end_index);
   exprt add_axioms_for_concat(const function_application_exprt &f);
+  exprt add_axioms_for_concat_code_point(const function_application_exprt &f);
   exprt add_axioms_for_constant(const char_array_exprt &res, irep_idt sval);
   exprt add_axioms_for_delete(
     const char_array_exprt &res,
@@ -282,8 +283,7 @@ private:
   exprt add_axioms_from_double(const function_application_exprt &f);
 
   exprt add_axioms_for_replace(const function_application_exprt &f);
-  char_array_exprt add_axioms_for_set_length(
-    const function_application_exprt &f);
+  exprt add_axioms_for_set_length(const function_application_exprt &f);
 
   // TODO: the specification may not be correct for the case where the
   // string is shorter than end. An actual java program should throw an
@@ -305,8 +305,8 @@ private:
   // TODO: not working correctly at the moment
   char_array_exprt add_axioms_for_value_of(const function_application_exprt &f);
 
-  char_array_exprt add_axioms_for_code_point(
-    const exprt &code_point, const refined_string_typet &ref_type);
+  exprt add_axioms_for_code_point(
+    const char_array_exprt &res, const exprt &code_point);
   char_array_exprt add_axioms_for_java_char_array(const exprt &char_array);
   char_array_exprt add_axioms_for_if(const if_exprt &expr);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);

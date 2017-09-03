@@ -22,16 +22,16 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 ///        is a string `s1` and the second an integer `k` which should have
 ///        same type as the string length
 /// \return a new string expression `res`
-char_array_exprt string_constraint_generatort::add_axioms_for_set_length(
+exprt string_constraint_generatort::add_axioms_for_set_length(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==4);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const char_array_exprt s1=get_string_expr(f.arguments()[2]);
   const exprt &k=f.arguments()[3];
   const typet &index_type=s1.length().type();
   const typet &char_type=s1.content().type().subtype();
-  char_array_exprt res=
-    fresh_string(index_type, s1.content().type().subtype());
 
   // We add axioms:
   // a1 : |res|=k
@@ -56,7 +56,7 @@ char_array_exprt string_constraint_generatort::add_axioms_for_set_length(
     equal_exprt(res[idx2], constant_char(0, char_type)));
   axioms.push_back(a3);
 
-  return res;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// add axioms corresponding to the String.substring java function Warning: the

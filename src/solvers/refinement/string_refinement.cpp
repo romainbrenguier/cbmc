@@ -570,10 +570,16 @@ symbol_solvert symbol_solver_from_equations(
     const exprt &rhs=eq.rhs();
     if(lhs.id()!=ID_symbol)
     {
-      std::cout << "WARNING lhs = " << lhs.pretty() << std::endl;
+      std::cout << "WARNING non symbol lhs: " << lhs.pretty() << std::endl;
       continue;
     }
-    PRECONDITION(lhs.type()==rhs.type());
+    if(lhs.type()!=rhs.type())
+    {
+      std::cout << "WARNING non equal types lhs: " << lhs.pretty() << std::endl
+                << "####################### rhs: " << rhs.pretty() << std::endl;
+      continue;
+    }
+
     if(is_char_pointer_type(rhs.type()))
     {
       solver.add_symbol(lhs, rhs);
@@ -1105,7 +1111,7 @@ exprt fill_in_array_with_expr(const exprt &expr, std::size_t string_max_length)
 
 /// Fill an array represented by an array_expr by propagating values to
 /// the left for unknown values. For instance `{ 24 , * , * , 42, * }` will give
-/// `{ 24, 42, 42, 42, 0 }`
+/// `{ 24, 42, 42, 42, '?' }`
 /// \param expr: an array expression
 /// \param string_max_length: bound on the length of strings
 /// \return an array expression with filled in values
@@ -1120,6 +1126,9 @@ exprt fill_in_array_expr(const array_exprt &expr, std::size_t string_max_length)
   {
     if(i<string_max_length && expr.operands()[i].id()!=ID_unknown)
       initial_map[i]=expr.operands()[i];
+    // Special case for unknown last character
+    if(i==expr.operands().size()-1 && expr.operands()[i].id()==ID_unknown)
+      initial_map[i]=from_integer('?', array_type.subtype());
   }
 
   array_exprt result(array_type);

@@ -103,3 +103,20 @@ exprt string_constraint_generatort::add_axioms_for_concat(
   else // args.size()==4
     return add_axioms_for_concat(out, s1, s2);
 }
+/// Add axioms corresponding to the StringBuilder.appendCodePoint(I) function
+/// \param f: function application with two arguments: a string and a code point
+/// \return an expression
+exprt string_constraint_generatort::add_axioms_for_concat_code_point(
+  const function_application_exprt &f)
+{
+  PRECONDITION(f.arguments().size()==4);
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
+  const char_array_exprt s1=get_string_expr(f.arguments()[2]);
+  const typet &char_type=s1.content().type().subtype();
+  const typet &index_type=s1.length().type();
+  const char_array_exprt code_point=fresh_string(index_type, char_type);
+  const exprt return_code1=
+    add_axioms_for_code_point(code_point, f.arguments()[3]);
+  return add_axioms_for_concat(res, s1, code_point);
+}

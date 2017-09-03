@@ -406,6 +406,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_from_literal(expr);
   else if(id==ID_cprover_string_concat_func)
     res=add_axioms_for_concat(expr);
+  else if(id==ID_cprover_string_concat_code_point_func)
+    res=add_axioms_for_concat_code_point(expr);
   else if(id==ID_cprover_string_insert_func)
     res=add_axioms_for_insert(expr);
   else if(id==ID_cprover_string_insert_char_func)
@@ -481,7 +483,7 @@ exprt string_constraint_generatort::add_axioms_for_copy(
   const function_application_exprt &f)
 {
   const auto &args=f.arguments();
-  PRECONDITION(args.size()==3||args.size()==5);
+  PRECONDITION(args.size()==3 || args.size()==5);
   const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
   const char_array_exprt str=get_string_expr(args[2]);
   const typet index_type=str.length().type();
