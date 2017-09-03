@@ -70,11 +70,11 @@ exprt string_constraint_generatort::add_axioms_for_substring(
   const function_application_exprt &f)
 {
   const function_application_exprt::argumentst &args=f.arguments();
-  PRECONDITION(args.size()==4||args.size()==5);
-  const char_array_exprt str=get_string_expr(args[0]);
+  PRECONDITION(args.size()==4 || args.size()==5);
+  const char_array_exprt str=get_string_expr(args[2]);
   const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
-  const exprt &i=args[2];
-  const exprt j=args.size()==5?args[2]:str.length();
+  const exprt &i=args[3];
+  const exprt j=args.size()==5?args[4]:str.length();
   return add_axioms_for_substring(res, str, i, j);
 }
 
@@ -350,7 +350,8 @@ exprt string_constraint_generatort::add_axioms_for_char_set(
   // a2 : res[pos]=char
   // a3 : forall i<|res|. i != pos => res[i] = str[i]
 
-  const binary_relation_exprt out_of_bounds(f.arguments()[3], ID_ge, str.length());
+  const binary_relation_exprt out_of_bounds(
+    f.arguments()[3], ID_ge, str.length());
   axioms.push_back(equal_exprt(res.length(), str.length()));
   axioms.push_back(equal_exprt(res[position], character));
   const symbol_exprt q=fresh_univ_index("QA_char_set", position.type());
