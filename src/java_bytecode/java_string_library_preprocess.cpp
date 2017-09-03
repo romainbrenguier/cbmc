@@ -818,10 +818,10 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
   exprt rhs_length=get_length(deref, symbol_table);
 
   // Assignments
-#if 0
   code.add(code_assignt(lhs.length(), rhs_length));
-#endif
+#if 0
   code.add(code_assumet(equal_exprt(lhs.length(), rhs_length)));
+#endif
 
 #if 0
   exprt member_data=get_data(deref, symbol_table);

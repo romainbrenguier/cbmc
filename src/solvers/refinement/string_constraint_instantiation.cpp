@@ -38,7 +38,8 @@ std::vector<exprt> instantiate_not_contains(
     for(const auto &i1 : index_set1)
     {
       const minus_exprt val(i0, i1);
-      const exprt witness=generator.get_witness_of(axiom, val);
+      const typecast_exprt witness(
+        generator.get_witness_of(axiom, val), i1.type());
       const and_exprt prem_and_is_witness(
         axiom.premise(),
         equal_exprt(witness, i1));

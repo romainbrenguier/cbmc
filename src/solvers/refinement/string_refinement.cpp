@@ -815,14 +815,6 @@ static std::set<exprt> get_index_set(
   auto pair=index_set.find(array);
   if(pair!=index_set.end())
     return pair->second;
-  else if(array.id()==ID_array)
-  {
-    std::set<exprt> set;
-    // for a constant array index set should contain all values from 0 to size-1
-    for(int i=0; i<array.operands().size(); ++i)
-      set.insert(from_integer(i, to_array_type(array.type()).size().type()));
-    return set;
-  }
   else
     return std::set<exprt>();
 }
@@ -1785,25 +1777,34 @@ void string_refinementt::initial_index_set(const string_constraintt &axiom)
     to_process.pop_back();
     if(cur.id()==ID_index)
     {
-      const exprt &s=cur.op0();
-      const exprt &i=cur.op1();
+      const index_exprt index_expr=to_index_expr(cur);
+      const exprt &s=index_expr.array();
+      const exprt &i=index_expr.index();
 
-      bool has_quant_var=find_qvar(i, qvar);
-
-      // if cur is of the form s[i] and no quantified variable appears in i
-      if(!has_quant_var)
+      if(s.id()==ID_array)
       {
-        add_to_index_set(s, i);
+        for(std::size_t j=0; j<s.operands().size(); ++j)
+          add_to_index_set(s, from_integer(j, i.type()));
       }
       else
       {
-        // otherwise we add k-1
-        exprt e(i);
-        minus_exprt kminus1(
-          axiom.upper_bound(),
-          from_integer(1, axiom.upper_bound().type()));
-        replace_expr(qvar, kminus1, e);
-        add_to_index_set(s, e);
+        bool has_quant_var=find_qvar(i, qvar);
+
+        // if cur is of the form s[i] and no quantified variable appears in i
+        if(!has_quant_var)
+        {
+          add_to_index_set(s, i);
+        }
+        else
+        {
+          // otherwise we add k-1
+          exprt e(i);
+          minus_exprt kminus1(
+                axiom.upper_bound(),
+                from_integer(1, axiom.upper_bound().type()));
+          replace_expr(qvar, kminus1, e);
+          add_to_index_set(s, e);
+        }
       }
     }
     else
@@ -1916,8 +1917,8 @@ exprt string_refinementt::instantiate(
 std::vector<exprt> string_refinementt::instantiate_not_contains(
   const string_not_contains_constraintt &axiom)
 {
-  const string_exprt s0=to_string_expr(axiom.s0());
-  const string_exprt s1=to_string_expr(axiom.s1());
+  const char_array_exprt s0=axiom.s0();
+  const char_array_exprt s1=axiom.s1();
 
   debug() << "instantiate not contains " << from_expr(ns, "", s0) << " : "
           << from_expr(ns, "", s1) << eom;
