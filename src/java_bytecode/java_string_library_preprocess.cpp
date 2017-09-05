@@ -487,8 +487,6 @@ string_exprt java_string_library_preprocesst::replace_char_array(
   // string_expr is `{ rhs->length; string_array }`
   string_exprt string_expr(
     get_length(array, symbol_table), char_array, refined_string_type);
-  // string_expr_sym <- { rhs->length; string_array }
- // add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   return string_expr;
 }
@@ -1158,123 +1156,6 @@ codet java_string_library_preprocesst::make_assign_function_from_call(
   // the first argument
   codet code=make_init_function_from_call(
     function_name, type, loc, symbol_table, false);
-  return code;
-}
-
-exprt code_malloc(
-  const typet &allocate_type,
-  const exprt &size,
-  code_blockt &code,
-  symbol_tablet &symbol_table,
-  const source_locationt &loc)
-{
-  exprt malloc_expr=side_effect_exprt(ID_malloc);
-  malloc_expr.copy_to_operands(size);
-  array_typet result_type(allocate_type, size);
-  malloc_expr.type()=result_type;
-
-  // create a symbol for the malloc expression so we can initialize
-  // without having to do it potentially through a double-deref, which
-  // breaks the to-SSA phase.
-  symbolt &malloc_sym=get_fresh_aux_symbol(
-        result_type,
-        "",
-        "malloc_site",
-        loc,
-        ID_java,
-        symbol_table);
-  exprt malloc_lhs=malloc_sym.symbol_expr();
-  code_assignt assign=code_assignt(malloc_lhs, typecast_exprt(malloc_expr, pointer_typet(allocate_type)));
-  assign.add_source_location()=loc;
-  code.add(assign);
-
-  return malloc_lhs;
-}
-
-/// Used to provide our own implementation of the
-/// `java.lang.String.toCharArray:()[C` function.
-/// \param type: type of the function called
-/// \param loc: location in the source
-/// \param symbol_table: the symbol table
-/// \return Code corresponding to
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// lhs = new java::array[char]
-/// int tmp_new_array_length;
-/// char tmp_new_array_data[this->length];
-/// int return_code_copy;
-/// return_code_copy=cprover_string_copy(
-///   length, tmp_new_array_data, {this->length, this->data});
-/// lhs->data = tmp_new_array_data
-/// lhs->length = length
-/// return lhs
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-codet java_string_library_preprocesst::make_string_to_char_array_code(
-    const code_typet &type,
-    const source_locationt &loc,
-    symbol_tablet &symbol_table)
-{
-  code_blockt code;
-  const exprt::operandst args=process_parameters(
-    type.parameters(), loc, symbol_table, code);
-  PRECONDITION(args.size()==1);
-  const string_exprt &string_expr=to_string_expr(args[0]);
-
-  // cprover_string_array = new java::array[char]
-  const exprt lhs=
-    allocate_fresh_array(type.return_type(), loc, symbol_table, code);
-
-  // char *tmp_new_array_data=malloc(char, this->length);
-  const symbolt array_sym=get_fresh_aux_symbol(
-    pointer_typet(java_char_type()),
-    std::string("tmp_new_array_data"),
-    std::string("tmp_new_array_data"),
-    loc,
-    ID_java,
-    symbol_table);
-  const symbol_exprt array_expr=array_sym.symbol_expr();
-  code.add(code_declt(array_expr));
-  const exprt malloc=code_malloc(
-    java_char_type(), string_expr.length(), code, symbol_table, loc);
-  code.add(code_assignt(array_expr, malloc));
-
-  // int tmp_new_array_length;
-  const symbolt array_length_sym=get_fresh_aux_symbol(
-    java_int_type(),
-    std::string("tmp_new_array_length"),
-    std::string("tmp_new_array_length"),
-    loc,
-    ID_java,
-    symbol_table);
-  const symbol_exprt length_expr=array_length_sym.symbol_expr();
-  code.add(code_declt(length_expr));
-
-  // int return_code_copy
-  symbolt return_code_sym=get_fresh_aux_symbol(
-    java_int_type(),
-    std::string("return_code_copy"),
-    std::string("return_code_copy"),
-    loc,
-    ID_java,
-    symbol_table);
-  exprt return_code=return_code_sym.symbol_expr();
-  code.add(code_declt(return_code));
-
-  // return_code=cprover_copy(length, tmp_array_data, string_expr)
-  dereference_exprt deref(lhs, lhs.type().subtype());
-#if 0
-  code.add(code_assign_function_application(
-    return_code, ID_cprover_string_copy_func,
-    {length_expr, array_expr, string_expr},
-    symbol_table));
-#endif
-  code.add(code_assignt(
-    dereference_exprt(array_expr, java_char_type()),
-    from_integer('x', java_char_type())));
-
-  code.add(code_assignt(member_exprt(deref, "data"), array_expr));
-  code.add(code_assignt(member_exprt(deref, "length"), length_expr));
-  // return lhs
-  code.add(code_returnt(lhs));
   return code;
 }
 
@@ -2062,14 +1943,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.substring:(I)Ljava/lang/String;"]=
       ID_cprover_string_substring_func;
-  conversion_table
-    ["java::java.lang.String.toCharArray:()[C"]=
-      std::bind(
-        &java_string_library_preprocesst::make_string_to_char_array_code,
-        this,
-        std::placeholders::_1,
-        std::placeholders::_2,
-        std::placeholders::_3);
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.toLowerCase:()Ljava/lang/String;"]=
       ID_cprover_string_to_lower_case_func;
@@ -2093,12 +1966,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_string_returning_function
     ["java::java.lang.String.valueOf:(C)Ljava/lang/String;"]=
       ID_cprover_string_of_char_func;
-  cprover_equivalent_to_java_string_returning_function
-    ["java::java.lang.String.valueOf:([C)Ljava/lang/String;"]=
-      ID_cprover_string_copy_func;
-  cprover_equivalent_to_java_string_returning_function
-    ["java::java.lang.String.valueOf:([CII)Ljava/lang/String;"]=
-      ID_cprover_string_copy_func;
   conversion_table
     ["java::java.lang.String.valueOf:(D)Ljava/lang/String;"]=
       std::bind(
@@ -2138,10 +2005,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.append:(C)Ljava/lang/StringBuilder;"]=
       ID_cprover_string_concat_char_func;
-  cprover_equivalent_to_java_assign_and_return_function
-    ["java::java.lang.StringBuilder.append:([C)"
-      "Ljava/lang/StringBuilder;"]=
-      ID_cprover_string_concat_func;
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.append:(D)Ljava/lang/StringBuilder;"]=
       ID_cprover_string_concat_double_func;
@@ -2185,12 +2048,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_assign_and_return_function
       ["java::java.lang.StringBuilder.insert:(IC)Ljava/lang/StringBuilder;"]=
         ID_cprover_string_insert_char_func;
-  cprover_equivalent_to_java_assign_and_return_function
-    ["java::java.lang.StringBuilder.insert:(I[C)Ljava/lang/StringBuilder;"]=
-      ID_cprover_string_insert_func;
-  cprover_equivalent_to_java_assign_and_return_function
-    ["java::java.lang.StringBuilder.insert:(I[CII)Ljava/lang/StringBuilder;"]=
-      ID_cprover_string_insert_func;
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuilder.insert:(IZ)Ljava/lang/StringBuilder;"]=
       ID_cprover_string_insert_bool_func;
@@ -2250,10 +2107,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
     ["java::java.lang.StringBuffer.append:(C)Ljava/lang/StringBuffer;"]=
       ID_cprover_string_concat_char_func;
   cprover_equivalent_to_java_assign_and_return_function
-    ["java::java.lang.StringBuffer.append:([C)"
-      "Ljava/lang/StringBuffer;"]=
-      ID_cprover_string_concat_func;
-  cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuffer.append:(D)Ljava/lang/StringBuffer;"]=
       ID_cprover_string_concat_double_func;
   cprover_equivalent_to_java_assign_and_return_function
@@ -2297,12 +2150,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuffer.insert:(IC)Ljava/lang/StringBuffer;"]=
       ID_cprover_string_insert_char_func;
-  cprover_equivalent_to_java_assign_and_return_function
-    ["java::java.lang.StringBuffer.insert:(I[C)Ljava/lang/StringBuffer;"]=
-      ID_cprover_string_insert_func;
-  cprover_equivalent_to_java_assign_and_return_function
-    ["java::java.lang.StringBuffer.insert:(I[CII)Ljava/lang/StringBuffer;"]=
-      ID_cprover_string_insert_func;
   cprover_equivalent_to_java_assign_and_return_function
     ["java::java.lang.StringBuffer.insert:(II)Ljava/lang/StringBuffer;"]=
       ID_cprover_string_insert_int_func;
