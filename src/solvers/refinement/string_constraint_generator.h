@@ -98,10 +98,18 @@ public:
   // Used by format function
   class format_specifiert;
 
-
-  char_array_exprt char_array_of_string_expr(const string_exprt &expr);
   char_array_exprt char_array_of_pointer(
     const exprt &pointer, const exprt &length);
+
+  void debug_arrays_of_pointers(std::ostream &out)
+  {
+    out << "arrays_of_pointers:" << std::endl;
+    for(auto pair : m_arrays_of_pointers)
+    {
+      out << "  * " << from_expr(ns, "", pair.first) << "\t--> "
+          << from_expr(ns, "", pair.second) << std::endl;
+    }
+  }
 
 private:
   // The integer with the longest string is Integer.MIN_VALUE which is -2^31,

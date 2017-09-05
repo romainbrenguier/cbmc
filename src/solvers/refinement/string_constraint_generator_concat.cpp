@@ -94,10 +94,9 @@ exprt string_constraint_generatort::add_axioms_for_concat(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size()==4 || args.size()==6);
-  char_array_exprt s1=char_array_of_string_expr(to_string_expr(args[2]));
-  char_array_exprt s2=char_array_of_string_expr(to_string_expr(args[3]));
-  char_array_exprt out=char_array_of_string_expr(
-    string_exprt(args[0], args[1], args[2].type()));
+  char_array_exprt s1=get_string_expr(args[2]);
+  char_array_exprt s2=get_string_expr(args[3]);
+  char_array_exprt out=char_array_of_pointer(args[1], args[0]);
   if(args.size()==6)
     return add_axioms_for_concat_substr(out, s1, s2, args[2], args[3]);
   else // args.size()==4

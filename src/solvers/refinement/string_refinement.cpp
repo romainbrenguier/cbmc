@@ -648,6 +648,8 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   substitute_function_applications_in_equations(equations, generator);
   output_equations(debug(), equations, ns);
 
+  generator.debug_arrays_of_pointers(debug());
+
   for(exprt &eq : equations)
   {
     debug() << "dec_solve: set_to " << from_expr(ns, "", eq) << eom;

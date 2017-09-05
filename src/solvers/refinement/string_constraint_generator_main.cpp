@@ -134,6 +134,8 @@ char_array_exprt
 {
   PRECONDITION(char_pointer.type().id()==ID_pointer);
   PRECONDITION(char_array_type.id()==ID_array);
+  PRECONDITION(char_array_type.subtype().id()==ID_unsignedbv ||
+               char_array_type.subtype().id()==ID_signedbv);
   if(char_pointer.id()==ID_address_of
      && (char_pointer.op0().id()==ID_index
          && char_pointer.op0().op0().id()==ID_array))
@@ -166,15 +168,11 @@ char_array_exprt string_constraint_generatort::get_string_expr(
     array_typet(ref_type.get_char_type(), member_exprt(expr, "length"));
 
   if(expr.id()==ID_symbol)
-  {
     return find_or_add_string_of_symbol(to_symbol_expr(expr), ref_type);
-  }
   else
   {
-    char_array_exprt str=char_array_of_string_expr(to_string_expr(expr));
-  /*  str.content()=associate_char_array_to_char_pointer(
-      str.content(), ref_type.get_content_type());*/
-    return str;
+    const string_exprt &str=to_string_expr(expr);
+    return char_array_of_pointer(str.content(), str.length());
   }
 }
 
@@ -203,19 +201,6 @@ void string_constraint_generatort::add_default_axioms(
     string_constraintt sc(qvar, s.length(), printable);
     axioms.push_back(sc);
   }
-}
-
-char_array_exprt string_constraint_generatort::char_array_of_string_expr(
-  const string_exprt &expr)
-{
-  // Force char array type for content
-  refined_string_typet ref_type=to_refined_string_type(expr.type());
-  ref_type.components()[1].type()=
-    array_typet(ref_type.get_char_type(), expr.length());
-  string_exprt str=to_string_expr(expr);
-  char_array_exprt array=associate_char_array_to_char_pointer(
-    str.content(), ref_type.get_content_type());
-  return array;
 }
 
 char_array_exprt string_constraint_generatort::char_array_of_pointer(
@@ -486,7 +471,7 @@ exprt string_constraint_generatort::add_axioms_for_copy(
   PRECONDITION(args.size()==3 || args.size()==5);
   const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
   const char_array_exprt str=get_string_expr(args[2]);
-  const typet index_type=str.length().type();
+  const typet &index_type=str.length().type();
   const exprt offset=args.size()==3?from_integer(0, index_type):args[3];
   const exprt count=args.size()==3?str.length():args[4];
   return add_axioms_for_substring(res, str, offset, plus_exprt(offset, count));
@@ -568,9 +553,7 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
 {
   PRECONDITION(f.arguments().size()==2);
   char_array_exprt str=get_string_expr(f.arguments()[0]);
-  // const refined_string_typet &ref_type=to_refined_string_type(str.type());
   symbol_exprt char_sym=fresh_symbol("char", str.type().subtype());
-  // ref_type.get_char_type());
   axioms.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
 }

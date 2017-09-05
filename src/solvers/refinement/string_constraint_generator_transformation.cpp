@@ -208,8 +208,7 @@ exprt string_constraint_generatort::add_axioms_for_to_lower_case(
   PRECONDITION(f.arguments().size()==3);
   const char_array_exprt res=
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const char_array_exprt str=
-    char_array_of_string_expr(to_string_expr(f.arguments()[2]));
+  const char_array_exprt str=get_string_expr(f.arguments()[2]);
   const refined_string_typet &ref_type=
     to_refined_string_type(f.arguments()[2].type());
   const typet &char_type=ref_type.get_char_type();
@@ -406,8 +405,8 @@ exprt string_constraint_generatort::add_axioms_for_delete_char_at(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==4);
-  const char_array_exprt res=char_array_of_string_expr(string_exprt(
-                            f.arguments()[0], f.arguments()[1]));
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const char_array_exprt str=get_string_expr(f.arguments()[2]);
   exprt index_one=from_integer(1, str.length().type());
   return add_axioms_for_delete(
@@ -454,8 +453,8 @@ exprt string_constraint_generatort::add_axioms_for_delete(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==5);
-  const char_array_exprt res=char_array_of_string_expr(string_exprt(
-       f.arguments()[0], f.arguments()[1]));
+  const char_array_exprt res=
+    char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const char_array_exprt arg=get_string_expr(f.arguments()[2]);
   return add_axioms_for_delete(res, arg, f.arguments()[3], f.arguments()[4]);
 }
