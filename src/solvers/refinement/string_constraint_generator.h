@@ -104,7 +104,7 @@ public:
   void debug_arrays_of_pointers(std::ostream &out)
   {
     out << "arrays_of_pointers:" << std::endl;
-    for(auto pair : m_arrays_of_pointers)
+    for(auto pair : arrays_of_pointers)
     {
       out << "  * " << from_expr(ns, "", pair.first) << "\t--> "
           << from_expr(ns, "", pair.second) << std::endl;
@@ -386,7 +386,7 @@ private:
   unsigned long to_integer_or_default(const exprt &expr, unsigned long def);
 
   // Associate a finite array to each char pointer
-  std::map<exprt, exprt> m_arrays_of_pointers;
+  std::map<exprt, exprt> arrays_of_pointers;
   char_array_exprt associate_char_array_to_char_pointer(
     const exprt &char_pointer, const typet &char_array_type);
 };

@@ -142,14 +142,34 @@ char_array_exprt
   {
     return to_char_array_expr(char_pointer.op0().op0());
   }
-  else
+  else if(char_pointer.id()==ID_if)
+  {
+    const if_exprt &if_expr=to_if_expr(char_pointer);
+    const char_array_exprt t=associate_char_array_to_char_pointer(
+      if_expr.true_case(), char_array_type);
+    const char_array_exprt f=associate_char_array_to_char_pointer(
+      if_expr.false_case(), char_array_type);
+    array_typet array_type(
+      char_array_type.subtype(),
+      if_exprt(if_expr.cond(),
+               to_array_type(t.type()).size(),
+               to_array_type(f.type()).size()));
+    return to_char_array_expr(if_exprt(if_expr.cond(), t, f, array_type));
+  }
+  else if(char_pointer.id()==ID_symbol || char_pointer.id()==ID_member)
   {
     symbol_exprt array_sym=fresh_symbol("char_array", char_array_type);
-    auto insert_result=m_arrays_of_pointers.insert(
+    auto insert_result=arrays_of_pointers.insert(
           std::make_pair(char_pointer, array_sym));
     index_exprt first(array_sym, from_integer(0, unsignedbv_typet(32)));
     // axioms.push_back(equal_exprt(char_pointer, address_of_exprt(first)));
     return to_char_array_expr(insert_result.first->second);
+  }
+  else
+  {
+    // unexpected char pointer expression
+    UNREACHABLE;
+    throw 0;
   }
 }
 

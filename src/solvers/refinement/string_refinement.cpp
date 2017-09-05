@@ -207,14 +207,26 @@ bool is_char_pointer_type(const typet &type)
   return type.id()==ID_pointer && type.subtype()==java_char_type();
 }
 
-static bool has_char_array_subtype(const typet &type, const namespacet &ns)
+static bool has_char_pointer_subtype(const typet &type, const namespacet &ns)
 {
-  if(is_char_array_type(type, ns))
+  if(is_char_pointer_type(type))
     return true;
+
+  if(type.id()==ID_struct || type.id()==ID_union)
+  {
+    struct_union_typet struct_type=to_struct_union_type(type);
+    auto it=struct_type.components().begin();
+    while(it!=struct_type.components().end())
+    {
+      if(has_char_pointer_subtype(it->type(), ns))
+        return true;
+      ++it;
+    }
+  }
   auto it=type.subtypes().begin();
   while(it!=type.subtypes().end())
   {
-    if(has_char_array_subtype(*it, ns))
+    if(has_char_pointer_subtype(*it, ns))
       return true;
     ++it;
   }
@@ -588,7 +600,7 @@ symbol_solvert symbol_solver_from_equations(
     {
       // ignore function application
     }
-    else if(has_char_pointer_subexpr(rhs))
+    else if(has_char_pointer_subtype(lhs.type(), ns))
     {
       if(rhs.type().id()==ID_struct)
       {
@@ -739,18 +751,11 @@ decision_proceduret::resultt string_refinementt::dec_solve()
 
       if(m_current_index_set.empty())
       {
-        debug() << "current index set is empty" << eom;
-        if(do_concretizing)
-        {
-          concretize_results();
-          return resultt::D_SATISFIABLE;
-        }
-        else
-        {
-          debug() << "check_SAT: the model is correct and "
-                  << "does not need concretizing" << eom;
-          return resultt::D_SATISFIABLE;
-        }
+        error() << "dec_solve: current index set is empty, "
+                << "this should not happen" << eom;
+        debug() << "current model:" << eom;
+        debug_model();
+        return resultt::D_ERROR;
       }
 
       display_index_set();
@@ -977,6 +982,11 @@ void string_refinementt::debug_model()
     arr_model=simplify_expr(arr_model, ns);
     debug() << indent << indent << "- simplified_char_array: "
             << from_expr(ns, "", arr_model) << eom;
+    const exprt concretized_array=concretize_arrays_in_expression(
+      arr_model, generator.max_string_length);
+    if(concretized_array.id()==ID_array)
+      debug() << indent << indent << "- as_string: \""
+              << string_of_array(to_array_expr(concretized_array)) << "\"\n";
     debug() << indent << indent << "- type: "
             << from_type(ns, "", arr_model.type()) << eom;
   }

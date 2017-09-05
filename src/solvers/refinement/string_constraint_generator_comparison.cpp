@@ -23,11 +23,13 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   const function_application_exprt &f)
 {
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
+  PRECONDITION(f.arguments().size()==2);
+
+  char_array_exprt s1=get_string_expr(f.arguments()[0]);
+  char_array_exprt s2=get_string_expr(f.arguments()[1]);
   symbol_exprt eq=fresh_boolean("equal");
   typecast_exprt tc_eq(eq, f.type());
 
-  char_array_exprt s1=get_string_expr(args(f, 2)[0]);
-  char_array_exprt s2=get_string_expr(args(f, 2)[1]);
   typet index_type=s1.length().type();
 
   // We want to write:
@@ -35,8 +37,8 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   // We add axioms:
   // a1 : eq => s1.length=s2.length
   // a2 : forall i<s1.length. eq => s1[i]=s2[i]
-  // a3 : !eq => s1.length!=s2.length
-  //       || (witness<s1.length &&s1[witness]!=s2[witness])
+  // a3 : !eq => (s1.length!=s2.length && witness=-1)
+  //       || (0<=witness<s1.length &&s1[witness]!=s2[witness])
 
   implies_exprt a1(eq, equal_exprt(s1.length(), s2.length()));
   axioms.push_back(a1);
@@ -51,6 +53,7 @@ exprt string_constraint_generatort::add_axioms_for_equals(
     binary_relation_exprt(witness, ID_lt, s1.length()),
     binary_relation_exprt(witness, ID_ge, zero));
   and_exprt witnessing(bound_witness, notequal_exprt(s1[witness], s2[witness]));
+
   and_exprt diff_length(
     notequal_exprt(s1.length(), s2.length()),
     equal_exprt(witness, from_integer(-1, index_type)));
