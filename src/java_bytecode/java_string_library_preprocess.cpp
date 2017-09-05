@@ -488,7 +488,7 @@ string_exprt java_string_library_preprocesst::replace_char_array(
   string_exprt string_expr(
     get_length(array, symbol_table), char_array, refined_string_type);
   // string_expr_sym <- { rhs->length; string_array }
-  add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
+ // add_assignment_to_string_expr_symbol(string_expr, loc, symbol_table, code);
 
   return string_expr;
 }
@@ -536,7 +536,30 @@ string_exprt java_string_library_preprocesst::fresh_string_expr(
   symbol_exprt content_field=sym_content.symbol_expr();
   string_exprt str(length_field, content_field, refined_string_type);
   code.add(code_declt(length_field));
+
   code.add(code_declt(content_field));
+
+#if 0
+  // Allocate_fresh_array
+  exprt malloc_expr=side_effect_exprt(ID_malloc);
+  malloc_expr.copy_to_operands(length_field);
+  typet result_type=content_field.type();
+  malloc_expr.type()=result_type;
+  symbolt &malloc_sym=get_fresh_aux_symbol(
+        result_type,
+        "",
+        "malloc_site",
+        loc,
+        ID_java,
+        symbol_table);
+  code_assignt assign=code_assignt(malloc_sym.symbol_expr(), malloc_expr);
+  assign.add_source_location()=loc;
+  code.add(assign);
+  malloc_expr=malloc_sym.symbol_expr();
+  code_assignt code_assign(content_field, malloc_expr);
+  code.add_source_location()=loc;
+  code.add(code_assign);
+#endif
   return str;
 }
 
@@ -1138,6 +1161,36 @@ codet java_string_library_preprocesst::make_assign_function_from_call(
   return code;
 }
 
+exprt code_malloc(
+  const typet &allocate_type,
+  const exprt &size,
+  code_blockt &code,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc)
+{
+  exprt malloc_expr=side_effect_exprt(ID_malloc);
+  malloc_expr.copy_to_operands(size);
+  array_typet result_type(allocate_type, size);
+  malloc_expr.type()=result_type;
+
+  // create a symbol for the malloc expression so we can initialize
+  // without having to do it potentially through a double-deref, which
+  // breaks the to-SSA phase.
+  symbolt &malloc_sym=get_fresh_aux_symbol(
+        result_type,
+        "",
+        "malloc_site",
+        loc,
+        ID_java,
+        symbol_table);
+  exprt malloc_lhs=malloc_sym.symbol_expr();
+  code_assignt assign=code_assignt(malloc_lhs, typecast_exprt(malloc_expr, pointer_typet(allocate_type)));
+  assign.add_source_location()=loc;
+  code.add(assign);
+
+  return malloc_lhs;
+}
+
 /// Used to provide our own implementation of the
 /// `java.lang.String.toCharArray:()[C` function.
 /// \param type: type of the function called
@@ -1146,8 +1199,13 @@ codet java_string_library_preprocesst::make_assign_function_from_call(
 /// \return Code corresponding to
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// lhs = new java::array[char]
-/// lhs->data = this->data
-/// lhs->length = this->length
+/// int tmp_new_array_length;
+/// char tmp_new_array_data[this->length];
+/// int return_code_copy;
+/// return_code_copy=cprover_string_copy(
+///   length, tmp_new_array_data, {this->length, this->data});
+/// lhs->data = tmp_new_array_data
+/// lhs->length = length
 /// return lhs
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 codet java_string_library_preprocesst::make_string_to_char_array_code(
@@ -1156,25 +1214,41 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
     symbol_tablet &symbol_table)
 {
   code_blockt code;
-  PRECONDITION(!type.parameters().empty());
-  const code_typet::parametert &p=type.parameters()[0];
-  symbol_exprt string_argument(p.get_identifier(), p.type());
-  PRECONDITION(implements_java_char_sequence(string_argument.type()));
-  // lhs = new java::array[char]
-  exprt lhs=allocate_fresh_array(type.return_type(), loc, symbol_table, code);
+  const exprt::operandst args=process_parameters(
+    type.parameters(), loc, symbol_table, code);
+  PRECONDITION(args.size()==1);
+  const string_exprt &string_expr=to_string_expr(args[0]);
 
-  string_exprt string_expr=fresh_string_expr(loc, symbol_table, code);
-  code_assign_java_string_to_string_expr(
-    string_expr, string_argument, loc, symbol_table, code);
+  // cprover_string_array = new java::array[char]
+  const exprt lhs=
+    allocate_fresh_array(type.return_type(), loc, symbol_table, code);
 
-  // data = new char[]
-  string_exprt string_expr2=fresh_string_expr(loc, symbol_table, code);
-#if 0
-  exprt data=allocate_fresh_array(
-    java_reference_type(string_expr.content().type()), loc, symbol_table, code);
-#endif
+  // char *tmp_new_array_data=malloc(char, this->length);
+  const symbolt array_sym=get_fresh_aux_symbol(
+    pointer_typet(java_char_type()),
+    std::string("tmp_new_array_data"),
+    std::string("tmp_new_array_data"),
+    loc,
+    ID_java,
+    symbol_table);
+  const symbol_exprt array_expr=array_sym.symbol_expr();
+  code.add(code_declt(array_expr));
+  const exprt malloc=code_malloc(
+    java_char_type(), string_expr.length(), code, symbol_table, loc);
+  code.add(code_assignt(array_expr, malloc));
 
-  // return_code=cprover_copy(length, data, string_expr)
+  // int tmp_new_array_length;
+  const symbolt array_length_sym=get_fresh_aux_symbol(
+    java_int_type(),
+    std::string("tmp_new_array_length"),
+    std::string("tmp_new_array_length"),
+    loc,
+    ID_java,
+    symbol_table);
+  const symbol_exprt length_expr=array_length_sym.symbol_expr();
+  code.add(code_declt(length_expr));
+
+  // int return_code_copy
   symbolt return_code_sym=get_fresh_aux_symbol(
     java_int_type(),
     std::string("return_code_copy"),
@@ -1185,14 +1259,20 @@ codet java_string_library_preprocesst::make_string_to_char_array_code(
   exprt return_code=return_code_sym.symbol_expr();
   code.add(code_declt(return_code));
 
+  // return_code=cprover_copy(length, tmp_array_data, string_expr)
   dereference_exprt deref(lhs, lhs.type().subtype());
+#if 0
   code.add(code_assign_function_application(
     return_code, ID_cprover_string_copy_func,
-  {string_expr2.length(), string_expr2.content(), string_expr},
+    {length_expr, array_expr, string_expr},
     symbol_table));
+#endif
+  code.add(code_assignt(
+    dereference_exprt(array_expr, java_char_type()),
+    from_integer('x', java_char_type())));
 
-  code.add(code_assignt(member_exprt(deref, "data"), string_expr2.content()));
-  code.add(code_assignt(member_exprt(deref, "length"), string_expr2.length()));
+  code.add(code_assignt(member_exprt(deref, "data"), array_expr));
+  code.add(code_assignt(member_exprt(deref, "length"), length_expr));
   // return lhs
   code.add(code_returnt(lhs));
   return code;
