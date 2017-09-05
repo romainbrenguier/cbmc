@@ -64,6 +64,32 @@ exprt string_constraint_generatort::add_axioms_for_concat_substr(
   return from_integer(0, res.length().type());
 }
 
+exprt string_constraint_generatort::add_axioms_for_concat_char(
+  const char_array_exprt &res,
+  const char_array_exprt &s1,
+  const exprt &c)
+{
+  // We add axioms:
+  // a1 : |res|=|s1|+1
+  // a2 : forall i<|s1|. res[i]=s1[i]
+  // a3 : res[|s1|]=c
+
+  const typet &index_type=res.length().type();
+  const equal_exprt a1(
+    res.length(), plus_exprt(s1.length(), from_integer(1, index_type)));
+  axioms.push_back(a1);
+
+  symbol_exprt idx=fresh_univ_index("QA_index_concat_char", index_type);
+  string_constraintt a2(idx, s1.length(), equal_exprt(s1[idx], res[idx]));
+  axioms.push_back(a2);
+
+  equal_exprt a3(res[s1.length()], c);
+  axioms.push_back(a3);
+
+  // We should have a enum type for the possible error codes
+  return from_integer(0, res.length().type());
+}
+
 /// Add axioms to say that `s0` is equal to the concatenation of `s1` and `s2`.
 /// \param s0: string_expression corresponding to the result
 /// \param s1: the string expression to append to
@@ -94,14 +120,26 @@ exprt string_constraint_generatort::add_axioms_for_concat(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size()==4 || args.size()==6);
-  char_array_exprt s1=get_string_expr(args[2]);
-  char_array_exprt s2=get_string_expr(args[3]);
-  char_array_exprt out=char_array_of_pointer(args[1], args[0]);
+  const char_array_exprt s1=get_string_expr(args[2]);
+  const char_array_exprt s2=get_string_expr(args[3]);
+  const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
   if(args.size()==6)
-    return add_axioms_for_concat_substr(out, s1, s2, args[2], args[3]);
+    return add_axioms_for_concat_substr(res, s1, s2, args[2], args[3]);
   else // args.size()==4
-    return add_axioms_for_concat(out, s1, s2);
+    return add_axioms_for_concat(res, s1, s2);
 }
+
+exprt string_constraint_generatort::add_axioms_for_concat_char(
+  const function_application_exprt &f)
+{
+  const function_application_exprt::argumentst &args=f.arguments();
+  PRECONDITION(args.size()==4);
+  const char_array_exprt s1=get_string_expr(args[2]);
+  const exprt &c=args[3];
+  const char_array_exprt res=char_array_of_pointer(args[1], args[0]);
+  return add_axioms_for_concat_char(res, s1, c);
+}
+
 /// Add axioms corresponding to the StringBuilder.appendCodePoint(I) function
 /// \param f: function application with two arguments: a string and a code point
 /// \return an expression

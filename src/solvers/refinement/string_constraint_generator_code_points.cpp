@@ -20,7 +20,6 @@ exprt string_constraint_generatort::add_axioms_for_code_point(
   const char_array_exprt &res, const exprt &code_point)
 {
   const typet &char_type=res.content().type().subtype();
-  const typet &index_type=res.length().type();
   const typet &type=code_point.type();
   PRECONDITION(type.id()==ID_signedbv);
 

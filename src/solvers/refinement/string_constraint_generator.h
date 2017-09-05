@@ -168,6 +168,11 @@ private:
     const char_array_exprt &res,
     const char_array_exprt &s1,
     const char_array_exprt &s2);
+  exprt add_axioms_for_concat_char(
+    const char_array_exprt &res,
+    const char_array_exprt &s1,
+    const exprt &c);
+  exprt add_axioms_for_concat_char(const function_application_exprt &f);
   exprt add_axioms_for_concat_substr(
     const char_array_exprt &res,
     const char_array_exprt &s1,

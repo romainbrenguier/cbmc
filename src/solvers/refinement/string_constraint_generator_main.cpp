@@ -391,6 +391,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_from_literal(expr);
   else if(id==ID_cprover_string_concat_func)
     res=add_axioms_for_concat(expr);
+  else if(id==ID_cprover_string_concat_char_func)
+    res=add_axioms_for_concat_char(expr);
   else if(id==ID_cprover_string_concat_code_point_func)
     res=add_axioms_for_concat_code_point(expr);
   else if(id==ID_cprover_string_insert_func)
@@ -564,6 +566,7 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
 exprt string_constraint_generatort::add_axioms_for_to_char_array(
   const function_application_exprt &f)
 {
+  UNREACHABLE;
   char_array_exprt str=get_string_expr(args(f, 1)[0]);
   return str.content();
 }
