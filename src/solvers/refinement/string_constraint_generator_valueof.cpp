@@ -43,12 +43,11 @@ exprt string_constraint_generatort::add_axioms_from_long(
   PRECONDITION(f.arguments().size()==3 || f.arguments().size()==4);
   const char_array_exprt res=
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  PRECONDITION(f.arguments().size()>=1);
   if(f.arguments().size()==4)
     return add_axioms_from_int_with_radix(
       res, f.arguments()[2], f.arguments()[3]);
   else
-    return add_axioms_from_int(res, f.arguments()[0]);
+    return add_axioms_from_int(res, f.arguments()[2]);
 }
 
 /// Add axioms corresponding to the String.valueOf(Z) java function.
