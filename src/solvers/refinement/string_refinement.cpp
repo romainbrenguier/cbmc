@@ -2076,32 +2076,30 @@ static array_index_mapt gather_indices(const exprt &expr)
   return v.indices;
 }
 
+/// \param expr: an expression
+/// \param var: a symbol
+/// \return Boolean telling whether `expr` is a linear function of `var`.
+/// TODO: add unit test
 /// \related string_constraintt
-class is_linear_arithmetic_expr_visitort: public const_expr_visitort
+static bool is_linear_arithmetic_expr(
+  const exprt &expr, const symbol_exprt &var)
 {
-public:
-  bool correct;
-
-  is_linear_arithmetic_expr_visitort(): correct(true) {}
-
-  void operator()(const exprt &expr) override
+  for(auto it=expr.depth_begin(); it!=expr.depth_end();)
   {
-    if(expr.id()!=ID_plus && expr.id()!=ID_minus && expr.id()!=ID_unary_minus)
+    if(it->id()!=ID_plus &&
+       it->id()!=ID_minus &&
+       it->id()!=ID_unary_minus &&
+       *it!=var)
     {
-      // This represents that the expr is a valid leaf, may not be future proof
-      // or 100% enforced, but is correct prescriptively. All non-sum exprs must
-      // be leaves.
-      correct&=expr.operands().empty();
+      if(find_qvar(*it, var))
+        return false;
+      else
+        it.next_sibling_or_parent();
     }
+    else
+      ++it;
   }
-};
-
-/// \related string_constraintt
-static bool is_linear_arithmetic_expr(const exprt &expr)
-{
-  is_linear_arithmetic_expr_visitort v;
-  expr.visit(v);
-  return v.correct;
+  return true;
 }
 
 /// The universally quantified variable is only allowed to occur in index
@@ -2186,11 +2184,12 @@ bool string_refinementt::is_valid_string_constraint(
       }
     }
 
-    // Condition 3: f must be linear
-    if(!is_linear_arithmetic_expr(rep))
+    // Condition 3: f must be linear in the quantified variable
+    if(!is_linear_arithmetic_expr(rep, expr.univ_var()))
     {
-      error() << "f is not linear: " << from_expr(ns, "", expr) << ", str: "
-              << from_expr(ns, "", pair.first) << eom;
+      error() << "f is not linear:\n  - f: " << from_expr(ns, "", expr)
+              << "\n  - str: " << from_expr(ns, "", pair.first)
+              << "\n  - index: " << from_expr(ns, "", rep) << eom;
       return false;
     }
 
