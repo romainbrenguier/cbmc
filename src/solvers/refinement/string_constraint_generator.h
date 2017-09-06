@@ -120,8 +120,9 @@ private:
   const std::size_t MAX_LONG_LENGTH=20;
   const std::size_t MAX_FLOAT_LENGTH=15;
   const std::size_t MAX_DOUBLE_LENGTH=30;
-
+#if 0
   std::map<function_application_exprt, exprt> function_application_cache;
+#endif
   namespacet ns;
 
   static irep_idt extract_java_string(const symbol_exprt &s);
@@ -353,7 +354,6 @@ private:
     const std::size_t max_size,
     const bool strict_formatting);
   exprt add_axioms_for_parse_int(const function_application_exprt &f);
-  exprt add_axioms_for_to_char_array(const function_application_exprt &f);
   exprt add_axioms_for_compare_to(const function_application_exprt &f);
 
   // Add axioms corresponding to the String.intern java function
@@ -367,6 +367,7 @@ private:
   // Tells which language is used. C and Java are supported
   irep_idt mode;
 
+#if 0
   // assert that the number of argument is equal to nb and extract them
   static const function_application_exprt::argumentst &args(
     const function_application_exprt &expr, size_t nb)
@@ -375,6 +376,7 @@ private:
     PRECONDITION(args.size()==nb);
     return args;
   }
+#endif
 
   // Helper functions
   exprt int_of_hex_char(const exprt &chr) const;

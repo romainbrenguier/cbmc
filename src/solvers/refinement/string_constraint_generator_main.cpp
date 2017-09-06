@@ -199,10 +199,11 @@ char_array_exprt string_constraint_generatort::get_string_expr(
   refined_string_typet ref_type=to_refined_string_type(expr.type());
   ref_type.components()[1].type()=
     array_typet(ref_type.get_char_type(), member_exprt(expr, "length"));
-
-  if(expr.id()==ID_symbol)
+#if 0
+  if(false && expr.id()==ID_symbol)
     return find_or_add_string_of_symbol(to_symbol_expr(expr), ref_type);
   else
+#endif
   {
     const string_exprt &str=to_string_expr(expr);
     return char_array_of_pointer(str.content(), str.length());
@@ -408,8 +409,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_last_index_of(expr);
   else if(id==ID_cprover_string_parse_int_func)
     res=add_axioms_for_parse_int(expr);
-  else if(id==ID_cprover_string_to_char_array_func)
-    res=add_axioms_for_to_char_array(expr);
   else if(id==ID_cprover_string_code_point_at_func)
     res=add_axioms_for_code_point_at(expr);
   else if(id==ID_cprover_string_code_point_before_func)
@@ -519,6 +518,7 @@ exprt string_constraint_generatort::add_axioms_for_copy(
 char_array_exprt string_constraint_generatort::add_axioms_for_java_char_array(
   const exprt &char_array)
 {
+  UNREACHABLE;
   char_array_exprt res=fresh_string(java_int_type(), java_char_type());
   exprt arr=to_address_of_expr(char_array).object();
   exprt len=member_exprt(arr, "length", res.length().type());
@@ -534,7 +534,8 @@ char_array_exprt string_constraint_generatort::add_axioms_for_java_char_array(
 exprt string_constraint_generatort::add_axioms_for_length(
   const function_application_exprt &f)
 {
-  char_array_exprt str=get_string_expr(args(f, 1)[0]);
+  PRECONDITION(f.arguments().size()==1);
+  const char_array_exprt str=get_string_expr(f.arguments()[0]);
   return str.length();
 }
 
@@ -543,8 +544,7 @@ exprt string_constraint_generatort::add_axioms_for_length(
 /// \return a Boolean expression
 exprt string_constraint_generatort::axiom_for_is_positive_index(const exprt &x)
 {
-  return binary_relation_exprt(
-    x, ID_ge, from_integer(0, x.type()));
+  return binary_relation_exprt(x, ID_ge, from_integer(0, x.type()));
 }
 
 /// add axioms stating that the returned value is equal to the argument
@@ -591,15 +591,4 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
   symbol_exprt char_sym=fresh_symbol("char", str.type().subtype());
   axioms.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
-}
-
-/// add axioms corresponding to the String.toCharArray java function
-/// \par parameters: function application with one string argument
-/// \return a char array expression
-exprt string_constraint_generatort::add_axioms_for_to_char_array(
-  const function_application_exprt &f)
-{
-  UNREACHABLE;
-  char_array_exprt str=get_string_expr(args(f, 1)[0]);
-  return str.content();
 }
