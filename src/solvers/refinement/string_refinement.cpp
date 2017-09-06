@@ -1265,9 +1265,9 @@ static exprt negation_of_not_contains_constraint(
   const string_not_contains_constraintt &axiom,
   const symbol_exprt &univ_var)
 {
-  // If the for all is vacuously true, the negation is false.
-  exprt lbu=axiom.univ_lower_bound();
-  exprt ubu=axiom.univ_upper_bound();
+  // If the forall is vacuously true, the negation is false.
+  const exprt &lbu=axiom.univ_lower_bound();
+  const exprt &ubu=axiom.univ_upper_bound();
   if(lbu.id()==ID_constant && ubu.id()==ID_constant)
   {
     mp_integer lb_int, ub_int;
@@ -1277,8 +1277,9 @@ static exprt negation_of_not_contains_constraint(
       return false_exprt();
   }
 
-  exprt lbe=axiom.exists_lower_bound();
-  exprt ube=axiom.exists_upper_bound();
+  const exprt &lbe=axiom.exists_lower_bound();
+  const exprt ube=axiom.exists_upper_bound();
+  PRECONDITION(lbe.id()==ID_constant && ube.id()==ID_constant);
 
   mp_integer lbe_int, ube_int;
   to_integer(to_constant_expr(lbe), lbe_int);
@@ -1464,7 +1465,8 @@ bool string_refinementt::check_axioms()
       to_char_array_expr(get(s1)));
 
     exprt negaxiom=negation_of_not_contains_constraint(
-      nc_axiom_in_model, univ_var);
+      to_string_not_contains_constraint(simplify_expr(nc_axiom_in_model, ns)),
+      univ_var);
     debug() << "(string_refinementt::check_axioms) Adding negated constraint: "
             << from_expr(ns, "", negaxiom) << eom;
     substitute_array_access(negaxiom);
