@@ -103,7 +103,7 @@ exprt string_constraint_generatort::add_axioms_from_bool(
     axioms.push_back(a4);
   }
 
-  return res;
+  return from_integer(0, signedbv_typet(32));
 }
 
 /// Add axioms enforcing that the string corresponds to the result
