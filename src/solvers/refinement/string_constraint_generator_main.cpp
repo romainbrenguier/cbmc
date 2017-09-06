@@ -128,6 +128,7 @@ char_array_exprt string_constraint_generatort::fresh_string(
 
 // Associate a char array to a char pointer. The size of the char array is a
 // variable with no constraint.
+#include<iostream>
 char_array_exprt
   string_constraint_generatort::associate_char_array_to_char_pointer(
     const exprt &char_pointer, const typet &char_array_type)
@@ -165,11 +166,23 @@ char_array_exprt
     // axioms.push_back(equal_exprt(char_pointer, address_of_exprt(first)));
     return to_char_array_expr(insert_result.first->second);
   }
+  else if(char_pointer.id()==ID_constant &&
+          to_constant_expr(char_pointer).get_value()==ID_NULL)
+  {
+    symbol_exprt array_sym=fresh_symbol("null_char_array", char_array_type);
+    auto insert_result=arrays_of_pointers.insert(
+          std::make_pair(char_pointer, array_sym));
+    return to_char_array_expr(insert_result.first->second);
+  }
   else
   {
+    std::cout << "WARNING: unexpected char pointer expression : "
+              << char_pointer.pretty() << std::endl;
     // unexpected char pointer expression
-    UNREACHABLE;
-    throw 0;
+    symbol_exprt array_sym=fresh_symbol("unknown_char_array", char_array_type);
+    auto insert_result=arrays_of_pointers.insert(
+          std::make_pair(char_pointer, array_sym));
+    return to_char_array_expr(insert_result.first->second);
   }
 }
 
