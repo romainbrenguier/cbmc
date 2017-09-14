@@ -154,6 +154,12 @@ public:
     copy_to_operands(lhs, rhs);
   }
 
+  code_assignt(const exprt &lhs, const exprt &rhs, const source_locationt loc):
+    code_assignt(lhs, rhs)
+  {
+    add_source_location()=loc;
+  }
+
   exprt &lhs()
   {
     return op0();
