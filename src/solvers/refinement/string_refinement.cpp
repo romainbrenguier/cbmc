@@ -571,33 +571,34 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   }
 
   const auto get = [this](const exprt &expr) { return this->get(expr); };
-  for(exprt axiom : generator.get_axioms())
+
+  for(string_constraintt constraint : generator.get_constraints())
+  {
+    symbol_resolve.replace_expr(constraint);
+    DATA_INVARIANT(
+      is_valid_string_constraint(error(), ns, constraint),
+      string_refinement_invariantt(
+        "string constraints satisfy their invariant"));
+    axioms.universal.push_back(constraint);
+  }
+
+  for(exprt axiom : generator.get_not_contains_constraints())
   {
     symbol_resolve.replace_expr(axiom);
-    if(axiom.id()==ID_string_constraint)
-    {
-      string_constraintt univ_axiom = to_string_constraint(axiom);
-      DATA_INVARIANT(
-        is_valid_string_constraint(error(), ns, univ_axiom),
-        string_refinement_invariantt(
-          "string constraints satisfy their invariant"));
-      axioms.universal.push_back(univ_axiom);
-    }
-    else if(axiom.id()==ID_string_not_contains_constraint)
-    {
-      string_not_contains_constraintt nc_axiom=
-        to_string_not_contains_constraint(axiom);
-      array_typet rtype = to_array_type(nc_axiom.s0().type());
-      const typet &index_type = rtype.size().type();
-      array_typet witness_type(index_type, infinity_exprt(index_type));
-      generator.witness[nc_axiom]=
-        generator.fresh_symbol("not_contains_witness", witness_type);
-      axioms.not_contains.push_back(nc_axiom);
-    }
-    else
-    {
-      add_lemma(axiom);
-    }
+    string_not_contains_constraintt nc_axiom =
+      to_string_not_contains_constraint(axiom);
+    array_typet rtype = to_array_type(nc_axiom.s0().type());
+    const typet &index_type = rtype.size().type();
+    array_typet witness_type(index_type, infinity_exprt(index_type));
+    generator.witness[nc_axiom] =
+      generator.fresh_symbol("not_contains_witness", witness_type);
+    axioms.not_contains.push_back(nc_axiom);
+  }
+
+  for(exprt lemma : generator.get_lemmas())
+  {
+    symbol_resolve.replace_expr(lemma);
+    add_lemma(lemma);
   }
 
   // Initial try without index set
