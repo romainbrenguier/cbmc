@@ -501,7 +501,7 @@ refined_string_exprt java_string_library_preprocesst::decl_string_expr(
 /// \param symbol_table: symbol table
 /// \param code: code block to which allocation instruction will be added
 /// \return a new string_expr
-refined_string_exprt java_string_library_preprocesst::nondet_string_expr(
+refined_string_exprt java_string_library_preprocesst::make_nondet_string_expr(
   const source_locationt &loc, symbol_tablet &symbol_table, code_blockt &code)
 {
   const refined_string_exprt str=decl_string_expr(loc, symbol_table, code);
@@ -675,7 +675,7 @@ refined_string_exprt java_string_library_preprocesst::string_expr_of_function(
   exprt return_code=return_code_sym.symbol_expr();
   code.add(code_declt(return_code));
 
-  refined_string_exprt string_expr=nondet_string_expr(loc, symbol_table, code);
+  refined_string_exprt string_expr=make_nondet_string_expr(loc, symbol_table, code);
 
   // args is { str.length, str.content, arguments... }
   exprt::operandst args;
@@ -1262,7 +1262,7 @@ exprt java_string_library_preprocesst::make_argument_for_format(
       code.add(code_declt(field_expr));
     }
     else
-      field_expr=nondet_string_expr(loc, symbol_table, code);
+      field_expr=make_nondet_string_expr(loc, symbol_table, code);
 
     field_exprs.push_back(field_expr);
     arg_i_struct.copy_to_operands(field_expr);

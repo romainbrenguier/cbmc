@@ -214,7 +214,7 @@ array_string_exprt
     symbol_name="unknown_char_array";
   }
 
-  symbol_exprt array_sym=fresh_symbol(symbol_name, char_array_type);
+  array_string_exprt array_sym=to_array_string_expr(fresh_symbol(symbol_name, char_array_type));
   auto insert_result=arrays_of_pointers_.insert(
         std::make_pair(char_pointer, array_sym));
   return to_array_string_expr(insert_result.first->second);
@@ -272,7 +272,7 @@ array_string_exprt string_constraint_generatort::char_array_of_pointer(
 
 /// This can throw an exception if the pointer has not been associated to
 /// an array yet.
-symbol_exprt string_constraint_generatort::get_char_array_for_pointer(
+array_string_exprt string_constraint_generatort::get_char_array_for_pointer(
   const exprt &pointer) const
 {
   return arrays_of_pointers_.at(pointer);
@@ -518,20 +518,39 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_format(expr);
   else if(id=="cprover_associate_pointer_to_array")
   {
-    const exprt &array_expr=expr.arguments()[0];
+    array_string_exprt array_expr=to_array_string_expr(expr.arguments()[0]);
     const exprt &pointer_expr=expr.arguments()[1];
+
+    const auto &length=array_expr.length();
+    if(length==infinity_exprt(length.type()))
+    {
+      std::cout << "adding length variable for array "
+                << to_symbol_expr(array_expr).get_identifier()
+                << std::endl;
+      auto ret=length_of_array_.insert(
+        std::make_pair(array_expr, fresh_symbol("string_length", length.type())));
+      array_expr.length()=length_of_array_[array_expr];
+    }
 
     // TODO should use a function for that
     auto ret=arrays_of_pointers_.insert(
-            std::make_pair(pointer_expr, to_symbol_expr(array_expr)));
+            std::make_pair(pointer_expr, array_expr));
     if(ret.second==false)
       std::cout << "string_constraint_generatort: "
                 << "cprover_associate_pointer_to_array: array "
                 << to_symbol_expr(array_expr).get_identifier() << " already "
                 << "in arrays_of_pointers map" << std::endl;
-    const auto &length=to_array_string_expr(array_expr).length();
     // TODO should go inside function
     add_default_axioms(to_array_string_expr(array_expr));
+    res=from_integer(0, expr.type());
+  }
+  else if(id=="cprover_associate_length_to_array")
+  {
+    array_string_exprt array_expr=to_array_string_expr(expr.arguments()[0]);
+    const exprt &new_length=expr.arguments()[1];
+
+    const auto &length=get_length_of_string_array(array_expr);
+    m_axioms.push_back(equal_exprt(length, new_length));
     res=from_integer(0, expr.type());
   }
   else

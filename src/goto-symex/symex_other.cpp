@@ -21,6 +21,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <util/c_types.h>
 
+#include<iostream>
 void goto_symext::symex_other(
   const goto_functionst &goto_functions,
   statet &state)
@@ -188,6 +189,7 @@ void goto_symext::symex_other(
 
     const typet &op0_type=ns.follow(clean_code.op0().type());
 
+    std::cout << "op0_type: " << op0_type.pretty() << std::endl;
     if(op0_type.id()!=ID_array)
       throw "array_set expects array operand";
 

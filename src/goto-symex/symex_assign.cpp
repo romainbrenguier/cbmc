@@ -61,7 +61,7 @@ void goto_symext::symex_assign(
     }
     else if(statement==ID_cpp_new ||
             statement==ID_cpp_new_array ||
-            statement==ID_java_new_array)
+            statement==ID_java_new_array_data)
       symex_cpp_new(state, lhs, side_effect_expr);
     else if(statement==ID_malloc)
       symex_malloc(state, lhs, side_effect_expr);

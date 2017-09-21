@@ -553,29 +553,56 @@ codet gen_nondet_string_init(
   code.add(code_assumet(binary_relation_exprt(
     length_expr, ID_ge, from_integer(0, java_int_type()))));
 
-  // data_expr = nondet(char*)
+
+#if 0
+  // data_expr = nondet(char[length_expr])
   const array_typet array_type(java_char_type(), length_expr);
   const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type);
   const symbol_exprt data_expr=data_sym.symbol_expr();
-  side_effect_expr_nondett nondet_data(data_expr.type());
+  // side_effect_expr_nondett nondet_data(data_expr.type());
+#elif 0
+  // data_expr = new_java_array(char*)
+  const array_typet array_type1(java_char_type(), length_expr);
+  const pointer_typet pointer_type(java_char_type());
+  const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type1); // pointer_type);
+  const symbol_exprt data_expr=data_sym.symbol_expr();
+
+  side_effect_exprt nondet_data(ID_java_new_array_data, data_expr.type().subtype());
+  nondet_data.operands().push_back(length_expr);
+  nondet_data.set(ID_size, length_expr);
+#else
+  // data_expr = nondet(char[INFINITY]) // we use infinity for variable size
+  const array_typet array_type(
+    java_char_type(), infinity_exprt(java_int_type()));
+  const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type);
+  const symbol_exprt data_expr=data_sym.symbol_expr();
+#endif
+
+  // side_effect_expr_nondett nondet_data(array_type1);
   code.add(code_declt(data_expr));
+  side_effect_expr_nondett nondet_data(data_expr.type());
   code.add(code_assignt(data_expr, nondet_data));
 
   // the literal with @clsid = String and @lock = false:
   const symbol_typet jlo_symbol("java::java.lang.Object");
   const struct_typet jlo_type=to_struct_type(ns.follow(jlo_symbol));
   struct_exprt jlo_init(jlo_symbol);
-
-  struct_exprt struct_expr(tmp_object.type());
   const constant_exprt class_id_expr(class_id, jlo_type.components()[0].type());
   jlo_init.copy_to_operands(class_id_expr);
-  jlo_init.copy_to_operands(from_integer(false, jlo_type.components()[1].type()));
+  jlo_init.copy_to_operands(
+    from_integer(false, jlo_type.components()[1].type()));
+
+  struct_exprt struct_expr(tmp_object.type());
   struct_expr.copy_to_operands(jlo_init);
   struct_expr.copy_to_operands(length_expr);
+
   const address_of_exprt first_index(index_exprt(
        data_expr, from_integer(0, java_int_type())));
+#if 0
+  struct_expr.copy_to_operands(data_expr);
+#else
   struct_expr.copy_to_operands(first_index);
-
+#endif
   symbolt &return_sym=get_fresh_aux_symbol(
         java_int_type(),
         "return_array",
@@ -589,6 +616,21 @@ codet gen_nondet_string_init(
     return_expr,
     "cprover_associate_pointer_to_array",
     {data_expr, first_index},
+    symbol_table));
+
+  symbolt &return_sym2=get_fresh_aux_symbol(
+        java_int_type(),
+        "return_array",
+        "return_array",
+        loc,
+        ID_java,
+        symbol_table);
+  const exprt return_expr2=return_sym.symbol_expr();
+  code.add(code_declt(return_expr2));
+  code.add(code_assign_function_application(
+    return_expr2,
+    "cprover_associate_length_to_array",
+    {data_expr, length_expr},
     symbol_table));
 
   // tmp_object = struct_expr;

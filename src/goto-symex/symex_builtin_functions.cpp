@@ -377,7 +377,7 @@ void goto_symext::symex_cpp_new(
     throw "new expected to return pointer";
 
   do_array=(code.get(ID_statement)==ID_cpp_new_array ||
-            code.get(ID_statement)==ID_java_new_array);
+            code.get(ID_statement)==ID_java_new_array_data);
 
   dynamic_counter++;
 
@@ -393,7 +393,7 @@ void goto_symext::symex_cpp_new(
   if(code.get(ID_statement)==ID_cpp_new_array ||
      code.get(ID_statement)==ID_cpp_new)
     symbol.mode=ID_cpp;
-  else if(code.get(ID_statement)==ID_java_new_array)
+  else if(code.get(ID_statement)==ID_java_new_array_data)
     symbol.mode=ID_java;
   else
     INVARIANT_WITH_IREP(false, "Unexpected side effect expression", code);

@@ -26,7 +26,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/refined_string_type.h>
 #include <util/constexpr.def>
 #include <solvers/refinement/string_constraint.h>
-
+#include <iostream>
 class string_constraint_generatort final
 {
 public:
@@ -62,7 +62,7 @@ public:
   /// Set of strings that have been created by the generator
   const std::set<array_string_exprt> &get_created_strings() const;
 
-  symbol_exprt get_char_array_for_pointer(const exprt &pointer) const;
+  array_string_exprt get_char_array_for_pointer(const exprt &pointer) const;
 
   exprt get_witness_of(
     const string_not_contains_constraintt &c,
@@ -93,8 +93,21 @@ public:
       out << "  * "
          // << pair.first.pretty() << "\t--> "
           << from_expr(m_ns, "", pair.first) << "\t--> "
-          << from_expr(m_ns, "", pair.second) << std::endl;
+          << from_expr(m_ns, "", pair.second) << " : "
+          << from_type(m_ns, "", pair.second.type()) << std::endl;
     }
+  }
+
+  /// Associate an actual finite length to infinite arrays
+  exprt get_length_of_string_array(const array_string_exprt &s) const
+  {
+    if(s.length()==infinity_exprt(s.length().type()))
+    {
+      auto it=length_of_array_.find(s);
+      if(it!=length_of_array_.end())
+        return it->second;
+    }
+    return s.length();
   }
 
 private:
@@ -390,7 +403,10 @@ private:
   std::map<array_string_exprt, symbol_exprt> m_intern_of_string;
 
   // associate arrays to char pointers
-  std::map<exprt, symbol_exprt> arrays_of_pointers_;
+  std::map<exprt, array_string_exprt> arrays_of_pointers_;
+
+  // associate length to arrays of infinite size
+  std::map<array_string_exprt, symbol_exprt> length_of_array_;
 
   // Associate objects in addresses with arrays
   // For instance if pointer `&dynamic_object` is associated with `char_array`,

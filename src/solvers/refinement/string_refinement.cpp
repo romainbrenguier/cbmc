@@ -615,9 +615,9 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   output_equations(debug(), equations, ns);
 #endif
 
-#ifdef DEBUG
+//#ifdef DEBUG
   generator.debug_arrays_of_pointers(debug());
-#endif
+//#endif
 
   for(const exprt &eq : equations)
   {
@@ -821,9 +821,9 @@ static std::set<exprt> get_index_set(
 /// \par parameters: an expression representing an array and an expression
 /// representing an integer
 /// \return an array expression or an array_of_exprt
-exprt string_refinementt::get_array(const exprt &arr) const
+exprt string_refinementt::get_array(const array_string_exprt &arr) const
 {
-  const exprt &size=to_array_type(arr.type()).size();
+  const exprt &size=arr.length();
   exprt arr_val=simplify_expr(supert::get(arr), ns);
   exprt size_val=supert::get(size);
   size_val=simplify_expr(size_val, ns);
@@ -939,9 +939,8 @@ std::string string_refinementt::string_of_array(const array_exprt &arr) const
   return utf16_constant_array_to_java(arr, n);
 }
 
-exprt string_refinementt::get_char_array_in_model(exprt arr) const
+exprt string_refinementt::get_char_array_in_model(const array_string_exprt &arr) const
 {
-  PRECONDITION(arr.type().id()==ID_array);
   const std::string indent("  ");
   debug() << "- " << from_expr(ns, "", arr) << ":\n";
   debug() << indent << indent << "- type: "
@@ -970,10 +969,10 @@ exprt string_refinementt::get_char_pointer_in_model(const exprt &ptr) const
 {
   PRECONDITION(is_char_pointer_type(ptr.type()));
   const std::string indent("  ");
-  exprt arr=symbol_resolve.find_expr(ptr);
+  exprt resolved_ptr=symbol_resolve.find_expr(ptr);
   debug() << indent << indent << "- resolved: "
-          << arr.pretty() << eom;
-  arr=generator.get_char_array_for_pointer(arr);
+          << resolved_ptr.pretty() << eom;
+  array_string_exprt arr=generator.get_char_array_for_pointer(resolved_ptr);
   debug() << indent << indent << "- associated_array: "
           << from_expr(ns, "", arr) << ":\n";
   return get_char_array_in_model(arr);
@@ -985,11 +984,11 @@ void string_refinementt::debug_model()
 {
   debug() << "string_refinementt::debug_model()" << eom;
   const std::string indent("  ");
-  std::set<exprt> char_array_in_axioms;
+  std::set<array_string_exprt> char_array_in_axioms;
   for(const auto &lem : universal_axioms)
     for(auto it=lem.depth_begin(); it!=lem.depth_end(); ++it)
       if(is_char_array_type(it->type(), ns))
-        char_array_in_axioms.insert(*it);
+        char_array_in_axioms.insert(to_array_string_expr(*it));
 
   generator.debug_arrays_of_pointers(debug());
 #if 0
@@ -2024,11 +2023,15 @@ exprt string_refinementt::get(const exprt &expr) const
 
   if(ecopy.type().id()==ID_array)
   {
-    exprt arr_model=get_array(ecopy);
+    array_string_exprt &arr=to_array_string_expr(ecopy);
+    arr.length()=generator.get_length_of_string_array(arr);
+    exprt arr_model=get_array(arr);
     // Should be factorized with get array or get array in model
     arr_model=simplify_expr(arr_model, ns);
     const exprt concretized_array=concretize_arrays_in_expression(
       arr_model, generator.max_string_length);
+    debug() << "get " << from_expr(ns, "", expr) << " --> "
+            << from_expr(ns, "", concretized_array) << eom;
     return concretized_array;
   }
 

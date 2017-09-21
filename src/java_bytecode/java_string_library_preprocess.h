@@ -220,7 +220,7 @@ private:
     symbol_tablet &symbol_table,
     code_blockt &code);
 
-  refined_string_exprt nondet_string_expr(
+  refined_string_exprt make_nondet_string_expr(
     const source_locationt &loc,
     symbol_tablet &symbol_table,
     code_blockt &code);

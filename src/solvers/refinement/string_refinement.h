@@ -192,8 +192,8 @@ private:
   void concretize_results();
   void concretize_lengths();
 
-  exprt get_array(const exprt &arr) const;
-  exprt get_char_array_in_model(exprt arr) const;
+  exprt get_array(const array_string_exprt &arr) const;
+  exprt get_char_array_in_model(const array_string_exprt &arr) const;
   exprt get_char_pointer_in_model(const exprt &ptr) const;
 
   std::string string_of_array(const array_exprt &arr) const;
