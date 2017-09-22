@@ -23,6 +23,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_pointer_casts.h"
 #include "java_types.h"
 #include "java_utils.h"
+#include "java_string_library_preprocess.h"
 
 void java_bytecode_typecheckt::typecheck_expr(exprt &expr)
 {
@@ -166,13 +167,14 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     // These are basically const global data:
     array_symbol.is_static_lifetime=true;
     array_symbol.is_state_var=true;
-    array_symbol.value=utf16_to_array(utf8_to_utf16_little_endian(id2string(value)));
+    array_symbol.value=
+      utf16_to_array(utf8_to_utf16_little_endian(id2string(value)));
     array_symbol.type=array_symbol.value.type();
 
     if(symbol_table.add(array_symbol))
       throw "failed to add constarray symbol to symbol table";
 
-#if 0
+#if 1
     const symbol_exprt array_expr=array_symbol.symbol_expr();
 #else
     const exprt array_expr=array_symbol.value;
@@ -181,6 +183,44 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
       index_exprt(array_expr, from_integer(0, java_int_type())));
     literal_init.copy_to_operands(first_index);
 
+    // Associate array with pointer
+    symbolt return_symbol;
+    return_symbol.name=escaped_symbol_name+"_return";
+    return_symbol.base_name="return_value_"+escaped_symbol_name;
+    return_symbol.pretty_name="return_value";
+    return_symbol.mode=ID_java;
+    return_symbol.is_type=false;
+    return_symbol.is_lvalue=true;
+    return_symbol.is_static_lifetime=true;
+    return_symbol.is_state_var=true;
+    return_symbol.value=make_function_application(
+      "cprover_associate_pointer_to_array",
+      {array_symbol.value, first_index},
+      java_int_type(),
+      symbol_table);
+    return_symbol.type=return_symbol.value.type();
+    if(symbol_table.add(return_symbol))
+      throw "failed to add return symbol to symbol table";
+/*
+    // Associate length with array
+    symbolt return_symbol2;
+    return_symbol2.name=escaped_symbol_name+"_return2";
+    return_symbol2.base_name="return_value2";
+    return_symbol2.pretty_name="return_value2";
+    return_symbol2.mode=ID_java;
+    return_symbol2.is_type=false;
+    return_symbol2.is_lvalue=true;
+    return_symbol2.is_static_lifetime=true;
+    return_symbol2.is_state_var=true;
+    return_symbol2.value=make_function_application(
+      "cprover_associate_length_to_array",
+      {array_symbol.value, from_integer(value.size(), java_int_type())},
+      java_int_type(),
+      symbol_table);
+    return_symbol2.type=return_symbol2.value.type();
+    if(symbol_table.add(return_symbol2))
+      throw "failed to add return symbol to symbol table";
+*/
     new_symbol.value=literal_init;
   }
   else if(jls_struct.components().size()>=1 &&
