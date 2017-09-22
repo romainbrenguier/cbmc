@@ -722,7 +722,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
         error() << "dec_solve: current index set is empty, "
                 << "this should not happen" << eom;
         debug() << "current model:" << eom;
-        debug_model();
+        debug_model(debug());
         return resultt::D_ERROR;
       }
 
@@ -939,7 +939,8 @@ std::string string_refinementt::string_of_array(const array_exprt &arr) const
   return utf16_constant_array_to_java(arr, n);
 }
 
-exprt string_refinementt::get_char_array_in_model(const array_string_exprt &arr) const
+exprt string_refinementt::get_char_array_in_model(
+  const array_string_exprt &arr) const
 {
   const std::string indent("  ");
   debug() << "- " << from_expr(ns, "", arr) << ":\n";
@@ -952,16 +953,16 @@ exprt string_refinementt::get_char_array_in_model(const array_string_exprt &arr)
   debug() << indent << indent << "- simplified_char_array: "
           << from_expr(ns, "", arr_model) << eom;
   const exprt concretized_array=concretize_arrays_in_expression(
-        arr_model, generator.max_string_length);
+        arr_model, generator.max_string_length, ns);
   debug() << indent << indent << "- concretized_char_array: "
-          << from_expr(ns, "", arr_model) << eom;
+          << from_expr(ns, "", concretized_array) << eom;
   if(concretized_array.id()==ID_array)
     debug() << indent << indent << "- as_string: \""
             << string_of_array(to_array_expr(concretized_array)) << "\"\n";
   else
     debug() << indent << "- warning: not an array" << eom;
   debug() << indent << indent << "- type: "
-          << from_type(ns, "", arr_model.type()) << eom;
+          << from_type(ns, "", concretized_array.type()) << eom;
   return concretized_array;
 }
 
@@ -980,9 +981,9 @@ exprt string_refinementt::get_char_pointer_in_model(const exprt &ptr) const
 
 /// Display part of the current model by mapping the variables created by the
 /// solver to constant expressions given by the current model
-void string_refinementt::debug_model()
+void string_refinementt::debug_model(std::ostream &out)
 {
-  debug() << "string_refinementt::debug_model()" << eom;
+  out << "string_refinementt::debug_model()" << std::endl;
   const std::string indent("  ");
   std::set<array_string_exprt> char_array_in_axioms;
   for(const auto &lem : universal_axioms)
@@ -1007,21 +1008,27 @@ void string_refinementt::debug_model()
   for(auto  arr : char_array_in_axioms)
   {
     const exprt model=get_char_array_in_model(arr);
-    debug() << indent << indent << "- result:"
-            << from_expr(ns, "", model) << eom;
+
+    out << "- " << from_expr(ns, "", arr) << ": "
+        << from_expr(ns, "", model) << std::endl;
   }
 
   for(auto it : generator.get_boolean_symbols())
   {
-      debug() << " - " << it.get_identifier() << ": "
-              << from_expr(ns, "", supert::get(it)) << eom;
+    out << " - " << it.get_identifier() << ": "
+        << from_expr(ns, "", supert::get(it)) << std::endl;
   }
 
   for(auto it : generator.get_index_symbols())
   {
-     debug() << " - " << it.get_identifier() << ": "
-             << from_expr(ns, "", supert::get(it)) << eom;
+     out << " - " << it.get_identifier() << ": "
+         << from_expr(ns, "", supert::get(it)) << std::endl;
   }
+}
+
+void string_refinementt::debug_model()
+{
+  debug_model(std::cout);
 }
 
 /// Create a new expression where 'with' expressions on arrays are replaced by
@@ -1112,9 +1119,17 @@ exprt fill_in_array_expr(const array_exprt &expr, std::size_t string_max_length)
 {
   PRECONDITION(expr.type().id()==ID_array);
   array_typet array_type=to_array_type(expr.type());
+  PRECONDITION(array_type.subtype().id()==ID_unsignedbv);
 
   // Map of the parts of the array that are initialized
   std::map<std::size_t, exprt> initial_map;
+  const std::size_t array_size=expr_cast<std::size_t>(array_type.size());
+
+  if(array_size>0)
+    initial_map.emplace(
+      array_size-1,
+      from_integer(CHARACTER_FOR_UNKNOWN, array_type.subtype()));
+
   for(std::size_t i=0; i<expr.operands().size(); ++i)
   {
     if(i<string_max_length && expr.operands()[i].id()!=ID_unknown)
@@ -1333,23 +1348,29 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
 /// be interpreted as `{ 2, 2, 3, 3, 3}`.
 /// \param expr: expression to interpret
 /// \param string_max_length: maximum size of arrays to consider
+/// \param ns: namespace, used to determine what is an array of character
 /// \return the interpreted expression
-exprt concretize_arrays_in_expression(exprt expr, std::size_t string_max_length)
+exprt concretize_arrays_in_expression(
+  exprt expr, std::size_t string_max_length, const namespacet &ns)
 {
   auto it=expr.depth_begin();
   const auto end=expr.depth_end();
   while(it!=end)
   {
-    if((it->id()==ID_with || it->id()==ID_array_of)
-       && it->type().id()==ID_array)
+    if(is_char_array_type(it->type(), ns))
     {
-      it.mutate()=fill_in_array_with_expr(*it, string_max_length);
-      it.next_sibling_or_parent();
-    }
-    else if(it->id()==ID_array && it->type().id()==ID_array)
-    {
-      it.mutate()=fill_in_array_expr(to_array_expr(*it), string_max_length);
-      it.next_sibling_or_parent();
+      if(it->id()==ID_with || it->id()==ID_array_of)
+      {
+        it.mutate()=fill_in_array_with_expr(*it, string_max_length);
+        it.next_sibling_or_parent();
+      }
+      else if(it->id()==ID_array)
+      {
+        it.mutate()=fill_in_array_expr(to_array_expr(*it), string_max_length);
+        it.next_sibling_or_parent();
+      }
+      else
+        ++it; // ignoring other expressions
     }
     else
       ++it;
@@ -1369,7 +1390,7 @@ bool string_refinementt::check_axioms()
     debug() << "  - " << from_expr(ns, "", pair.first) << " --> "
             << from_expr(ns, "", pair.second) << eom;
 
-  debug_model();
+  debug_model(debug());
 
   // Maps from indexes of violated universal axiom to a witness of violation
   std::map<size_t, exprt> violated;
@@ -1403,7 +1424,7 @@ bool string_refinementt::check_axioms()
             << "       " << from_expr(ns, "", negaxiom) << eom;
 
     exprt with_concretized_arrays=concretize_arrays_in_expression(
-      negaxiom, generator.max_string_length);
+      negaxiom, generator.max_string_length, ns);
     debug() << "    - negated_axiom_with_concretized_array_access:\n"
             << "       " << from_expr(ns, "", with_concretized_arrays) << eom;
 
@@ -2029,7 +2050,7 @@ exprt string_refinementt::get(const exprt &expr) const
     // Should be factorized with get array or get array in model
     arr_model=simplify_expr(arr_model, ns);
     const exprt concretized_array=concretize_arrays_in_expression(
-      arr_model, generator.max_string_length);
+      arr_model, generator.max_string_length, ns);
     debug() << "get " << from_expr(ns, "", expr) << " --> "
             << from_expr(ns, "", concretized_array) << eom;
     return concretized_array;

@@ -43,7 +43,7 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
     qvar,
     prefix.length(),
     isprefix,
-    equal_exprt(str[plus_exprt_with_overflow_check(qvar, offset)],
+    equal_exprt(str[plus_exprt(qvar, offset)],
                 prefix[qvar]));
   m_axioms.push_back(a2);
 
@@ -52,12 +52,12 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
     axiom_for_is_positive_index(witness),
     and_exprt(
       prefix.axiom_for_length_gt(witness),
-      notequal_exprt(str[plus_exprt_with_overflow_check(witness, offset)],
+      notequal_exprt(str[plus_exprt(witness, offset)],
                      prefix[witness])));
   or_exprt s0_notpref_s1(
     not_exprt(
       str.axiom_for_length_ge(
-        plus_exprt_with_overflow_check(prefix.length(), offset))),
+        plus_exprt(prefix.length(), offset))),
     witness_diff);
 
   implies_exprt a3(not_exprt(isprefix), s0_notpref_s1);

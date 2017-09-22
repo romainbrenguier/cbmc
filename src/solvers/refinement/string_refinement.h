@@ -159,7 +159,9 @@ private:
   void set_to(const exprt &expr, bool value) override;
 
   void add_instantiations();
+  void debug_model(std::ostream &out);
   void debug_model();
+
   bool check_axioms();
   bool is_axiom_sat(
     const exprt &axiom, const symbol_exprt& var, exprt &witness);
@@ -202,7 +204,7 @@ private:
 exprt substitute_array_lists(exprt expr, size_t string_max_length);
 
 exprt concretize_arrays_in_expression(
-  exprt expr, std::size_t string_max_length);
+  exprt expr, std::size_t string_max_length, const namespacet &ns);
 
 bool is_char_array_type(const typet &type, const namespacet &ns);
 

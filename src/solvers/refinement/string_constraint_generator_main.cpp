@@ -217,7 +217,9 @@ array_string_exprt
   array_string_exprt array_sym=to_array_string_expr(fresh_symbol(symbol_name, char_array_type));
   auto insert_result=arrays_of_pointers_.insert(
         std::make_pair(char_pointer, array_sym));
-  return to_array_string_expr(insert_result.first->second);
+  array_string_exprt result=to_array_string_expr(insert_result.first->second);
+  add_default_axioms(result);
+  return result;
 }
 
 /// casts an expression to a string expression, or fetches the actual
@@ -538,7 +540,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     if(ret.second==false)
       std::cout << "string_constraint_generatort: "
                 << "cprover_associate_pointer_to_array: array "
-                << to_symbol_expr(array_expr).get_identifier() << " already "
+                << array_expr.pretty() << " already "
                 << "in arrays_of_pointers map" << std::endl;
     // TODO should go inside function
     add_default_axioms(to_array_string_expr(array_expr));
