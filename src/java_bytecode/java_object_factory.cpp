@@ -505,41 +505,46 @@ public:
   }
 };
 
-/// Initialize a nondeterministic String
-/// \param expr: the expression to initialize
-/// \param tmp_object: the actual object
+/// Initialize a nondeterministic String structure
+/// \param obj: struct to initialize, must have been declared using
+///   code of the form:
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// struct java.lang.String { struct @java.lang.Object;
+///   int length; char *data; } tmp_object_factory$1;
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// \param loc: location in the source
 /// \param symbol_table: the symbol table
 /// \return code for initialization of the strings
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// struct java.lang.String { struct @java.lang.Object;
-///   int length; char *data; } tmp_object_factory$1;
 /// arg = &tmp_object_factory$1;
 /// tmp_object_factory$1.@java.lang.Object.@class_identifier =
 ///   "java::java.lang.String";
 /// tmp_object_factory$1.@java.lang.Object.@lock = false;
 /// tmp_object_factory$1.length = NONDET(int);
-/// char tmp_object_factory$2[tmp_object_factory$1.length];
+/// char tmp_object_factory$2[INFINITY];
+/// tmp_object_factory$2=NONDET(char[INFINITY])
 /// tmp_object_factory$1.data = tmp_object_factory$2;
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// Unit tests in `unit/java_bytecode/java_object_factory/` ensure
 /// it is the case.
-codet gen_nondet_string_init(
-  const exprt &expr,
-  const exprt &tmp_object,
+codet initialize_nondet_string_struct(
+  const exprt &obj,
   const source_locationt &loc,
   symbol_tablet &symbol_table)
 {
   PRECONDITION(
     java_string_library_preprocesst::
-      implements_java_char_sequence(expr.type()));
+      implements_java_char_sequence(obj.type()));
 
   const namespacet ns(symbol_table);
   code_blockt code;
 
   // `obj` is `*expr`
-  const dereference_exprt obj(expr, expr.type().subtype());
-  const irep_idt &class_id=to_symbol_type(obj.type()).get_identifier();
+  // const dereference_exprt obj(expr, expr.type().subtype());
+  const irep_idt &class_id=
+    obj.type().id()==ID_symbol?
+    to_symbol_type(obj.type()).get_identifier():
+    irep_idt("java::"+id2string(to_struct_type(obj.type()).get_tag()));
 
   // length_expr = nondet(int);
   typet const_size_type=java_int_type();
@@ -553,37 +558,10 @@ codet gen_nondet_string_init(
   code.add(code_assumet(binary_relation_exprt(
     length_expr, ID_ge, from_integer(0, java_int_type()))));
 
-
-#if 0
-  // data_expr = nondet(char[length_expr])
-  const array_typet array_type(java_char_type(), length_expr);
-  const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type);
-  const symbol_exprt data_expr=data_sym.symbol_expr();
-  // side_effect_expr_nondett nondet_data(data_expr.type());
-#elif 0
-  // data_expr = new_java_array(char*)
-  const array_typet array_type1(java_char_type(), length_expr);
-  const pointer_typet pointer_type(java_char_type());
-  const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type1); // pointer_type);
-  const symbol_exprt data_expr=data_sym.symbol_expr();
-
-  side_effect_exprt nondet_data(ID_java_new_array_data, data_expr.type().subtype());
-  nondet_data.operands().push_back(length_expr);
-  nondet_data.set(ID_size, length_expr);
-#else
   // data_expr = nondet(char[INFINITY]) // we use infinity for variable size
-  const array_typet array_type(
-    java_char_type(), infinity_exprt(java_int_type()));
-  const symbolt data_sym=new_tmp_symbol(symbol_table, loc, array_type);
-  const symbol_exprt data_expr=data_sym.symbol_expr();
-#endif
+  exprt data_expr=make_nondet_infinite_char_array(symbol_table, loc, code);
 
-  // side_effect_expr_nondett nondet_data(array_type1);
-  code.add(code_declt(data_expr));
-  side_effect_expr_nondett nondet_data(data_expr.type());
-  code.add(code_assignt(data_expr, nondet_data));
-
-  // the literal with @clsid = String and @lock = false:
+  // @clsid = String and @lock = false:
   const symbol_typet jlo_symbol("java::java.lang.Object");
   const struct_typet jlo_type=to_struct_type(ns.follow(jlo_symbol));
   struct_exprt jlo_init(jlo_symbol);
@@ -592,54 +570,52 @@ codet gen_nondet_string_init(
   jlo_init.copy_to_operands(
     from_integer(false, jlo_type.components()[1].type()));
 
-  struct_exprt struct_expr(tmp_object.type());
+  struct_exprt struct_expr(obj.type());
   struct_expr.copy_to_operands(jlo_init);
   struct_expr.copy_to_operands(length_expr);
 
   const address_of_exprt first_index(index_exprt(
        data_expr, from_integer(0, java_int_type())));
-#if 0
-  struct_expr.copy_to_operands(data_expr);
-#else
   struct_expr.copy_to_operands(first_index);
-#endif
-  symbolt &return_sym=get_fresh_aux_symbol(
-        java_int_type(),
-        "return_array",
-        "return_array",
-        loc,
-        ID_java,
-        symbol_table);
-  const exprt return_expr=return_sym.symbol_expr();
-  code.add(code_declt(return_expr));
-  code.add(code_assign_function_application(
-    return_expr,
-    "cprover_associate_pointer_to_array",
-    {data_expr, first_index},
-    symbol_table));
 
-  symbolt &return_sym2=get_fresh_aux_symbol(
-        java_int_type(),
-        "return_array",
-        "return_array",
-        loc,
-        ID_java,
-        symbol_table);
-  const exprt return_expr2=return_sym.symbol_expr();
-  code.add(code_declt(return_expr2));
-  code.add(code_assign_function_application(
-    return_expr2,
-    "cprover_associate_length_to_array",
-    {data_expr, length_expr},
-    symbol_table));
+  add_pointer_to_array_association(
+    first_index, data_expr, symbol_table, loc, code);
+
+  add_array_to_length_association(
+    data_expr, length_expr, symbol_table, loc, code);
 
   // tmp_object = struct_expr;
-  code.add(code_assignt(tmp_object, struct_expr));
-  // expr = &tmp_object;
-  code.add(code_assignt(expr, address_of_exprt(tmp_object), loc));
+  code.add(code_assignt(obj, struct_expr));
   return code;
 }
 
+/// Add code for the initialization of a string and affectation of its
+/// address to the pointer `expr`
+/// \param expr: pointer to be affected
+/// \param symbol_table: the symbol table
+/// \param loc: location in the source
+/// \param [out] code: code block in which initialization code is added
+void add_nondet_string_pointer_initialization(
+  const exprt &expr,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &code)
+{
+  const namespacet ns(symbol_table);
+  const dereference_exprt obj(expr, expr.type().subtype());
+  const struct_typet struct_type=
+      (obj.type().id()!=ID_struct)?
+        to_struct_type(ns.follow(to_symbol_type(obj.type()))):
+        to_struct_type(obj.type());
+  const symbolt tmp_object_sym=new_tmp_symbol(symbol_table, loc, struct_type);
+  const symbol_exprt tmp_object=tmp_object_sym.symbol_expr();
+  // struct java.lang.String tmp_object;
+  code.add(code_declt(tmp_object));
+  code.add(initialize_nondet_string_struct(tmp_object, loc, symbol_table));
+  // expr = &tmp_object;
+  code.add(code_assignt(expr, address_of_exprt(tmp_object), loc));
+
+}
 /// Initializes a pointer \p expr of type \p pointer_type to a primitive-typed
 /// value or an object tree.  It allocates child objects as necessary and
 /// nondet-initializes their members, or if MUST_UPDATE_IN_PLACE is set,
@@ -680,7 +656,6 @@ void java_object_factoryt::gen_nondet_pointer_init(
   const update_in_placet &update_in_place)
 {
   PRECONDITION(expr.type().id()==ID_pointer);
-
 
   const pointer_typet &replacement_pointer_type=
     pointer_type_selector.convert_pointer_type(pointer_type, ns);
@@ -771,21 +746,11 @@ void java_object_factoryt::gen_nondet_pointer_init(
   // and asign to `expr` the address of such object
   code_blockt non_null_inst;
 
-  if(java_string_library_preprocesst::implements_java_char_sequence(
+  if(java_string_library_preprocesst::implements_java_char_sequence_pointer(
        expr.type()))
   {
-    const dereference_exprt obj(expr, expr.type().subtype());
-
-    const struct_typet struct_type=
-      (obj.type().id()!=ID_struct)?
-      to_struct_type(ns.follow(to_symbol_type(obj.type()))):
-      to_struct_type(obj.type());
-    const symbolt tmp_object_sym=new_tmp_symbol(symbol_table, loc, struct_type);
-    const symbol_exprt tmp_object=tmp_object_sym.symbol_expr();
-    // struct java.lang.String tmp_object;
-    assignments.add(code_declt(tmp_object));
-
-    assignments.add(gen_nondet_string_init(expr, tmp_object, loc, symbol_table));
+    add_nondet_string_pointer_initialization(
+      expr, symbol_table, loc, assignments);
   }
   else
   {

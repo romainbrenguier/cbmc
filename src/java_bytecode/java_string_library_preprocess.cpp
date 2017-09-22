@@ -298,7 +298,7 @@ exprt java_string_library_preprocesst::convert_exprt_to_string_exprt(
   symbol_tablet &symbol_table,
   code_blockt &init_code)
 {
-  PRECONDITION(implements_java_char_sequence(op_to_process.type()));
+  PRECONDITION(implements_java_char_sequence_pointer(op_to_process.type()));
   refined_string_exprt string_expr=decl_string_expr(loc, symbol_table, init_code);
   code_assign_java_string_to_string_expr(
     string_expr, op_to_process, loc, symbol_table, init_code);
@@ -325,7 +325,7 @@ exprt::operandst java_string_library_preprocesst::process_operands(
   exprt::operandst ops;
   for(const auto &p : operands)
   {
-    if(implements_java_char_sequence(p.type()))
+    if(implements_java_char_sequence_pointer(p.type()))
       ops.push_back(
         convert_exprt_to_string_exprt(p, loc, symbol_table, init_code));
     else if(is_java_char_array_pointer_type(p.type()))
@@ -356,7 +356,7 @@ exprt::operandst
   exprt::operandst ops;
   const exprt &op0=operands[0];
   const exprt &op1=operands[1];
-  PRECONDITION(implements_java_char_sequence(op0.type()));
+  PRECONDITION(implements_java_char_sequence_pointer(op0.type()));
 
   ops.push_back(
     convert_exprt_to_string_exprt(op0, loc, symbol_table, init_code));
@@ -509,39 +509,17 @@ refined_string_exprt java_string_library_preprocesst::make_nondet_string_expr(
   side_effect_expr_nondett nondet_length(str.length().type());
   code.add(code_assignt(str.length(), nondet_length));
 
-  symbolt &nondet_array_sym=get_fresh_aux_symbol(
-        array_typet(java_char_type(), str.length()),
-        "",
-        "nondet_array",
-        loc,
-        ID_java,
-        symbol_table);
-  exprt nondet_array_expr=nondet_array_sym.symbol_expr();
-  code_declt decl1(nondet_array_expr);
-  decl1.add_source_location()=loc;
-  code.add(decl1);
-
-  side_effect_expr_nondett nondet_data(nondet_array_expr.type());
-  code.add(code_assignt(nondet_array_expr, nondet_data));
+  exprt nondet_array_expr=
+    make_nondet_infinite_char_array(symbol_table, loc, code);
 
   address_of_exprt first_index(
     index_exprt(nondet_array_expr, from_integer(0, java_int_type())));
 
-  symbolt &return_sym=get_fresh_aux_symbol(
-        java_int_type(),
-        "return_array",
-        "return_array",
-        loc,
-        ID_java,
-        symbol_table);
-  exprt return_expr=return_sym.symbol_expr();
-  code.add(code_declt(return_expr));
-  code.add(code_assign_function_application(
-    return_expr,
-    "cprover_associate_pointer_to_array",
-    {nondet_array_expr, first_index},
-    symbol_table));
+  add_pointer_to_array_association(
+    first_index, nondet_array_expr, symbol_table, loc, code);
 
+  add_array_to_length_association(
+    nondet_array_expr, str.length(), symbol_table, loc, code);
 
   code.add(code_assignt(str.content(), first_index));
 
@@ -646,6 +624,73 @@ codet java_string_library_preprocesst::code_return_function_application(
   return code_returnt(fun_app);
 }
 
+exprt make_nondet_infinite_char_array(
+  symbol_tablet &symbol_table, const source_locationt &loc, code_blockt &code)
+{
+  const array_typet array_type(
+        java_char_type(), infinity_exprt(java_int_type()));
+  const symbolt data_sym=get_fresh_aux_symbol(
+        array_type,
+        "nondet_inifinite_array",
+        "nondet_inifinite_array",
+        loc,
+        ID_java,
+        symbol_table);
+  const symbol_exprt data_expr=data_sym.symbol_expr();
+  code.add(code_declt(data_expr));
+  side_effect_expr_nondett nondet_data(data_expr.type());
+  code.add(code_assignt(data_expr, nondet_data));
+  return data_expr;
+}
+
+void add_pointer_to_array_association(
+  const exprt &pointer,
+  const exprt &array,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &code)
+{
+  PRECONDITION(array.type().id()==ID_array);
+  PRECONDITION(pointer.type().id()==ID_pointer);
+  symbolt &return_sym=get_fresh_aux_symbol(
+        java_int_type(),
+        "return_array",
+        "return_array",
+        loc,
+        ID_java,
+        symbol_table);
+  exprt return_expr=return_sym.symbol_expr();
+  code.add(code_declt(return_expr));
+  code.add(code_assign_function_application(
+    return_expr,
+    "cprover_associate_pointer_to_array",
+    {array, pointer},
+    symbol_table));
+}
+
+void add_array_to_length_association(
+  const exprt &array,
+  const exprt &length,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &code)
+{
+  symbolt &return_sym=get_fresh_aux_symbol(
+        java_int_type(),
+        "return_array",
+        "return_array",
+        loc,
+        ID_java,
+        symbol_table);
+  const exprt return_expr=return_sym.symbol_expr();
+  code.add(code_declt(return_expr));
+  code.add(code_assign_function_application(
+    return_expr,
+    "cprover_associate_length_to_array",
+    {array, length},
+    symbol_table));
+}
+
 /// \param string_expr: a string expression
 /// \param function_name: the name of the function
 /// \param arguments: arguments of the function
@@ -705,7 +750,7 @@ codet java_string_library_preprocesst::code_assign_components_to_java_string(
   const exprt &rhs_length,
   symbol_tablet &symbol_table)
 {
-  PRECONDITION(implements_java_char_sequence(lhs.type()));
+  PRECONDITION(implements_java_char_sequence_pointer(lhs.type()));
   dereference_exprt deref=checked_dereference(lhs, lhs.type().subtype());
 
   // A String has a field Object with @clsid = String and @lock = false:
@@ -743,28 +788,6 @@ codet java_string_library_preprocesst::code_assign_string_expr_to_java_string(
     lhs, rhs.content(), rhs.length(), symbol_table);
 }
 
-/// Produce code for an assignment of a string from a string expr.
-/// \param lhs: an expression representing a java string
-/// \param rhs: a string expression
-/// \param loc: a location in the program
-/// \param symbol_table: symbol table
-/// \return return the following code:
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// data = new array[];
-/// *data = rhs.data;
-/// lhs = { {Object} , length=rhs.length, data=data}
-/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-codet java_string_library_preprocesst::
-  code_assign_string_expr_to_new_java_string(
-    const exprt &lhs,
-    const refined_string_exprt &rhs,
-    const source_locationt &loc,
-    symbol_tablet &symbol_table)
-{
-  return code_assign_components_to_java_string(
-    lhs, rhs.content(), rhs.length(), symbol_table);
-}
-
 /// \param lhs: a string expression
 /// \param rhs: an expression representing a java string
 /// \param loc: source location
@@ -781,7 +804,7 @@ void java_string_library_preprocesst::code_assign_java_string_to_string_expr(
   symbol_tablet &symbol_table,
   code_blockt &code)
 {
-  PRECONDITION(implements_java_char_sequence(rhs.type()));
+  PRECONDITION(implements_java_char_sequence_pointer(rhs.type()));
 
   typet deref_type;
   if(rhs.type().subtype().id()==ID_symbol)
@@ -969,8 +992,8 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   {
     code_ifthenelset ife;
     ife.cond()=condition_list[i];
-    ife.then_case()=code_assign_string_expr_to_new_java_string(
-      str, string_expr_list[i], loc, symbol_table);
+    ife.then_case()=code_assign_string_expr_to_java_string(
+      str, string_expr_list[i], symbol_table);
     ife.else_case()=tmp_code;
     tmp_code=ife;
   }
@@ -1023,8 +1046,8 @@ codet java_string_library_preprocesst::make_init_function_from_call(
     function_name, args, loc, symbol_table, code);
 
   // arg_this <- string_expr
-  code.add(code_assign_string_expr_to_new_java_string(
-    arg_this, string_expr, loc, symbol_table));
+  code.add(code_assign_string_expr_to_java_string(
+    arg_this, string_expr, symbol_table));
 
   return code;
 }
@@ -1371,8 +1394,8 @@ codet java_string_library_preprocesst::make_string_format_code(
     code);
   exprt java_string=allocate_fresh_string(
     type.return_type(), loc, symbol_table, code);
-  code.add(code_assign_string_expr_to_new_java_string(
-    java_string, string_expr, loc, symbol_table));
+  code.add(code_assign_string_expr_to_java_string(
+    java_string, string_expr, symbol_table));
   code.add(code_returnt(java_string));
   return code;
 }
@@ -1436,8 +1459,8 @@ codet java_string_library_preprocesst::make_object_get_class_code(
     java_reference_type(symbol_table.lookup("java::java.lang.String").type);
   exprt string1=allocate_fresh_string(string_ptr_type, loc, symbol_table, code);
   code.add(
-    code_assign_string_expr_to_new_java_string(
-      string1, string_expr1, loc, symbol_table));
+    code_assign_string_expr_to_java_string(
+      string1, string_expr1, symbol_table));
 
   // > class1 = Class.forName(string1)
   code_function_callt fun_call;
@@ -1512,8 +1535,8 @@ codet java_string_library_preprocesst::
 
   // Assign to string
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
-  code.add(code_assign_string_expr_to_new_java_string(
-    str, string_expr, loc, symbol_table));
+  code.add(code_assign_string_expr_to_java_string(
+    str, string_expr, symbol_table));
 
   // Return value
   code.add(code_returnt(str));
@@ -1552,8 +1575,8 @@ codet java_string_library_preprocesst::make_copy_string_code(
 
   // Allocate and assign the string
   exprt str=allocate_fresh_string(type.return_type(), loc, symbol_table, code);
-  code.add(code_assign_string_expr_to_new_java_string(
-    str, string_expr, loc, symbol_table));
+  code.add(code_assign_string_expr_to_java_string(
+    str, string_expr, symbol_table));
 
   // Return value
   code.add(code_returnt(str));
@@ -1590,8 +1613,8 @@ codet java_string_library_preprocesst::make_copy_constructor_code(
 
   // Assign string_expr to `this` object
   symbol_exprt arg_this(params[0].get_identifier(), params[0].type());
-  code.add(code_assign_string_expr_to_new_java_string(
-    arg_this, string_expr, loc, symbol_table));
+  code.add(code_assign_string_expr_to_java_string(
+    arg_this, string_expr, symbol_table));
 
   return code;
 }

@@ -155,7 +155,7 @@ void allocate_dynamic_object_with_decl(
   const source_locationt &loc,
   code_blockt &output_code);
 
-codet gen_nondet_string_init(const exprt &expr, const exprt &tmp_object,
+codet initialize_nondet_string_struct(const exprt &obj,
   const source_locationt &loc,
   symbol_tablet &symbol_table);
 

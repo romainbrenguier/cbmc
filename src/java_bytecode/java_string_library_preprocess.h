@@ -65,13 +65,21 @@ public:
   static bool is_java_char_sequence_pointer_type(const typet &type);
   static bool is_java_char_array_type(const typet &type);
   static bool is_java_char_array_pointer_type(const typet &type);
-  static bool implements_java_char_sequence(const typet &type)
+  static bool implements_java_char_sequence_pointer(const typet &type)
   {
     return
       is_java_char_sequence_pointer_type(type) ||
       is_java_string_builder_pointer_type(type) ||
       is_java_string_buffer_pointer_type(type) ||
       is_java_string_pointer_type(type);
+  }
+  static bool implements_java_char_sequence(const typet &type)
+  {
+    return
+      is_java_char_sequence_type(type) ||
+      is_java_string_builder_type(type) ||
+      is_java_string_buffer_type(type) ||
+      is_java_string_type(type);
   }
 
 #ifndef UNIT_TEST
@@ -259,12 +267,6 @@ private:
   codet code_assign_string_expr_to_java_string(
     const exprt &lhs, const refined_string_exprt &rhs, symbol_tablet &symbol_table);
 
-  codet code_assign_string_expr_to_new_java_string(
-    const exprt &lhs,
-    const refined_string_exprt &rhs,
-    const source_locationt &loc,
-    symbol_tablet &symbol_table);
-
   void code_assign_java_string_to_string_expr(
     const refined_string_exprt &lhs,
     const exprt &rhs,
@@ -335,11 +337,27 @@ exprt make_function_application(
   const typet &type,
   symbol_tablet &symbol_table);
 
-
 codet code_assign_function_application(
   const exprt &lhs,
   const irep_idt &function_name,
   const exprt::operandst &arguments,
   symbol_tablet &symbol_table);
+
+exprt make_nondet_infinite_char_array(
+  symbol_tablet &symbol_table, const source_locationt &loc, code_blockt &code);
+
+void add_pointer_to_array_association(
+  const exprt &pointer,
+  const exprt &array,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &code);
+
+void add_array_to_length_association(
+  const exprt &array,
+  const exprt &length,
+  symbol_tablet &symbol_table,
+  const source_locationt &loc,
+  code_blockt &code);
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_STRING_LIBRARY_PREPROCESS_H
