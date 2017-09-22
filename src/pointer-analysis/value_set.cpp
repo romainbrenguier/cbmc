@@ -1086,7 +1086,6 @@ void value_sett::get_reference_set_rec(
   insert(dest, exprt(ID_unknown, expr.type()));
 }
 
-#include <iostream>
 void value_sett::assign(
   const exprt &lhs,
   const exprt &rhs,
@@ -1094,13 +1093,13 @@ void value_sett::assign(
   bool is_simplified,
   bool add_to_sets)
 {
-#if 1
+#if 0
   std::cout << "ASSIGN LHS: " << from_expr(ns, "", lhs) << " : "
             << from_type(ns, "", lhs.type()) << '\n';
   std::cout << "ASSIGN RHS: " << from_expr(ns, "", rhs) << " : "
             << from_type(ns, "", rhs.type()) << '\n';
   std::cout << "--------------------------------------------\n";
-  // output(ns, std::cout);
+  output(ns, std::cout);
 #endif
 
   const typet &type=ns.follow(lhs.type());
