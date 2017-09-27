@@ -65,66 +65,24 @@ public:
   // \todo avoid depending on java type
   exprt lower_bound = from_integer(0, java_int_type());
   exprt upper_bound;
-
-  void replace(union_find_replacet &symbol_resolve)
-  {
-    symbol_resolve.replace_expr(premise);
-    symbol_resolve.replace_expr(body);
-    symbol_resolve.replace_expr(univ_var);
-    symbol_resolve.replace_expr(upper_bound);
-    symbol_resolve.replace_expr(lower_bound);
-  };
-
-  string_constraintt() = delete;
-
-  string_constraintt(
-    const symbol_exprt &_univ_var,
-    const exprt &bound_inf,
-    const exprt &bound_sup,
-    const exprt &prem,
-    const exprt &body)
-    : premise(prem),
-      body(body),
-      univ_var(_univ_var),
-      lower_bound(bound_inf),
-      upper_bound(bound_sup)
-  {
-  }
-
-  // Default bound inferior is 0
-  string_constraintt(
-    const symbol_exprt &_univ_var,
-    const exprt &bound_sup,
-    const exprt &prem,
-    const exprt &body)
-    : string_constraintt(
-        _univ_var,
-        from_integer(0, java_int_type()),
-        bound_sup,
-        prem,
-        body)
-  {}
-
-  // Default premise is true
-  string_constraintt(
-    const symbol_exprt &_univ_var,
-    const exprt &bound_sup,
-    const exprt &body):
-    string_constraintt(_univ_var, bound_sup, true_exprt(), body)
-  {}
-
-  exprt univ_within_bounds() const
-  {
-    return and_exprt(
-      binary_relation_exprt(lower_bound, ID_le, univ_var),
-      binary_relation_exprt(upper_bound, ID_gt, univ_var));
-  }
-
-  friend inline std::string from_expr(
-    const namespacet &ns,
-    const irep_idt &identifier,
-    const string_constraintt &expr);
 };
+
+inline void
+replace(string_constraintt &axiom, const union_find_replacet &symbol_resolve)
+{
+  symbol_resolve.replace_expr(axiom.premise);
+  symbol_resolve.replace_expr(axiom.body);
+  symbol_resolve.replace_expr(axiom.univ_var);
+  symbol_resolve.replace_expr(axiom.upper_bound);
+  symbol_resolve.replace_expr(axiom.lower_bound);
+}
+
+inline exprt univ_within_bounds(const string_constraintt &axiom)
+{
+  return and_exprt(
+    binary_relation_exprt(axiom.lower_bound, ID_le, axiom.univ_var),
+    binary_relation_exprt(axiom.upper_bound, ID_gt, axiom.univ_var));
+}
 
 /// Used for debug printing.
 /// \param [in] ns: namespace for `from_expr`
