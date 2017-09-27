@@ -817,7 +817,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
     constraints.end(),
     std::back_inserter(axioms.universal),
     [&](string_constraintt constraint) { // NOLINT
-      constraint.replace(symbol_resolve);
+      replace(constraint, symbol_resolve);
       DATA_INVARIANT(
         is_valid_string_constraint(error(), ns, constraint),
         string_refinement_invariantt(
@@ -1507,7 +1507,7 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
   if(axiom.premise == false_exprt())
     return false_exprt();
 
-  const and_exprt premise(axiom.premise, axiom.univ_within_bounds());
+  const and_exprt premise(axiom.premise, univ_within_bounds(axiom));
   const and_exprt negaxiom(premise, not_exprt(axiom.body));
 
   return negaxiom;
@@ -1635,8 +1635,12 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
     const exprt &prem = axiom.premise;
     const exprt &body = axiom.body;
 
-    const string_constraintt axiom_in_model(
-      univ_var, get(bound_inf), get(bound_sup), get(prem), get(body));
+    string_constraintt axiom_in_model;
+    axiom_in_model.univ_var = univ_var;
+    axiom_in_model.lower_bound = get(bound_inf);
+    axiom_in_model.upper_bound = get(bound_sup);
+    axiom_in_model.premise = get(prem);
+    axiom_in_model.body = get(body);
 
     exprt negaxiom=negation_of_constraint(axiom_in_model);
     negaxiom = simplify_expr(negaxiom, ns);
@@ -1739,10 +1743,9 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
         implies_exprt instance(axiom.premise, axiom.body);
         replace_expr(axiom.univ_var, val, instance);
         // We are not sure the index set contains only positive numbers
-        exprt bounds=and_exprt(
-          axiom.univ_within_bounds(),
-          binary_relation_exprt(
-            from_integer(0, val.type()), ID_le, val));
+        exprt bounds = and_exprt(
+          univ_within_bounds(axiom),
+          binary_relation_exprt(from_integer(0, val.type()), ID_le, val));
         replace_expr(axiom.univ_var, val, bounds);
         const implies_exprt counter(bounds, instance);
 
@@ -2223,10 +2226,9 @@ static exprt instantiate(
   implies_exprt instance(axiom.premise, axiom.body);
   replace_expr(axiom.univ_var, r, instance);
   // We are not sure the index set contains only positive numbers
-  exprt bounds=and_exprt(
-    axiom.univ_within_bounds(),
-    binary_relation_exprt(
-      from_integer(0, val.type()), ID_le, val));
+  exprt bounds = and_exprt(
+    univ_within_bounds(axiom),
+    binary_relation_exprt(from_integer(0, val.type()), ID_le, val));
   replace_expr(axiom.univ_var, r, bounds);
   return implies_exprt(bounds, instance);
 }
