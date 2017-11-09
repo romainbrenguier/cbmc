@@ -241,4 +241,18 @@ inline const refined_string_exprt &to_string_expr(const exprt &expr)
   return static_cast<const refined_string_exprt &>(expr);
 }
 
+template <>
+inline bool can_cast_expr<refined_string_exprt>(const exprt &base)
+{
+  return base.id() == ID_struct && base.operands().size() == 2;
+}
+
+inline void validate_expr(const refined_string_exprt &x)
+{
+  INVARIANT(x.id() == ID_struct, "refined string expr are struct");
+  INVARIANT(
+    x.operands().size() == 2,
+    "refined string expr have length and content fields");
+}
+
 #endif
