@@ -65,7 +65,7 @@ const mp_integer mp_zero=string2integer("0");
 /// Numerical cast provides a unified way of converting from one numerical type
 /// to another.
 /// Generic case doesn't exist, this has to be specialized for different types.
-template <typename T, typename = void>
+template <typename Target, typename Source, typename = void>
 struct numeric_castt final
 {
 };
@@ -77,6 +77,7 @@ struct numeric_castt final
 ///         empty optional otherwise.
 template <typename T>
 struct numeric_castt<T,
+                     mp_integer,
                      typename std::enable_if<std::is_integral<T>::value &&
                                              std::is_signed<T>::value>::type>
 {
@@ -105,6 +106,7 @@ struct numeric_castt<T,
 ///         empty optional otherwise.
 template <typename T>
 struct numeric_castt<T,
+                     mp_integer,
                      typename std::enable_if<std::is_integral<T>::value &&
                                              !std::is_signed<T>::value>::type>
 {
@@ -123,10 +125,10 @@ struct numeric_castt<T,
   }
 };
 
-template <typename T>
-optionalt<T> numeric_cast(const mp_integer &mpi)
+template <typename Target, typename Source>
+optionalt<Target> numeric_cast(const Source &arg)
 {
-  return numeric_castt<T>::numeric_cast(mpi);
+  return numeric_castt<Target, Source>::numeric_cast(arg);
 }
 
 #endif // CPROVER_UTIL_MP_ARITH_H
