@@ -131,4 +131,18 @@ optionalt<Target> numeric_cast(const Source &arg)
   return numeric_castt<Target, Source>::numeric_cast(arg);
 }
 
+/// An invariant with fail with message "Bad conversion" if conversion
+/// is not possible.
+/// \tparam Target: type to convert to
+/// \tparam Source: type to convert from
+/// \param arg: constant expression
+/// \return value of type T
+template <typename Target, typename Source>
+Target numeric_cast_v(const Source &arg)
+{
+  const auto maybe = numeric_castt<Target, Source>::numeric_cast(arg);
+  INVARIANT(maybe, "Bad conversion");
+  return *maybe;
+}
+
 #endif // CPROVER_UTIL_MP_ARITH_H
