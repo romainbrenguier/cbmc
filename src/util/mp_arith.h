@@ -93,7 +93,7 @@ struct numeric_castt<T,
       mpi <= std::numeric_limits<T>::max() &&
       mpi >= std::numeric_limits<T>::min())
       // to_long converts to long long which is the largest signed numeric type
-      return {static_cast<T>(mpi.to_long())};
+      return static_cast<T>(mpi.to_long());
     else
       return {};
   }
@@ -119,7 +119,7 @@ struct numeric_castt<T,
           std::numeric_limits<decltype(mpi.to_ulong())>::min(),
       "Numeric cast only works for types smaller than unsigned long long");
     if(mpi <= std::numeric_limits<T>::max() && mpi >= 0)
-      return {static_cast<T>(mpi.to_ulong())};
+      return static_cast<T>(mpi.to_ulong());
     else
       return {};
   }
