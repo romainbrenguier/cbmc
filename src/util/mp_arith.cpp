@@ -18,6 +18,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "arith_tools.h"
 #include "invariant.h"
+#include "std_expr.h"
 
 typedef BigInt::ullong_t ullong_t; // NOLINT(readability/identifiers)
 typedef BigInt::llong_t llong_t; // NOLINT(readability/identifiers)
@@ -369,3 +370,95 @@ mp_integer rotate_left(
   ullong_t result=((number<<shift)&filter)|((number&filter) >> revShift);
   return result;
 }
+
+bool to_integer(const exprt &expr, mp_integer &int_value)
+{
+  if(!expr.is_constant())
+    return true;
+  return to_integer(to_constant_expr(expr), int_value);
+}
+
+bool to_integer(const constant_exprt &expr, mp_integer &int_value)
+{
+  const irep_idt &value=expr.get_value();
+  const typet &type=expr.type();
+  const irep_idt &type_id=type.id();
+
+  if(type_id==ID_pointer)
+  {
+    if(value==ID_NULL)
+    {
+      int_value=0;
+      return false;
+    }
+  }
+  else if(type_id==ID_integer ||
+          type_id==ID_natural)
+  {
+    int_value=string2integer(id2string(value));
+    return false;
+  }
+  else if(type_id==ID_unsignedbv)
+  {
+    int_value=binary2integer(id2string(value), false);
+    return false;
+  }
+  else if(type_id==ID_signedbv)
+  {
+    int_value=binary2integer(id2string(value), true);
+    return false;
+  }
+  else if(type_id==ID_c_bool)
+  {
+    int_value=binary2integer(id2string(value), false);
+    return false;
+  }
+  else if(type_id==ID_c_enum)
+  {
+    const typet &subtype=to_c_enum_type(type).subtype();
+    if(subtype.id()==ID_signedbv)
+    {
+      int_value=binary2integer(id2string(value), true);
+      return false;
+    }
+    else if(subtype.id()==ID_unsignedbv)
+    {
+      int_value=binary2integer(id2string(value), false);
+      return false;
+    }
+  }
+  else if(type_id==ID_c_bit_field)
+  {
+    const typet &subtype=type.subtype();
+    if(subtype.id()==ID_signedbv)
+    {
+      int_value=binary2integer(id2string(value), true);
+      return false;
+    }
+    else if(subtype.id()==ID_unsignedbv)
+    {
+      int_value=binary2integer(id2string(value), false);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// convert a positive integer expression to an unsigned int
+/// \par parameters: a constant expression and a reference to an unsigned int
+/// \return an error flag
+bool to_unsigned_integer(const constant_exprt &expr, unsigned &uint_value)
+{
+  mp_integer i;
+  if(to_integer(expr, i))
+    return true;
+  if(i<0)
+    return true;
+  else
+  {
+    uint_value=integer2unsigned(i);
+    return false;
+  }
+}
+
