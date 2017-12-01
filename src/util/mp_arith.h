@@ -83,12 +83,20 @@ struct numeric_castt<T,
 {
   static optionalt<T> numeric_cast(const mp_integer &mpi)
   {
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
     static_assert(
       std::numeric_limits<T>::max() <=
           std::numeric_limits<decltype(mpi.to_long())>::max() &&
         std::numeric_limits<T>::min() >=
           std::numeric_limits<decltype(mpi.to_long())>::min(),
       "Numeric cast only works for types smaller than long long");
+#else
+    PRECONDITION(
+      std::numeric_limits<T>::max() <=
+        std::numeric_limits<decltype(mpi.to_long())>::max() &&
+      std::numeric_limits<T>::min() >=
+        std::numeric_limits<decltype(mpi.to_long())>::min());
+#endif
     if(
       mpi <= std::numeric_limits<T>::max() &&
       mpi >= std::numeric_limits<T>::min())
@@ -112,12 +120,22 @@ struct numeric_castt<T,
 {
   static optionalt<T> numeric_cast(const mp_integer &mpi)
   {
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
     static_assert(
       std::numeric_limits<T>::max() <=
           std::numeric_limits<decltype(mpi.to_ulong())>::max() &&
         std::numeric_limits<T>::min() >=
           std::numeric_limits<decltype(mpi.to_ulong())>::min(),
       "Numeric cast only works for types smaller than unsigned long long");
+#else
+    // std::numeric_limits<> methods are not declared constexpr in old versions
+    // of VS
+    PRECONDITION(
+      std::numeric_limits<T>::max() <=
+        std::numeric_limits<decltype(mpi.to_ulong())>::max() &&
+      std::numeric_limits<T>::min() >=
+        std::numeric_limits<decltype(mpi.to_ulong())>::min());
+#endif
     if(mpi <= std::numeric_limits<T>::max() && mpi >= 0)
       return static_cast<T>(mpi.to_ulong());
     else
