@@ -794,12 +794,13 @@ static optionalt<exprt> get_array(
     return {};
   }
 
-  unsigned n;
-  if(to_unsigned_integer(to_constant_expr(size_val), n))
+  auto n_opt = numeric_cast<unsigned, exprt>(size_val);
+  if(!n_opt)
   {
     stream << "(sr::get_array) size is not valid" << eom;
     return {};
   }
+  unsigned n = *n_opt;
 
   const array_typet ret_type(char_type, from_integer(n, index_type));
   array_exprt ret(ret_type);
@@ -824,9 +825,9 @@ static optionalt<exprt> get_array(
     for(size_t i = 0; i < arr_val.operands().size(); i += 2)
     {
       exprt index = arr_val.operands()[i];
-      unsigned idx;
-      if(!to_unsigned_integer(to_constant_expr(index), idx) && idx<n)
-        initial_map[idx] = arr_val.operands()[i + 1];
+      if(auto idx = numeric_cast<std::size_t, exprt>(index))
+        if(*idx < n)
+          initial_map[*idx] = arr_val.operands()[i + 1];
     }
 
     // Pad the concretized values to the left to assign the uninitialized
@@ -851,13 +852,11 @@ static optionalt<exprt> get_array(
 /// \return a string
 static std::string string_of_array(const array_exprt &arr)
 {
-  unsigned n;
   if(arr.type().id()!=ID_array)
       return std::string("");
 
   exprt size_expr=to_array_type(arr.type()).size();
-  PRECONDITION(size_expr.id()==ID_constant);
-  to_unsigned_integer(to_constant_expr(size_expr), n);
+  auto n = numeric_cast_v<unsigned, exprt>(size_expr);
   return utf16_constant_array_to_java(arr, n);
 }
 
