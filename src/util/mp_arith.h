@@ -20,6 +20,8 @@ Author: Daniel Kroening, kroening@kroening.com
 // NOLINTNEXTLINE(readability/identifiers)
 typedef BigInt mp_integer;
 
+class exprt;
+
 std::ostream &operator<<(std::ostream &, const mp_integer &);
 mp_integer operator>>(const mp_integer &, const mp_integer &);
 mp_integer operator<<(const mp_integer &, const mp_integer &);
@@ -62,12 +64,40 @@ unsigned integer2unsigned(const mp_integer &);
 
 const mp_integer mp_zero=string2integer("0");
 
+class exprt;
+class constant_exprt;
+class typet;
+
+// this one will go away
+// returns 'true' on error
+/// \deprecated: use the constant_exprt version instead
+bool to_integer(const exprt &expr, mp_integer &int_value);
+
+// returns 'true' on error
+/// \deprecated: use numeric_cast<mp_integer> instead
+bool to_integer(const constant_exprt &expr, mp_integer &int_value);
+
+// returns 'true' on error
+bool to_unsigned_integer(const constant_exprt &expr, unsigned &uint_value);
+
 /// Numerical cast provides a unified way of converting from one numerical type
 /// to another.
 /// Generic case doesn't exist, this has to be specialized for different types.
-template <typename Target, typename Source, typename = void>
+template <typename Target, typename = void>
 struct numeric_castt final
 {
+};
+
+template <>
+struct numeric_castt<mp_integer> final
+{
+  optionalt<mp_integer> operator()(const exprt &expr) const
+  {
+    mp_integer out;
+    if(to_integer(expr, out))
+      return {};
+    return out;
+  }
 };
 
 /// Convert mp_integer to any signed type
@@ -77,67 +107,50 @@ struct numeric_castt final
 ///         empty optional otherwise.
 template <typename T>
 struct numeric_castt<T,
-                     mp_integer,
-                     typename std::enable_if<std::is_integral<T>::value &&
-                                             std::is_signed<T>::value>::type>
+                     typename std::enable_if<std::is_integral<T>::value>::type>
 {
-  static optionalt<T> numeric_cast(const mp_integer &mpi)
+  template <typename U = T,
+            typename std::enable_if<std::is_signed<U>::value, int>::type = 0>
+  static auto get_val(const mp_integer &mpi) -> decltype(mpi.to_long())
   {
+    return mpi.to_long();
+  }
+
+  template <typename U = T,
+            typename std::enable_if<!std::is_signed<U>::value, int>::type = 0>
+  static auto get_val(const mp_integer &mpi) -> decltype(mpi.to_ulong())
+  {
+    return mpi.to_ulong();
+  }
+
+  optionalt<T> operator()(const mp_integer &mpi) const
+  {
+    constexpr const auto precondition =
+      std::numeric_limits<T>::max() <=
+        std::numeric_limits<decltype(get_val(mpi))>::max() &&
+      std::numeric_limits<T>::min() >=
+        std::numeric_limits<decltype(get_val(mpi))>::min();
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
     static_assert(
-      std::numeric_limits<T>::max() <=
-          std::numeric_limits<decltype(mpi.to_long())>::max() &&
-        std::numeric_limits<T>::min() >=
-          std::numeric_limits<decltype(mpi.to_long())>::min(),
-      "Numeric cast only works for types smaller than long long");
+      precondition,
+      "Numeric cast only works for types within appropriate range");
 #else
-    PRECONDITION(
-      std::numeric_limits<T>::max() <=
-        std::numeric_limits<decltype(mpi.to_long())>::max() &&
-      std::numeric_limits<T>::min() >=
-        std::numeric_limits<decltype(mpi.to_long())>::min());
+    PRECONDITION(precondition);
 #endif
     if(
       mpi <= std::numeric_limits<T>::max() &&
       mpi >= std::numeric_limits<T>::min())
-      // to_long converts to long long which is the largest signed numeric type
-      return static_cast<T>(mpi.to_long());
-    else
-      return {};
+    {
+      return static_cast<T>(get_val(mpi));
+    }
+    return {};
   }
-};
 
-/// Convert mp_integer to any unsigned type
-/// \tparam T: type to convert to
-/// \param mpi: mp_integer to convert
-/// \return optional integer of type T if conversion is possible,
-///         empty optional otherwise.
-template <typename T>
-struct numeric_castt<T,
-                     mp_integer,
-                     typename std::enable_if<std::is_integral<T>::value &&
-                                             !std::is_signed<T>::value>::type>
-{
-  static optionalt<T> numeric_cast(const mp_integer &mpi)
+  optionalt<T> operator()(const exprt &expr) const
   {
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-    static_assert(
-      std::numeric_limits<T>::max() <=
-          std::numeric_limits<decltype(mpi.to_ulong())>::max() &&
-        std::numeric_limits<T>::min() >=
-          std::numeric_limits<decltype(mpi.to_ulong())>::min(),
-      "Numeric cast only works for types smaller than unsigned long long");
-#else
-    // std::numeric_limits<> methods are not declared constexpr in old versions
-    // of VS
-    PRECONDITION(
-      std::numeric_limits<T>::max() <=
-        std::numeric_limits<decltype(mpi.to_ulong())>::max() &&
-      std::numeric_limits<T>::min() >=
-        std::numeric_limits<decltype(mpi.to_ulong())>::min());
-#endif
-    if(mpi <= std::numeric_limits<T>::max() && mpi >= 0)
-      return static_cast<T>(mpi.to_ulong());
+    auto mpi_opt = numeric_castt<mp_integer>{}(expr);
+    if(mpi_opt)
+      return numeric_castt<T>{}(*mpi_opt);
     else
       return {};
   }
@@ -146,7 +159,7 @@ struct numeric_castt<T,
 template <typename Target, typename Source>
 optionalt<Target> numeric_cast(const Source &arg)
 {
-  return numeric_castt<Target, Source>::numeric_cast(arg);
+  return numeric_castt<Target>{}(arg);
 }
 
 /// An invariant with fail with message "Bad conversion" if conversion
@@ -158,7 +171,7 @@ optionalt<Target> numeric_cast(const Source &arg)
 template <typename Target, typename Source>
 Target numeric_cast_v(const Source &arg)
 {
-  const auto maybe = numeric_castt<Target, Source>::numeric_cast(arg);
+  const auto maybe = numeric_castt<Target>{}(arg);
   INVARIANT(maybe, "Bad conversion");
   return *maybe;
 }
