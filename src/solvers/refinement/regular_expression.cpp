@@ -6,6 +6,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 
 \*******************************************************************/
 
+#include <iostream>
 #include "regular_expression.h"
 
 std::vector<std::pair<char, char>> charsett::parse(const std::string &s)
@@ -56,22 +57,25 @@ std::vector<atomic_patternt> flat_patternt::parse(const std::string &regex)
   {
     const std::size_t start_index = regex[i] == '[' ? i + 1 : i;
     std::size_t end_index = regex[i] == '[' ? regex.find(']', i) : i + 1;
-    const charsett cs(regex.substr(start_index, end_index));
+    const charsett cs(regex.substr(start_index, end_index - start_index));
+    // skip the closing square bracket
+    if(regex[i] == '[')
+      end_index += 1;
 
     quantifiert quant = quantifiert::ONCE;
-    if(end_index + 1 < length)
+    if(end_index < length)
     {
-      if(regex[end_index + 1] == '?')
+      if(regex[end_index] == '?')
       {
         quant = quantifiert::QUESTION_MARK;
         end_index += 1;
       }
-      else if(regex[end_index + 1] == '+')
+      else if(regex[end_index] == '+')
       {
         quant = quantifiert::PLUS;
         end_index += 1;
       }
-      else if(regex[end_index + 1] == '*')
+      else if(regex[end_index] == '*')
       {
         quant = quantifiert::STAR;
         end_index += 1;
@@ -86,12 +90,12 @@ std::vector<atomic_patternt> flat_patternt::parse(const std::string &regex)
 
 /// \param usable_name: a name we can use as a prefix for symbols without
 ///        interfering without other symbols.
-std::vector<string_constraintt> flat_patternt::generate_constraints(
+std::vector<exprt> flat_patternt::generate_constraints(
   const symbol_exprt &match_result,
   const refined_string_exprt &str,
   const std::string &usable_name) const
 {
-  std::vector<string_constraintt> result;
+  std::vector<exprt> result;
   const typet length_type = str.length().type();
   symbol_exprt q_var(usable_name+"_QA", length_type);
   std::vector<symbol_exprt> delimiters;
@@ -103,18 +107,33 @@ std::vector<string_constraintt> flat_patternt::generate_constraints(
 
   for(std::size_t i = 0; i < atoms.size(); ++i)
   {
-    // forall q_var \in [d[i-1], d[i]]. str[i] \in charset
     const exprt lower_bound =
       i == 0
       ? static_cast<exprt>(from_integer(0, length_type))
       : delimiters[i-1];
+    const plus_exprt lower_bound_plus_1(
+      lower_bound, from_integer(1, lower_bound.type()));
 
-    string_constraintt sc(
+    // forall q_var \in [d[i-1], d[i]]. str[i] \in charset
+    result.push_back(string_constraintt(
       q_var,
       lower_bound,
       delimiters[i],
       match_result,
-      atoms[i].charset.contains(str[q_var]));
+      atoms[i].charset.contains(str[q_var])));
+
+    if(atoms[i].quantifier == quantifiert::ONCE)
+      result.push_back(equal_exprt(delimiters[i], lower_bound_plus_1));
+    else if(atoms[i].quantifier == quantifiert::PLUS)
+      result.push_back(delimiters[i], ID_ge, lower_bound_plus_1);
+    else
+    {
+      result.push_back(binary_relation_exprt(
+        delimiters[i], ID_ge, lower_bound));
+      if(atoms[i].quantifier == quantifiert::QUESTION_MARK)
+        result.push_back(binary_relation_exprt(
+          delimiters[i], ID_le, lower_bound_plus_1));
+    }
   }
   return result;
 }
