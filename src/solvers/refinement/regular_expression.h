@@ -52,7 +52,7 @@ public:
   explicit flat_patternt(const std::string &regex): atoms(parse(regex))
   { };
 
-  std::vector<string_constraintt> generate_constraints(
+  std::vector<exprt> generate_constraints(
     const symbol_exprt &match_result,
     const refined_string_exprt &str,
     const std::string &usable_name) const;

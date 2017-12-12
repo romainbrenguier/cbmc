@@ -16,32 +16,6 @@
 #include <solvers/refinement/string_refinement.h>
 #include <solvers/refinement/regular_expression.h>
 #include <java_bytecode/java_types.h>
-#include <util/symbol_table.h>
-#include <iostream>
-#include <java_bytecode/java_bytecode_language.h>
-#include <langapi/mode.h>
-
-SCENARIO("regexp", "[core][solvers][refinement][regular_expression]")
-{
-  const flat_patternt regex("a[b-c]*[vx-z]+");
-  std::vector<string_constraintt> axioms = regex.generate_constraints(
-    symbol_exprt("result", java_int_type()),
-    refined_string_exprt(
-      symbol_exprt("length", java_int_type()),
-      symbol_exprt("content",
-                   array_typet(java_char_type(), infinity_exprt(java_int_type())))),
-      "prefix"
-    );
-
-  register_language(new_java_bytecode_language);
-  symbol_tablet symbol_table;
-  namespacet ns(symbol_table);
-  std::cout << "size : " << axioms.size() << std::endl;
-  for(auto ax : axioms)
-  {
-    std:: cout << from_expr(ns, "", ax) << std::endl;
-  }
-}
 
 SCENARIO("union_find_replace", "[core][solvers][refinement][string_refinement]")
 {

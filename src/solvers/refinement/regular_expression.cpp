@@ -125,7 +125,8 @@ std::vector<exprt> flat_patternt::generate_constraints(
     if(atoms[i].quantifier == quantifiert::ONCE)
       result.push_back(equal_exprt(delimiters[i], lower_bound_plus_1));
     else if(atoms[i].quantifier == quantifiert::PLUS)
-      result.push_back(delimiters[i], ID_ge, lower_bound_plus_1);
+      result.push_back(
+        binary_relation_exprt(delimiters[i], ID_ge, lower_bound_plus_1));
     else
     {
       result.push_back(binary_relation_exprt(
