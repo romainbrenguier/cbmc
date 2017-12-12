@@ -62,4 +62,7 @@ private:
   const std::vector<atomic_patternt> atoms;
 };
 
+/// \todo the only function exposed in this file should be a
+/// generate_constraints function that parse a string
+
 #endif // CPROVER_SOLVERS_REFINEMENT_REGULAR_EXPRESSION_H
