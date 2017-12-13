@@ -29,6 +29,16 @@ Author: Nathan Phillips <Nathan.Phillips@diffblue.com>
 /// \return true if \a base is of type \a T
 template<typename T> inline bool can_cast_expr(const exprt &base);
 
+/// \brief Check whether a reference to a generic \ref typet is of a specific
+///   derived class.
+///
+///   Implement template specializations of this function to enable casting
+///
+/// \tparam T The typet-derived class to check for
+/// \param base Reference to a generic \ref typet
+/// \return true if \a base is of type \a T
+template<typename T> inline bool can_cast_type(const typet &base);
+
 /// Called after casting.  Provides a point to assert on the structure of the
 /// expr. By default, this is a no-op, but you can provide an overload to
 /// validate particular types.  Should always succeed unless the program has
@@ -36,6 +46,14 @@ template<typename T> inline bool can_cast_expr(const exprt &base);
 /// these checks have been used historically, but it would be reasonable to
 /// validate objects in this way at any time.
 inline void validate_expr(const exprt &) {}
+
+/// Called after casting.  Provides a point to check data invariants on the
+/// structure of the typet. By default, this is a no-op, but you can provide an
+/// overload to validate particular types. Should always succeed unless the
+/// program has entered an invalid state. We validate objects at cast time as
+/// that is when these checks have been used historically, but it would be
+/// reasonable to validate objects in this way at any time.
+inline void validate_type(const typet &) {}
 
 namespace detail // NOLINT
 {
@@ -86,6 +104,34 @@ auto expr_try_dynamic_cast(TExpr &base)
   return ret;
 }
 
+/// \brief Try to cast a reference to a generic typet to a specific derived
+///    class
+/// \tparam T The reference or const reference type to \a TUnderlying to cast
+///    to
+/// \tparam TType The original type to cast from, either typet or const typet
+/// \param base Reference to a generic \ref typet
+/// \return Ptr to object of type \a TUnderlying
+///   or nullptr if \a base is not an instance of \a TUnderlying
+template <typename T, typename TType>
+auto type_try_dynamic_cast(TType &base)
+  -> typename detail::expr_try_dynamic_cast_return_typet<T, TType>::type
+{
+  typedef
+    typename detail::expr_try_dynamic_cast_return_typet<T, TType>::type
+    returnt;
+  static_assert(
+    std::is_base_of<typet, typename std::decay<TType>::type>::value,
+    "Tried to type_try_dynamic_cast from something that wasn't an typet");
+  static_assert(
+    std::is_base_of<typet, T>::value,
+    "The template argument T must be derived from typet.");
+  if(!can_cast_type<typename std::remove_const<T>::type>(base))
+    return nullptr;
+  const auto ret=static_cast<returnt>(&base);
+  validate_type(*ret);
+  return ret;
+}
+
 namespace detail // NOLINT
 {
 
@@ -123,6 +169,22 @@ auto expr_dynamic_cast(TExpr &base)
   return *ret;
 }
 
+/// \brief Cast a reference to a generic typet to a specific derived class.
+/// \tparam T The reference or const reference type to \a TUnderlying to cast to
+/// \tparam TType The original type to cast from, either typet or const type
+/// \param base Reference to a generic \ref exprt
+/// \return Reference to object of type \a T
+/// \throw std::bad_cast If \a base is not an instance of \a TUnderlying
+template<typename T, typename TType>
+auto type_dynamic_cast(TType &base)
+  -> typename detail::expr_dynamic_cast_return_typet<T, TType>::type
+{
+  const auto ret=type_try_dynamic_cast<T>(base);
+  if(ret==nullptr)
+    throw std::bad_cast();
+  return *ret;
+}
+
 /// \brief Cast a reference to a generic exprt to a specific derived class.
 ///   Also assert that the expression has the expected type.
 /// \tparam T The reference or const reference type to \a TUnderlying to cast to
@@ -138,6 +200,23 @@ auto expr_checked_cast(TExpr &base)
 {
   PRECONDITION(can_cast_expr<T>(base));
   return expr_dynamic_cast<T>(base);
+}
+
+/// \brief Cast a reference to a generic typet to a specific derived class.
+///   Also assert that the typet has the expected type.
+/// \tparam T The reference or const reference type to \a TUnderlying to cast to
+/// \tparam TType The original type to cast from, either typet or const typet
+/// \param base Reference to a generic \ref typet
+/// \return Reference to object of type \a T
+/// \throw std::bad_cast If \a base is not an instance of \a TUnderlying
+/// \remark If CBMC assertions (PRECONDITION) are set to abort then this will
+///   abort rather than throw if \a base is not an instance of \a TUnderlying
+template<typename T, typename TType>
+auto type_checked_cast(TType &base)
+  -> typename detail::expr_dynamic_cast_return_typet<T, TType>::type
+{
+  PRECONDITION(can_cast_type<T>(base));
+  return type_dynamic_cast<T>(base);
 }
 
 inline void validate_operands(
