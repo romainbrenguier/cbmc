@@ -31,19 +31,19 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 class char_array_poolt final
 {
 public:
-  array_string_exprt new_array(
+  array_offset_string_exprt new_array(
     const exprt &char_pointer,
     const typet &char_array_type,
     std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol);
 
-  optionalt<array_string_exprt> find(const exprt &pointer);
+  optionalt<array_offset_string_exprt> find(const exprt &pointer);
 
   bool add(
     const exprt &pointer_expr,
-    array_string_exprt &array_expr,
+    array_offset_string_exprt &array_expr,
     std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol);
 
-  const std::map<exprt, array_string_exprt> &get_arrays_of_pointers() const
+  const std::map<exprt, array_offset_string_exprt> &get_arrays_of_pointers() const
   {
     return arrays_of_pointers;
   }
@@ -51,7 +51,7 @@ public:
 
 private:
   // associate arrays to char pointers
-  std::map<exprt, array_string_exprt> arrays_of_pointers;
+  std::map<exprt, array_offset_string_exprt> arrays_of_pointers;
 
   // associate length to arrays of infinite size
   std::map<array_string_exprt, symbol_exprt> lengths;
@@ -87,7 +87,7 @@ public:
   const std::vector<symbol_exprt> &get_index_symbols() const;
 
   /// Set of strings that have been created by the generator
-  const std::set<array_string_exprt> &get_created_strings() const;
+  const std::set<array_offset_string_exprt> &get_created_strings() const;
 
   exprt get_witness_of(
     const string_not_contains_constraintt &c,
@@ -119,18 +119,18 @@ public:
 
 private:
   symbol_exprt fresh_boolean(const irep_idt &prefix);
-  array_string_exprt
+  array_offset_string_exprt
   fresh_string(const typet &index_type, const typet &char_type);
-  array_string_exprt get_string_expr(const exprt &expr);
+  array_offset_string_exprt get_string_expr(const exprt &expr);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
   static constant_exprt constant_char(int i, const typet &char_type);
 
-  void add_default_axioms(const array_string_exprt &s);
+  void add_default_axioms(const array_offset_string_exprt &s);
   exprt axiom_for_is_positive_index(const exprt &x);
 
   void add_constraint_on_characters(
-    const array_string_exprt &s,
+    const array_offset_string_exprt &s,
     const exprt &start,
     const exprt &end,
     const std::string &char_set);
@@ -157,8 +157,8 @@ private:
 
   exprt add_axioms_for_is_empty(const function_application_exprt &f);
   exprt add_axioms_for_is_prefix(
-    const array_string_exprt &prefix,
-    const array_string_exprt &str,
+    const array_offset_string_exprt &prefix,
+    const array_offset_string_exprt &str,
     const exprt &offset);
   exprt add_axioms_for_is_prefix(
     const function_application_exprt &f, bool swap_arguments=false);
@@ -169,46 +169,46 @@ private:
   exprt add_axioms_for_char_set(const function_application_exprt &f);
   exprt add_axioms_for_copy(const function_application_exprt &f);
   exprt add_axioms_for_concat(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const array_string_exprt &s2);
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &s1,
+    const array_offset_string_exprt &s2);
   exprt add_axioms_for_concat_char(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &s1,
     const exprt &c);
   exprt add_axioms_for_concat_char(const function_application_exprt &f);
   exprt add_axioms_for_concat_substr(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const array_string_exprt &s2,
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &s1,
+    const array_offset_string_exprt &s2,
     const exprt &start_index,
     const exprt &end_index);
   exprt add_axioms_for_concat(const function_application_exprt &f);
   exprt add_axioms_for_concat_code_point(const function_application_exprt &f);
-  exprt add_axioms_for_constant(const array_string_exprt &res, irep_idt sval);
+  exprt add_axioms_for_constant(const array_offset_string_exprt &res, irep_idt sval);
   exprt add_axioms_for_delete(
-    const array_string_exprt &res,
-    const array_string_exprt &str,
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &str,
     const exprt &start,
     const exprt &end);
   exprt add_axioms_for_delete(const function_application_exprt &f);
   exprt add_axioms_for_delete_char_at(const function_application_exprt &expr);
   exprt add_axioms_for_format(const function_application_exprt &f);
   exprt add_axioms_for_format(
-    const array_string_exprt &res,
+    const array_offset_string_exprt &res,
     const std::string &s,
     const exprt::operandst &args);
 
-  array_string_exprt add_axioms_for_format_specifier(
+  array_offset_string_exprt add_axioms_for_format_specifier(
     const format_specifiert &fs,
     const struct_exprt &arg,
     const typet &index_type,
     const typet &char_type);
 
   exprt add_axioms_for_insert(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const array_string_exprt &s2,
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &s1,
+    const array_offset_string_exprt &s2,
     const exprt &offset);
   exprt add_axioms_for_insert(const function_application_exprt &f);
   exprt add_axioms_for_insert_int(const function_application_exprt &f);
@@ -219,36 +219,36 @@ private:
   exprt add_axioms_from_literal(const function_application_exprt &f);
   exprt add_axioms_from_int(const function_application_exprt &f);
   exprt add_axioms_from_int(
-    const array_string_exprt &res,
+    const array_offset_string_exprt &res,
     const exprt &input_int,
     size_t max_size = 0);
   exprt add_axioms_from_int_with_radix(
-    const array_string_exprt &res,
+    const array_offset_string_exprt &res,
     const exprt &input_int,
     const exprt &radix,
     size_t max_size = 0);
-  exprt add_axioms_from_int_hex(const array_string_exprt &res, const exprt &i);
+  exprt add_axioms_from_int_hex(const array_offset_string_exprt &res, const exprt &i);
   exprt add_axioms_from_int_hex(const function_application_exprt &f);
   exprt add_axioms_from_long(const function_application_exprt &f);
   exprt add_axioms_from_bool(const function_application_exprt &f);
-  exprt add_axioms_from_bool(const array_string_exprt &res, const exprt &i);
+  exprt add_axioms_from_bool(const array_offset_string_exprt &res, const exprt &i);
   exprt add_axioms_from_char(const function_application_exprt &f);
-  exprt add_axioms_from_char(const array_string_exprt &res, const exprt &i);
+  exprt add_axioms_from_char(const array_offset_string_exprt &res, const exprt &i);
   exprt add_axioms_for_index_of(
-    const array_string_exprt &str,
+    const array_offset_string_exprt &str,
     const exprt &c,
     const exprt &from_index);
   exprt add_axioms_for_index_of_string(
-    const array_string_exprt &haystack,
-    const array_string_exprt &needle,
+    const array_offset_string_exprt &haystack,
+    const array_offset_string_exprt &needle,
     const exprt &from_index);
   exprt add_axioms_for_index_of(const function_application_exprt &f);
   exprt add_axioms_for_last_index_of_string(
-    const array_string_exprt &haystack,
-    const array_string_exprt &needle,
+    const array_offset_string_exprt &haystack,
+    const array_offset_string_exprt &needle,
     const exprt &from_index);
   exprt add_axioms_for_last_index_of(
-    const array_string_exprt &str,
+    const array_offset_string_exprt &str,
     const exprt &c,
     const exprt &from_index);
 
@@ -261,13 +261,13 @@ private:
   /// the start for negative number
   exprt add_axioms_for_string_of_float(const function_application_exprt &f);
   exprt
-  add_axioms_for_string_of_float(const array_string_exprt &res, const exprt &f);
+  add_axioms_for_string_of_float(const array_offset_string_exprt &res, const exprt &f);
   exprt add_axioms_for_fractional_part(
-    const array_string_exprt &res,
+    const array_offset_string_exprt &res,
     const exprt &i,
     size_t max_size);
   exprt add_axioms_from_float_scientific_notation(
-    const array_string_exprt &res,
+    const array_offset_string_exprt &res,
     const exprt &f);
   exprt add_axioms_from_float_scientific_notation(
     const function_application_exprt &f);
@@ -283,20 +283,20 @@ private:
   /// string is shorter than end. An actual java program should throw an
   /// exception in that case.
   exprt add_axioms_for_substring(
-    const array_string_exprt &res,
-    const array_string_exprt &str,
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &str,
     const exprt &start,
     const exprt &end);
   exprt add_axioms_for_substring(const function_application_exprt &f);
   exprt add_axioms_for_to_lower_case(const function_application_exprt &f);
   exprt add_axioms_for_to_upper_case(const function_application_exprt &f);
   exprt add_axioms_for_to_upper_case(
-    const array_string_exprt &res,
-    const array_string_exprt &expr);
+    const array_offset_string_exprt &res,
+    const array_offset_string_exprt &expr);
   exprt add_axioms_for_trim(const function_application_exprt &f);
 
   exprt add_axioms_for_code_point(
-    const array_string_exprt &res,
+    const array_offset_string_exprt &res,
     const exprt &code_point);
   exprt add_axioms_for_char_literal(const function_application_exprt &f);
 
@@ -319,13 +319,13 @@ private:
     const exprt &input_int,
     const typet &type,
     const bool strict_formatting,
-    const array_string_exprt &str,
+    const array_offset_string_exprt &str,
     const std::size_t max_string_length,
     const exprt &radix,
     const unsigned long radix_ul);
   void add_axioms_for_correct_number_format(
     const exprt &input_int,
-    const array_string_exprt &str,
+    const array_offset_string_exprt &str,
     const exprt &radix_as_char,
     const unsigned long radix_ul,
     const std::size_t max_size,
@@ -343,7 +343,7 @@ private:
 
   exprt associate_length_to_array(const function_application_exprt &f);
 
-  array_string_exprt char_array_of_pointer(
+  array_offset_string_exprt char_array_of_pointer(
     const exprt &ptr, const exprt &length);
 
   // Helper functions
@@ -360,7 +360,7 @@ public:
   // Used to store information about witnesses for not_contains constraints
   std::map<string_not_contains_constraintt, symbol_exprt> witness;
 private:
-  std::set<array_string_exprt> created_strings;
+  std::set<array_offset_string_exprt> created_strings;
   char_array_poolt char_array_pool;
   unsigned symbol_count=0;
   const messaget message;
@@ -371,10 +371,10 @@ private:
   const namespacet ns;
   // To each string on which hash_code was called we associate a symbol
   // representing the return value of the hash_code function.
-  std::map<array_string_exprt, exprt> hash_code_of_string;
+  std::map<array_offset_string_exprt, exprt> hash_code_of_string;
 
   // Pool used for the intern method
-  std::map<array_string_exprt, symbol_exprt> intern_of_string;
+  std::map<array_offset_string_exprt, symbol_exprt> intern_of_string;
 };
 
 exprt is_digit_with_radix(

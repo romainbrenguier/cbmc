@@ -36,9 +36,9 @@ exprt string_constraint_generatort::add_axioms_for_set_length(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 4);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt s1 = get_string_expr(f.arguments()[2]);
   const exprt &k = f.arguments()[3];
   const typet &index_type = s1.length().type();
   const typet &char_type = s1.char_type();
@@ -72,12 +72,12 @@ exprt string_constraint_generatort::add_axioms_for_set_length(
 /// Substring of a string between two indices
 ///
 /// \copybrief string_constraint_generatort::add_axioms_for_substring(
-///   const array_string_exprt &res,
-///   const array_string_exprt &str,
+///   const array_offset_string_exprt &res,
+///   const array_offset_string_exprt &str,
 ///   const exprt &start,
 ///   const exprt &end)
 // NOLINTNEXTLINE
-/// \link string_constraint_generatort::add_axioms_for_substring(const array_string_exprt &res, const array_string_exprt &str, const exprt &start, const exprt &end)
+/// \link string_constraint_generatort::add_axioms_for_substring(const array_offset_string_exprt &res, const array_offset_string_exprt &str, const exprt &start, const exprt &end)
 ///   (More...) \endlink
 /// \warning The specification may not be correct for the case where the string
 /// is shorter than the end index
@@ -93,8 +93,8 @@ exprt string_constraint_generatort::add_axioms_for_substring(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size() == 4 || args.size() == 5);
-  const array_string_exprt str = get_string_expr(args[2]);
-  const array_string_exprt res = char_array_of_pointer(args[1], args[0]);
+  const array_offset_string_exprt str = get_string_expr(args[2]);
+  const array_offset_string_exprt res = char_array_of_pointer(args[1], args[0]);
   const exprt &i = args[3];
   const exprt j = args.size() == 5 ? args[4] : str.length();
   return add_axioms_for_substring(res, str, i, j);
@@ -117,8 +117,8 @@ exprt string_constraint_generatort::add_axioms_for_substring(
 /// \param end: integer expression
 /// \return integer expression equal to zero
 exprt string_constraint_generatort::add_axioms_for_substring(
-  const array_string_exprt &res,
-  const array_string_exprt &str,
+  const array_offset_string_exprt &res,
+  const array_offset_string_exprt &str,
   const exprt &start,
   const exprt &end)
 {
@@ -179,8 +179,8 @@ exprt string_constraint_generatort::add_axioms_for_trim(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt &str = get_string_expr(f.arguments()[2]);
-  const array_string_exprt &res =
+  const array_offset_string_exprt &str = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt &res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const typet &index_type = str.length().type();
   const typet &char_type = str.char_type();
@@ -258,9 +258,9 @@ exprt string_constraint_generatort::add_axioms_for_to_lower_case(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt str = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[2]);
   const refined_string_typet &ref_type =
     to_refined_string_type(f.arguments()[2].type());
   const typet &char_type=ref_type.get_char_type();
@@ -330,8 +330,8 @@ exprt string_constraint_generatort::add_axioms_for_to_lower_case(
 /// \return integer expression which is different from `0` when there is an
 ///         exception to signal
 exprt string_constraint_generatort::add_axioms_for_to_upper_case(
-  const array_string_exprt &res,
-  const array_string_exprt &str)
+  const array_offset_string_exprt &res,
+  const array_offset_string_exprt &str)
 {
   const typet &char_type = str.char_type();
   const typet &index_type = str.length().type();
@@ -369,9 +369,9 @@ exprt string_constraint_generatort::add_axioms_for_to_upper_case(
 /// Conversion of a string to upper case
 ///
 // NOLINTNEXTLINE
-/// \copybrief string_constraint_generatort::add_axioms_for_to_upper_case(const array_string_exprt&, const array_string_exprt&)
+/// \copybrief string_constraint_generatort::add_axioms_for_to_upper_case(const array_offset_string_exprt&, const array_offset_string_exprt&)
 // NOLINTNEXTLINE
-/// \link string_constraint_generatort::add_axioms_for_to_upper_case(const array_string_exprt &res, const array_string_exprt &str)
+/// \link string_constraint_generatort::add_axioms_for_to_upper_case(const array_offset_string_exprt &res, const array_offset_string_exprt &str)
 ///   (More...) \endlink
 /// \param f: function application with arguments integer `|res|`, character
 ///           pointer `&res[0]`, refined_string `str`
@@ -381,9 +381,9 @@ exprt string_constraint_generatort::add_axioms_for_to_upper_case(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  array_string_exprt res =
+  array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  array_string_exprt str = get_string_expr(f.arguments()[2]);
+  array_offset_string_exprt str = get_string_expr(f.arguments()[2]);
   return add_axioms_for_to_upper_case(res, str);
 }
 
@@ -405,8 +405,8 @@ exprt string_constraint_generatort::add_axioms_for_char_set(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 5);
-  const array_string_exprt str = get_string_expr(f.arguments()[2]);
-  const array_string_exprt res =
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const exprt &position = f.arguments()[3];
   const exprt &character = f.arguments()[4];
@@ -433,7 +433,7 @@ exprt string_constraint_generatort::add_axioms_for_char_set(
 static optionalt<std::pair<exprt, exprt>> to_char_pair(
   exprt expr1,
   exprt expr2,
-  std::function<array_string_exprt(const exprt &)> get_string_expr)
+  std::function<array_offset_string_exprt(const exprt &)> get_string_expr)
 {
   if((expr1.type().id()==ID_unsignedbv
       || expr1.type().id()==ID_char)
@@ -445,7 +445,8 @@ static optionalt<std::pair<exprt, exprt>> to_char_pair(
   const auto expr1_length = numeric_cast<std::size_t>(expr1_str.length());
   const auto expr2_length = numeric_cast<std::size_t>(expr2_str.length());
   if(expr1_length && expr2_length && *expr1_length==1 && *expr2_length==1)
-    return std::make_pair(exprt(expr1_str.char_at(0)), exprt(expr2_str.get(0)));
+    return std::make_pair(
+      exprt(expr1_str.char_at(0)), exprt(expr2_str.char_at(0)));
   return { };
 }
 
@@ -472,8 +473,8 @@ exprt string_constraint_generatort::add_axioms_for_replace(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 5);
-  array_string_exprt str = get_string_expr(f.arguments()[2]);
-  array_string_exprt res =
+  array_offset_string_exprt str = get_string_expr(f.arguments()[2]);
+  array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   if(
     const auto maybe_chars =
@@ -508,9 +509,9 @@ exprt string_constraint_generatort::add_axioms_for_delete_char_at(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 4);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt str = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[2]);
   exprt index_one=from_integer(1, str.length().type());
   return add_axioms_for_delete(
     res,
@@ -534,8 +535,8 @@ exprt string_constraint_generatort::add_axioms_for_delete_char_at(
 /// \param end: integer expression
 /// \return integer expression different from zero to signal an exception
 exprt string_constraint_generatort::add_axioms_for_delete(
-  const array_string_exprt &res,
-  const array_string_exprt &str,
+  const array_offset_string_exprt &res,
+  const array_offset_string_exprt &str,
   const exprt &start,
   const exprt &end)
 {
@@ -543,8 +544,8 @@ exprt string_constraint_generatort::add_axioms_for_delete(
   PRECONDITION(end.type()==str.length().type());
   const typet &index_type = str.length().type();
   const typet &char_type = str.char_type();
-  const array_string_exprt sub1 = fresh_string(index_type, char_type);
-  const array_string_exprt sub2 = fresh_string(index_type, char_type);
+  const array_offset_string_exprt sub1 = fresh_string(index_type, char_type);
+  const array_offset_string_exprt sub2 = fresh_string(index_type, char_type);
   const exprt return_code1 = add_axioms_for_substring(
     sub1, str, from_integer(0, str.length().type()), start);
   const exprt return_code2 =
@@ -556,9 +557,9 @@ exprt string_constraint_generatort::add_axioms_for_delete(
 /// Remove a portion of a string
 ///
 // NOLINTNEXTLINE
-/// \copybrief string_constraint_generatort::add_axioms_for_delete(const array_string_exprt &res, const array_string_exprt &str, const exprt &start, const exprt &end)
+/// \copybrief string_constraint_generatort::add_axioms_for_delete(const array_offset_string_exprt &res, const array_offset_string_exprt &str, const exprt &start, const exprt &end)
 // NOLINTNEXTLINE
-/// \link string_constraint_generatort::add_axioms_for_delete(const array_string_exprt &res, const array_string_exprt &str, const exprt &start, const exprt &end)
+/// \link string_constraint_generatort::add_axioms_for_delete(const array_offset_string_exprt &res, const array_offset_string_exprt &str, const exprt &start, const exprt &end)
 ///   (More...) \endlink
 /// \param f: function application with arguments integer `|res|`, character
 ///           pointer `&res[0]`, refined_string `str`, integer `start`
@@ -569,8 +570,8 @@ exprt string_constraint_generatort::add_axioms_for_delete(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 5);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt arg = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt arg = get_string_expr(f.arguments()[2]);
   return add_axioms_for_delete(res, arg, f.arguments()[3], f.arguments()[4]);
 }

@@ -35,7 +35,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \param from_index: an integer expression
 /// \return integer expression `index`
 exprt string_constraint_generatort::add_axioms_for_index_of(
-  const array_string_exprt &str,
+  const array_offset_string_exprt &str,
   const exprt &c,
   const exprt &from_index)
 {
@@ -101,8 +101,8 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 /// \return integer expression `index` representing the first index of `needle`
 ///   in `haystack`
 exprt string_constraint_generatort::add_axioms_for_index_of_string(
-  const array_string_exprt &haystack,
-  const array_string_exprt &needle,
+  const array_offset_string_exprt &haystack,
+  const array_offset_string_exprt &needle,
   const exprt &from_index)
 {
   const typet &index_type=haystack.length().type();
@@ -193,8 +193,8 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
 /// \return integer expression `index` representing the last index of `needle`
 ///         in `haystack` before or at `from_index`, or -1 if there is none
 exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
-  const array_string_exprt &haystack,
-  const array_string_exprt &needle,
+  const array_offset_string_exprt &haystack,
+  const array_offset_string_exprt &needle,
   const exprt &from_index)
 {
   const typet &index_type=haystack.length().type();
@@ -259,9 +259,9 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
 ///
 /// If the target is a character:
 // NOLINTNEXTLINE
-/// \copybrief add_axioms_for_index_of(const array_string_exprt&,const exprt&,const exprt&)
+/// \copybrief add_axioms_for_index_of(const array_offset_string_exprt&,const exprt&,const exprt&)
 /// \link
-/// add_axioms_for_index_of(const array_string_exprt&,const exprt&,const exprt&)
+/// add_axioms_for_index_of(const array_offset_string_exprt&,const exprt&,const exprt&)
 /// (More...) \endlink
 ///
 /// If the target is a refined_string:
@@ -278,7 +278,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size() == 2 || args.size() == 3);
-  const array_string_exprt str = get_string_expr(args[0]);
+  const array_offset_string_exprt str = get_string_expr(args[0]);
   const exprt &c=args[1];
   const typet &index_type = str.length().type();
   const typet &char_type = str.char_type();
@@ -297,7 +297,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
       is_refined_string_type(c.type()),
       string_refinement_invariantt("c can only be a (un)signedbv or a refined "
         "string and the (un)signedbv case is already handled"));
-    array_string_exprt sub = get_string_expr(c);
+    array_offset_string_exprt sub = get_string_expr(c);
     return add_axioms_for_index_of_string(str, sub, from_index);
   }
 }
@@ -326,7 +326,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
 /// \return integer expression `index` representing the last index of `needle`
 ///         in `haystack` before or at `from_index`, or `-1` if there is none
 exprt string_constraint_generatort::add_axioms_for_last_index_of(
-  const array_string_exprt &str,
+  const array_offset_string_exprt &str,
   const exprt &c,
   const exprt &from_index)
 {
@@ -376,9 +376,9 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
 ///
 /// If the target is a character:
 // NOLINTNEXTLINE
-/// \copybrief add_axioms_for_last_index_of(const array_string_exprt&,const exprt&,const exprt&)
+/// \copybrief add_axioms_for_last_index_of(const array_offset_string_exprt&,const exprt&,const exprt&)
 // NOLINTNEXTLINE
-/// \link add_axioms_for_last_index_of(const array_string_exprt&,const exprt&,const exprt&)
+/// \link add_axioms_for_last_index_of(const array_offset_string_exprt&,const exprt&,const exprt&)
 ///   (More...) \endlink
 ///
 /// If the target is a refined_string:
@@ -395,7 +395,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size() == 2 || args.size() == 3);
-  const array_string_exprt str = get_string_expr(args[0]);
+  const array_offset_string_exprt str = get_string_expr(args[0]);
   const exprt c = args[1];
   const typet &index_type = str.length().type();
   const typet &char_type = str.char_type();
@@ -410,7 +410,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   }
   else
   {
-    const array_string_exprt sub = get_string_expr(c);
+    const array_offset_string_exprt sub = get_string_expr(c);
     return add_axioms_for_last_index_of_string(str, sub, from_index);
   }
 }

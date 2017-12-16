@@ -593,8 +593,8 @@ decision_proceduret::resultt string_refinementt::dec_solve()
   for(auto pair : generator.get_char_array_pool().get_arrays_of_pointers())
   {
     debug() << "  * " << from_expr(ns, "", pair.first) << "\t--> "
-            << from_expr(ns, "", pair.second) << " : "
-            << from_type(ns, "", pair.second.type()) << eom;
+            << from_expr(ns, "", pair.second.get_data()) << " : "
+            << from_type(ns, "", pair.second.get_data().type()) << eom;
   }
 #endif
 
@@ -911,15 +911,15 @@ static exprt get_char_array_and_concretize(
   const namespacet &ns,
   const std::size_t max_string_length,
   messaget::mstreamt &stream,
-  const array_string_exprt &arr)
+  const array_offset_string_exprt &arr)
 {
   const auto &eom = messaget::eom;
   static const std::string indent("  ");
-  stream << "- " << from_expr(ns, "", arr) << ":\n";
-  stream << indent << indent << "- type: " << from_type(ns, "", arr.type())
-         << eom;
+  stream << "- " << from_expr(ns, "", arr.get_data()) << ":\n";
+  stream << indent << indent << "- type: "
+         << from_type(ns, "", arr.get_data().type()) << eom;
   const auto arr_model_opt =
-    get_array(super_get, ns, max_string_length, stream, arr);
+    get_array(super_get, ns, max_string_length, stream, arr.get_data());
   if(arr_model_opt)
   {
     stream << indent << indent
@@ -949,7 +949,7 @@ static exprt get_char_array_and_concretize(
   else
   {
     stream << indent << indent << "- incomplete model" << eom;
-    return arr;
+    return nil_exprt();
   }
 }
 
@@ -974,7 +974,7 @@ void debug_model(
     const exprt model = get_char_array_and_concretize(
       super_get, ns, max_string_length, stream, arr);
 
-    stream << "- " << from_expr(ns, "", arr) << ":\n"
+    stream << "- " << from_expr(ns, "", arr.get_data()) << ":\n"
            << indent << "- pointer: " << from_expr(ns, "", pointer_array.first)
            << "\n"
            << indent << "- model: " << from_expr(ns, "", model)
@@ -2132,7 +2132,7 @@ exprt string_refinementt::get(const exprt &expr) const
     else
     {
       auto set = generator.get_created_strings();
-      if(set.find(arr) != set.end())
+      if(false) // set.find(arr) != set.end())
       {
         exprt length = super_get(arr.length());
         if(const auto n = numeric_cast<std::size_t>(length))

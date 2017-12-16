@@ -18,7 +18,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \param code_point: an expression representing a java code point
 /// \return integer expression equal to zero
 exprt string_constraint_generatort::add_axioms_for_code_point(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &code_point)
 {
   const typet &char_type = res.char_type();
@@ -122,7 +122,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_at(
   const typet &return_type = f.type();
   PRECONDITION(return_type.id()==ID_signedbv);
   PRECONDITION(f.arguments().size() == 2);
-  const array_string_exprt str = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   const exprt &pos = f.arguments()[1];
 
   const symbol_exprt result = fresh_symbol("char", return_type);
@@ -154,7 +154,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_before(
   typet return_type=f.type();
   PRECONDITION(return_type.id()==ID_signedbv);
   symbol_exprt result=fresh_symbol("char", return_type);
-  array_string_exprt str = get_string_expr(args[0]);
+  array_offset_string_exprt str = get_string_expr(args[0]);
 
   const exprt &char1=
     str[minus_exprt(args[1], from_integer(2, str.length().type()))];
@@ -182,7 +182,7 @@ exprt string_constraint_generatort::add_axioms_for_code_point_count(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt str = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   const exprt &begin = f.arguments()[1];
   const exprt &end = f.arguments()[2];
   const typet &return_type=f.type();

@@ -256,14 +256,14 @@ static exprt get_component_in_struct(
 /// \param index_type: type for indexes in strings
 /// \param char_type: type of characters
 /// \return String expression representing the output of String.format.
-array_string_exprt
+array_offset_string_exprt
 string_constraint_generatort::add_axioms_for_format_specifier(
   const format_specifiert &fs,
   const struct_exprt &arg,
   const typet &index_type,
   const typet &char_type)
 {
-  const array_string_exprt res = fresh_string(index_type, char_type);
+  const array_offset_string_exprt res = fresh_string(index_type, char_type);
   exprt return_code;
   switch(fs.conversion)
   {
@@ -314,7 +314,7 @@ string_constraint_generatort::add_axioms_for_format_specifier(
   {
     string_constraint_generatort::format_specifiert fs_lower=fs;
     fs_lower.conversion=tolower(fs.conversion);
-    const array_string_exprt lower_case =
+    const array_offset_string_exprt lower_case =
       add_axioms_for_format_specifier(fs_lower, arg, index_type, char_type);
     add_axioms_for_to_upper_case(res, lower_case);
     return res;
@@ -347,12 +347,12 @@ string_constraint_generatort::add_axioms_for_format_specifier(
 /// \param args: a vector of arguments
 /// \return code, 0 on success
 exprt string_constraint_generatort::add_axioms_for_format(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const std::string &s,
   const exprt::operandst &args)
 {
   const std::vector<format_elementt> format_strings=parse_format_string(s);
-  std::vector<array_string_exprt> intermediary_strings;
+  std::vector<array_offset_string_exprt> intermediary_strings;
   std::size_t arg_count=0;
   const typet &char_type = res.char_type();
   const typet &index_type = res.length().type();
@@ -387,7 +387,7 @@ exprt string_constraint_generatort::add_axioms_for_format(
     }
     else
     {
-      const array_string_exprt str = fresh_string(index_type, char_type);
+      const array_offset_string_exprt str = fresh_string(index_type, char_type);
       const exprt return_code =
         add_axioms_for_constant(str, fe.get_format_text().get_content());
       intermediary_strings.push_back(str);
@@ -398,11 +398,11 @@ exprt string_constraint_generatort::add_axioms_for_format(
       array_exprt(array_typet(char_type, from_integer(0, index_type))));
 
   auto it=intermediary_strings.begin();
-  array_string_exprt str = *(it++);
+  array_offset_string_exprt str = *(it++);
   exprt return_code = from_integer(0, signedbv_typet(32));
   for(; it!=intermediary_strings.end(); ++it)
   {
-    const array_string_exprt fresh = fresh_string(index_type, char_type);
+    const array_offset_string_exprt fresh = fresh_string(index_type, char_type);
     return_code =
       bitor_exprt(return_code, add_axioms_for_concat(fresh, str, *it));
     str = fresh;
@@ -447,17 +447,19 @@ exprt string_constraint_generatort::add_axioms_for_format(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() >= 3);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt s1 = get_string_expr(f.arguments()[2]);
   unsigned int length;
 
+  const auto offset = numeric_cast<std::size_t>(s1.get_offset());
   if(s1.length().id()==ID_constant &&
-     s1.content().id()==ID_array &&
-     !to_unsigned_integer(to_constant_expr(s1.length()), length))
+     !to_unsigned_integer(to_constant_expr(s1.length()), length) &&
+     offset)
   {
     std::string s=utf16_constant_array_to_java(
-      to_array_expr(s1.content()), length);
+      to_array_expr(s1.get_data()), length);
+    s = s.substr(*offset);
     // List of arguments after s
     std::vector<exprt> args(f.arguments().begin() + 3, f.arguments().end());
     return add_axioms_for_format(res, s, args);

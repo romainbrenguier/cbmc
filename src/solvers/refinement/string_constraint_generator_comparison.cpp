@@ -31,8 +31,8 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
   PRECONDITION(f.arguments().size() == 2);
 
-  array_string_exprt s1 = get_string_expr(f.arguments()[0]);
-  array_string_exprt s2 = get_string_expr(f.arguments()[1]);
+  array_offset_string_exprt s1 = get_string_expr(f.arguments()[0]);
+  array_offset_string_exprt s2 = get_string_expr(f.arguments()[1]);
   symbol_exprt eq=fresh_boolean("equal");
   typecast_exprt tc_eq(eq, f.type());
 
@@ -115,8 +115,8 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
   PRECONDITION(f.arguments().size() == 2);
   const symbol_exprt eq = fresh_boolean("equal_ignore_case");
-  const array_string_exprt s1 = get_string_expr(f.arguments()[0]);
-  const array_string_exprt s2 = get_string_expr(f.arguments()[1]);
+  const array_offset_string_exprt s1 = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt s2 = get_string_expr(f.arguments()[1]);
   const typet char_type = s1.char_type();
   const exprt char_a = constant_char('a', char_type);
   const exprt char_A = constant_char('A', char_type);
@@ -165,7 +165,7 @@ exprt string_constraint_generatort::add_axioms_for_hash_code(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 1);
-  const array_string_exprt str = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   const typet &return_type = f.type();
   const typet &index_type = str.length().type();
 
@@ -213,8 +213,8 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
   PRECONDITION(f.arguments().size() == 2);
   const typet &return_type=f.type();
   PRECONDITION(return_type.id() == ID_signedbv);
-  const array_string_exprt &s1 = get_string_expr(f.arguments()[0]);
-  const array_string_exprt &s2 = get_string_expr(f.arguments()[1]);
+  const array_offset_string_exprt &s1 = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt &s2 = get_string_expr(f.arguments()[1]);
   const symbol_exprt res = fresh_symbol("compare_to", return_type);
   const typet &index_type = s1.length().type();
 
@@ -270,7 +270,7 @@ symbol_exprt string_constraint_generatort::add_axioms_for_intern(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 1);
-  const array_string_exprt str = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   // For now we only enforce content equality and not pointer equality
   const typet &return_type=f.type();
   const typet index_type = str.length().type();
@@ -291,7 +291,7 @@ symbol_exprt string_constraint_generatort::add_axioms_for_intern(
 
   // WARNING: the specification may be incomplete or incorrect
   for(auto it : intern_of_string)
-    if(it.second!=str)
+    if(it.second!=str.get_data())
     {
       symbol_exprt i=fresh_exist_index("index_intern", index_type);
       axioms.push_back(

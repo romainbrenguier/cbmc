@@ -156,7 +156,7 @@ exprt string_constraint_generatort::add_axioms_for_string_of_float(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  array_string_exprt res =
+  array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   return add_axioms_for_string_of_float(res, f.arguments()[2]);
 }
@@ -183,7 +183,7 @@ exprt string_constraint_generatort::add_axioms_from_double(
 /// \return an integer expression, different from zero if an error should be
 ///   raised
 exprt string_constraint_generatort::add_axioms_for_string_of_float(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &f)
 {
   const floatbv_typet &type=to_floatbv_type(f.type());
@@ -200,7 +200,7 @@ exprt string_constraint_generatort::add_axioms_for_string_of_float(
   const exprt max_non_exponent_notation = from_integer(100000, shifted.type());
   // fractional_part is floor(f * 100000) % 100000
   const mod_exprt fractional_part(shifted, max_non_exponent_notation);
-  const array_string_exprt fractional_part_str =
+  const array_offset_string_exprt fractional_part_str =
     fresh_string(index_type, char_type);
   const exprt return_code1 =
     add_axioms_for_fractional_part(fractional_part_str, fractional_part, 6);
@@ -211,7 +211,7 @@ exprt string_constraint_generatort::add_axioms_for_string_of_float(
     round_expr_to_zero(f), max_non_exponent_notation);
   // We should not need more than 8 characters to represent the integer
   // part of the float.
-  const array_string_exprt integer_part_str =
+  const array_offset_string_exprt integer_part_str =
     fresh_string(index_type, char_type);
   const exprt return_code2 =
     add_axioms_from_int(integer_part_str, integer_part, 8);
@@ -227,7 +227,7 @@ exprt string_constraint_generatort::add_axioms_for_string_of_float(
 ///   potential minus sign and therefore should be greater than 2
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_for_fractional_part(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &int_expr,
   size_t max_size)
 {
@@ -313,7 +313,7 @@ exprt string_constraint_generatort::add_axioms_for_fractional_part(
 /// \param f: a float expression, which is positive
 /// \return a integer expression different from 0 to signal an exception
 exprt string_constraint_generatort::add_axioms_from_float_scientific_notation(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &f)
 {
   const ieee_float_spect float_spec = ieee_float_spect::single_precision();
@@ -421,7 +421,7 @@ exprt string_constraint_generatort::add_axioms_from_float_scientific_notation(
     dec_significand);
   dec_significand_int=round_expr_to_zero(dec_significand);
 
-  array_string_exprt string_expr_integer_part =
+  array_offset_string_exprt string_expr_integer_part =
     fresh_string(index_type, char_type);
   exprt return_code1 =
     add_axioms_from_int(string_expr_integer_part, dec_significand_int, 3);
@@ -441,14 +441,14 @@ exprt string_constraint_generatort::add_axioms_from_float_scientific_notation(
   const mod_exprt fractional_part_shifted(
     shifted_float, max_non_exponent_notation);
 
-  array_string_exprt string_fractional_part =
+  array_offset_string_exprt string_fractional_part =
     fresh_string(index_type, char_type);
   const exprt return_code2 = add_axioms_for_fractional_part(
     string_fractional_part, fractional_part_shifted, 6);
 
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
-  const array_string_exprt string_expr_with_fractional_part =
+  const array_offset_string_exprt string_expr_with_fractional_part =
     fresh_string(index_type, char_type);
   const exprt return_code3 = add_axioms_for_concat(
     string_expr_with_fractional_part,
@@ -456,15 +456,15 @@ exprt string_constraint_generatort::add_axioms_from_float_scientific_notation(
     string_fractional_part);
 
   // string_expr_with_E = concat(string_fraction, string_lit_E)
-  const array_string_exprt stringE = fresh_string(index_type, char_type);
+  const array_offset_string_exprt stringE = fresh_string(index_type, char_type);
   const exprt return_code4 = add_axioms_for_constant(stringE, "E");
-  const array_string_exprt string_expr_with_E =
+  const array_offset_string_exprt string_expr_with_E =
     fresh_string(index_type, char_type);
   const exprt return_code5 = add_axioms_for_concat(
     string_expr_with_E, string_expr_with_fractional_part, stringE);
 
   // exponent_string = string_of_int(decimal_exponent)
-  const array_string_exprt exponent_string =
+  const array_offset_string_exprt exponent_string =
     fresh_string(index_type, char_type);
   const exprt return_code6 =
     add_axioms_from_int(exponent_string, decimal_exponent, 3);
@@ -483,7 +483,7 @@ exprt string_constraint_generatort::add_axioms_from_float_scientific_notation(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const exprt &arg = f.arguments()[2];
   return add_axioms_from_float_scientific_notation(res, arg);

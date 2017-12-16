@@ -21,7 +21,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \param sval: a string constant
 /// \return integer expression equal to zero
 exprt string_constraint_generatort::add_axioms_for_constant(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   irep_idt sval)
 {
   const typet &index_type = res.length().type();
@@ -78,7 +78,7 @@ exprt string_constraint_generatort::add_axioms_from_literal(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size() == 3); // Bad args to string literal?
-  const array_string_exprt res = char_array_of_pointer(args[1], args[0]);
+  const array_offset_string_exprt res = char_array_of_pointer(args[1], args[0]);
   const exprt &arg = args[2];
   irep_idt sval=to_constant_expr(arg).get_value();
   return add_axioms_for_constant(res, sval);

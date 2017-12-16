@@ -38,9 +38,9 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \param end_index: integer expression
 /// \return integer expression `0`
 exprt string_constraint_generatort::add_axioms_for_concat_substr(
-  const array_string_exprt &res,
-  const array_string_exprt &s1,
-  const array_string_exprt &s2,
+  const array_offset_string_exprt &res,
+  const array_offset_string_exprt &s1,
+  const array_offset_string_exprt &s2,
   const exprt &start_index,
   const exprt &end_index)
 {
@@ -80,8 +80,8 @@ exprt string_constraint_generatort::add_axioms_for_concat_substr(
 /// \param c: character expression
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_for_concat_char(
-  const array_string_exprt &res,
-  const array_string_exprt &s1,
+  const array_offset_string_exprt &res,
+  const array_offset_string_exprt &s1,
   const exprt &c)
 {
   const typet &index_type = res.length().type();
@@ -109,9 +109,9 @@ exprt string_constraint_generatort::add_axioms_for_concat_char(
 /// \param s2: the string expression to append to the first one
 /// \return an integer expression
 exprt string_constraint_generatort::add_axioms_for_concat(
-  const array_string_exprt &res,
-  const array_string_exprt &s1,
-  const array_string_exprt &s2)
+  const array_offset_string_exprt &res,
+  const array_offset_string_exprt &s1,
+  const array_offset_string_exprt &s2)
 {
   exprt index_zero=from_integer(0, s2.length().type());
   return add_axioms_for_concat_substr(res, s1, s2, index_zero, s2.length());
@@ -133,9 +133,9 @@ exprt string_constraint_generatort::add_axioms_for_concat(
 {
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(args.size() == 4 || args.size() == 6);
-  const array_string_exprt s1 = get_string_expr(args[2]);
-  const array_string_exprt s2 = get_string_expr(args[3]);
-  const array_string_exprt res = char_array_of_pointer(args[1], args[0]);
+  const array_offset_string_exprt s1 = get_string_expr(args[2]);
+  const array_offset_string_exprt s2 = get_string_expr(args[3]);
+  const array_offset_string_exprt res = char_array_of_pointer(args[1], args[0]);
   if(args.size() == 6)
     return add_axioms_for_concat_substr(res, s1, s2, args[4], args[5]);
   else // args.size()==4
@@ -154,9 +154,9 @@ exprt string_constraint_generatort::add_axioms_for_concat_char(
 {
   const function_application_exprt::argumentst &args = f.arguments();
   PRECONDITION(args.size() == 4);
-  const array_string_exprt s1 = get_string_expr(args[2]);
+  const array_offset_string_exprt s1 = get_string_expr(args[2]);
   const exprt &c = args[3];
-  const array_string_exprt res = char_array_of_pointer(args[1], args[0]);
+  const array_offset_string_exprt res = char_array_of_pointer(args[1], args[0]);
   return add_axioms_for_concat_char(res, s1, c);
 }
 
@@ -168,12 +168,12 @@ exprt string_constraint_generatort::add_axioms_for_concat_code_point(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 4);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(f.arguments()[2]);
+  const array_offset_string_exprt s1 = get_string_expr(f.arguments()[2]);
   const typet &char_type = s1.char_type();
   const typet &index_type = s1.length().type();
-  const array_string_exprt code_point = fresh_string(index_type, char_type);
+  const array_offset_string_exprt code_point = fresh_string(index_type, char_type);
   const exprt return_code1 =
     add_axioms_for_code_point(code_point, f.arguments()[3]);
   return add_axioms_for_concat(res, s1, code_point);

@@ -29,8 +29,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \param offset: an integer
 /// \return Boolean expression `isprefix`
 exprt string_constraint_generatort::add_axioms_for_is_prefix(
-  const array_string_exprt &prefix,
-  const array_string_exprt &str,
+  const array_offset_string_exprt &prefix,
+  const array_offset_string_exprt &str,
   const exprt &offset)
 {
   symbol_exprt isprefix=fresh_boolean("isprefix");
@@ -71,7 +71,7 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
 /// given target.
 /// These axioms are detailed here:
 // NOLINTNEXTLINE
-/// string_constraint_generatort::add_axioms_for_is_prefix(const array_string_exprt &prefix, const array_string_exprt &str, const exprt &offset)
+/// string_constraint_generatort::add_axioms_for_is_prefix(const array_offset_string_exprt &prefix, const array_offset_string_exprt &str, const exprt &offset)
 /// \todo The primitive should be renamed to `starts_with`.
 /// \todo Get rid of the boolean flag.
 /// \param f: a function application with arguments refined_string `s0`,
@@ -86,8 +86,8 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
   const function_application_exprt::argumentst &args=f.arguments();
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
   PRECONDITION(args.size() == 2 || args.size() == 3);
-  const array_string_exprt s0 = get_string_expr(args[swap_arguments ? 1 : 0]);
-  const array_string_exprt s1 = get_string_expr(args[swap_arguments ? 0 : 1]);
+  const array_offset_string_exprt s0 = get_string_expr(args[swap_arguments ? 1 : 0]);
+  const array_offset_string_exprt s1 = get_string_expr(args[swap_arguments ? 0 : 1]);
   const exprt offset =
     args.size() == 2 ? from_integer(0, s0.length().type()) : args[2];
   return typecast_exprt(add_axioms_for_is_prefix(s0, s1, offset), f.type());
@@ -108,7 +108,7 @@ exprt string_constraint_generatort::add_axioms_for_is_empty(
   // a2 : s0 => is_empty
 
   symbol_exprt is_empty=fresh_boolean("is_empty");
-  array_string_exprt s0 = get_string_expr(f.arguments()[0]);
+  array_offset_string_exprt s0 = get_string_expr(f.arguments()[0]);
   axioms.push_back(implies_exprt(is_empty, s0.axiom_for_has_length(0)));
   axioms.push_back(implies_exprt(s0.axiom_for_has_length(0), is_empty));
   return typecast_exprt(is_empty, f.type());
@@ -143,8 +143,8 @@ exprt string_constraint_generatort::add_axioms_for_is_suffix(
 
   symbol_exprt issuffix=fresh_boolean("issuffix");
   typecast_exprt tc_issuffix(issuffix, f.type());
-  const array_string_exprt &s0 = get_string_expr(args[swap_arguments ? 1 : 0]);
-  const array_string_exprt &s1 = get_string_expr(args[swap_arguments ? 0 : 1]);
+  const array_offset_string_exprt &s0 = get_string_expr(args[swap_arguments ? 1 : 0]);
+  const array_offset_string_exprt &s1 = get_string_expr(args[swap_arguments ? 0 : 1]);
   const typet &index_type=s0.length().type();
 
   implies_exprt a1(issuffix, s1.axiom_for_length_ge(s0.length()));
@@ -198,8 +198,8 @@ exprt string_constraint_generatort::add_axioms_for_contains(
 {
   PRECONDITION(f.arguments().size() == 2);
   PRECONDITION(f.type()==bool_typet() || f.type().id()==ID_c_bool);
-  const array_string_exprt s0 = get_string_expr(f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(f.arguments()[1]);
+  const array_offset_string_exprt s0 = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt s1 = get_string_expr(f.arguments()[1]);
   const typet &index_type = s0.length().type();
   const symbol_exprt contains = fresh_boolean("contains");
   const symbol_exprt startpos =

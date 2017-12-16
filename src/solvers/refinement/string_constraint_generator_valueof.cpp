@@ -27,7 +27,7 @@ exprt string_constraint_generatort::add_axioms_from_int(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3 || f.arguments().size() == 4);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   if(f.arguments().size() == 4)
     return add_axioms_from_int_with_radix(
@@ -44,7 +44,7 @@ exprt string_constraint_generatort::add_axioms_from_long(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3 || f.arguments().size() == 4);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   if(f.arguments().size() == 4)
     return add_axioms_from_int_with_radix(
@@ -61,7 +61,7 @@ exprt string_constraint_generatort::add_axioms_from_bool(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   return add_axioms_from_bool(res, f.arguments()[2]);
 }
@@ -73,7 +73,7 @@ exprt string_constraint_generatort::add_axioms_from_bool(
 /// \param b: Boolean expression
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_from_bool(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &b)
 {
   const typet &char_type = res.char_type();
@@ -121,7 +121,7 @@ exprt string_constraint_generatort::add_axioms_from_bool(
 ///   which is interpreted to mean "as large as is needed for this type")
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_from_int(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &input_int,
   size_t max_size)
 {
@@ -139,7 +139,7 @@ exprt string_constraint_generatort::add_axioms_from_int(
 ///   which is interpreted to mean "as large as is needed for this type")
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_from_int_with_radix(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &input_int,
   const exprt &radix,
   size_t max_size)
@@ -201,7 +201,7 @@ exprt string_constraint_generatort::int_of_hex_char(const exprt &chr)
 /// \param i: an integer argument
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_from_int_hex(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &i)
 {
   const typet &type=i.type();
@@ -260,7 +260,7 @@ exprt string_constraint_generatort::add_axioms_from_int_hex(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   return add_axioms_from_int_hex(res, f.arguments()[2]);
 }
@@ -268,9 +268,9 @@ exprt string_constraint_generatort::add_axioms_from_int_hex(
 /// Conversion from char to string
 ///
 /// \copybrief  string_constraint_generatort::add_axioms_from_char(
-///   const array_string_exprt &res, const exprt &c)
+///   const array_offset_string_exprt &res, const exprt &c)
 // NOLINTNEXTLINE
-/// \link string_constraint_generatort::add_axioms_from_char(const array_string_exprt &res, const exprt &c)
+/// \link string_constraint_generatort::add_axioms_from_char(const array_offset_string_exprt &res, const exprt &c)
 ///    (More...) \endlink
 /// \param f: function application with arguments integer `|res|`, character
 ///           pointer `&res[0]` and character `c`
@@ -279,7 +279,7 @@ exprt string_constraint_generatort::add_axioms_from_char(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt res =
+  const array_offset_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   return add_axioms_from_char(res, f.arguments()[2]);
 }
@@ -292,7 +292,7 @@ exprt string_constraint_generatort::add_axioms_from_char(
 /// \param c: character expression
 /// \return code 0 on success
 exprt string_constraint_generatort::add_axioms_from_char(
-  const array_string_exprt &res,
+  const array_offset_string_exprt &res,
   const exprt &c)
 {
   and_exprt lemma(equal_exprt(res.char_at(0), c), res.axiom_for_has_length(1));
@@ -313,7 +313,7 @@ exprt string_constraint_generatort::add_axioms_from_char(
 ///   zeros or upper case letters
 void string_constraint_generatort::add_axioms_for_correct_number_format(
   const exprt &input_int,
-  const array_string_exprt &str,
+  const array_offset_string_exprt &str,
   const exprt &radix_as_char,
   const unsigned long radix_ul,
   const std::size_t max_size,
@@ -401,7 +401,7 @@ void string_constraint_generatort::add_axioms_for_characters_in_integer_string(
   const exprt &input_int,
   const typet &type,
   const bool strict_formatting,
-  const array_string_exprt &str,
+  const array_offset_string_exprt &str,
   const std::size_t max_string_length,
   const exprt &radix,
   const unsigned long radix_ul)
@@ -488,7 +488,7 @@ exprt string_constraint_generatort::add_axioms_for_parse_int(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size()==1 || f.arguments().size()==2);
-  const array_string_exprt str = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   const typet &type=f.type();
   PRECONDITION(type.id()==ID_signedbv);
   const exprt radix=f.arguments().size()==1?

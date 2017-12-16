@@ -52,7 +52,7 @@ string_constraint_generatort::get_boolean_symbols() const
   return boolean_symbols;
 }
 
-const std::set<array_string_exprt> &
+const std::set<array_offset_string_exprt> &
 string_constraint_generatort::get_created_strings() const
 {
   return created_strings;
@@ -141,7 +141,7 @@ plus_exprt string_constraint_generatort::plus_exprt_with_overflow_check(
   return sum;
 }
 
-optionalt<array_string_exprt> char_array_poolt::find(const exprt &pointer)
+optionalt<array_offset_string_exprt> char_array_poolt::find(const exprt &pointer)
 {
   const auto it = arrays_of_pointers.find(pointer);
   if(it != arrays_of_pointers.end())
@@ -166,14 +166,15 @@ exprt char_array_poolt::get_length(const array_string_exprt &s) const
 /// construct a string expression whose length and content are new variables
 /// \par parameters: a type for string
 /// \return a string expression
-array_string_exprt string_constraint_generatort::fresh_string(
+array_offset_string_exprt string_constraint_generatort::fresh_string(
   const typet &index_type,
   const typet &char_type)
 {
   symbol_exprt length = fresh_symbol("string_length", index_type);
   array_typet array_type(char_type, length);
   symbol_exprt content = fresh_symbol("string_content", array_type);
-  array_string_exprt str = to_array_string_expr(content);
+  array_offset_string_exprt str(
+    to_array_string_expr(content), from_integer(0, length.type()), length);
   created_strings.insert(str);
   add_default_axioms(str);
   return str;
@@ -181,7 +182,7 @@ array_string_exprt string_constraint_generatort::fresh_string(
 
 // Associate a char array to a char pointer. The size of the char array is a
 // variable with no constraint.
-array_string_exprt char_array_poolt::new_array(
+array_offset_string_exprt char_array_poolt::new_array(
   const exprt &char_pointer,
   const typet &char_array_type,
   std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol)
@@ -191,6 +192,7 @@ array_string_exprt char_array_poolt::new_array(
   PRECONDITION(
     char_array_type.subtype().id() == ID_unsignedbv ||
     char_array_type.subtype().id() == ID_signedbv);
+  const array_typet &array_type = to_array_type(char_array_type);
   std::string symbol_name;
   if(
     char_pointer.id() == ID_address_of &&
@@ -198,8 +200,10 @@ array_string_exprt char_array_poolt::new_array(
     char_pointer.op0().op0().id() == ID_array)
   {
     // Do not replace constant arrays
-    return to_array_string_expr(
-      to_index_expr(to_address_of_expr(char_pointer).object()).array());
+    const auto array = to_array_string_expr(
+        to_index_expr(to_address_of_expr(char_pointer).object()).array());
+    const exprt &len = array.length();
+    return array_offset_string_exprt(array, from_integer(0, len.type()), len);
   }
   else if(char_pointer.id() == ID_address_of)
   {
@@ -208,17 +212,18 @@ array_string_exprt char_array_poolt::new_array(
   else if(char_pointer.id() == ID_if)
   {
     const if_exprt &if_expr = to_if_expr(char_pointer);
-    const array_string_exprt t = new_array(
+    const array_offset_string_exprt t = new_array(
       if_expr.true_case(), char_array_type, fresh_symbol);
-    const array_string_exprt f = new_array(
+    const array_offset_string_exprt f = new_array(
       if_expr.false_case(), char_array_type, fresh_symbol);
     array_typet array_type(
       char_array_type.subtype(),
-      if_exprt(
-        if_expr.cond(),
-        to_array_type(t.type()).size(),
-        to_array_type(f.type()).size()));
-    return to_array_string_expr(if_exprt(if_expr.cond(), t, f, array_type));
+      if_exprt(if_expr.cond(), t.length(), f.length()));
+    return array_offset_string_exprt(
+      to_array_string_expr(
+        if_exprt(if_expr.cond(), t.get_data(), f.get_data(), array_type)),
+      from_integer(0, array_type.size().type()),
+      array_type.size());
   }
   else if(char_pointer.id() == ID_symbol)
     symbol_name = "char_array_symbol";
@@ -233,16 +238,19 @@ array_string_exprt char_array_poolt::new_array(
       char_array_type.subtype(),
       from_integer(0, to_array_type(char_array_type).size().type()));
     symbol_exprt array_sym = fresh_symbol("char_array_null", array_type);
-    return to_array_string_expr(array_sym);
+    return array_offset_string_exprt(
+      to_array_string_expr(array_sym), array_type.size(), array_type.size());
   }
   else
     symbol_name = "unknown_char_array";
 
   array_string_exprt array_sym =
     to_array_string_expr(fresh_symbol(symbol_name, char_array_type));
+  array_offset_string_exprt array_off(
+    array_sym, from_integer(0, array_type.size().type()), array_type.size());
   auto insert_result =
-    arrays_of_pointers.insert(std::make_pair(char_pointer, array_sym));
-  array_string_exprt result = to_array_string_expr(insert_result.first->second);
+    arrays_of_pointers.insert(std::make_pair(char_pointer, array_off));
+  array_offset_string_exprt result = insert_result.first->second;
   return result;
 }
 
@@ -250,14 +258,14 @@ array_string_exprt char_array_poolt::new_array(
 /// \return true if added, false if already present
 bool char_array_poolt::add(
   const exprt &pointer_expr,
-  array_string_exprt &array_expr,
+  array_offset_string_exprt &array_expr,
   std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol)
 {
   const auto &length = array_expr.length();
   if(length == infinity_exprt(length.type()))
   {
-    auto pair = lengths.insert(
-      std::make_pair(array_expr, fresh_symbol("string_length", length.type())));
+    auto pair = lengths.insert(std::make_pair(
+      array_expr.get_data(), fresh_symbol("string_length", length.type())));
     array_expr.length() = pair.first->second;
   }
 
@@ -285,16 +293,19 @@ exprt string_constraint_generatort::associate_array_to_pointer(
   array_string_exprt array_expr = to_array_string_expr(
     f.arguments()[0].id() == ID_index ? to_index_expr(f.arguments()[0]).array()
                                       : f.arguments()[0]);
+  const exprt &len = array_expr.length();
+  array_offset_string_exprt array_off(
+    array_expr, from_integer(0, len.type()), len);
 
   const exprt &pointer_expr = f.arguments()[1];
 
   const bool added = char_array_pool.add(
-    pointer_expr, array_expr, [&](const dstringt &prefix, const typet &type)
+    pointer_expr, array_off, [&](const dstringt &prefix, const typet &type)
     {
       return fresh_symbol(prefix, type);
     });
   INVARIANT(added, "should not associate two arrays to the same pointer");
-  add_default_axioms(to_array_string_expr(array_expr));
+  add_default_axioms(array_off);
   return from_integer(0, f.type());
 }
 
@@ -319,7 +330,7 @@ exprt string_constraint_generatort::associate_length_to_array(
 /// string_exprt in the case of a symbol.
 /// \param expr: an expression of refined string type
 /// \return a string expression
-array_string_exprt
+array_offset_string_exprt
 string_constraint_generatort::get_string_expr(const exprt &expr)
 {
   PRECONDITION(is_refined_string_type(expr.type()));
@@ -335,7 +346,7 @@ string_constraint_generatort::get_string_expr(const exprt &expr)
 /// \return a string expression that is linked to the argument through axioms
 ///   that are added to the list
 void string_constraint_generatort::add_default_axioms(
-  const array_string_exprt &s)
+  const array_offset_string_exprt &s)
 {
   // If `s` was already added we do nothing.
   if(!created_strings.insert(s).second)
@@ -361,7 +372,7 @@ void string_constraint_generatort::add_default_axioms(
 /// \return a string expression that is linked to the argument through axioms
 ///   that are added to the list
 void string_constraint_generatort::add_constraint_on_characters(
-  const array_string_exprt &s,
+  const array_offset_string_exprt &s,
   const exprt &start,
   const exprt &end,
   const std::string &char_set)
@@ -399,7 +410,7 @@ exprt string_constraint_generatort::add_axioms_for_constrain_characters(
   PRECONDITION(3 <= args.size() && args.size() <= 5);
   PRECONDITION(args[2].type().id() == ID_string);
   PRECONDITION(args[2].id() == ID_constant);
-  const array_string_exprt s = char_array_of_pointer(args[1], args[0]);
+  const array_offset_string_exprt s = char_array_of_pointer(args[1], args[0]);
   const irep_idt &char_set_string = to_constant_expr(args[2]).get_value();
   const exprt &start =
     args.size() >= 4 ? args[3] : from_integer(0, s.length().type());
@@ -409,7 +420,7 @@ exprt string_constraint_generatort::add_axioms_for_constrain_characters(
 }
 
 /// Adds creates a new array if it does not already exists
-array_string_exprt string_constraint_generatort::char_array_of_pointer(
+array_offset_string_exprt string_constraint_generatort::char_array_of_pointer(
   const exprt &pointer,
   const exprt &length)
 {
@@ -417,7 +428,7 @@ array_string_exprt string_constraint_generatort::char_array_of_pointer(
     return *arr_opt;
 
   const array_typet array_type(pointer.type().subtype(), length);
-  const array_string_exprt array = char_array_pool.new_array(
+  const array_offset_string_exprt array = char_array_pool.new_array(
     pointer,
     array_type,
     [&](const dstringt &prefix, const typet &type)
@@ -576,8 +587,8 @@ exprt string_constraint_generatort::add_axioms_for_copy(
 {
   const auto &args=f.arguments();
   PRECONDITION(args.size() == 3 || args.size() == 5);
-  const array_string_exprt res = char_array_of_pointer(args[1], args[0]);
-  const array_string_exprt str = get_string_expr(args[2]);
+  const array_offset_string_exprt res = char_array_of_pointer(args[1], args[0]);
+  const array_offset_string_exprt str = get_string_expr(args[2]);
   const typet &index_type = str.length().type();
   const exprt offset = args.size() == 3 ? from_integer(0, index_type) : args[3];
   const exprt count = args.size() == 3 ? str.length() : args[4];
@@ -593,7 +604,7 @@ exprt string_constraint_generatort::add_axioms_for_length(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 1);
-  const array_string_exprt str = get_string_expr(f.arguments()[0]);
+  const array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   return str.length();
 }
 
@@ -647,7 +658,7 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
   const function_application_exprt &f)
 {
   PRECONDITION(f.arguments().size() == 2);
-  array_string_exprt str = get_string_expr(f.arguments()[0]);
+  array_offset_string_exprt str = get_string_expr(f.arguments()[0]);
   symbol_exprt char_sym = fresh_symbol("char", str.char_type());
   axioms.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
