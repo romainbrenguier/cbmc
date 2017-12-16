@@ -27,6 +27,8 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <solvers/sat/satcheck.h>
 #include <solvers/refinement/string_constraint_instantiation.h>
 #include <java_bytecode/java_types.h>
+#include <iostream>
+#include <util/ssa_expr.h>
 
 static exprt substitute_array_with_expr(const exprt &expr, const exprt &index);
 
@@ -417,7 +419,40 @@ static union_find_replacet generate_symbol_resolution_from_equations(
     }
     else if(rhs.id() == ID_function_application)
     {
-      // function applications can be ignored because they will be replaced
+      /*
+      auto fun = expr_checked_cast<function_application_exprt>(rhs);
+      const auto fun_name = fun.function();
+      const irep_idt &id=
+        is_ssa_expr(fun_name)
+        ? to_ssa_expr(fun_name).get_object_name()
+        : to_symbol_expr(fun_name).get_identifier();
+      std::cout << id << std::endl;
+
+      if(id == ID_cprover_string_concat_func)
+      {
+        std::cout << fun.pretty() << std::endl;
+        // arg0 is a substring of lhs
+        exprt substring1("substring");
+        substring1.operands().push_back(from_integer(0, java_int_type()));
+        substring1.operands().push_back(lhs);
+        solver.make_union(fun.arguments()[0], substring1);
+        // arg1 is a substring of lhs
+        exprt substring2("substring");
+        substring2.operands().push_back(fun.arguments()[0]);
+        substring2.operands().push_back(lhs);
+        solver.make_union(fun.arguments()[1], substring2);
+      }
+      else if(id == ID_cprover_string_substring_func)
+      {
+        std::cout << fun.pretty() << std::endl;
+        // lhs is a substring of lhs
+        exprt substring1("substring");
+        substring1.operands().push_back(fun.arguments()[0]);
+        substring1.operands().push_back(fun.arguments()[1]);
+        solver.make_union(lhs, substring1);
+      }
+*/
+      // other function applications can be ignored because they will be replaced
       // in the convert_function_application step of dec_solve
     }
     else if(has_char_pointer_subtype(lhs.type(), ns))
@@ -521,6 +556,7 @@ void output_equations(
 /// \return `resultt::D_SATISFIABLE` if the constraints are satisfiable,
 ///   `resultt::D_UNSATISFIABLE` if they are unsatisfiable,
 ///   `resultt::D_ERROR` if the limit of iteration was reached.
+#define DEBUG
 decision_proceduret::resultt string_refinementt::dec_solve()
 {
 #ifdef DEBUG
