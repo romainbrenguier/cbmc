@@ -180,6 +180,28 @@ public:
     copy_to_operands(s1);
   };
 
+  // if s0 is so0.data and s1 is so1.data then
+  // so0[i] is s0[i + offset0] and so1[i] is s1[i + offset1]
+  // so lb0 is univ_bound_inf + offset0 and lb1 is exists_bound_inf + offset1
+  string_not_contains_constraintt(
+    exprt univ_bound_inf,
+    exprt univ_bound_sup,
+    exprt premise,
+    exprt exists_bound_inf,
+    exprt exists_bound_sup,
+    const array_offset_string_exprt &so0,
+    const array_offset_string_exprt &so1)
+    : exprt(ID_string_not_contains_constraint)
+  {
+    copy_to_operands(plus_exprt(univ_bound_inf, so0.get_offset()));
+    copy_to_operands(plus_exprt(univ_bound_sup, so0.get_offset()));
+    copy_to_operands(premise);
+    copy_to_operands(plus_exprt(exists_bound_inf, so1.get_offset()));
+    copy_to_operands(plus_exprt(exists_bound_sup, so1.get_offset()));
+    copy_to_operands(so0.get_data());
+    copy_to_operands(so1.get_data());
+  };
+
   const exprt &univ_lower_bound() const
   {
     return op0();
