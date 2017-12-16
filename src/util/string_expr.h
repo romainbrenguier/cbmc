@@ -53,6 +53,11 @@ public:
     return index_exprt(content(), from_integer(i, length().type()));
   }
 
+  const typet &char_type() const
+  {
+    return (*this)[0].type();
+  }
+
   // Comparison on the length of the strings
   binary_relation_exprt axiom_for_length_ge(
     const string_exprt &rhs) const

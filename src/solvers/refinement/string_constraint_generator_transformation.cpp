@@ -41,7 +41,7 @@ exprt string_constraint_generatort::add_axioms_for_set_length(
   const array_string_exprt s1 = get_string_expr(f.arguments()[2]);
   const exprt &k = f.arguments()[3];
   const typet &index_type = s1.length().type();
-  const typet &char_type = s1.content().type().subtype();
+  const typet &char_type = s1.char_type();
 
   // We add axioms:
   // a1 : |res|=k
