@@ -173,6 +173,59 @@ inline const array_string_exprt &to_array_string_expr(const exprt &expr)
   return static_cast<const array_string_exprt &>(expr);
 }
 
+// Representation of strings as a position in an array, allowing sharing of
+// parts of the array between several strings.
+class array_offset_string_exprt :
+  public string_exprt<array_offset_string_exprt>
+{
+public:
+  array_offset_string_exprt(
+    array_string_exprt data, exprt offset, exprt length):
+    data(data), offset(offset), length_(length)
+  { }
+
+  exprt &length()
+  {
+    return length_;
+  }
+
+  const exprt &length() const
+  {
+    return length_;
+  }
+
+  exprt operator[](const exprt &i) const
+  {
+    return index_exprt(data, plus_exprt(i, offset));
+  }
+
+  const exprt &get_offset() const
+  {
+    return offset;
+  }
+
+  const array_string_exprt &get_data() const
+  {
+    return data;
+  }
+
+  friend bool operator<(
+    const array_offset_string_exprt &x, const array_offset_string_exprt &y);
+
+private:
+  array_string_exprt data;
+  exprt offset;
+  exprt length_;
+};
+
+inline bool operator<(
+  const array_offset_string_exprt &x, const array_offset_string_exprt &y)
+{
+  return x.data<y.data
+         || (x.data == y.data && x.offset < y.offset)
+         || (x.data == y.data && x.offset == y.offset && x.length_<y.length_);
+}
+
 // Represent strings as a struct with a length field and a content field
 class refined_string_exprt : public struct_exprt,
                              public string_exprt<refined_string_exprt>
