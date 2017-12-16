@@ -94,7 +94,7 @@ exprt string_constraint_generatort::add_axioms_from_bool(
   for(std::size_t i=0; i<str_true.length(); i++)
   {
     exprt chr=from_integer(str_true[i], char_type);
-    implies_exprt a2(eq, equal_exprt(res[i], chr));
+    implies_exprt a2(eq, equal_exprt(res.char_at(i), chr));
     axioms.push_back(a2);
   }
 
@@ -105,7 +105,7 @@ exprt string_constraint_generatort::add_axioms_from_bool(
   for(std::size_t i=0; i<str_false.length(); i++)
   {
     exprt chr=from_integer(str_false[i], char_type);
-    implies_exprt a4(not_exprt(eq), equal_exprt(res[i], chr));
+    implies_exprt a4(not_exprt(eq), equal_exprt(res.char_at(i), chr));
     axioms.push_back(a4);
   }
 
@@ -224,11 +224,11 @@ exprt string_constraint_generatort::add_axioms_from_int_hex(
   {
     exprt sum=from_integer(0, type);
     exprt all_numbers=true_exprt();
-    exprt chr=res[0];
+    exprt chr=res.char_at(0);
 
     for(size_t j=0; j<size; j++)
     {
-      chr=res[j];
+      chr=res.char_at(j);
       exprt chr_int = int_of_hex_char(chr);
       sum = plus_exprt(mult_exprt(sum, sixteen), typecast_exprt(chr_int, type));
       or_exprt is_number(
@@ -248,7 +248,7 @@ exprt string_constraint_generatort::add_axioms_from_int_hex(
     // disallow 0s at the beginning
     if(size>1)
       axioms.push_back(
-        implies_exprt(premise, not_exprt(equal_exprt(res[0], zero_char))));
+        implies_exprt(premise, not_exprt(equal_exprt(res.char_at(0), zero_char))));
   }
   return from_integer(0, get_return_code_type());
 }
@@ -295,7 +295,7 @@ exprt string_constraint_generatort::add_axioms_from_char(
   const array_string_exprt &res,
   const exprt &c)
 {
-  and_exprt lemma(equal_exprt(res[0], c), res.axiom_for_has_length(1));
+  and_exprt lemma(equal_exprt(res.char_at(0), c), res.axiom_for_has_length(1));
   axioms.push_back(lemma);
   return from_integer(0, get_return_code_type());
 }
@@ -322,7 +322,7 @@ void string_constraint_generatort::add_axioms_for_correct_number_format(
   const typet &char_type = str.char_type();
   const typet &index_type = str.length().type();
 
-  const exprt &chr=str[0];
+  const exprt &chr=str.char_at(0);
   const equal_exprt starts_with_minus(chr, constant_char('-', char_type));
   const equal_exprt starts_with_plus(chr, constant_char('+', char_type));
   const exprt starts_with_digit=
@@ -364,7 +364,7 @@ void string_constraint_generatort::add_axioms_for_correct_number_format(
     const implies_exprt character_at_index_is_digit(
       str.axiom_for_length_ge(from_integer(index+1, index_type)),
       is_digit_with_radix(
-        str[index], strict_formatting, radix_as_char, radix_ul));
+        str.char_at(index), strict_formatting, radix_as_char, radix_ul));
     axioms.push_back(character_at_index_is_digit);
   }
 
@@ -380,7 +380,7 @@ void string_constraint_generatort::add_axioms_for_correct_number_format(
 
     // no_leading_zero_after_minus : str[0]='-' => str[1]!='0'
     implies_exprt no_leading_zero_after_minus(
-      starts_with_minus, not_exprt(equal_exprt(str[1], zero_char)));
+      starts_with_minus, not_exprt(equal_exprt(str.char_at(1), zero_char)));
     axioms.push_back(no_leading_zero_after_minus);
   }
 }
@@ -408,12 +408,12 @@ void string_constraint_generatort::add_axioms_for_characters_in_integer_string(
 {
   const typet &char_type = str.char_type();
 
-  const equal_exprt starts_with_minus(str[0], constant_char('-', char_type));
+  const equal_exprt starts_with_minus(str.char_at(0), constant_char('-', char_type));
   const constant_exprt zero_expr=from_integer(0, type);
   exprt::operandst digit_constraints;
 
   exprt sum=get_numeric_value_from_character(
-    str[0], char_type, type, strict_formatting, radix_ul);
+    str.char_at(0), char_type, type, strict_formatting, radix_ul);
 
   /// Deal with size==1 case separately. There are axioms from
   /// add_axioms_for_correct_number_format which say that the string must
@@ -442,7 +442,7 @@ void string_constraint_generatort::add_axioms_for_characters_in_integer_string(
     const exprt new_sum=plus_exprt(
       radix_sum,
       get_numeric_value_from_character(
-        str[size-1], char_type, type, strict_formatting, radix_ul));
+        str.char_at(size-1), char_type, type, strict_formatting, radix_ul));
 
     // An overflow can happen when reaching the last index which can contain
     // a digit, which is `max_string_length - 2` because of the space left for

@@ -445,7 +445,7 @@ static optionalt<std::pair<exprt, exprt>> to_char_pair(
   const auto expr1_length = numeric_cast<std::size_t>(expr1_str.length());
   const auto expr2_length = numeric_cast<std::size_t>(expr2_str.length());
   if(expr1_length && expr2_length && *expr1_length==1 && *expr2_length==1)
-    return std::make_pair(exprt(expr1_str[0]), exprt(expr2_str[0]));
+    return std::make_pair(exprt(expr1_str.char_at(0)), exprt(expr2_str.get(0)));
   return { };
 }
 

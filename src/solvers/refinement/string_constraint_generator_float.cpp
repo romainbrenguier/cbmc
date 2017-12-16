@@ -253,7 +253,7 @@ exprt string_constraint_generatort::add_axioms_for_fractional_part(
                res.axiom_for_length_le(max));
   axioms.push_back(a1);
 
-  equal_exprt starts_with_dot(res[0], from_integer('.', char_type));
+  equal_exprt starts_with_dot(res.char_at(0), from_integer('.', char_type));
 
   exprt::operandst digit_constraints;
   digit_constraints.push_back(starts_with_dot);
@@ -270,12 +270,12 @@ exprt string_constraint_generatort::add_axioms_for_fractional_part(
     if_exprt to_add(
       after_end,
       from_integer(0, type),
-      typecast_exprt(minus_exprt(res[j], zero_char), type));
+      typecast_exprt(minus_exprt(res.char_at(j), zero_char), type));
     sum=plus_exprt(ten_sum, to_add);
 
     and_exprt is_number(
-      binary_relation_exprt(res[j], ID_ge, zero_char),
-      binary_relation_exprt(res[j], ID_le, nine_char));
+      binary_relation_exprt(res.char_at(j), ID_ge, zero_char),
+      binary_relation_exprt(res.char_at(j), ID_le, nine_char));
     digit_constraints.push_back(is_number);
 
     // There are no trailing zeros except for ".0" (i.e j=2)
@@ -283,7 +283,7 @@ exprt string_constraint_generatort::add_axioms_for_fractional_part(
     {
       not_exprt no_trailing_zero(and_exprt(
         equal_exprt(res.length(), from_integer(j+1, res.length().type())),
-      equal_exprt(res[j], zero_char)));
+      equal_exprt(res.char_at(j), zero_char)));
       digit_constraints.push_back(no_trailing_zero);
     }
   }
