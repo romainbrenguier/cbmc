@@ -32,14 +32,14 @@ private:
   }
   exprt operator[](const exprt &i) const
   {
-    return static_cast<child_t *>(this)->operator[](i);
+    return static_cast<const child_t *>(this)->operator[](i);
   }
 
 protected:
   string_exprt() = default;
 
 public:
-  exprt operator[](int i) const
+  exprt operator[](std::size_t i) const
   {
     return (*this)[from_integer(i, length().type())];
   }
@@ -149,7 +149,6 @@ public:
     return index_exprt(content(), i);
   }
 
-private:
   exprt &content()
   {
     return *this;
