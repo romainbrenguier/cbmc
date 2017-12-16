@@ -30,27 +30,18 @@ private:
   {
     return static_cast<const child_t *>(this)->length();
   }
-  exprt &content()
+  exprt operator[](const exprt &i) const
   {
-    return static_cast<child_t *>(this)->content();
-  }
-  const exprt &content() const
-  {
-    return static_cast<const child_t *>(this)->content();
+    return static_cast<child_t *>(this)->operator[](i);
   }
 
 protected:
   string_exprt() = default;
 
 public:
-  exprt operator[](const exprt &i) const
+  exprt operator[](int i) const
   {
-    return index_exprt(content(), i);
-  }
-
-  index_exprt operator[] (int i) const
-  {
-    return index_exprt(content(), from_integer(i, length().type()));
+    return (*this)[from_integer(i, length().type())];
   }
 
   const typet &char_type() const
@@ -153,6 +144,12 @@ public:
     return to_array_type(type()).size();
   }
 
+  exprt operator[](const exprt &i) const
+  {
+    return index_exprt(content(), i);
+  }
+
+private:
   exprt &content()
   {
     return *this;
@@ -225,6 +222,11 @@ public:
   exprt &content()
   {
     return op1();
+  }
+
+  exprt operator[](const exprt &i) const
+  {
+    return index_exprt(content(), i);
   }
 
   static exprt within_bounds(const exprt &idx, const exprt &bound);
