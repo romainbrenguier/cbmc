@@ -141,16 +141,23 @@ plus_exprt string_constraint_generatort::plus_exprt_with_overflow_check(
   return sum;
 }
 
+optionalt<array_string_exprt> char_array_poolt::find(const exprt &pointer)
+{
+  const auto it = arrays_of_pointers.find(pointer);
+  if(it != arrays_of_pointers.end())
+    return it->second;
+  return {};
+}
+
 /// Associate an actual finite length to infinite arrays
 /// \param s: array expression representing a string
 /// \return expression for the length of `s`
-exprt string_constraint_generatort::get_length_of_string_array(
-  const array_string_exprt &s) const
+exprt char_array_poolt::get_length(const array_string_exprt &s) const
 {
   if(s.length() == infinity_exprt(s.length().type()))
   {
-    auto it = length_of_array_.find(s);
-    if(it != length_of_array_.end())
+    auto it = lengths.find(s);
+    if(it != lengths.end())
       return it->second;
   }
   return s.length();
@@ -174,10 +181,10 @@ array_string_exprt string_constraint_generatort::fresh_string(
 
 // Associate a char array to a char pointer. The size of the char array is a
 // variable with no constraint.
-array_string_exprt
-string_constraint_generatort::associate_char_array_to_char_pointer(
+array_string_exprt char_array_poolt::new_array(
   const exprt &char_pointer,
-  const typet &char_array_type)
+  const typet &char_array_type,
+  std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol)
 {
   PRECONDITION(char_pointer.type().id() == ID_pointer);
   PRECONDITION(char_array_type.id() == ID_array);
@@ -201,10 +208,10 @@ string_constraint_generatort::associate_char_array_to_char_pointer(
   else if(char_pointer.id() == ID_if)
   {
     const if_exprt &if_expr = to_if_expr(char_pointer);
-    const array_string_exprt t = associate_char_array_to_char_pointer(
-      if_expr.true_case(), char_array_type);
-    const array_string_exprt f = associate_char_array_to_char_pointer(
-      if_expr.false_case(), char_array_type);
+    const array_string_exprt t = new_array(
+      if_expr.true_case(), char_array_type, fresh_symbol);
+    const array_string_exprt f = new_array(
+      if_expr.false_case(), char_array_type, fresh_symbol);
     array_typet array_type(
       char_array_type.subtype(),
       if_exprt(
@@ -234,10 +241,31 @@ string_constraint_generatort::associate_char_array_to_char_pointer(
   array_string_exprt array_sym =
     to_array_string_expr(fresh_symbol(symbol_name, char_array_type));
   auto insert_result =
-    arrays_of_pointers_.insert(std::make_pair(char_pointer, array_sym));
+    arrays_of_pointers.insert(std::make_pair(char_pointer, array_sym));
   array_string_exprt result = to_array_string_expr(insert_result.first->second);
-  add_default_axioms(result);
   return result;
+}
+
+/// can modify array by assigning it a length
+/// \return true if added, false if already present
+bool char_array_poolt::add(
+  const exprt &pointer_expr,
+  array_string_exprt &array_expr,
+  std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol)
+{
+  const auto &length = array_expr.length();
+  if(length == infinity_exprt(length.type()))
+  {
+    auto pair = lengths.insert(
+      std::make_pair(array_expr, fresh_symbol("string_length", length.type())));
+    array_expr.length() = pair.first->second;
+  }
+
+  /// \todo We should use a function for inserting the correspondance
+  /// between array and pointers.
+  const auto it_bool =
+    arrays_of_pointers.insert(std::make_pair(pointer_expr, array_expr));
+  return it_bool.second;
 }
 
 /// Associate a char array to a char pointer.
@@ -260,20 +288,12 @@ exprt string_constraint_generatort::associate_array_to_pointer(
 
   const exprt &pointer_expr = f.arguments()[1];
 
-  const auto &length = array_expr.length();
-  if(length == infinity_exprt(length.type()))
-  {
-    auto pair = length_of_array_.insert(
-      std::make_pair(array_expr, fresh_symbol("string_length", length.type())));
-    array_expr.length() = pair.first->second;
-  }
-
-  /// \todo We should use a function for inserting the correspondance
-  /// between array and pointers.
-  const auto it_bool =
-    arrays_of_pointers_.insert(std::make_pair(pointer_expr, array_expr));
-  INVARIANT(
-    it_bool.second, "should not associate two arrays to the same pointer");
+  const bool added = char_array_pool.add(
+    pointer_expr, array_expr, [&](const dstringt &prefix, const typet &type)
+    {
+      return fresh_symbol(prefix, type);
+    });
+  INVARIANT(added, "should not associate two arrays to the same pointer");
   add_default_axioms(to_array_string_expr(array_expr));
   return from_integer(0, f.type());
 }
@@ -290,7 +310,7 @@ exprt string_constraint_generatort::associate_length_to_array(
   array_string_exprt array_expr = to_array_string_expr(f.arguments()[0]);
   const exprt &new_length = f.arguments()[1];
 
-  const auto &length = get_length_of_string_array(array_expr);
+  const auto &length = char_array_pool.get_length(array_expr);
   axioms.push_back(equal_exprt(length, new_length));
   return from_integer(0, f.type());
 }
@@ -389,14 +409,23 @@ exprt string_constraint_generatort::add_axioms_for_constrain_characters(
 }
 
 /// Adds creates a new array if it does not already exists
-/// \todo This should be replaced by associate_char_array_to_char_pointer
 array_string_exprt string_constraint_generatort::char_array_of_pointer(
   const exprt &pointer,
   const exprt &length)
 {
+  if(const auto arr_opt = char_array_pool.find(pointer))
+    return *arr_opt;
+
   const array_typet array_type(pointer.type().subtype(), length);
-  const array_string_exprt array =
-    associate_char_array_to_char_pointer(pointer, array_type);
+  const array_string_exprt array = char_array_pool.new_array(
+    pointer,
+    array_type,
+    [&](const dstringt &prefix, const typet &type)
+    {
+      return fresh_symbol(prefix, type);
+    });
+
+  add_default_axioms(array);
   return array;
 }
 

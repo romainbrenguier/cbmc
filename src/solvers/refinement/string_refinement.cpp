@@ -590,7 +590,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
 
 #ifdef DEBUG
   debug() << "dec_solve: arrays_of_pointers:" << eom;
-  for(auto pair : generator.get_arrays_of_pointers())
+  for(auto pair : generator.get_char_array_pool().get_arrays_of_pointers())
   {
     debug() << "  * " << from_expr(ns, "", pair.first) << "\t--> "
             << from_expr(ns, "", pair.second) << " : "
@@ -967,7 +967,8 @@ void debug_model(
   static const std::string indent("  ");
 
   stream << "debug_model:" << '\n';
-  for(const auto &pointer_array : generator.get_arrays_of_pointers())
+  for(const auto &pointer_array :
+    generator.get_char_array_pool().get_arrays_of_pointers())
   {
     const auto arr = pointer_array.second;
     const exprt model = get_char_array_and_concretize(
@@ -2117,7 +2118,7 @@ exprt string_refinementt::get(const exprt &expr) const
   if(is_char_array_type(ecopy.type(), ns))
   {
     array_string_exprt &arr = to_array_string_expr(ecopy);
-    arr.length() = generator.get_length_of_string_array(arr);
+    arr.length() = generator.get_char_array_pool().get_length(arr);
     const auto arr_model_opt =
       get_array(super_get, ns, generator.max_string_length, debug(), arr);
     // \todo Refactor with get array in model

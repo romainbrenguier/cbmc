@@ -27,6 +27,36 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/constexpr.def>
 #include <solvers/refinement/string_constraint.h>
 
+/// Associates pointers with char array and retrive them
+class char_array_poolt final
+{
+public:
+  array_string_exprt new_array(
+    const exprt &char_pointer,
+    const typet &char_array_type,
+    std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol);
+
+  optionalt<array_string_exprt> find(const exprt &pointer);
+
+  bool add(
+    const exprt &pointer_expr,
+    array_string_exprt &array_expr,
+    std::function<symbol_exprt(const dstringt &, const typet &)> fresh_symbol);
+
+  const std::map<exprt, array_string_exprt> &get_arrays_of_pointers() const
+  {
+    return arrays_of_pointers;
+  }
+  exprt get_length(const array_string_exprt &s) const;
+
+private:
+  // associate arrays to char pointers
+  std::map<exprt, array_string_exprt> arrays_of_pointers;
+
+  // associate length to arrays of infinite size
+  std::map<array_string_exprt, symbol_exprt> lengths;
+};
+
 class string_constraint_generatort final
 {
 public:
@@ -76,12 +106,10 @@ public:
 
   symbol_exprt fresh_exist_index(const irep_idt &prefix, const typet &type);
 
-  const std::map<exprt, array_string_exprt> &get_arrays_of_pointers() const
+  const char_array_poolt &get_char_array_pool() const
   {
-    return arrays_of_pointers_;
-  }
-
-  exprt get_length_of_string_array(const array_string_exprt &s) const;
+    return char_array_pool;
+  };
 
   // Type used by primitives to signal errors
   const signedbv_typet get_return_code_type()
@@ -96,14 +124,7 @@ private:
   array_string_exprt get_string_expr(const exprt &expr);
   plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
 
-  array_string_exprt associate_char_array_to_char_pointer(
-    const exprt &char_pointer,
-    const typet &char_array_type);
-
   static constant_exprt constant_char(int i, const typet &char_type);
-
-  array_string_exprt
-  char_array_of_pointer(const exprt &pointer, const exprt &length);
 
   void add_default_axioms(const array_string_exprt &s);
   exprt axiom_for_is_positive_index(const exprt &x);
@@ -322,6 +343,9 @@ private:
 
   exprt associate_length_to_array(const function_application_exprt &f);
 
+  array_string_exprt char_array_of_pointer(
+    const exprt &ptr, const exprt &length);
+
   // Helper functions
   static exprt int_of_hex_char(const exprt &chr);
   static exprt is_high_surrogate(const exprt &chr);
@@ -337,6 +361,7 @@ public:
   std::map<string_not_contains_constraintt, symbol_exprt> witness;
 private:
   std::set<array_string_exprt> created_strings;
+  char_array_poolt char_array_pool;
   unsigned symbol_count=0;
   const messaget message;
 
@@ -350,12 +375,6 @@ private:
 
   // Pool used for the intern method
   std::map<array_string_exprt, symbol_exprt> intern_of_string;
-
-  // associate arrays to char pointers
-  std::map<exprt, array_string_exprt> arrays_of_pointers_;
-
-  // associate length to arrays of infinite size
-  std::map<array_string_exprt, symbol_exprt> length_of_array_;
 };
 
 exprt is_digit_with_radix(
