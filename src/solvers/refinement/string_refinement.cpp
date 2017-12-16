@@ -818,7 +818,7 @@ static optionalt<exprt> get_array(
   exprt arr_val = simplify_expr(super_get(arr), ns);
   exprt size_val=super_get(size);
   size_val=simplify_expr(size_val, ns);
-  const typet char_type = arr.type().subtype();
+  const typet char_type = arr.char_type();
   const typet &index_type=size.type();
   const array_typet empty_ret_type(char_type, from_integer(0, index_type));
   const array_of_exprt empty_ret(from_integer(0, char_type), empty_ret_type);

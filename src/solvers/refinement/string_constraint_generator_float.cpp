@@ -188,7 +188,7 @@ exprt string_constraint_generatort::add_axioms_for_string_of_float(
 {
   const floatbv_typet &type=to_floatbv_type(f.type());
   const ieee_float_spect float_spec(type);
-  const typet &char_type = res.content().type().subtype();
+  const typet &char_type = res.char_type();
   const typet &index_type = res.length().type();
 
   // We will look at the first 5 digits of the fractional part.
@@ -234,7 +234,7 @@ exprt string_constraint_generatort::add_axioms_for_fractional_part(
   PRECONDITION(int_expr.type().id()==ID_signedbv);
   PRECONDITION(max_size>=2);
   const typet &type=int_expr.type();
-  const typet &char_type = res.content().type().subtype();
+  const typet &char_type = res.char_type();
   const typet &index_type = res.length().type();
   const exprt ten = from_integer(10, type);
   const exprt zero_char = constant_char('0', char_type);
@@ -320,7 +320,7 @@ exprt string_constraint_generatort::add_axioms_from_float_scientific_notation(
   const typet float_type = float_spec.to_type();
   const signedbv_typet int_type(32);
   const typet &index_type = res.length().type();
-  const typet &char_type = res.content().type().subtype();
+  const typet &char_type = res.char_type();
 
   // This is used for rounding float to integers.
   exprt round_to_zero_expr=from_integer(ieee_floatt::ROUND_TO_ZERO, int_type);

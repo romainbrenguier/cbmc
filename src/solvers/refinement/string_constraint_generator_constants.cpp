@@ -25,7 +25,7 @@ exprt string_constraint_generatort::add_axioms_for_constant(
   irep_idt sval)
 {
   const typet &index_type = res.length().type();
-  const typet &char_type = res.content().type().subtype();
+  const typet &char_type = res.char_type();
   std::string c_str=id2string(sval);
   std::wstring str;
 

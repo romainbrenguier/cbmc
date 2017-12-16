@@ -171,7 +171,7 @@ exprt string_constraint_generatort::add_axioms_for_concat_code_point(
   const array_string_exprt res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const array_string_exprt s1 = get_string_expr(f.arguments()[2]);
-  const typet &char_type = s1.content().type().subtype();
+  const typet &char_type = s1.char_type();
   const typet &index_type = s1.length().type();
   const array_string_exprt code_point = fresh_string(index_type, char_type);
   const exprt return_code1 =

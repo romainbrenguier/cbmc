@@ -619,7 +619,7 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
 {
   PRECONDITION(f.arguments().size() == 2);
   array_string_exprt str = get_string_expr(f.arguments()[0]);
-  symbol_exprt char_sym = fresh_symbol("char", str.type().subtype());
+  symbol_exprt char_sym = fresh_symbol("char", str.char_type());
   axioms.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
 }

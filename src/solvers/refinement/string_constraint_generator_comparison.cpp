@@ -117,7 +117,7 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   const symbol_exprt eq = fresh_boolean("equal_ignore_case");
   const array_string_exprt s1 = get_string_expr(f.arguments()[0]);
   const array_string_exprt s2 = get_string_expr(f.arguments()[1]);
-  const typet char_type = s1.content().type().subtype();
+  const typet char_type = s1.char_type();
   const exprt char_a = constant_char('a', char_type);
   const exprt char_A = constant_char('A', char_type);
   const exprt char_Z = constant_char('Z', char_type);

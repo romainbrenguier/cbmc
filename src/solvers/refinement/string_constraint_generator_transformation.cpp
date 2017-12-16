@@ -183,7 +183,7 @@ exprt string_constraint_generatort::add_axioms_for_trim(
   const array_string_exprt &res =
     char_array_of_pointer(f.arguments()[1], f.arguments()[0]);
   const typet &index_type = str.length().type();
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.char_type();
   const symbol_exprt idx = fresh_exist_index("index_trim", index_type);
   const exprt space_char = from_integer(' ', char_type);
 
@@ -333,7 +333,7 @@ exprt string_constraint_generatort::add_axioms_for_to_upper_case(
   const array_string_exprt &res,
   const array_string_exprt &str)
 {
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.char_type();
   const typet &index_type = str.length().type();
   exprt char_a=constant_char('a', char_type);
   exprt char_A=constant_char('A', char_type);
@@ -542,7 +542,7 @@ exprt string_constraint_generatort::add_axioms_for_delete(
   PRECONDITION(start.type()==str.length().type());
   PRECONDITION(end.type()==str.length().type());
   const typet &index_type = str.length().type();
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.char_type();
   const array_string_exprt sub1 = fresh_string(index_type, char_type);
   const array_string_exprt sub2 = fresh_string(index_type, char_type);
   const exprt return_code1 = add_axioms_for_substring(
