@@ -16,123 +16,8 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/arith_tools.h>
 #include <util/refined_string_type.h>
 
-// Given an representation of strings as exprt that implements `length` and
-// `content` this provides additional useful methods.
-template <typename child_t>
-class string_exprt
-{
-private:
-  exprt &length()
-  {
-    return static_cast<child_t *>(this)->length();
-  }
-  const exprt &length() const
-  {
-    return static_cast<const child_t *>(this)->length();
-  }
-  exprt operator[](const exprt &i) const
-  {
-    return static_cast<const child_t *>(this)->operator[](i);
-  }
-
-protected:
-  string_exprt() = default;
-
-public:
-
-  exprt char_at(int i) const
-  {
-    return (*this)[from_integer(i, length().type())];
-  }
-
-  const typet &char_type() const
-  {
-    return this->char_at(0).type();
-  }
-
-  // Comparison on the length of the strings
-  binary_relation_exprt axiom_for_length_ge(
-    const string_exprt &rhs) const
-  {
-    return binary_relation_exprt(length(), ID_ge, rhs.length());
-  }
-
-  binary_relation_exprt axiom_for_length_ge(
-    const exprt &rhs) const
-  {
-    PRECONDITION(rhs.type() == length().type());
-    return binary_relation_exprt(length(), ID_ge, rhs);
-  }
-
-  binary_relation_exprt axiom_for_length_gt(
-    const exprt &rhs) const
-  {
-    PRECONDITION(rhs.type() == length().type());
-    return binary_relation_exprt(rhs, ID_lt, length());
-  }
-
-  binary_relation_exprt axiom_for_length_gt(
-    const string_exprt &rhs) const
-  {
-    return binary_relation_exprt(rhs.length(), ID_lt, length());
-  }
-
-  binary_relation_exprt axiom_for_length_gt(mp_integer i) const
-  {
-    return axiom_for_length_gt(from_integer(i, length().type()));
-  }
-
-  binary_relation_exprt axiom_for_length_le(
-    const string_exprt &rhs) const
-  {
-    return binary_relation_exprt(length(), ID_le, rhs.length());
-  }
-
-  binary_relation_exprt axiom_for_length_le(
-    const exprt &rhs) const
-  {
-    PRECONDITION(rhs.type() == length().type());
-    return binary_relation_exprt(length(), ID_le, rhs);
-  }
-
-  binary_relation_exprt axiom_for_length_le(mp_integer i) const
-  {
-    return axiom_for_length_le(from_integer(i, length().type()));
-  }
-
-  binary_relation_exprt axiom_for_length_lt(
-    const string_exprt &rhs) const
-  {
-    return binary_relation_exprt(length(), ID_lt, rhs.length());
-  }
-
-  binary_relation_exprt axiom_for_length_lt(
-    const exprt &rhs) const
-  {
-    PRECONDITION(rhs.type() == length().type());
-    return binary_relation_exprt(length(), ID_lt, rhs);
-  }
-
-  equal_exprt axiom_for_has_same_length_as(
-    const string_exprt &rhs) const
-  {
-    return equal_exprt(length(), rhs.length());
-  }
-
-  equal_exprt axiom_for_has_length(const exprt &rhs) const
-  {
-    PRECONDITION(rhs.type() == length().type());
-    return equal_exprt(length(), rhs);
-  }
-
-  equal_exprt axiom_for_has_length(mp_integer i) const
-  {
-    return axiom_for_has_length(from_integer(i, length().type()));
-  }
-};
-
 // Representation of strings as arrays
-class array_string_exprt : public string_exprt<array_string_exprt>, public exprt
+class array_string_exprt : public exprt
 {
 public:
   exprt &length()
@@ -159,6 +44,11 @@ public:
   {
     return *this;
   }
+
+  const typet &char_type() const
+  {
+    return type().subtype();
+  }
 };
 
 inline array_string_exprt &to_array_string_expr(exprt &expr)
@@ -175,8 +65,7 @@ inline const array_string_exprt &to_array_string_expr(const exprt &expr)
 
 // Representation of strings as a position in an array, allowing sharing of
 // parts of the array between several strings.
-class array_offset_string_exprt :
-  public string_exprt<array_offset_string_exprt>
+class array_offset_string_exprt
 {
 public:
   array_offset_string_exprt(
@@ -212,6 +101,96 @@ public:
   friend bool operator<(
     const array_offset_string_exprt &x, const array_offset_string_exprt &y);
 
+  exprt char_at(int i) const
+  {
+    return (*this)[from_integer(i, length().type())];
+  }
+
+  const typet &char_type() const
+  {
+    return this->char_at(0).type();
+  }
+
+  // Comparison on the length of the strings
+  binary_relation_exprt axiom_for_length_ge(
+    const array_offset_string_exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_ge, rhs.length());
+  }
+
+  binary_relation_exprt axiom_for_length_ge(
+    const exprt &rhs) const
+  {
+    PRECONDITION(rhs.type() == length().type());
+    return binary_relation_exprt(length(), ID_ge, rhs);
+  }
+
+  binary_relation_exprt axiom_for_length_gt(
+    const exprt &rhs) const
+  {
+    PRECONDITION(rhs.type() == length().type());
+    return binary_relation_exprt(rhs, ID_lt, length());
+  }
+
+  binary_relation_exprt axiom_for_length_gt(
+    const array_offset_string_exprt &rhs) const
+  {
+    return binary_relation_exprt(rhs.length(), ID_lt, length());
+  }
+
+  binary_relation_exprt axiom_for_length_gt(mp_integer i) const
+  {
+    return axiom_for_length_gt(from_integer(i, length().type()));
+  }
+
+  binary_relation_exprt axiom_for_length_le(
+    const array_offset_string_exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_le, rhs.length());
+  }
+
+  binary_relation_exprt axiom_for_length_le(
+    const exprt &rhs) const
+  {
+    PRECONDITION(rhs.type() == length().type());
+    return binary_relation_exprt(length(), ID_le, rhs);
+  }
+
+  binary_relation_exprt axiom_for_length_le(mp_integer i) const
+  {
+    return axiom_for_length_le(from_integer(i, length().type()));
+  }
+
+  binary_relation_exprt axiom_for_length_lt(
+    const array_offset_string_exprt &rhs) const
+  {
+    return binary_relation_exprt(length(), ID_lt, rhs.length());
+  }
+
+  binary_relation_exprt axiom_for_length_lt(
+    const exprt &rhs) const
+  {
+    PRECONDITION(rhs.type() == length().type());
+    return binary_relation_exprt(length(), ID_lt, rhs);
+  }
+
+  equal_exprt axiom_for_has_same_length_as(
+    const array_offset_string_exprt &rhs) const
+  {
+    return equal_exprt(length(), rhs.length());
+  }
+
+  equal_exprt axiom_for_has_length(const exprt &rhs) const
+  {
+    PRECONDITION(rhs.type() == length().type());
+    return equal_exprt(length(), rhs);
+  }
+
+  equal_exprt axiom_for_has_length(mp_integer i) const
+  {
+    return axiom_for_has_length(from_integer(i, length().type()));
+  }
+
 private:
   array_string_exprt data;
   exprt offset;
@@ -227,8 +206,7 @@ inline bool operator<(
 }
 
 // Represent strings as a struct with a length field and a content field
-class refined_string_exprt : public struct_exprt,
-                             public string_exprt<refined_string_exprt>
+class refined_string_exprt : public struct_exprt
 {
 public:
   refined_string_exprt() : struct_exprt()
