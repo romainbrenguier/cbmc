@@ -45,25 +45,32 @@ exprt string_constraint_generatort::add_axioms_for_insert(
 
   // Axiom 2.
   constraints.push_back([&] { // NOLINT
-    const symbol_exprt i = fresh_symbol("QA_insert1", index_type);
-    return string_constraintt(i, offset1, equal_exprt(res[i], s1[i]));
+    string_constraintt a2;
+    a2.univ_var = fresh_univ_index("QA_insert1", index_type);
+    a2.upper_bound = offset1;
+    a2.body = equal_exprt(res[a2.univ_var], s1[a2.univ_var]);
+    return a2;
   }());
 
   // Axiom 3.
   constraints.push_back([&] { // NOLINT
-    const symbol_exprt i = fresh_symbol("QA_insert2", index_type);
-    return string_constraintt(
-      i, s2.length(), equal_exprt(res[plus_exprt(i, offset1)], s2[i]));
+    string_constraintt a3;
+    a3.univ_var = fresh_univ_index("QA_insert2", index_type);
+    a3.upper_bound = s2.length();
+    a3.body =
+      equal_exprt(res[plus_exprt(a3.univ_var, offset1)], s2[a3.univ_var]);
+    return a3;
   }());
 
   // Axiom 4.
   constraints.push_back([&] { // NOLINT
-    const symbol_exprt i = fresh_symbol("QA_insert3", index_type);
-    return string_constraintt(
-      i,
-      offset1,
-      s1.length(),
-      equal_exprt(res[plus_exprt(i, s2.length())], s1[i]));
+    string_constraintt a4;
+    a4.univ_var = fresh_univ_index("QA_insert3", index_type);
+    a4.lower_bound = offset1;
+    a4.upper_bound = s1.length();
+    a4.body =
+      equal_exprt(res[plus_exprt(a4.univ_var, s2.length())], s1[a4.univ_var]);
+    return a4;
   }());
 
   return from_integer(0, get_return_code_type());

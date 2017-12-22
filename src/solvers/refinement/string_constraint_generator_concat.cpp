@@ -51,19 +51,22 @@ exprt string_constraint_generatort::add_axioms_for_concat_substr(
 
   // Axiom 2.
   constraints.push_back([&] { // NOLINT
-    const symbol_exprt idx =
-      fresh_univ_index("QA_index_concat", res.length().type());
-    return string_constraintt(idx, s1.length(), equal_exprt(s1[idx], res[idx]));
+    string_constraintt sc;
+    sc.univ_var = fresh_univ_index("QA_index_concat", res.length().type());
+    sc.upper_bound = s1.length();
+    sc.body = equal_exprt(s1[sc.univ_var], res[sc.univ_var]);
+    return sc;
   }());
 
   // Axiom 3.
   constraints.push_back([&] { // NOLINT
-    const symbol_exprt idx2 =
-      fresh_univ_index("QA_index_concat2", res.length().type());
-    const equal_exprt res_eq(
-      res[plus_exprt(idx2, s1.length())], s2[plus_exprt(start1, idx2)]);
-    const minus_exprt upper_bound(res.length(), s1.length());
-    return string_constraintt(idx2, upper_bound, res_eq);
+    string_constraintt sc;
+    sc.univ_var = fresh_univ_index("QA_index_concat2", res.length().type());
+    sc.body = equal_exprt(
+      res[plus_exprt(sc.univ_var, s1.length())],
+      s2[plus_exprt(start1, sc.univ_var)]);
+    sc.upper_bound = minus_exprt(res.length(), s1.length());
+    return sc;
   }());
 
   return from_integer(0, get_return_code_type());
@@ -119,9 +122,13 @@ exprt string_constraint_generatort::add_axioms_for_concat_char(
   const typet &index_type = res.length().type();
   lemmas.push_back(length_constraint_for_concat_char(res, s1));
 
-  symbol_exprt idx = fresh_univ_index("QA_index_concat_char", index_type);
-  string_constraintt a2(idx, s1.length(), equal_exprt(s1[idx], res[idx]));
-  constraints.push_back(a2);
+  constraints.push_back([&] {
+    string_constraintt a2;
+    a2.univ_var = fresh_univ_index("QA_index_concat_char", index_type);
+    a2.upper_bound = s1.length();
+    a2.body = equal_exprt(s1[a2.univ_var], res[a2.univ_var]);
+    return a2;
+  }());
 
   equal_exprt a3(res[s1.length()], c);
   lemmas.push_back(a3);
