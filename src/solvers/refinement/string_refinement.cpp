@@ -817,7 +817,7 @@ decision_proceduret::resultt string_refinementt::dec_solve()
     constraints.end(),
     std::back_inserter(axioms.universal),
     [&](string_constraintt constraint) { // NOLINT
-      symbol_resolve.replace_expr(constraint);
+      constraint.replace(symbol_resolve);
       DATA_INVARIANT(
         is_valid_string_constraint(error(), ns, constraint),
         string_refinement_invariantt(
@@ -1492,8 +1492,8 @@ static exprt negation_of_not_contains_constraint(
 static exprt negation_of_constraint(const string_constraintt &axiom)
 {
   // If the for all is vacuously true, the negation is false.
-  const exprt &lb=axiom.lower_bound();
-  const exprt &ub=axiom.upper_bound();
+  const exprt &lb=axiom.lower_bound;
+  const exprt &ub=axiom.upper_bound;
   if(lb.id()==ID_constant && ub.id()==ID_constant)
   {
     const auto lb_int = numeric_cast<mp_integer>(lb);
@@ -1504,11 +1504,11 @@ static exprt negation_of_constraint(const string_constraintt &axiom)
 
   // If the premise is false, the implication is trivially true, so the
   // negation is false.
-  if(axiom.premise()==false_exprt())
+  if(axiom.premise == false_exprt())
     return false_exprt();
 
-  and_exprt premise(axiom.premise(), axiom.univ_within_bounds());
-  and_exprt negaxiom(premise, not_exprt(axiom.body()));
+  const and_exprt premise(axiom.premise, axiom.univ_within_bounds());
+  const and_exprt negaxiom(premise, not_exprt(axiom.body));
 
   return negaxiom;
 }
@@ -1555,35 +1555,23 @@ exprt concretize_arrays_in_expression(
 
 /// Debugging function which outputs the different steps an axiom goes through
 /// to be checked in check axioms.
+/// \tparam T: can be either string_constraintt, string_not_contains_constraintt
+///            or exprt.
+template <typename T>
 static void debug_check_axioms_step(
   messaget::mstreamt &stream,
   const namespacet &ns,
-  const exprt &axiom,
-  const exprt &axiom_in_model,
+  const T &axiom,
+  const T &axiom_in_model,
   const exprt &negaxiom,
   const exprt &with_concretized_arrays)
 {
   static const std::string indent = "  ";
   static const std::string indent2 = "    ";
   stream << indent2 << "- axiom:\n" << indent2 << indent;
-
-  if(axiom.id() == ID_string_constraint)
-    stream << from_expr(ns, "", to_string_constraint(axiom));
-  else if(axiom.id() == ID_string_not_contains_constraint)
-    stream << from_expr(ns, "", to_string_not_contains_constraint(axiom));
-  else
-    stream << from_expr(ns, "", axiom);
+  stream << from_expr(ns, "", axiom);
   stream << '\n' << indent2 << "- axiom_in_model:\n" << indent2 << indent;
-
-  if(axiom_in_model.id() == ID_string_constraint)
-    stream << from_expr(ns, "", to_string_constraint(axiom_in_model));
-  else if(axiom_in_model.id() == ID_string_not_contains_constraint)
-    stream << from_expr(
-      ns, "", to_string_not_contains_constraint(axiom_in_model));
-  else
-    stream << from_expr(ns, "", axiom_in_model);
-
-  stream << '\n'
+  stream << from_expr(ns, "", axiom_in_model) << '\n'
          << indent2 << "- negated_axiom:\n"
          << indent2 << indent << from_expr(ns, "", negaxiom) << '\n';
   stream << indent2 << "- negated_axiom_with_concretized_arrays:\n"
@@ -1641,11 +1629,11 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
   for(size_t i=0; i<axioms.universal.size(); i++)
   {
     const string_constraintt &axiom=axioms.universal[i];
-    const symbol_exprt &univ_var=axiom.univ_var();
-    const exprt &bound_inf=axiom.lower_bound();
-    const exprt &bound_sup=axiom.upper_bound();
-    const exprt &prem=axiom.premise();
-    const exprt &body=axiom.body();
+    const symbol_exprt &univ_var = axiom.univ_var;
+    const exprt &bound_inf = axiom.lower_bound;
+    const exprt &bound_sup = axiom.upper_bound;
+    const exprt &prem = axiom.premise;
+    const exprt &body = axiom.body;
 
     const string_constraintt axiom_in_model(
       univ_var, get(bound_inf), get(bound_sup), get(prem), get(body));
@@ -1748,14 +1736,14 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
         const exprt &val=v.second;
         const string_constraintt &axiom=axioms.universal[v.first];
 
-        implies_exprt instance(axiom.premise(), axiom.body());
-        replace_expr(axiom.univ_var(), val, instance);
+        implies_exprt instance(axiom.premise, axiom.body);
+        replace_expr(axiom.univ_var, val, instance);
         // We are not sure the index set contains only positive numbers
         exprt bounds=and_exprt(
           axiom.univ_within_bounds(),
           binary_relation_exprt(
             from_integer(0, val.type()), ID_le, val));
-        replace_expr(axiom.univ_var(), val, bounds);
+        replace_expr(axiom.univ_var, val, bounds);
         const implies_exprt counter(bounds, instance);
 
         stream << "  -  " << from_expr(ns, "", counter) << eom;
@@ -2075,9 +2063,9 @@ static void initial_index_set(
   const namespacet &ns,
   const string_constraintt &axiom)
 {
-  const symbol_exprt &qvar=axiom.univ_var();
+  const symbol_exprt &qvar = axiom.univ_var;
   std::list<exprt> to_process;
-  to_process.push_back(axiom.body());
+  to_process.push_back(axiom.body);
 
   while(!to_process.empty())
   {
@@ -2108,7 +2096,7 @@ static void initial_index_set(
           // otherwise we add k-1
           exprt copy(i);
           const minus_exprt kminus1(
-            axiom.upper_bound(), from_integer(1, axiom.upper_bound().type()));
+            axiom.upper_bound, from_integer(1, axiom.upper_bound.type()));
           replace_expr(qvar, kminus1, copy);
           add_to_index_set(index_set, ns, s, copy);
         }
@@ -2227,19 +2215,19 @@ static exprt instantiate(
   const exprt &str,
   const exprt &val)
 {
-  exprt idx=find_index(axiom.body(), str, axiom.univ_var());
+  exprt idx = find_index(axiom.body, str, axiom.univ_var);
   if(idx.is_nil())
     return true_exprt();
 
-  exprt r=compute_inverse_function(stream, axiom.univ_var(), val, idx);
-  implies_exprt instance(axiom.premise(), axiom.body());
-  replace_expr(axiom.univ_var(), r, instance);
+  exprt r = compute_inverse_function(stream, axiom.univ_var, val, idx);
+  implies_exprt instance(axiom.premise, axiom.body);
+  replace_expr(axiom.univ_var, r, instance);
   // We are not sure the index set contains only positive numbers
   exprt bounds=and_exprt(
     axiom.univ_within_bounds(),
     binary_relation_exprt(
       from_integer(0, val.type()), ID_le, val));
-  replace_expr(axiom.univ_var(), r, bounds);
+  replace_expr(axiom.univ_var, r, bounds);
   return implies_exprt(bounds, instance);
 }
 
@@ -2474,9 +2462,9 @@ is_linear_arithmetic_expr(const exprt &expr, const symbol_exprt &var)
 ///   false otherwise.
 static bool universal_only_in_index(const string_constraintt &expr)
 {
-  for(auto it = expr.body().depth_begin(); it != expr.body().depth_end();)
+  for(auto it = expr.body.depth_begin(); it != expr.body.depth_end();)
   {
-    if(*it == expr.univ_var())
+    if(*it == expr.univ_var)
       return false;
     if(it->id() == ID_index)
       it.next_sibling_or_parent();
@@ -2499,7 +2487,7 @@ static bool is_valid_string_constraint(
 {
   const auto eom=messaget::eom;
   // Condition 1: The premise cannot contain any string indices
-  const array_index_mapt premise_indices=gather_indices(expr.premise());
+  const array_index_mapt premise_indices = gather_indices(expr.premise);
   if(!premise_indices.empty())
   {
     stream << "Premise has indices: " << from_expr(ns, "", expr) << ", map: {";
@@ -2513,7 +2501,7 @@ static bool is_valid_string_constraint(
     return false;
   }
 
-  const array_index_mapt body_indices=gather_indices(expr.body());
+  const array_index_mapt body_indices = gather_indices(expr.body);
   // Must validate for each string. Note that we have an invariant that the
   // second value in the pair is non-empty.
   for(const auto &pair : body_indices)
@@ -2534,7 +2522,7 @@ static bool is_valid_string_constraint(
     }
 
     // Condition 3: f must be linear in the quantified variable
-    if(!is_linear_arithmetic_expr(rep, expr.univ_var()))
+    if(!is_linear_arithmetic_expr(rep, expr.univ_var))
     {
       stream << "f is not linear: " << from_expr(ns, "", expr) << ", str: "
              << from_expr(ns, "", pair.first) << eom;
