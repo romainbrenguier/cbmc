@@ -59,7 +59,7 @@ class string_constraintt final
 public:
   // String constraints are of the form
   // forall univ_var in [lower_bound,upper_bound[. premise => body
-  exprt premise = true_exprt(); // Index guard
+  exprt index_guard = true_exprt(); // Index guard
   exprt body;                   // value constraint
   symbol_exprt univ_var;
   // \todo avoid depending on java type
@@ -70,7 +70,7 @@ public:
 inline void
 replace(string_constraintt &axiom, const union_find_replacet &symbol_resolve)
 {
-  symbol_resolve.replace_expr(axiom.premise);
+  symbol_resolve.replace_expr(axiom.index_guard);
   symbol_resolve.replace_expr(axiom.body);
   symbol_resolve.replace_expr(axiom.univ_var);
   symbol_resolve.replace_expr(axiom.upper_bound);

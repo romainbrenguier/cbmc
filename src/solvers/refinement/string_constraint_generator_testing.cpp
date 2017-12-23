@@ -46,7 +46,7 @@ exprt string_constraint_generatort::add_axioms_for_is_prefix(
   string_constraintt a2;
   a2.univ_var = qvar;
   a2.upper_bound = prefix.length();
-  a2.premise = isprefix;
+  a2.index_guard = isprefix;
   a2.body = equal_exprt(str[plus_exprt(qvar, offset)], prefix[qvar]);
   constraints.push_back(a2);
 
@@ -156,7 +156,7 @@ exprt string_constraint_generatort::add_axioms_for_is_suffix(
   string_constraintt a2;
   a2.univ_var = qvar;
   a2.upper_bound = s0.length();
-  a2.premise = issuffix;
+  a2.index_guard = issuffix;
   a2.body = equal_exprt(s0[qvar], s1[qvar_shifted]);
   constraints.push_back(a2);
 
@@ -228,7 +228,7 @@ exprt string_constraint_generatort::add_axioms_for_contains(
   string_constraintt a4;
   a4.univ_var = qvar;
   a4.upper_bound = s1.length();
-  a4.premise = contains;
+  a4.index_guard = contains;
   a4.body = equal_exprt(s1[qvar], s0[qvar_shifted]);
   constraints.push_back(a4);
 

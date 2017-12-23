@@ -54,7 +54,7 @@ exprt string_constraint_generatort::add_axioms_for_set_length(
   string_constraintt a2;
   a2.univ_var = idx;
   a2.upper_bound = res.length();
-  a2.premise = s1.axiom_for_length_gt(idx);
+  a2.index_guard = s1.axiom_for_length_gt(idx);
   a2.body = equal_exprt(s1[idx], res[idx]);
   constraints.push_back(a2);
 
@@ -62,7 +62,7 @@ exprt string_constraint_generatort::add_axioms_for_set_length(
   string_constraintt a3;
   a3.univ_var = idx2;
   a3.upper_bound = res.length();
-  a3.premise = s1.axiom_for_length_le(idx2);
+  a3.index_guard = s1.axiom_for_length_le(idx2);
   a3.body = equal_exprt(res[idx2], constant_char(0, char_type));
   constraints.push_back(a3);
 
@@ -440,7 +440,7 @@ exprt string_constraint_generatort::add_axioms_for_char_set(
   a3.univ_var = q;
   a3.lower_bound = from_integer(0, q.type());
   a3.upper_bound = res.length();
-  a3.premise = a3_guard;
+  a3.index_guard = a3_guard;
   a3.body = a3_body;
   constraints.push_back(a3);
 

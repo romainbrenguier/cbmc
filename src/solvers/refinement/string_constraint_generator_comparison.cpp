@@ -46,7 +46,7 @@ exprt string_constraint_generatort::add_axioms_for_equals(
   string_constraintt a2;
   a2.univ_var = qvar;
   a2.upper_bound = s1.length();
-  a2.premise = eq;
+  a2.index_guard = eq;
   a2.body = equal_exprt(s1[qvar], s2[qvar]);
   constraints.push_back(a2);
 
@@ -137,7 +137,7 @@ exprt string_constraint_generatort::add_axioms_for_equals_ignore_case(
   string_constraintt a2;
   a2.univ_var = qvar;
   a2.upper_bound = s1.length();
-  a2.premise = eq;
+  a2.index_guard = eq;
   a2.body = constr2;
   constraints.push_back(a2);
 
@@ -234,7 +234,7 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
   string_constraintt a2;
   a2.univ_var = i;
   a2.upper_bound = s1.length();
-  a2.premise = res_null;
+  a2.index_guard = res_null;
   a2.body = equal_exprt(s1[i], s2[i]);
   constraints.push_back(a2);
 
@@ -268,7 +268,7 @@ exprt string_constraint_generatort::add_axioms_for_compare_to(
   string_constraintt a4;
   a4.univ_var = i2;
   a4.upper_bound = x;
-  a4.premise = not_exprt(res_null);
+  a4.index_guard = not_exprt(res_null);
   a4.body = equal_exprt(s1[i2], s2[i2]);
   constraints.push_back(a4);
 
