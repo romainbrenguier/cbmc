@@ -4,7 +4,7 @@
 
 void replace(string_constraintt &axiom, const replace_mapt &symbol_resolve)
 {
-  replace_expr(symbol_resolve, axiom.premise);
+  replace_expr(symbol_resolve, axiom.index_guard);
   replace_expr(symbol_resolve, axiom.body);
   replace_expr(symbol_resolve, axiom.univ_var);
   replace_expr(symbol_resolve, axiom.upper_bound);
@@ -26,7 +26,7 @@ std::string from_expr(
   return "forall " + from_expr(ns, identifier, expr.univ_var) + " in [" +
          from_expr(ns, identifier, expr.lower_bound) + ", " +
          from_expr(ns, identifier, expr.upper_bound) + "). " +
-         from_expr(ns, identifier, expr.premise) + " => " +
+         from_expr(ns, identifier, expr.index_guard) + " => " +
          from_expr(ns, identifier, expr.body);
 }
 
@@ -179,11 +179,12 @@ bool is_valid_string_constraint(
   const string_constraintt &expr)
 {
   const auto eom = messaget::eom;
-  // Condition 1: The premise cannot contain any string indices
-  const array_index_mapt premise_indices = gather_indices(expr.premise);
+  // Condition 1: The index guard cannot contain any string indices
+  const array_index_mapt premise_indices = gather_indices(expr.index_guard);
   if(!premise_indices.empty())
   {
-    stream << "Premise has indices: " << from_expr(ns, "", expr) << ", map: {";
+    stream << "Index guard has indices: " << from_expr(ns, "", expr)
+           << ", map: {";
     for(const auto &pair : premise_indices)
     {
       stream << from_expr(ns, "", pair.first) << ": {";

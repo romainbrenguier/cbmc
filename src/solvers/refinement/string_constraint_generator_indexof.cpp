@@ -68,7 +68,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   a4.univ_var = n;
   a4.lower_bound = lower_bound;
   a4.upper_bound = index;
-  a4.premise = contains;
+  a4.index_guard = contains;
   a4.body = not_exprt(equal_exprt(str[n], c));
   constraints.push_back(a4);
 
@@ -77,7 +77,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of(
   a5.univ_var = m;
   a5.lower_bound = lower_bound;
   a5.upper_bound = str.length();
-  a5.premise = not_exprt(contains);
+  a5.index_guard = not_exprt(contains);
   a5.body = notequal_exprt(str[m], c);
   constraints.push_back(a5);
 
@@ -134,7 +134,7 @@ exprt string_constraint_generatort::add_axioms_for_index_of_string(
   string_constraintt a3;
   a3.univ_var = qvar;
   a3.upper_bound = needle.length();
-  a3.premise = contains;
+  a3.index_guard = contains;
   a3.body = equal_exprt(haystack[plus_exprt(qvar, offset)], needle[qvar]);
   constraints.push_back(a3);
 
@@ -228,7 +228,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of_string(
   string_constraintt a3;
   a3.univ_var = qvar;
   a3.upper_bound = needle.length();
-  a3.premise = contains;
+  a3.index_guard = contains;
   a3.body = constr3;
   constraints.push_back(a3);
 
@@ -372,7 +372,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   a4.univ_var = n;
   a4.lower_bound = plus_exprt(index, index1);
   a4.upper_bound = end_index;
-  a4.premise = contains;
+  a4.index_guard = contains;
   a4.body = notequal_exprt(str[n], c);
   constraints.push_back(a4);
 
@@ -380,7 +380,7 @@ exprt string_constraint_generatort::add_axioms_for_last_index_of(
   string_constraintt a5;
   a5.univ_var = m;
   a5.upper_bound = end_index;
-  a5.premise = not_exprt(contains);
+  a5.index_guard = not_exprt(contains);
   a5.body = notequal_exprt(str[m], c);
   constraints.push_back(a5);
 
