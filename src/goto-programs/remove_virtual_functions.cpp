@@ -206,12 +206,12 @@ void remove_virtual_functionst::remove_virtual_function(
     // Only create one call sequence per possible target:
     if(insertit.second)
     {
-      goto_programt::targett t1=new_code_calls.add_instruction();
-      t1->source_location=vcall_source_loc;
+      goto_programt::targett target_for_call = new_code_calls.add_instruction();
+      target_for_call->source_location = vcall_source_loc;
 
       // call function
-      t1->make_function_call(code);
-      auto &newcall = to_code_function_call(t1->code);
+      target_for_call->make_function_call(code);
+      auto &newcall = to_code_function_call(target_for_call->code);
       newcall.function() = fun.symbol_expr;
       // Cast the `this` pointer to the correct type for the new callee:
       const auto &callee_type =
@@ -224,11 +224,11 @@ void remove_virtual_functionst::remove_virtual_function(
       if(!type_eq(newcall.arguments()[0].type(), need_type, ns))
         newcall.arguments()[0].make_typecast(need_type);
 
-      insertit.first->second = t1;
+      insertit.first->second = target_for_call;
       // goto final
-      goto_programt::targett t3=new_code_calls.add_instruction();
-      t3->source_location=vcall_source_loc;
-      t3->make_goto(t_final, true_exprt());
+      goto_programt::targett target_for_goto = new_code_calls.add_instruction();
+      target_for_goto->source_location = vcall_source_loc;
+      target_for_goto->make_goto(t_final, true_exprt());
     }
 
     // Emit target if end of dispatch table is reached or if the next element is
