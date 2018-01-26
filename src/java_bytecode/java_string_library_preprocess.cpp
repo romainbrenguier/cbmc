@@ -2322,4 +2322,10 @@ void java_string_library_preprocesst::initialize_conversion_table()
         std::placeholders::_1,
         std::placeholders::_2,
         std::placeholders::_3);
+  // CProverString.dateFormat is meant to be use in the cases where one would
+  // normally use SimpleDateFormat.format
+  cprover_equivalent_to_java_string_returning_function
+    ["java::org.cprover.CProverString.dateFormat:(Ljava/lang/String;IIIIII)"
+    "Ljava/lang/String;"]=
+      ID_cprover_string_date_format_func;
 }
