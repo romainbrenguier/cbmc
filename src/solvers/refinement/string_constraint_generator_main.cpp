@@ -512,6 +512,8 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_set_length(expr);
   else if(id==ID_cprover_string_delete_func)
     res=add_axioms_for_delete(expr);
+  else if(id==ID_cprover_string_date_format_func)
+    res=add_axioms_for_date_format(expr);
   else if(id==ID_cprover_string_delete_char_at_func)
     res=add_axioms_for_delete_char_at(expr);
   else if(id==ID_cprover_string_replace_func)
