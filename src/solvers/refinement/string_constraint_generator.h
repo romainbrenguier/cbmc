@@ -327,6 +327,8 @@ private:
   /// \deprecated Not tested.
   symbol_exprt add_axioms_for_intern(const function_application_exprt &f);
 
+  symbol_exprt add_axioms_for_date_format(const function_application_exprt &f);
+
   exprt associate_array_to_pointer(const function_application_exprt &f);
 
   exprt associate_length_to_array(const function_application_exprt &f);
