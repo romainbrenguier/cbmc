@@ -17,6 +17,7 @@ Date:   June 2017
 #include <util/c_types.h>
 
 #include <goto-programs/goto_functions.h>
+#include <goto-instrument/accelerate/cone_of_influence.h>
 
 #include "java_bytecode_convert_class.h"
 #include "java_utils.h"
@@ -58,7 +59,8 @@ protected:
 
   codet check_null_dereference(
     const exprt &expr,
-    const source_locationt &original_loc);
+    const source_locationt &original_loc,
+    const bool throw_runtime_exceptions);
 
   codet check_class_cast(
     const exprt &class1,
@@ -69,10 +71,14 @@ protected:
     const exprt &length,
     const source_locationt &original_loc);
 
-  void instrument_code(codet &code);
-  void add_expr_instrumentation(code_blockt &block, const exprt &expr);
+  void instrument_code(codet &code, expr_sett &non_null_pointers);
+  void add_expr_instrumentation(
+    code_blockt &block,
+    const exprt &expr,
+    expr_sett &non_null_pointers);
   void prepend_instrumentation(codet &code, code_blockt &instrumentation);
-  optionalt<codet> instrument_expr(const exprt &expr);
+  optionalt<codet>
+  instrument_expr(const exprt &expr, expr_sett &non_null_pointers);
 };
 
 const std::vector<std::string> exception_needed_classes = {
@@ -272,7 +278,8 @@ codet java_bytecode_instrumentt::check_class_cast(
 /// assertion checking the subtype relation
 codet java_bytecode_instrumentt::check_null_dereference(
   const exprt &expr,
-  const source_locationt &original_loc)
+  const source_locationt &original_loc,
+  const bool throw_runtime_exceptions)
 {
   const equal_exprt equal_expr(
     expr,
@@ -326,9 +333,12 @@ codet java_bytecode_instrumentt::check_array_length(
 /// \param expr: expression to instrument
 void java_bytecode_instrumentt::add_expr_instrumentation(
   code_blockt &block,
-  const exprt &expr)
+  const exprt &expr,
+  expr_sett &non_null_pointers)
 {
-  if(optionalt<codet> expr_instrumentation = instrument_expr(expr))
+  if(
+    optionalt<codet> expr_instrumentation =
+      instrument_expr(expr, non_null_pointers))
   {
     if(expr_instrumentation->get_statement() == ID_block)
       block.append(to_code_block(*expr_instrumentation));
@@ -358,7 +368,11 @@ void java_bytecode_instrumentt::prepend_instrumentation(
 /// Augments `expr` with instrumentation in the form of either
 /// assertions or runtime exceptions
 /// \param `expr` the expression to be instrumented
-void java_bytecode_instrumentt::instrument_code(codet &code)
+/// \param `non_null_pointers` pointers that have alredy been checked against
+///   null pointer exceptions
+void java_bytecode_instrumentt::instrument_code(
+  codet &code,
+  expr_sett &non_null_pointers)
 {
   source_locationt old_source_location=code.source_location();
 
@@ -369,8 +383,9 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
     code_assignt code_assign=to_code_assign(code);
 
     code_blockt block;
-    add_expr_instrumentation(block, code_assign.lhs());
-    add_expr_instrumentation(block, code_assign.rhs());
+    add_expr_instrumentation(block, code_assign.lhs(), non_null_pointers);
+    add_expr_instrumentation(block, code_assign.rhs(), non_null_pointers);
+    non_null_pointers.erase(code_assign.lhs());
     prepend_instrumentation(code, block);
   }
   else if(statement==ID_expression)
@@ -379,7 +394,8 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
       to_code_expression(code);
 
     code_blockt block;
-    add_expr_instrumentation(block, code_expression.expression());
+    add_expr_instrumentation(
+      block, code_expression.expression(), non_null_pointers);
     prepend_instrumentation(code, block);
   }
   else if(statement==ID_assert)
@@ -405,29 +421,30 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
   else if(statement==ID_block)
   {
     Forall_operands(it, code)
-      instrument_code(to_code(*it));
+      instrument_code(to_code(*it), non_null_pointers);
   }
   else if(statement==ID_label)
   {
     code_labelt &code_label=to_code_label(code);
-    instrument_code(code_label.code());
+    instrument_code(code_label.code(), non_null_pointers);
   }
   else if(statement==ID_ifthenelse)
   {
     code_blockt block;
     code_ifthenelset &code_ifthenelse=to_code_ifthenelse(code);
-    add_expr_instrumentation(block, code_ifthenelse.cond());
-    instrument_code(code_ifthenelse.then_case());
+    add_expr_instrumentation(block, code_ifthenelse.cond(), non_null_pointers);
+    // TODO: we should seperate the two non_null_pointers set and merge them afterwards
+    instrument_code(code_ifthenelse.then_case(), non_null_pointers);
     if(code_ifthenelse.else_case().is_not_nil())
-      instrument_code(code_ifthenelse.else_case());
+      instrument_code(code_ifthenelse.else_case(), non_null_pointers);
     prepend_instrumentation(code, block);
   }
   else if(statement==ID_switch)
   {
     code_blockt block;
     code_switcht &code_switch=to_code_switch(code);
-    add_expr_instrumentation(block, code_switch.value());
-    add_expr_instrumentation(block, code_switch.body());
+    add_expr_instrumentation(block, code_switch.value(), non_null_pointers);
+    add_expr_instrumentation(block, code_switch.body(), non_null_pointers);
     prepend_instrumentation(code, block);
   }
   else if(statement==ID_return)
@@ -435,7 +452,7 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
     if(code.operands().size()==1)
     {
       code_blockt block;
-      add_expr_instrumentation(block, code.op0());
+      add_expr_instrumentation(block, code.op0(), non_null_pointers);
       prepend_instrumentation(code, block);
     }
   }
@@ -443,8 +460,10 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
   {
     code_blockt block;
     code_function_callt &code_function_call=to_code_function_call(code);
-    add_expr_instrumentation(block, code_function_call.lhs());
-    add_expr_instrumentation(block, code_function_call.function());
+    add_expr_instrumentation(
+      block, code_function_call.lhs(), non_null_pointers);
+    add_expr_instrumentation(
+      block, code_function_call.function(), non_null_pointers);
 
     const code_typet &function_type=
       to_code_type(code_function_call.function().type());
@@ -455,11 +474,12 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
       block.copy_to_operands(
         check_null_dereference(
           code_function_call.arguments()[0],
-          code_function_call.source_location()));
+          code_function_call.source_location(),
+          throw_runtime_exceptions));
     }
 
     for(const auto &arg : code_function_call.arguments())
-      add_expr_instrumentation(block, arg);
+      add_expr_instrumentation(block, arg, non_null_pointers);
 
     prepend_instrumentation(code, block);
   }
@@ -474,13 +494,15 @@ void java_bytecode_instrumentt::instrument_code(codet &code)
 /// \param expr: the expression for which we compute
 /// instrumentation
 /// \return: The instrumentation for `expr` if required
-optionalt<codet> java_bytecode_instrumentt::instrument_expr(const exprt &expr)
+optionalt<codet> java_bytecode_instrumentt::instrument_expr(
+  const exprt &expr,
+  expr_sett &non_null_pointers)
 {
   code_blockt result;
   // First check our operands:
   forall_operands(it, expr)
   {
-    if(optionalt<codet> op_result = instrument_expr(*it))
+    if(optionalt<codet> op_result = instrument_expr(*it, non_null_pointers))
       result.move_to_operands(*op_result);
   }
 
@@ -517,12 +539,11 @@ optionalt<codet> java_bytecode_instrumentt::instrument_expr(const exprt &expr)
       // we don't throw null
       result.copy_to_operands(
         check_null_dereference(
-          expr.op0(),
-          expr.source_location()));
+          expr.op0(), expr.source_location(), throw_runtime_exceptions));
     }
     else if(statement==ID_java_new_array)
     {
-      // this correponds to new array so we check that
+      // this corresponds to new array so we check that
       // length is >=0
       result.copy_to_operands(
         check_array_length(
@@ -543,12 +564,19 @@ optionalt<codet> java_bytecode_instrumentt::instrument_expr(const exprt &expr)
           expr.get_bool(ID_java_member_access))
   {
     // Check pointer non-null before access:
-    const dereference_exprt dereference_expr=to_dereference_expr(expr);
-    codet null_dereference_check=
-      check_null_dereference(
-        dereference_expr.op0(),
-        dereference_expr.source_location());
-    result.move_to_operands(null_dereference_check);
+    const auto &dereference_expr = expr_checked_cast<dereference_exprt>(expr);
+    const exprt &pointer = dereference_expr.pointer();
+
+    // Only check the dereference if we haven't already checked the same pointer
+    if(non_null_pointers.count(pointer) == 0)
+    {
+      codet null_dereference_check = check_null_dereference(
+        dereference_expr.pointer(),
+        dereference_expr.source_location(),
+        throw_runtime_exceptions);
+      non_null_pointers.insert(pointer);
+      result.move_to_operands(null_dereference_check);
+    }
   }
 
   if(result==code_blockt())
@@ -561,7 +589,8 @@ optionalt<codet> java_bytecode_instrumentt::instrument_expr(const exprt &expr)
 /// \param expr: the expression to be instrumented
 void java_bytecode_instrumentt::operator()(codet &code)
 {
-  instrument_code(code);
+  expr_sett non_null_pointers;
+  instrument_code(code, non_null_pointers);
 }
 
 /// Instruments the code attached to `symbol` with
