@@ -168,6 +168,7 @@ SCENARIO("test_value_set_analysis",
 {
   GIVEN("Normal and custom value-set analysis of CustomVSATest::test")
   {
+    config.set_arch("none");
     null_message_handlert null_output;
     cmdlinet command_line;
 
