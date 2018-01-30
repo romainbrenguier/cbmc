@@ -236,7 +236,7 @@ void remove_virtual_functionst::remove_virtual_function(
     // variable to be sorted for the identifier of the function to be called.
     auto l_it = std::next(it);
     bool next_emit_target =
-      (l_it == functions.crend()) ||
+      (l_it == filtered_functions.crend()) ||
       l_it->symbol_expr.get_identifier() != fun.symbol_expr.get_identifier();
 
     // The root function call is done via fall-through, so nothing to emit
