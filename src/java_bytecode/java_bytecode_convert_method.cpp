@@ -1103,6 +1103,32 @@ static unsigned get_bytecode_type_width(const typet &ty)
   return ty.get_unsigned_int(ID_width);
 }
 
+/// Find catch blocks that begin here. For now we assume if more than
+/// one catch targets the same bytecode then we must be indifferent to
+/// its type and just call it a Throwable.
+/// \param exception_table
+/// \return optional type of exception
+optionalt<typet> get_catch_type(
+  const java_bytecode_parse_treet::methodt::exception_tablet &exception_table,
+  unsigned cur_pc)
+{
+  optionalt<typet> catch_type;
+
+  for(const auto &exception : exception_table)
+  {
+    if(cur_pc == exception.handler_pc)
+    {
+      if(catch_type || exception.catch_type == symbol_typet())
+      {
+        return symbol_typet("java::java.lang.Throwable");
+      }
+      else
+        catch_type = exception.catch_type;
+    }
+  }
+  return catch_type;
+}
+
 codet java_bytecode_convert_methodt::convert_instructions(
   const methodt &method,
   const code_typet &method_type,
@@ -1313,29 +1339,9 @@ codet java_bytecode_convert_methodt::convert_instructions(
       statement=std::string(id2string(statement), 0, statement.size()-2);
     }
 
-    typet catch_type;
-
-    // Find catch blocks that begin here. For now we assume if more than
-    // one catch targets the same bytecode then we must be indifferent to
-    // its type and just call it a Throwable.
-    auto it=method.exception_table.begin();
-    for(; it!=method.exception_table.end(); ++it)
-    {
-      if(cur_pc==it->handler_pc)
-      {
-        if(catch_type!=typet() || it->catch_type==symbol_typet())
-        {
-          catch_type=symbol_typet("java::java.lang.Throwable");
-          break;
-        }
-        else
-          catch_type=it->catch_type;
-      }
-    }
-
     codet catch_instruction;
 
-    if(catch_type!=typet())
+    if(const auto catch_type = get_catch_type(method.exception_table, cur_pc))
     {
       // at the beginning of a handler, clear the stack and
       // push the corresponding exceptional return variable
@@ -1348,7 +1354,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
       symbol_exprt catch_var=
         tmp_variable(
           "caught_exception",
-          java_reference_type(catch_type));
+          java_reference_type(*catch_type));
       stack.push_back(catch_var);
       code_landingpadt catch_statement(catch_var);
       catch_instruction=catch_statement;
