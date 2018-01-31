@@ -24,6 +24,7 @@ SRC = bytecode_info.cpp \
       java_pointer_casts.cpp \
       java_root_class.cpp \
       java_string_library_preprocess.cpp \
+      java_string_literals.cpp \
       java_types.cpp \
       java_utils.cpp \
       generate_java_generic_type.cpp \
@@ -40,6 +41,16 @@ CLEANFILES = java_bytecode$(LIBEXT)
 
 all: java_bytecode$(LIBEXT)
 
+clean: clean_library
+
+.PHONY: clean_library
+clean_library:
+	$(MAKE) clean -C library
+
+library/java_core_models.inc:
+	$(MAKE) -C library java_core_models.inc
+
+java_class_loader$(OBJEXT): library/java_core_models.inc
 ###############################################################################
 
 java_bytecode$(LIBEXT): $(OBJ)

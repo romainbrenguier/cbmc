@@ -30,6 +30,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_entry_point.h"
 #include "java_bytecode_parser.h"
 #include "java_class_loader.h"
+#include "java_string_literals.h"
 #include "java_utils.h"
 #include <java_bytecode/ci_lazy_methods.h>
 #include <java_bytecode/generate_java_generic_type.h>
@@ -42,6 +43,7 @@ Author: Daniel Kroening, kroening@kroening.com
 void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
 {
   assume_inputs_non_null=cmd.isset("java-assume-inputs-non-null");
+  java_class_loader.use_core_models=!cmd.isset("no-core-models");
   string_refinement_enabled=cmd.isset("refine-strings");
   throw_runtime_exceptions=cmd.isset("java-throw-runtime-exceptions");
   if(cmd.isset("java-max-input-array-length"))
@@ -146,6 +148,16 @@ bool java_bytecode_languaget::parse(
   java_class_loader.set_message_handler(get_message_handler());
   java_class_loader.set_java_cp_include_files(java_cp_include_files);
   java_class_loader.add_load_classes(java_load_classes);
+  if(string_refinement_enabled)
+  {
+    string_preprocess.initialize_known_type_table();
+
+    auto get_string_base_classes = [this](const irep_idt &id) { // NOLINT (*)
+      return string_preprocess.get_string_type_base_classes(id);
+    };
+
+    java_class_loader.set_extra_class_refs_function(get_string_base_classes);
+  }
 
   // look at extension
   if(has_suffix(path, ".class"))
@@ -256,6 +268,118 @@ static void infer_opaque_type_fields(
   }
 }
 
+/// Create if necessary, then return the constant global java.lang.Class symbol
+/// for a given class id
+/// \param class_id: class identifier
+/// \param symbol_table: global symbol table; a symbol may be added
+/// \return java.lang.Class typed symbol expression
+static symbol_exprt get_or_create_class_literal_symbol(
+  const irep_idt &class_id, symbol_tablet &symbol_table)
+{
+  symbol_typet java_lang_Class("java::java.lang.Class");
+  symbol_exprt symbol_expr(
+    id2string(class_id)+"@class_model",
+    java_lang_Class);
+  if(!symbol_table.has_symbol(symbol_expr.get_identifier()))
+  {
+    symbolt new_class_symbol;
+    new_class_symbol.name = symbol_expr.get_identifier();
+    new_class_symbol.type = symbol_expr.type();
+    INVARIANT(
+      has_prefix(id2string(new_class_symbol.name), "java::"),
+      "class identifier should have 'java::' prefix");
+    new_class_symbol.base_name =
+      id2string(new_class_symbol.name).substr(6);
+    new_class_symbol.mode = ID_java;
+    new_class_symbol.is_lvalue = true;
+    new_class_symbol.is_state_var = true;
+    new_class_symbol.is_static_lifetime = true;
+    symbol_table.add(new_class_symbol);
+  }
+
+  return symbol_expr;
+}
+
+/// Get result of a Java load-constant (ldc) instruction.
+/// Possible cases:
+/// 1) Pushing a String causes a reference to a java.lang.String object
+/// to be constructed and pushed onto the operand stack.
+/// 2) Pushing an int or a float causes a primitive value to be pushed
+/// onto the stack.
+/// 3) Pushing a Class constant causes a reference to a java.lang.Class
+/// to be pushed onto the operand stack
+/// \param ldc_arg0: raw operand to the ldc opcode
+/// \param symbol_table: global symbol table. If the argument `ldc_arg0` is a
+///   String or Class constant then a new constant global may be added.
+/// \param string_refinement_enabled: true if --refine-strings is enabled, which
+///   influences how String literals are structured.
+/// \return ldc result
+static exprt get_ldc_result(
+  const exprt &ldc_arg0,
+  symbol_tablet &symbol_table,
+  bool string_refinement_enabled)
+{
+  if(ldc_arg0.id() == ID_type)
+  {
+    const irep_idt &class_id = ldc_arg0.type().get(ID_identifier);
+    return
+      address_of_exprt(
+        get_or_create_class_literal_symbol(class_id, symbol_table));
+  }
+  else if(ldc_arg0.id() == ID_java_string_literal)
+  {
+    return
+      address_of_exprt(
+        get_or_create_string_literal_symbol(
+          ldc_arg0, symbol_table, string_refinement_enabled));
+  }
+  else
+  {
+    INVARIANT(
+      ldc_arg0.id() == ID_constant,
+      "ldc argument should be constant, string literal or class literal");
+    return ldc_arg0;
+  }
+}
+
+/// Creates global variables for constants mentioned in a given method. These
+/// are either string literals, or class literals (the java.lang.Class instance
+/// returned by `(some_reference_typed_expression).class`). The method parse
+/// tree is rewritten to directly reference these globals.
+/// \param parse_tree: parse tree to search for constant global references
+/// \param symbol_table: global symbol table, to which constant globals will be
+///   added.
+/// \param string_refinement_enabled: true if `--refine-stings` is active,
+///   which changes how string literals are structured.
+static void generate_constant_global_variables(
+  java_bytecode_parse_treet &parse_tree,
+  symbol_tablet &symbol_table,
+  bool string_refinement_enabled)
+{
+  for(auto &method : parse_tree.parsed_class.methods)
+  {
+    for(auto &instruction : method.instructions)
+    {
+      // ldc* instructions are Java bytecode "load constant" ops, which can
+      // retrieve a numeric constant, String literal, or Class literal.
+      if(instruction.statement == "ldc" ||
+         instruction.statement == "ldc2" ||
+         instruction.statement == "ldc_w" ||
+         instruction.statement == "ldc2_w")
+      {
+        INVARIANT(
+          instruction.args.size() != 0,
+          "ldc instructions should have an argument");
+        instruction.args[0] =
+          get_ldc_result(
+            instruction.args[0],
+            symbol_table,
+            string_refinement_enabled);
+      }
+    }
+  }
+}
+
 bool java_bytecode_languaget::typecheck(
   symbol_tablet &symbol_table,
   const std::string &module)
@@ -266,6 +390,24 @@ bool java_bytecode_languaget::typecheck(
 
   if(string_refinement_enabled)
     string_preprocess.initialize_conversion_table();
+
+  // Must load java.lang.Object first to avoid stubbing
+  // This ordering could alternatively be enforced by
+  // moving the code below to the class loader.
+  java_class_loadert::class_mapt::const_iterator it=
+    java_class_loader.class_map.find("java.lang.Object");
+  if(it!=java_class_loader.class_map.end())
+  {
+    if(java_bytecode_convert_class(
+     it->second,
+     symbol_table,
+     get_message_handler(),
+     max_user_array_length,
+     method_bytecode,
+     lazy_methods_mode,
+     string_preprocess))
+       return true;
+  }
 
   // first generate a new struct symbol for each class and a new function symbol
   // for every method
@@ -316,6 +458,23 @@ bool java_bytecode_languaget::typecheck(
   {
     infer_opaque_type_fields(c.second, symbol_table);
   }
+
+  // Create global variables for constants (String and Class literals) up front.
+  // This means that when running with lazy loading, we will be aware of these
+  // literal globals' existence when __CPROVER_initialize is generated in
+  // `generate_support_functions`.
+  const std::size_t before_constant_globals_size = symbol_table.symbols.size();
+  for(auto &c : java_class_loader.class_map)
+  {
+    generate_constant_global_variables(
+      c.second,
+      symbol_table,
+      string_refinement_enabled);
+  }
+  status() << "Java: added "
+           << (symbol_table.symbols.size() - before_constant_globals_size)
+           << " String or Class constant symbols"
+           << messaget::eom;
 
   // Now incrementally elaborate methods
   // that are reachable from this entry point.

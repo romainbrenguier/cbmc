@@ -106,6 +106,7 @@ SRC = $(BOOLEFORCE_SRC) \
       flattening/boolbv_array.cpp \
       flattening/boolbv_array_of.cpp \
       flattening/boolbv_bitwise.cpp \
+      flattening/boolbv_bswap.cpp \
       flattening/boolbv_bv_rel.cpp \
       flattening/boolbv_byte_extract.cpp \
       flattening/boolbv_byte_update.cpp \
@@ -177,6 +178,7 @@ SRC = $(BOOLEFORCE_SRC) \
       refinement/refine_arithmetic.cpp \
       refinement/refine_arrays.cpp \
       refinement/string_refinement.cpp \
+      refinement/string_constraint.cpp \
       refinement/string_constraint_generator_code_points.cpp \
       refinement/string_constraint_generator_comparison.cpp \
       refinement/string_constraint_generator_concat.cpp \
