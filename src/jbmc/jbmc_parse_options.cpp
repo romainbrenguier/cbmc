@@ -491,6 +491,12 @@ int jbmc_parse_optionst::doit()
   if(set_properties(goto_model))
     return 7; // should contemplate EX_USAGE from sysexits.h
 
+  if(cmdline.isset("show-catches"))
+  {
+    show_catches(goto_model, ui_message_handler.get_ui());
+    return 0; // should contemplate EX_OK from sysexits.h
+  }
+
   // unwinds <clinit> loops to number of enum elements
   // side effect: add this as explicit unwind to unwind set
   if(options.get_bool_option("java-unwind-enum-static"))
@@ -875,6 +881,7 @@ void jbmc_parse_optionst::help()
     "\n"
     "Analysis options:\n"
     " --show-properties            show the properties, but don't run analysis\n" // NOLINT(*)
+    " --show-catches               show the catches, but don't run analysis\n"
     " --symex-coverage-report f    generate a Cobertura XML coverage report in f\n" // NOLINT(*)
     " --property id                only check one specific property\n"
     " --stop-on-fail               stop analysis once a failed property is detected\n" // NOLINT(*)

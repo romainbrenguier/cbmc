@@ -24,6 +24,10 @@ void show_properties(
   const goto_modelt &,
   ui_message_handlert::uit ui);
 
+void show_catches(
+  const goto_modelt &,
+  ui_message_handlert::uit ui);
+
 void show_properties(
   const namespacet &ns,
   ui_message_handlert::uit ui,

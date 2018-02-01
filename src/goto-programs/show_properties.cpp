@@ -187,3 +187,32 @@ void show_properties(
   else
     show_properties(ns, ui, goto_model.goto_functions);
 }
+
+void show_catches(
+  const namespacet &ns,
+  const irep_idt &identifier,
+  ui_message_handlert::uit ui,
+  const goto_programt &goto_program)
+{
+  for(const auto &ins : goto_program.instructions)
+  {
+    const source_locationt &source_location=ins.source_location;
+    std::cout << ins.to_string() << "  : " << source_location.id() << std::endl;
+  }
+}
+
+void show_catches(
+  const goto_modelt &goto_model,
+  ui_message_handlert::uit ui)
+{
+  std::cout << "show catches" << std::endl;
+  const namespacet ns(goto_model.symbol_table);
+  const goto_functionst &goto_functions = goto_model.goto_functions;
+  for(const auto &fct : goto_functions.function_map)
+    if(!fct.second.is_inlined())
+      show_catches(
+        ns,
+        fct.first,
+        ui,
+        fct.second.body);
+}

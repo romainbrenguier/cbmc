@@ -54,6 +54,7 @@ class optionst;
   "(show-loops)" \
   "(show-symbol-table)(show-parse-tree)(show-vcc)" \
   "(show-properties)" \
+  "(show-catches)" \
   "(drop-unused-functions)" \
   "(property):(stop-on-fail)(trace)" \
   "(verbosity):" \
