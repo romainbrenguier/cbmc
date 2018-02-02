@@ -205,14 +205,17 @@ void show_catches(
 
       if(auto symbol = expr_try_dynamic_cast<symbol_exprt>(rhs.get()))
         if(symbol->get_identifier() == "java::@inflight_exception")
-          if(auto symbol_type =
-            type_try_dynamic_cast<symbol_typet>(assign->lhs().type()))
-          {
-            std::cout << "Catch " << ":\n";
-            std::cout << "  " << ins.source_location << '\n'
-                      << "  " << symbol_type->get_identifier() << '\n'
-                      << "  " << from_type(ns, "", *symbol_type) << '\n';
-          }
+          if(auto pointer_type = type_try_dynamic_cast<pointer_typet>(
+            assign->lhs().type()))
+            if(auto symbol_type =
+              type_try_dynamic_cast<symbol_typet>(pointer_type->subtype()))
+            {
+              std::cout << "Catch " << ":\n";
+              std::cout << "  " << ins.source_location << '\n'
+                        << "  " << symbol_type->get_identifier() << '\n'
+                        << "  " << from_type(ns, "", *symbol_type) << '\n';
+              std::cout << std::endl;
+            }
     }
   }
 }
