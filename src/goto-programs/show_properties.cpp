@@ -196,15 +196,24 @@ void show_catches(
 {
   for(const auto &ins : goto_program.instructions)
   {
-    // const source_locationt &source_location=ins.source_location;
     if(auto assign = expr_try_dynamic_cast<code_assignt>(ins.code))
     {
-      if(auto lhs_symbol = expr_try_dynamic_cast<symbol_exprt>(assign->lhs()))
-        if(has_prefix(lhs_symbol->get_identifier(), "caught_exception"))
-          std::cout << "exception " << assign->rhs().pretty() << std::endl;
-    else
-      std::cout << "instruction : " << ins.code.get_statement()
-                << " @ " << ins.location_number << std::endl;
+      // Remove typecasts
+      auto rhs = std::ref(assign->rhs());
+      while(auto uncast = expr_try_dynamic_cast<typecast_exprt>(rhs.get()))
+        rhs = std::ref(uncast->op());
+
+      if(auto symbol = expr_try_dynamic_cast<symbol_exprt>(rhs.get()))
+        if(symbol->get_identifier() == "java::@inflight_exception")
+          if(auto symbol_type =
+            type_try_dynamic_cast<symbol_typet>(assign->lhs().type()))
+          {
+            std::cout << "Catch " << ":\n";
+            std::cout << "  " << ins.source_location << '\n'
+                      << "  " << symbol_type->get_identifier() << '\n'
+                      << "  " << from_type(ns, "", *symbol_type) << '\n';
+          }
+    }
   }
 }
 
@@ -212,7 +221,6 @@ void show_catches(
   const goto_modelt &goto_model,
   ui_message_handlert::uit ui)
 {
-  std::cout << "show catches" << std::endl;
   const namespacet ns(goto_model.symbol_table);
   const goto_functionst &goto_functions = goto_model.goto_functions;
   for(const auto &fct : goto_functions.function_map)
