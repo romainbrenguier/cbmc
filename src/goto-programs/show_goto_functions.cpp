@@ -18,7 +18,7 @@ Author: Peter Schrammel
 #include <util/json_expr.h>
 #include <util/xml_expr.h>
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <langapi/language_util.h>
 #include <goto-programs/show_goto_functions_json.h>

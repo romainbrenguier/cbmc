@@ -39,7 +39,7 @@ Author: CM Wintersteiger, 2006
 #include <util/tempdir.h>
 #include <util/tempfile.h>
 #include <util/config.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/suffix.h>
 #include <util/get_base_name.h>
 #include <util/run.h>

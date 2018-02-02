@@ -21,7 +21,7 @@ Date: September 2011
 #if 0
 #include <util/std_expr.h>
 #include <util/guard.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <goto-programs/remove_skip.h>
 #endif

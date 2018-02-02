@@ -9,7 +9,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <cctype>
 #include <iterator>
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_types.h>
 #include <util/c_types.h>
 #include <util/std_expr.h>

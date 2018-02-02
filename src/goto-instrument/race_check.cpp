@@ -16,7 +16,7 @@ Date: February 2006
 #include <util/std_expr.h>
 #include <util/guard.h>
 #include <util/symbol_table.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/cprover_prefix.h>
 
 #include <goto-programs/goto_program.h>

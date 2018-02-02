@@ -17,7 +17,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <util/base_exceptions.h>
 #include <util/std_expr.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <analyses/dirty.h>
 

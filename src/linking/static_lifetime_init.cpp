@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/arith_tools.h>
 #include <util/std_code.h>
 #include <util/config.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <util/c_types.h>
 

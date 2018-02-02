@@ -15,7 +15,7 @@ Author: Daniel Kroening
 #include <util/byte_operators.h>
 #include <util/c_types.h>
 #include <util/arith_tools.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/ssa_expr.h>
 
 #include <goto-programs/goto_program_template.h>

@@ -11,7 +11,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "value_set_analysis.h"
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/cprover_prefix.h>
 #include <util/xml_expr.h>
 #include <util/xml.h>

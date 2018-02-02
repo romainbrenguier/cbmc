@@ -17,7 +17,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <goto-programs/resolve_concrete_function_call.h>
 
 #include <util/c_types.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/type_eq.h>
 
 class remove_virtual_functionst

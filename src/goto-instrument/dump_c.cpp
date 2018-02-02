@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <util/config.h>
 #include <util/invariant.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/suffix.h>
 #include <util/find_symbols.h>
 #include <util/base_type.h>

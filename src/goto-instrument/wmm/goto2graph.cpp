@@ -22,7 +22,7 @@ Date: 2012
 #include <cstdlib>
 #endif
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/cprover_prefix.h>
 #include <util/options.h>
 #include <util/message.h>

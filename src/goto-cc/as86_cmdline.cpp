@@ -14,7 +14,7 @@ Author: Michael Tautschnig
 #include <cassert>
 #include <iostream>
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 // non-as86 options
 const char *goto_as86_options_with_argument[]=

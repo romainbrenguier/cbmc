@@ -23,7 +23,7 @@ Author: CM Wintersteiger, 2006
 
 #include <util/string2int.h>
 #include <util/message.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/config.h>
 
 #include "compile.h"

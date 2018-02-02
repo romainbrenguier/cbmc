@@ -19,7 +19,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "config.h"
 #include "expr_util.h"
 #include "threeval.h"
-#include "prefix.h"
+#include "string_utils.h"
 #include "pointer_predicates.h"
 
 static bool is_dereference_integer_object(

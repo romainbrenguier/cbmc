@@ -12,7 +12,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "branch.h"
 
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include "function.h"
 

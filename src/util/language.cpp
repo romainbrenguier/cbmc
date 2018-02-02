@@ -14,7 +14,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "expr.h"
 #include <util/symbol.h>
 #include <util/symbol_table.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/cprover_prefix.h>
 #include <util/std_types.h>
 

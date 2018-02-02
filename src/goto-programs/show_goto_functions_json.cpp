@@ -17,7 +17,7 @@ Author: Thomas Kiley
 #include <util/json_expr.h>
 #include <util/json_irep.h>
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <langapi/language_util.h>
 

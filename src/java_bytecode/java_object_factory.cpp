@@ -20,7 +20,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/nondet_bool.h>
 #include <util/nondet_ifthenelse.h>
 #include <util/pointer_offset_size.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/invariant.h>
 
 #include <linking/zero_initializer.h>

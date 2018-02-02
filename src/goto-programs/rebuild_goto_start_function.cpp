@@ -11,7 +11,7 @@
 #include <util/language.h>
 #include <util/symbol.h>
 #include <util/symbol_table.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/cmdline.h>
 #include <langapi/mode.h>
 #include <memory>

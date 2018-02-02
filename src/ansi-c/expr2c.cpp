@@ -28,7 +28,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_code.h>
 #include <util/ieee_float.h>
 #include <util/fixedbv.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/lispirep.h>
 #include <util/lispexpr.h>
 #include <util/namespace.h>

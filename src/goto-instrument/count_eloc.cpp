@@ -16,7 +16,7 @@ Date: December 2012
 #include <iostream>
 #include <unordered_set>
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/file_util.h>
 
 #include <goto-programs/cfg.h>

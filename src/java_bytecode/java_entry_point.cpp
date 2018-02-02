@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <linking/static_lifetime_init.h>
 
 #include <util/arith_tools.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_types.h>
 #include <util/std_code.h>
 #include <util/std_expr.h>

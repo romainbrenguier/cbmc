@@ -14,7 +14,7 @@ Author: Daniel Kroening, 2013
 #include <cassert>
 #include <iostream>
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 /// parses the command line options into a cmdlinet
 /// \par parameters: argument count, argument strings

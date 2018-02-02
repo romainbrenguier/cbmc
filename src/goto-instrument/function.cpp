@@ -13,7 +13,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <util/arith_tools.h>
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_expr.h>
 
 #include <util/c_types.h>

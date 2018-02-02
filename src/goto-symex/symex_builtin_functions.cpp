@@ -23,7 +23,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_expr.h>
 #include <util/std_code.h>
 #include <util/simplify_expr.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/string2int.h>
 #include <util/invariant_utils.h>
 #include <util/c_types.h>

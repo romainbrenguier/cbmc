@@ -12,7 +12,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <solvers/refinement/string_constraint_generator.h>
 
 #include <ansi-c/string_constant.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/unicode.h>
 
 /// Add axioms ensuring that the provided string expression and constant are

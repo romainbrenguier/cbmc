@@ -25,7 +25,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/ieee_float.h>
 #include <util/invariant.h>
 #include <util/namespace.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/simplify_expr.h>
 #include <util/std_expr.h>
 #include <util/string2int.h>

@@ -17,7 +17,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "string2int.h"
 #include "symbol_table.h"
-#include "prefix.h"
+#include "string_utils.h"
 #include "std_types.h"
 
 unsigned get_max(

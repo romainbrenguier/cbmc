@@ -13,7 +13,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <util/invariant.h>
 #include <util/message.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_types.h>
 #include <util/string_utils.h>
 

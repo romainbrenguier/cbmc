@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/cprover_prefix.h>
 #include <util/expr_util.h>
 #include <util/fresh_symbol.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_expr.h>
 #include <util/symbol_table.h>
 #include <util/simplify_expr.h>

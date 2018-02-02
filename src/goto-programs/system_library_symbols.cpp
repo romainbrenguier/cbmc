@@ -11,7 +11,7 @@ Author: Thomas Kiley
 
 #include "system_library_symbols.h"
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/suffix.h>
 #include <util/symbol.h>
 #include <util/type.h>

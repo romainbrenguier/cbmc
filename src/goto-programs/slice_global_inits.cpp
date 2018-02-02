@@ -20,7 +20,7 @@ Date:   December 2016
 #include <util/namespace.h>
 #include <util/std_expr.h>
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <goto-programs/goto_functions.h>
 #include <goto-programs/remove_skip.h>

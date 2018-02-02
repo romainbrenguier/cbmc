@@ -21,7 +21,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/cprover_prefix.h>
 #include <util/expr_util.h>
 #include <util/invariant.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_code.h>
 #include <util/std_expr.h>
 

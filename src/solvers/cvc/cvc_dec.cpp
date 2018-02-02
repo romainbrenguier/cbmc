@@ -26,7 +26,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #define getpid _getpid
 #endif
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/string2int.h>
 
 cvc_temp_filet::cvc_temp_filet()

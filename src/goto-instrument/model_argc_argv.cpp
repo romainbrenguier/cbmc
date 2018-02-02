@@ -22,7 +22,7 @@ Date: April 2016
 #include <util/config.h>
 #include <util/replace_symbol.h>
 #include <util/symbol_table.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <ansi-c/ansi_c_language.h>
 

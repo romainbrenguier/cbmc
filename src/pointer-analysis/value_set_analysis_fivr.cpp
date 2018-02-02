@@ -12,7 +12,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "value_set_analysis_fivr.h"
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/cprover_prefix.h>
 #include <util/xml_irep.h>
 #include <util/symbol_table.h>

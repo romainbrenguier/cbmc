@@ -17,7 +17,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_expr.h>
 #include <util/arith_tools.h>
 #include <util/ieee_float.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <ansi-c/string_constant.h>
 

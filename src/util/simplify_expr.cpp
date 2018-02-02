@@ -29,7 +29,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "namespace.h"
 #include "threeval.h"
 #include "pointer_predicates.h"
-#include "prefix.h"
+#include "string_utils.h"
 #include "byte_operators.h"
 #include "bv_arithmetic.h"
 #include "endianness_map.h"

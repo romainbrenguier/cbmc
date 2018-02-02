@@ -19,7 +19,7 @@ Date:   April 2010
 #include <cstdio>
 
 #include <util/invariant.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/tempfile.h>
 
 goto_cc_cmdlinet::~goto_cc_cmdlinet()

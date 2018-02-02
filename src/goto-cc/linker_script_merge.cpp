@@ -19,7 +19,7 @@ Author: Kareem Khazem <karkhaz@karkhaz.com>, 2017
 #include <util/expr.h>
 #include <util/get_base_name.h>
 #include <util/magic.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/run.h>
 #include <util/string2int.h>
 #include <util/tempfile.h>

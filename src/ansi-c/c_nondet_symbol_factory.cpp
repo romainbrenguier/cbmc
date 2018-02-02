@@ -22,7 +22,7 @@ Author: DiffBlue Limited. All rights reserved.
 #include <util/std_expr.h>
 #include <util/namespace.h>
 #include <util/pointer_offset_size.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #include <linking/zero_initializer.h>
 

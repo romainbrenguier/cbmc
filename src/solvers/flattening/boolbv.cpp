@@ -18,7 +18,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/magic.h>
 #include <util/replace_expr.h>
 #include <util/std_types.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_expr.h>
 #include <util/threeval.h>
 #include <util/string2int.h>

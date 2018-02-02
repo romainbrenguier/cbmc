@@ -18,7 +18,7 @@ Date: February 2013
 #include <memory>
 
 #include <util/pointer_offset_size.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/make_unique.h>
 
 #include <pointer-analysis/value_set_analysis_fi.h>

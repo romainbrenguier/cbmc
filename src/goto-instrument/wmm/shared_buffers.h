@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <goto-programs/goto_program.h>
 #include <util/namespace.h>
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/message.h>
 
 #include "wmm.h"

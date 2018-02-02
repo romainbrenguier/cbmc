@@ -15,7 +15,7 @@ Date: June 2003
 #include <util/base_type.h>
 #include <util/std_code.h>
 #include <util/symbol_table.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/fresh_symbol.h>
 
 #include "goto_inline.h"

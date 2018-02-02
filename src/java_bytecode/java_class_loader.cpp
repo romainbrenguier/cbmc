@@ -13,7 +13,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <fstream>
 
 #include <util/suffix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/config.h>
 
 #include "java_bytecode_parser.h"

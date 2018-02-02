@@ -24,7 +24,7 @@ Date: September 2011
 #include <set>
 
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/message.h>
 
 #include <goto-programs/remove_skip.h>

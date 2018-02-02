@@ -11,7 +11,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #define CPROVER_UTIL_SOURCE_LOCATION_H
 
 #include "irep.h"
-#include "prefix.h"
+#include "string_utils.h"
 
 class source_locationt:public irept
 {

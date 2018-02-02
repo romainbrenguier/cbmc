@@ -196,8 +196,15 @@ void show_catches(
 {
   for(const auto &ins : goto_program.instructions)
   {
-    const source_locationt &source_location=ins.source_location;
-    std::cout << ins.to_string() << "  : " << source_location.id() << std::endl;
+    // const source_locationt &source_location=ins.source_location;
+    if(auto assign = expr_try_dynamic_cast<code_assignt>(ins.code))
+    {
+      if(auto lhs_symbol = expr_try_dynamic_cast<symbol_exprt>(assign->lhs()))
+        if(has_prefix(lhs_symbol->get_identifier(), "caught_exception"))
+          std::cout << "exception " << assign->rhs().pretty() << std::endl;
+    else
+      std::cout << "instruction : " << ins.code.get_statement()
+                << " @ " << ins.location_number << std::endl;
   }
 }
 

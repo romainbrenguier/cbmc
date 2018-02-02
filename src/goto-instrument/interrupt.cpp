@@ -16,7 +16,7 @@ Date: September 2011
 #include <util/cprover_prefix.h>
 #include <util/std_expr.h>
 #include <util/std_code.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/symbol_table.h>
 
 #include <goto-programs/goto_functions.h>

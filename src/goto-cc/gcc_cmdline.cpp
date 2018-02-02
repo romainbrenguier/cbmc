@@ -16,7 +16,7 @@ Author: CM Wintersteiger, 2006
 #include <iostream>
 #include <fstream>
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 /// parses the command line options into a cmdlinet
 /// \par parameters: argument count, argument strings

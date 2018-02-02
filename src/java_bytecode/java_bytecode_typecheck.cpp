@@ -12,7 +12,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_bytecode_typecheck.h"
 
 #include <util/std_types.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/config.h>
 
 #include "expr2java.h"

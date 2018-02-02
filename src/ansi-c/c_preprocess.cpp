@@ -31,7 +31,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/unicode.h>
 #include <util/arith_tools.h>
 #include <util/std_types.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 #define GCC_DEFINES_16 \
   " -D__INT_MAX__=32767"\

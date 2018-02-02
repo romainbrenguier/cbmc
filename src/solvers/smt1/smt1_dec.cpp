@@ -24,7 +24,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/tempfile.h>
 #include <util/arith_tools.h>
 #include <util/string2int.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 
 std::string smt1_dect::decision_procedure_text() const
 {

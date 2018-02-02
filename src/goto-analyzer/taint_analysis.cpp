@@ -14,7 +14,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <iostream>
 #include <fstream>
 
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/simplify_expr.h>
 #include <util/json.h>
 

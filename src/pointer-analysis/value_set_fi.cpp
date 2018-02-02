@@ -18,7 +18,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/simplify_expr.h>
 #include <util/base_type.h>
 #include <util/std_expr.h>
-#include <util/prefix.h>
+#include <util/string_utils.h>
 #include <util/std_code.h>
 #include <util/arith_tools.h>
 
