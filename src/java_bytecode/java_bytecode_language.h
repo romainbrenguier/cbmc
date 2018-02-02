@@ -26,7 +26,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #define JAVA_BYTECODE_LANGUAGE_OPTIONS /*NOLINT*/                              \
   "(no-core-models)"                                                           \
   "(java-assume-inputs-non-null)"                                              \
-  "(java-throw-runtime-exceptions)"                                            \
+  "(java-throw-runtime-exceptions):"                                            \
   "(java-max-input-array-length):"                                             \
   "(java-max-input-tree-depth):"                                               \
   "(java-max-vla-length):"                                                     \
@@ -40,7 +40,7 @@ Author: Daniel Kroening, kroening@kroening.com
   "                                  the Java Class Library\n"                                   /* NOLINT(*) */ \
   " --java-assume-inputs-non-null    never initialize reference-typed parameter to the\n"        /* NOLINT(*) */ \
   "                                  entry point with null\n"                                    /* NOLINT(*) */ \
-  " --java-throw-runtime-exceptions  make implicit runtime exceptions explicit\n"                /* NOLINT(*) */ \
+  " --java-throw-runtime-exceptions EXCEPTION_CLASSES make implicit runtime exceptions explicit\n"                /* NOLINT(*) */ \
   " --java-max-input-array-length N  limit input array size to <= N\n"                           /* NOLINT(*) */ \
   " --java-max-input-tree-depth N    object references are (deterministically) set to null in\n" /* NOLINT(*) */ \
   "                                  the object\n"                                               /* NOLINT(*) */ \
@@ -183,7 +183,7 @@ protected:
   lazy_methods_modet lazy_methods_mode;
   std::vector<irep_idt> lazy_methods_extra_entry_points;
   bool string_refinement_enabled;
-  bool throw_runtime_exceptions;
+  std::set<std::string> throw_runtime_exceptions;
   java_string_library_preprocesst string_preprocess;
   std::string java_cp_include_files;
 

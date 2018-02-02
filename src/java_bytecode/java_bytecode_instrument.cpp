@@ -30,7 +30,7 @@ class java_bytecode_instrumentt:public messaget
 public:
   java_bytecode_instrumentt(
     symbol_table_baset &_symbol_table,
-    const bool _throw_runtime_exceptions,
+    const std::set<std::string> _throw_runtime_exceptions,
     message_handlert &_message_handler)
     : messaget(_message_handler),
       symbol_table(_symbol_table),
@@ -43,7 +43,7 @@ public:
 
 protected:
   symbol_table_baset &symbol_table;
-  const bool throw_runtime_exceptions;
+  const std::set<std::string> throw_runtime_exceptions;
   message_handlert &message_handler;
 
   codet throw_exception(
@@ -146,6 +146,15 @@ codet java_bytecode_instrumentt::throw_exception(
   return if_code;
 }
 
+static bool should_throw(
+  const std::set<std::string> &throw_runtime_exceptions,
+  const std::string &exception)
+{
+  return
+    throw_runtime_exceptions.count(exception)
+    || throw_runtime_exceptions.count("java.lang.Exception")
+    || throw_runtime_exceptions.count("java.lang.Throwable");
+}
 
 /// Checks whether there is a division by zero
 /// and throws ArithmeticException if necessary.
@@ -161,7 +170,7 @@ codet java_bytecode_instrumentt::check_arithmetic_exception(
   const constant_exprt &zero=from_integer(0, denominator.type());
   const binary_relation_exprt equal_zero(denominator, ID_equal, zero);
 
-  if(throw_runtime_exceptions)
+  if(should_throw(throw_runtime_exceptions, "java.lang.ArithmeticException"))
     return throw_exception(
       equal_zero,
       original_loc,
@@ -195,7 +204,8 @@ codet java_bytecode_instrumentt::check_array_access(
   const binary_relation_exprt lt_length(idx, ID_lt, length_field);
   const and_exprt cond(ge_zero, lt_length);
 
-  if(throw_runtime_exceptions)
+  if(should_throw(
+    throw_runtime_exceptions, "java.lang.ArrayIndexOutOfBoundsException"))
     return throw_exception(
       not_exprt(cond),
       original_loc,
@@ -243,7 +253,8 @@ codet java_bytecode_instrumentt::check_class_cast(
     null_check_op.make_typecast(voidptr);
 
   codet check_code;
-  if(throw_runtime_exceptions)
+  if(should_throw(throw_runtime_exceptions,
+        "java.lang.ClassCastException"))
   {
     check_code=
       throw_exception(
@@ -285,10 +296,12 @@ codet java_bytecode_instrumentt::check_null_dereference(
     expr,
     null_pointer_exprt(to_pointer_type(expr.type())));
 
-  if(throw_runtime_exceptions)
+  if(should_throw(throw_runtime_exceptions,
+      "java.lang.NullPointerException"))
     return throw_exception(
       equal_expr,
-      original_loc, "java.lang.NullPointerException");
+      original_loc,
+      "java.lang.NullPointerException");
 
   code_assertt check((not_exprt(equal_expr)));
   check.add_source_location()
@@ -314,7 +327,8 @@ codet java_bytecode_instrumentt::check_array_length(
   const constant_exprt &zero=from_integer(0, java_int_type());
   const binary_relation_exprt ge_zero(length, ID_ge, zero);
 
-  if(throw_runtime_exceptions)
+  if(should_throw(throw_runtime_exceptions,
+      "java.lang.NegativeArraySizeException"))
     return throw_exception(
       not_exprt(ge_zero),
       original_loc,
@@ -589,7 +603,7 @@ void java_bytecode_instrumentt::operator()(exprt &expr)
 void java_bytecode_instrument_symbol(
   symbol_table_baset &symbol_table,
   symbolt &symbol,
-  const bool throw_runtime_exceptions,
+  const std::set<std::string> &throw_runtime_exceptions,
   message_handlert &message_handler)
 {
   java_bytecode_instrumentt instrument(
@@ -616,7 +630,7 @@ void java_bytecode_instrument_symbol(
 /// \param message_handler: stream to report status and warnings
 void java_bytecode_instrument(
   symbol_tablet &symbol_table,
-  const bool throw_runtime_exceptions,
+  const std::set<std::string> &throw_runtime_exceptions,
   message_handlert &message_handler)
 {
   java_bytecode_instrumentt instrument(

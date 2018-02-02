@@ -45,7 +45,7 @@ void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
   assume_inputs_non_null=cmd.isset("java-assume-inputs-non-null");
   java_class_loader.use_core_models=!cmd.isset("no-core-models");
   string_refinement_enabled=cmd.isset("refine-strings");
-  throw_runtime_exceptions=cmd.isset("java-throw-runtime-exceptions");
+
   if(cmd.isset("java-max-input-array-length"))
     object_factory_parameters.max_nondet_array_length=
       std::stoi(cmd.get_value("java-max-input-array-length"));
@@ -67,7 +67,10 @@ void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
 
   if(cmd.isset("java-throw-runtime-exceptions"))
   {
-    throw_runtime_exceptions = true;
+    const std::string argument = cmd.get_value("java-throw-runtime-exceptions");
+    std::vector<std::string> exception_list;
+    split_string(argument, ':', exception_list);
+    throw_runtime_exceptions.insert(exception_list.begin(), exception_list.end());
     java_load_classes.insert(
         java_load_classes.end(),
         exception_needed_classes.begin(),
