@@ -129,6 +129,17 @@ public:
   }
 };
 
+template <>
+inline bool can_cast_type<symbol_typet>(const typet &type)
+{
+  return type.id() == ID_symbol;
+}
+
+inline void validate_type(const symbol_typet &type)
+{
+  DATA_INVARIANT(!type.get(ID_identifier).empty(), "symbol must have identifier");
+}
+
 /*! \brief Cast a generic typet to a \ref symbol_typet
  *
  * This is an unchecked conversion. \a type must be known to be \ref
@@ -142,7 +153,9 @@ public:
 inline const symbol_typet &to_symbol_type(const typet &type)
 {
   PRECONDITION(type.id()==ID_symbol);
-  return static_cast<const symbol_typet &>(type);
+  const symbol_typet &ret = static_cast<const symbol_typet &>(type);
+  validate_type(ret);
+  return ret;
 }
 
 /*! \copydoc to_symbol_type(const typet &)
@@ -151,7 +164,9 @@ inline const symbol_typet &to_symbol_type(const typet &type)
 inline symbol_typet &to_symbol_type(typet &type)
 {
   PRECONDITION(type.id()==ID_symbol);
-  return static_cast<symbol_typet &>(type);
+  symbol_typet &ret = static_cast<symbol_typet &>(type);
+  validate_type(ret);
+  return ret;
 }
 
 /*! \brief Base type of C structs and unions, and C++ classes
