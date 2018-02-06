@@ -1075,7 +1075,8 @@ static optionalt<exprt> get_array(
   if(n>max_string_length)
   {
     stream << "(sr::get_array) long string (size=" << n << ")" << eom;
-    return {};
+    stream << "(sr::get_array) returning a dummy string" << eom;
+    return empty_ret;
   }
 
   if(n==0)
