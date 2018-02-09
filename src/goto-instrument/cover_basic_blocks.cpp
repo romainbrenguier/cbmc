@@ -93,7 +93,7 @@ cover_basic_blockst::cover_basic_blockst(const goto_programt &_goto_program)
     update_covered_lines(block_info);
 }
 
-unsigned cover_basic_blockst::block_of(goto_programt::const_targett t) const
+std::size_t cover_basic_blockst::block_of(goto_programt::const_targett t) const
 {
   const auto it = block_map.find(t);
   INVARIANT(it != block_map.end(), "instruction must be part of a block");
@@ -101,14 +101,14 @@ unsigned cover_basic_blockst::block_of(goto_programt::const_targett t) const
 }
 
 optionalt<goto_programt::const_targett>
-cover_basic_blockst::instruction_of(unsigned block_nr) const
+cover_basic_blockst::instruction_of(const std::size_t block_nr) const
 {
   INVARIANT(block_nr < block_infos.size(), "block number out of range");
   return block_infos.at(block_nr).representative_inst;
 }
 
 const source_locationt &
-cover_basic_blockst::source_location_of(unsigned block_nr) const
+cover_basic_blockst::source_location_of(const std::size_t block_nr) const
 {
   INVARIANT(block_nr < block_infos.size(), "block number out of range");
   return block_infos.at(block_nr).source_location;
