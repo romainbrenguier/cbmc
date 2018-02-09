@@ -15,6 +15,10 @@ Author: Peter Schrammel
 #include <util/message.h>
 #include <util/string2int.h>
 
+/// create list of covered lines as CSV string and set as property of source
+/// location of basic block, compress to ranges if applicable
+static void update_covered_lines(cover_basic_blockst::block_infot &block_info);
+
 cover_basic_blockst::cover_basic_blockst(const goto_programt &_goto_program)
 {
   bool next_is_target = true;
@@ -214,7 +218,7 @@ void cover_basic_blockst::output(std::ostream &out) const
         << '\n';
 }
 
-void cover_basic_blockst::update_covered_lines(block_infot &block_info)
+static void update_covered_lines(cover_basic_blockst::block_infot &block_info)
 {
   if(block_info.source_location.is_nil())
     return;

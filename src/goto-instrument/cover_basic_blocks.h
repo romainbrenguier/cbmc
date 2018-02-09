@@ -21,6 +21,21 @@ class message_handlert;
 class cover_basic_blockst
 {
 public:
+  struct block_infot
+  {
+    /// the program location to instrument for this block
+    optionalt<goto_programt::const_targett> representative_inst;
+
+    /// the source location representative for this block
+    // (we need a separate copy of source locations because we attach
+    //  the line number ranges to them)
+    source_locationt source_location;
+
+    // map block numbers to source code locations
+    /// the set of lines belonging to this block
+    std::unordered_set<unsigned> lines;
+  };
+
   explicit cover_basic_blockst(const goto_programt &_goto_program);
 
   /// \param t a goto instruction
@@ -62,27 +77,9 @@ protected:
   typedef std::map<goto_programt::const_targett, unsigned> block_mapt;
   block_mapt block_map;
 
-  struct block_infot
-  {
-    /// the program location to instrument for this block
-    optionalt<goto_programt::const_targett> representative_inst;
-
-    /// the source location representative for this block
-    // (we need a separate copy of source locations because we attach
-    //  the line number ranges to them)
-    source_locationt source_location;
-
-    // map block numbers to source code locations
-    /// the set of lines belonging to this block
-    std::unordered_set<unsigned> lines;
-  };
-
   typedef std::vector<block_infot> block_infost;
   block_infost block_infos;
 
-  /// create list of covered lines as CSV string and set as property of source
-  /// location of basic block, compress to ranges if applicable
-  void update_covered_lines(block_infot &block_info);
 };
 
 #endif // CPROVER_GOTO_INSTRUMENT_COVER_BASIC_BLOCKS_H
