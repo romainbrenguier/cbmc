@@ -23,7 +23,7 @@ class cover_basic_blockst
 public:
   struct block_infot
   {
-    /// the program location to instrument for this block
+    /// the program instruction representative for this block
     optionalt<goto_programt::const_targett> representative_inst;
 
     /// the source location representative for this block
@@ -31,7 +31,6 @@ public:
     //  the line number ranges to them)
     source_locationt source_location;
 
-    // map block numbers to source code locations
     /// the set of lines belonging to this block
     std::unordered_set<unsigned> lines;
   };
@@ -72,14 +71,10 @@ public:
   /// Outputs the list of blocks
   void output(std::ostream &out) const;
 
-protected:
+private:
   // map program locations to block numbers
-  typedef std::map<goto_programt::const_targett, unsigned> block_mapt;
-  block_mapt block_map;
-
-  typedef std::vector<block_infot> block_infost;
-  block_infost block_infos;
-
+  std::map<goto_programt::const_targett, unsigned> block_map;
+  std::vector<block_infot> block_infos;
 };
 
 #endif // CPROVER_GOTO_INSTRUMENT_COVER_BASIC_BLOCKS_H
