@@ -20,6 +20,7 @@ Date: May 2016
 #include <util/options.h>
 
 #include "cover_basic_blocks.h"
+#include "cover_location_blocks.h"
 
 /// Applies instrumenters to given goto program
 /// \param goto_program: the goto program
@@ -30,12 +31,22 @@ void instrument_cover_goals(
   const cover_instrumenterst &instrumenters,
   message_handlert &message_handler)
 {
-  cover_basic_blockst basic_blocks(goto_program);
-  basic_blocks.select_unique_java_bytecode_indices(
-    goto_program, message_handler);
-  basic_blocks.report_block_anomalies(goto_program, message_handler);
-
-  instrumenters(goto_program, basic_blocks);
+  bool has_bytecode_indexes = !goto_program.instructions.front()
+                                 .source_location.get_java_bytecode_index()
+                                 .empty();
+  if(has_bytecode_indexes)
+  {
+    cover_location_blockst cover_blocks(goto_program);
+    instrumenters(goto_program, cover_blocks);
+  }
+  else
+  {
+    cover_basic_blockst cover_blocks(goto_program);
+    cover_blocks.select_unique_java_bytecode_indices(
+      goto_program, message_handler);
+    cover_blocks.report_block_anomalies(goto_program, message_handler);
+    instrumenters(goto_program, cover_blocks);
+  }
 }
 
 /// Instruments goto program for a given coverage criterion
