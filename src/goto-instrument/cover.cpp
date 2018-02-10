@@ -49,26 +49,6 @@ void instrument_cover_goals(
   }
 }
 
-/// Instruments goto program for a given coverage criterion
-/// \param symbol_table: the symbol table
-/// \param goto_program: the goto program
-/// \param criterion: the coverage criterion
-/// \param message_handler: a message handler
-void instrument_cover_goals(
-  const symbol_tablet &symbol_table,
-  goto_programt &goto_program,
-  coverage_criteriont criterion,
-  message_handlert &message_handler)
-{
-  goal_filterst goal_filters;
-  goal_filters.add(util_make_unique<internal_goals_filtert>(message_handler));
-
-  cover_instrumenterst instrumenters;
-  instrumenters.add_from_criterion(criterion, symbol_table, goal_filters);
-
-  instrument_cover_goals(goto_program, instrumenters, message_handler);
-}
-
 /// Create and add an instrumenter based on the given criterion
 /// \param criterion: the coverage criterion
 /// \param symbol_table: the symbol table

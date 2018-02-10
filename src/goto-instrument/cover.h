@@ -43,25 +43,8 @@ struct cover_configt
   cover_instrumenterst cover_instrumenters;
 };
 
-void instrument_cover_goals(
-  const symbol_tablet &,
-  goto_functionst &,
-  coverage_criteriont,
-  message_handlert &message_handler);
-
-void instrument_cover_goals(
-  const symbol_tablet &,
-  goto_programt &,
-  coverage_criteriont,
-  message_handlert &message_handler);
-
 std::unique_ptr<cover_configt> get_cover_config(
   const optionst &, const symbol_tablet &, message_handlert &);
-
-void instrument_cover_goals(
-  const cover_configt &,
-  goto_model_functiont &,
-  message_handlert &);
 
 void parse_cover_options(const cmdlinet &, optionst &);
 
