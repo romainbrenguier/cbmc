@@ -29,12 +29,10 @@ Date: May 2016
 void instrument_cover_goals(
   goto_programt &goto_program,
   const cover_instrumenterst &instrumenters,
-  message_handlert &message_handler)
+  message_handlert &message_handler,
+  bool java_bytecode)
 {
-  bool has_bytecode_indexes = !goto_program.instructions.front()
-                                 .source_location.get_java_bytecode_index()
-                                 .empty();
-  if(has_bytecode_indexes)
+  if(java_bytecode)
   {
     cover_location_blockst cover_blocks(goto_program);
     instrumenters(goto_program, cover_blocks);
@@ -178,6 +176,11 @@ std::unique_ptr<cover_configt> get_cover_config(
   optionst::value_listt criteria_strings = options.get_list_option("cover");
 
   config->keep_assertions = false;
+
+  // Hackish way of finding whether we should instrument as bytecode
+  config->java_bytecode =
+    symbol_table.lookup(CPROVER_PREFIX "initialize")->mode == ID_java;
+
   for(const auto &criterion_string : criteria_strings)
   {
     try
@@ -248,7 +251,10 @@ static void instrument_cover_goals(
   if(config.function_filters(function_id, function))
   {
     instrument_cover_goals(
-      function.body, config.cover_instrumenters, message_handler);
+      function.body,
+      config.cover_instrumenters,
+      message_handler,
+      config.java_bytecode);
     changed = true;
   }
 

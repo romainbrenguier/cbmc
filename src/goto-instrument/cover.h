@@ -38,6 +38,7 @@ struct cover_configt
 {
   bool keep_assertions;
   bool traces_must_terminate;
+  bool java_bytecode;
   function_filterst function_filters;
   goal_filterst goal_filters;
   cover_instrumenterst cover_instrumenters;
