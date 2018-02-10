@@ -20,6 +20,7 @@ Date: May 2016
 #include <util/options.h>
 
 #include "cover_basic_blocks.h"
+#include "cover_location_blocks.h"
 
 /// Applies instrumenters to given goto program
 /// \param goto_program: the goto program
@@ -28,34 +29,22 @@ Date: May 2016
 void instrument_cover_goals(
   goto_programt &goto_program,
   const cover_instrumenterst &instrumenters,
-  message_handlert &message_handler)
+  message_handlert &message_handler,
+  bool java_bytecode)
 {
-  cover_basic_blockst basic_blocks(goto_program);
-  basic_blocks.select_unique_java_bytecode_indices(
-    goto_program, message_handler);
-  basic_blocks.report_block_anomalies(goto_program, message_handler);
-
-  instrumenters(goto_program, basic_blocks);
-}
-
-/// Instruments goto program for a given coverage criterion
-/// \param symbol_table: the symbol table
-/// \param goto_program: the goto program
-/// \param criterion: the coverage criterion
-/// \param message_handler: a message handler
-void instrument_cover_goals(
-  const symbol_tablet &symbol_table,
-  goto_programt &goto_program,
-  coverage_criteriont criterion,
-  message_handlert &message_handler)
-{
-  goal_filterst goal_filters;
-  goal_filters.add(util_make_unique<internal_goals_filtert>(message_handler));
-
-  cover_instrumenterst instrumenters;
-  instrumenters.add_from_criterion(criterion, symbol_table, goal_filters);
-
-  instrument_cover_goals(goto_program, instrumenters, message_handler);
+  if(java_bytecode)
+  {
+    cover_location_blockst cover_blocks(goto_program);
+    instrumenters(goto_program, cover_blocks);
+  }
+  else
+  {
+    cover_basic_blockst cover_blocks(goto_program);
+    cover_blocks.select_unique_java_bytecode_indices(
+      goto_program, message_handler);
+    cover_blocks.report_block_anomalies(goto_program, message_handler);
+    instrumenters(goto_program, cover_blocks);
+  }
 }
 
 /// Create and add an instrumenter based on the given criterion
@@ -187,6 +176,11 @@ std::unique_ptr<cover_configt> get_cover_config(
   optionst::value_listt criteria_strings = options.get_list_option("cover");
 
   config->keep_assertions = false;
+
+  // Hackish way of finding whether we should instrument as bytecode
+  config->java_bytecode =
+    symbol_table.lookup(CPROVER_PREFIX "initialize")->mode == ID_java;
+
   for(const auto &criterion_string : criteria_strings)
   {
     try
@@ -257,7 +251,10 @@ static void instrument_cover_goals(
   if(config.function_filters(function_id, function))
   {
     instrument_cover_goals(
-      function.body, config.cover_instrumenters, message_handler);
+      function.body,
+      config.cover_instrumenters,
+      message_handler,
+      config.java_bytecode);
     changed = true;
   }
 
