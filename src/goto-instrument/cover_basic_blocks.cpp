@@ -167,11 +167,8 @@ cover_basic_blocks_javat::cover_basic_blocks_javat(
   forall_goto_program_instructions(it, _goto_program)
   {
     const auto &bytecode_index = it->source_location.get_java_bytecode_index();
-    if(!index_to_block.count(bytecode_index))
-    {
+    if(index_to_block.emplace(bytecode_index, block_infos.size()).second)
       block_infos.push_back(it);
-      index_to_block.emplace(bytecode_index, block_infos.size() - 1);
-    }
   }
 }
 
