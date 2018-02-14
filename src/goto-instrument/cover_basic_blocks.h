@@ -121,6 +121,8 @@ class cover_basic_blocks_javat final : public cover_blocks_baset
 private:
   // map block number to first instruction of the block
   std::vector<goto_programt::const_targett> block_infos;
+  // map block number to its location
+  std::vector<source_locationt> block_locations;
   // map java indexes to block indexes
   std::unordered_map<irep_idt, std::size_t, irep_id_hash> index_to_block;
 

@@ -166,9 +166,14 @@ cover_basic_blocks_javat::cover_basic_blocks_javat(
 {
   forall_goto_program_instructions(it, _goto_program)
   {
-    const auto &bytecode_index = it->source_location.get_java_bytecode_index();
+    const auto &location = it->source_location;
+    const auto &bytecode_index = location.get_java_bytecode_index();
     if(index_to_block.emplace(bytecode_index, block_infos.size()).second)
+    {
       block_infos.push_back(it);
+      block_locations.push_back(location);
+      block_locations.back().set_basic_block_covered_lines(location.get_line());
+    }
   }
 }
 
@@ -191,12 +196,12 @@ cover_basic_blocks_javat::instruction_of(const std::size_t block_nr) const
 const source_locationt &
 cover_basic_blocks_javat::source_location_of(const std::size_t block_nr) const
 {
-  INVARIANT(block_nr < block_infos.size(), "block number out of range");
-  return block_infos[block_nr]->source_location;
+  INVARIANT(block_nr < block_locations.size(), "block number out of range");
+  return block_locations[block_nr];
 }
 
 void cover_basic_blocks_javat::output(std::ostream &out) const
 {
-  for(std::size_t i = 0; i < block_infos.size(); ++i)
-    out << block_infos[i]->source_location << " -> " << i << '\n';
+  for(std::size_t i = 0; i < block_locations.size(); ++i)
+    out << block_locations[i] << " -> " << i << '\n';
 }
