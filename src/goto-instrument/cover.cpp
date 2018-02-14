@@ -29,7 +29,7 @@ void instrument_cover_goals(
   goto_programt &goto_program,
   const cover_instrumenterst &instrumenters,
   message_handlert &message_handler,
-  const irep_idt mode)
+  const irep_idt &mode)
 {
   const std::unique_ptr<cover_blocks_baset> basic_blocks =
     mode == ID_java ? std::unique_ptr<cover_blocks_baset>(
