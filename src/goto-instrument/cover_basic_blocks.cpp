@@ -189,14 +189,14 @@ cover_basic_blocks_javat::block_of(goto_programt::const_targett t) const
 optionalt<goto_programt::const_targett>
 cover_basic_blocks_javat::instruction_of(const std::size_t block_nr) const
 {
-  INVARIANT(block_nr < block_infos.size(), "block number out of range");
+  PRECONDITION(block_nr < block_infos.size());
   return block_infos[block_nr];
 }
 
 const source_locationt &
 cover_basic_blocks_javat::source_location_of(const std::size_t block_nr) const
 {
-  INVARIANT(block_nr < block_locations.size(), "block number out of range");
+  PRECONDITION(block_nr < block_locations.size());
   return block_locations[block_nr];
 }
 
