@@ -122,7 +122,7 @@ private:
   // map block number to first instruction of the block
   std::vector<goto_programt::const_targett> block_infos;
   // map java indexes to block indexes
-  std::unordered_map<dstringt, std::size_t, dstring_hash> index_to_block;
+  std::unordered_map<irep_idt, std::size_t, irep_id_hash> index_to_block;
 
 public:
   explicit cover_basic_blocks_javat(const goto_programt &_goto_program);
