@@ -206,6 +206,12 @@ void java_bytecode_convert_classt::convert(const classt &c)
   class_type.set(ID_abstract, c.is_abstract);
   if(c.is_enum)
   {
+    if(max_array_length != 0 && c.enum_elements > max_array_length)
+    {
+      warning() << "Java Enum " << c.name << " won't work properly because max "
+                << "array length (" << max_array_length << ") is less than the "
+                << "enum size (" << c.enum_elements << ")" << eom;
+    }
     class_type.set(
       ID_java_enum_static_unwind,
       std::to_string(c.enum_elements+1));
@@ -385,6 +391,20 @@ void java_bytecode_convert_classt::convert(
       "."+id2string(f.name);
     new_symbol.mode=ID_java;
     new_symbol.is_type=false;
+
+    // These annotations use `ID_C_access` instead of `ID_access` like methods
+    // to avoid type clashes in expressions like `some_static_field = 0`, where
+    // with ID_access the constant '0' would need to have an access modifier
+    // too, or else appear to have incompatible type.
+    if(f.is_public)
+      new_symbol.type.set(ID_C_access, ID_public);
+    else if(f.is_protected)
+      new_symbol.type.set(ID_C_access, ID_protected);
+    else if(f.is_private)
+      new_symbol.type.set(ID_C_access, ID_private);
+    else
+      new_symbol.type.set(ID_C_access, ID_default);
+
     const namespacet ns(symbol_table);
     new_symbol.value=
       zero_initializer(

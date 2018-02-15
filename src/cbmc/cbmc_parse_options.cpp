@@ -45,7 +45,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <goto-programs/remove_asm.h>
 #include <goto-programs/remove_unused_functions.h>
 #include <goto-programs/remove_skip.h>
-#include <goto-programs/remove_static_init_loops.h>
 #include <goto-programs/set_properties.h>
 #include <goto-programs/show_goto_functions.h>
 #include <goto-programs/show_symbol_table.h>
@@ -1030,6 +1029,7 @@ void cbmc_parse_optionst::help()
     " --json-ui                    use JSON-formatted output\n"
     HELP_GOTO_TRACE
     " --verbosity #                verbosity level\n"
+    HELP_TIMESTAMP
     "\n";
   // clang-format on
 }
