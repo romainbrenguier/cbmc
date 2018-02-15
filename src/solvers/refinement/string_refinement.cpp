@@ -1391,44 +1391,28 @@ static exprt substitute_array_access(
     &symbol_generator)
 {
   const typet &char_type = array_expr.type().subtype();
+  const std::vector<exprt> &operands = array_expr.operands();
 
-  // Access to an empty array is undefined (non deterministic result)
-  if(array_expr.operands().empty())
-    return symbol_generator("out_of_bound_access", char_type);
+  exprt result = symbol_generator("out_of_bound_access", char_type);
 
-  const std::size_t last_index = array_expr.operands().size() - 1;
-  exprt ite = array_expr.operands().back();
-
-  if(ite.type() != char_type)
+  for(std::size_t i = 0; i < operands.size(); ++i)
   {
-    // We have to manually set the type for unknown values
-    INVARIANT(
-      ite.id() == ID_unknown,
-      string_refinement_invariantt(
-        "the last element can only have type char "
-        "or unknown, and it is not char type"));
-    ite.type() = char_type;
-  }
-
-  auto op_it = ++array_expr.operands().rbegin();
-
-  for(std::size_t i = last_index - 1; op_it != array_expr.operands().rend();
-      ++op_it, --i)
-  {
-    const equal_exprt equals(index, from_integer(i, java_int_type()));
-    if(op_it->type() != char_type)
+    // Go in reverse order so that smaller indexes appear first in the result
+    const std::size_t pos = operands.size() - 1 - i;
+    const equal_exprt equals(index, from_integer(pos, java_int_type()));
+    if(operands[pos].type() != char_type)
     {
       INVARIANT(
-        op_it->id() == ID_unknown,
+        operands[pos].id() == ID_unknown,
         string_refinement_invariantt(
           "elements can only have type char or "
           "unknown, and it is not char type"));
-      ite = if_exprt(equals, exprt(ID_unknown, char_type), ite);
+      result = if_exprt(equals, exprt(ID_unknown, char_type), result);
     }
     else
-      ite = if_exprt(equals, *op_it, ite);
+      result = if_exprt(equals, operands[pos], result);
   }
-  return ite;
+  return result;
 }
 
 static exprt substitute_array_access(
