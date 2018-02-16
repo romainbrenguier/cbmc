@@ -70,8 +70,8 @@ bool jsil_convertt::convert_code(const symbolt &symbol, codet &code)
 {
   if(code.get_statement()==ID_block)
   {
-    Forall_operands(it, code)
-      if(convert_code(symbol, to_code(*it)))
+    for(auto &subcode : to_code_block(code).subcodes())
+      if(convert_code(symbol, subcode))
         return true;
   }
   else if(code.get_statement()==ID_assign)

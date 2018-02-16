@@ -36,8 +36,8 @@ public:
   /// Type of symbol
   typet type;
 
-  /// Initial value of symbol
-  exprt value;
+  /// Initial value of symbol. (Can be an exprt or codet)
+  irept value;
 
   /// Source code location of definition of symbol
   source_locationt location;

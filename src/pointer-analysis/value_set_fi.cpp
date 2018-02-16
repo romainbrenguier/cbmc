@@ -1414,7 +1414,7 @@ void value_set_fit::do_end_function(
 }
 
 void value_set_fit::apply_code(
-  const exprt &code,
+  const codet &code,
   const namespacet &ns)
 {
   const irep_idt &statement=code.get(ID_statement);
@@ -1432,17 +1432,18 @@ void value_set_fit::apply_code(
   else if(statement==ID_assign ||
           statement==ID_init)
   {
-    if(code.operands().size()!=2)
+    if(code.get_sub().size()!=2)
       throw "assignment expected to have two operands";
 
-    assign(code.op0(), code.op1(), ns);
+    assign((exprt &)code.get_sub()[0], (exprt &)code.get_sub()[1], ns);
   }
   else if(statement==ID_decl)
   {
-    if(code.operands().size()!=1)
+    if(code.get_sub().size()!=1)
       throw "decl expected to have one operand";
 
-    const exprt &lhs=code.op0();
+    const auto &code_decl = to_code_decl(code);
+    const exprt &lhs=code_decl.symbol();
 
     if(lhs.id()!=ID_symbol)
       throw "decl expected to have symbol on lhs";

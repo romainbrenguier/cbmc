@@ -184,7 +184,7 @@ void language_uit::show_symbol_table_plain(
       ptr->from_type(symbol.type, type_str, ns);
 
     if(symbol.value.is_not_nil())
-      ptr->from_expr(symbol.value, value_str, ns);
+      ptr->from_expr(static_cast<const exprt &>(symbol.value), value_str, ns);
 
     if(brief)
     {

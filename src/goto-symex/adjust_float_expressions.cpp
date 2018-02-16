@@ -185,7 +185,8 @@ void adjust_float_expressions(
 {
   Forall_goto_program_instructions(it, goto_function.body)
   {
-    adjust_float_expressions(it->code, ns);
+    // Should have a subexpr function for code
+    // adjust_float_expressions(it->code, ns);
     adjust_float_expressions(it->guard, ns);
   }
 }

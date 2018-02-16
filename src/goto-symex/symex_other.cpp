@@ -83,6 +83,7 @@ void goto_symext::symex_other(
 {
   const goto_programt::instructiont &instruction=*state.source.pc;
 
+  // This is not code but expressions with statements
   const codet &code=to_code(instruction.code);
 
   const irep_idt &statement=code.get_statement();
@@ -91,11 +92,13 @@ void goto_symext::symex_other(
   {
     // ignore
   }
+    // \todo No code class corresponds to this
   else if(statement==ID_cpp_delete ||
           statement=="cpp_delete[]")
   {
     codet clean_code=code;
-    clean_expr(clean_code, state, false);
+    for(exprt &e : clean_code.subexpressions())
+      clean_expr(e, state, false);
     symex_cpp_delete(state, clean_code);
   }
   else if(statement==ID_free)

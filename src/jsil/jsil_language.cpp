@@ -153,7 +153,7 @@ bool jsil_languaget::to_expr(
       result=true;
 
     if(!result)
-      expr=symbol_table.symbols.begin()->second.value;
+      expr= static_cast<const exprt &>(symbol_table.symbols.begin()->second.value);
 
     // typecheck it
     if(!result)

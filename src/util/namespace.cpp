@@ -112,7 +112,7 @@ void namespace_baset::follow_macros(exprt &expr) const
 
     if(symbol.is_macro && !symbol.value.is_nil())
     {
-      expr=symbol.value;
+      expr= static_cast<const exprt &>(symbol.value);
       follow_macros(expr);
     }
 

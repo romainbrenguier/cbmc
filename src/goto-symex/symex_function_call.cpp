@@ -435,9 +435,9 @@ void goto_symext::return_assignment(statet &state)
 
   target.location(state.guard.as_expr(), state.source);
 
-  if(code.operands().size()==1)
+  if(code.get_sub().size()==1)
   {
-    exprt value=code.op0();
+    exprt value=code.return_value();
 
     if(frame.return_value.is_not_nil())
     {

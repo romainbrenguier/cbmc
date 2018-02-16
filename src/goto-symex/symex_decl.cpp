@@ -26,16 +26,17 @@ void goto_symext::symex_decl(statet &state)
 
   const codet &code=to_code(instruction.code);
 
-  if(code.operands().size()==2)
+  if(code.get_sub().size()==2)
     throw "two-operand decl not supported here";
 
-  if(code.operands().size()!=1)
+  if(code.get_sub().size()!=1)
     throw "decl expects one operand";
 
-  if(code.op0().id()!=ID_symbol)
+  const code_declt code_decl = to_code_decl(code);
+  if(code_decl.symbol().id()!=ID_symbol)
     throw "decl expects symbol as first operand";
 
-  symex_decl(state, to_symbol_expr(code.op0()));
+  symex_decl(state, to_symbol_expr(code_decl.symbol()));
 }
 
 void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)

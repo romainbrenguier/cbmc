@@ -299,13 +299,14 @@ void goto_program_dereferencet::dereference_instruction(
 
   if(i.is_assign())
   {
-    if(i.code.operands().size()!=2)
+    if(i.code.get_sub().size()!=2)
       throw "assignment expects two operands";
 
+    code_assignt &code_assign = to_code_assign(i.code);
     dereference_expr(
-      i.code.op0(), checks_only, value_set_dereferencet::modet::WRITE);
+      code_assign.lhs(), checks_only, value_set_dereferencet::modet::WRITE);
     dereference_expr(
-      i.code.op1(), checks_only, value_set_dereferencet::modet::READ);
+      code_assign.rhs(), checks_only, value_set_dereferencet::modet::READ);
   }
   else if(i.is_function_call())
   {
@@ -322,12 +323,12 @@ void goto_program_dereferencet::dereference_instruction(
       checks_only,
       value_set_dereferencet::modet::READ);
     dereference_expr(
-      function_call.op2(), checks_only, value_set_dereferencet::modet::READ);
+      (exprt&)function_call.get_sub()[2], checks_only, value_set_dereferencet::modet::READ);
   }
   else if(i.is_return())
   {
-    Forall_operands(it, i.code)
-      dereference_expr(*it, checks_only, value_set_dereferencet::modet::READ);
+    for(auto &e : i.code.get_sub())
+      dereference_expr((exprt &)e, checks_only, value_set_dereferencet::modet::READ);
   }
   else if(i.is_other())
   {
@@ -335,17 +336,18 @@ void goto_program_dereferencet::dereference_instruction(
 
     if(statement==ID_expression)
     {
-      if(i.code.operands().size()!=1)
+      if(i.code.get_sub().size()!=1)
         throw "expression expects one operand";
 
+      code_expressiont &code_expr = to_code_expression(i.code);
       dereference_expr(
-        i.code.op0(), checks_only, value_set_dereferencet::modet::READ);
+        code_expr.expression(), checks_only, value_set_dereferencet::modet::READ);
     }
     else if(statement==ID_printf)
     {
-      Forall_operands(it, i.code)
+      for(auto &e : i.code.get_sub())
         dereference_expr(
-          *it, checks_only, value_set_dereferencet::modet::READ);
+          (exprt &)e, checks_only, value_set_dereferencet::modet::READ);
     }
   }
 }

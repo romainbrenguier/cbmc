@@ -113,7 +113,8 @@ void rewrite_union(
 {
   Forall_goto_program_instructions(it, goto_function.body)
   {
-    rewrite_union(it->code, ns);
+    // should have a subexpr function for code
+   // rewrite_union(it->code, ns);
     rewrite_union(it->guard, ns);
   }
 }

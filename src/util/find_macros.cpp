@@ -40,7 +40,7 @@ void find_macros(
       {
         // inserted?
         if(dest.insert(identifier).second)
-          stack.push(&symbol.value);
+          stack.push(&static_cast<const exprt&>(symbol.value));
       }
     }
     else

@@ -1499,8 +1499,9 @@ void value_sett::apply_code_rec(
 
   if(statement==ID_block)
   {
-    forall_operands(it, code)
-      apply_code_rec(to_code(*it), ns);
+    const code_blockt &code_block = to_code_block(code);
+    for(auto &c : code_block.subcodes())
+      apply_code_rec(c, ns);
   }
   else if(statement==ID_function_call)
   {
@@ -1510,17 +1511,18 @@ void value_sett::apply_code_rec(
   else if(statement==ID_assign ||
           statement==ID_init)
   {
-    if(code.operands().size()!=2)
+    if(code.get_sub().size()!=2)
       throw "assignment expected to have two operands";
 
-    assign(code.op0(), code.op1(), ns, false, false);
+    assign((exprt &)code.get_sub()[0], (exprt &)code.get_sub()[1], ns, false, false);
   }
   else if(statement==ID_decl)
   {
-    if(code.operands().size()!=1)
+    if(code.get_sub().size()!=1)
       throw "decl expected to have one operand";
 
-    const exprt &lhs=code.op0();
+    const code_declt &code_decl = to_code_decl(code);
+    const exprt &lhs=code_decl.symbol();
 
     if(lhs.id()!=ID_symbol)
       throw "decl expected to have symbol on lhs";
@@ -1562,10 +1564,10 @@ void value_sett::apply_code_rec(
   {
     // this may kill a valid bit
 
-    if(code.operands().size()!=1)
+    if(code.get_sub().size()!=1)
       throw "free expected to have one operand";
 
-    do_free(code.op0(), ns);
+    do_free((exprt &)code.get_sub()[0], ns);
   }
   else if(statement=="lock" || statement=="unlock")
   {
@@ -1585,11 +1587,12 @@ void value_sett::apply_code_rec(
   }
   else if(statement==ID_return)
   {
+    const auto &code_return = to_code_return(code);
     // this is turned into an assignment
-    if(code.operands().size()==1)
+    if(code.get_sub().size()==1)
     {
-      symbol_exprt lhs("value_set::return_value", code.op0().type());
-      assign(lhs, code.op0(), ns, false, false);
+      symbol_exprt lhs("value_set::return_value", code_return.return_value().type());
+      assign(lhs, code_return.return_value(), ns, false, false);
     }
   }
   else if(statement==ID_array_set)
@@ -1603,7 +1606,7 @@ void value_sett::apply_code_rec(
   }
   else if(statement==ID_assume)
   {
-    guard(to_code_assume(code).op0(), ns);
+    guard(to_code_assume(code).assumption(), ns);
   }
   else if(statement==ID_user_specified_predicate ||
           statement==ID_user_specified_parameter_predicates ||

@@ -1066,7 +1066,8 @@ static irep_idt string_from_ns(
   if(ns.lookup(id, symbol))
     throw "failed to find "+id2string(id);
 
-  const exprt &tmp=symbol->value;
+  // How do we now it is an exprt?
+  const exprt &tmp= static_cast<const exprt&>(symbol->value);
 
   if(tmp.id()!=ID_address_of ||
      tmp.operands().size()!=1 ||
@@ -1092,7 +1093,7 @@ static unsigned unsigned_from_ns(
   if(ns.lookup(id, symbol))
     throw "failed to find "+id2string(id);
 
-  exprt tmp=symbol->value;
+  exprt tmp= static_cast<const exprt&>(symbol->value);
   simplify(tmp, ns);
 
   if(tmp.id()!=ID_constant)

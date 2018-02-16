@@ -343,18 +343,18 @@ void goto_symext::symex_input(
   statet &state,
   const codet &code)
 {
-  if(code.operands().size()<2)
+  if(code.get_sub().size()<2)
     throw "input expected to have at least two operands";
 
-  exprt id_arg=code.op0();
+  exprt id_arg= static_cast<const exprt&>(code.get_sub()[0]);
 
   state.rename(id_arg, ns);
 
   std::list<exprt> args;
 
-  for(std::size_t i=1; i<code.operands().size(); i++)
+  for(std::size_t i=1; i<code.get_sub().size(); i++)
   {
-    args.push_back(code.operands()[i]);
+    args.push_back(static_cast<const exprt &>(code.get_sub()[i]));
     state.rename(args.back(), ns);
     do_simplify(args.back());
   }
@@ -368,18 +368,18 @@ void goto_symext::symex_output(
   statet &state,
   const codet &code)
 {
-  if(code.operands().size()<2)
+  if(code.get_sub().size()<2)
     throw "output expected to have at least two operands";
 
-  exprt id_arg=code.op0();
+  exprt id_arg= static_cast<const exprt&>(code.get_sub()[0]);
 
   state.rename(id_arg, ns);
 
   std::list<exprt> args;
 
-  for(std::size_t i=1; i<code.operands().size(); i++)
+  for(std::size_t i=1; i<code.get_sub().size(); i++)
   {
-    args.push_back(code.operands()[i]);
+    args.push_back(static_cast<const exprt &>(code.get_sub()[i]));
     state.rename(args.back(), ns);
     do_simplify(args.back());
   }
@@ -537,7 +537,7 @@ void goto_symext::symex_macro(
   statet &state,
   const code_function_callt &code)
 {
-  const irep_idt &identifier=code.op0().get(ID_identifier);
+  const irep_idt &identifier=code.lhs().get(ID_identifier);
 
   if(identifier==CPROVER_MACRO_PREFIX "waitfor")
   {

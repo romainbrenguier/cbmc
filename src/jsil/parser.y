@@ -211,7 +211,7 @@ statements: statement
 
 statement: TOK_NEWLINE
          {
-           newstack($$)=code_skipt();
+           newstack($$)=exprt(); // code_skipt();
          }
          | instruction TOK_NEWLINE
          {
@@ -245,7 +245,7 @@ instruction: TOK_LABEL TOK_IDENTIFIER
            }
            | TOK_SKIP
            {
-             newstack($$)=code_skipt();
+             newstack($$)=exprt(); // code_skipt();
            }
            | TOK_IDENTIFIER TOK_DEFEQ rhs
            {

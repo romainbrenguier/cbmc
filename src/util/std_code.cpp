@@ -31,7 +31,7 @@ code_blockt &codet::make_block()
 
   *this=codet();
   set_statement(ID_block);
-  move_to_operands(tmp);
+  get_sub().push_back(tmp);
 
   return static_cast<code_blockt &>(*this);
 }
@@ -40,12 +40,12 @@ codet &codet::first_statement()
 {
   const irep_idt &statement=get_statement();
 
-  if(has_operands())
+  if(!get_sub().empty())
   {
     if(statement==ID_block)
-      return to_code(op0()).first_statement();
+      return to_code(get_sub()[0]).first_statement();
     else if(statement==ID_label)
-      return to_code(op0()).first_statement();
+      return to_code(get_sub()[0]).first_statement();
   }
 
   return *this;
@@ -55,12 +55,12 @@ const codet &codet::first_statement() const
 {
   const irep_idt &statement=get_statement();
 
-  if(has_operands())
+  if(!get_sub().empty())
   {
     if(statement==ID_block)
-      return to_code(op0()).first_statement();
+      return to_code(get_sub()[0]).first_statement();
     else if(statement==ID_label)
-      return to_code(op0()).first_statement();
+      return to_code(get_sub()[0]).first_statement();
   }
 
   return *this;
@@ -70,12 +70,12 @@ codet &codet::last_statement()
 {
   const irep_idt &statement=get_statement();
 
-  if(has_operands())
+  if(!get_sub().empty())
   {
     if(statement==ID_block)
-      return to_code(operands().back()).last_statement();
+      return to_code(get_sub().back()).last_statement();
     else if(statement==ID_label)
-      return to_code(operands().back()).last_statement();
+      return to_code(get_sub().back()).last_statement();
   }
 
   return *this;
@@ -85,12 +85,12 @@ const codet &codet::last_statement() const
 {
   const irep_idt &statement=get_statement();
 
-  if(has_operands())
+  if(!get_sub().empty())
   {
     if(statement==ID_block)
-      return to_code(operands().back()).last_statement();
+      return to_code(get_sub().back()).last_statement();
     else if(statement==ID_label)
-      return to_code(operands().back()).last_statement();
+      return to_code(get_sub().back()).last_statement();
   }
 
   return *this;
@@ -100,9 +100,9 @@ const codet &codet::last_statement() const
 /// \param extra_block: The input code_blockt
 void code_blockt::append(const code_blockt &extra_block)
 {
-  operands().reserve(operands().size()+extra_block.operands().size());
+  get_sub().reserve(get_sub().size()+extra_block.get_sub().size());
 
-  for(const auto &operand : extra_block.operands())
+  for(const auto &operand : extra_block.get_sub())
   {
     add(to_code(operand));
   }

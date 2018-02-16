@@ -656,7 +656,7 @@ void jsil_typecheckt::typecheck_code(codet &code)
     typecheck_return(to_code_return(code));
   else if(statement==ID_expression)
   {
-    if(code.operands().size()!=1)
+    if(code.get_sub().size()!=1)
     {
       err_location(code);
       error() << "expression statement expected to have one operand"
@@ -664,7 +664,7 @@ void jsil_typecheckt::typecheck_code(codet &code)
       throw 0;
     }
 
-    typecheck_expr(code.op0());
+    typecheck_expr(to_code_expression(code).expression());
   }
   else if(statement==ID_label)
   {
@@ -672,7 +672,7 @@ void jsil_typecheckt::typecheck_code(codet &code)
     // TODO: produce defined label set
   }
   else if(statement==ID_block)
-    typecheck_block(code);
+    typecheck_block(to_code_block(code));
   else if(statement==ID_ifthenelse)
     typecheck_ifthenelse(to_code_ifthenelse(code));
   else if(statement==ID_goto)
@@ -700,16 +700,16 @@ void jsil_typecheckt::typecheck_return(code_returnt &code)
     typecheck_expr(code.return_value());
 }
 
-void jsil_typecheckt::typecheck_block(codet &code)
+void jsil_typecheckt::typecheck_block(code_blockt &code)
 {
-  Forall_operands(it, code)
-    typecheck_code(to_code(*it));
+  for(codet &c : code.subcodes())
+    typecheck_code(c);
 }
 
 void jsil_typecheckt::typecheck_try_catch(code_try_catcht &code)
 {
   // A special case of try catch with one catch clause
-  if(code.operands().size()!=3)
+  if(code.get_sub().size()!=3)
   {
     err_location(code);
     error() << "try_catch expected to have three operands" << eom;
@@ -727,7 +727,7 @@ void jsil_typecheckt::typecheck_try_catch(code_try_catcht &code)
 void jsil_typecheckt::typecheck_function_call(
   code_function_callt &call)
 {
-  if(call.operands().size()!=3)
+  if(call.get_sub().size()!=3)
   {
     err_location(call);
     error() << "function call expected to have three operands" << eom;
@@ -840,10 +840,10 @@ void jsil_typecheckt::typecheck_ifthenelse(code_ifthenelset &code)
 
 void jsil_typecheckt::typecheck_assign(code_assignt &code)
 {
-  typecheck_expr(code.op0());
-  typecheck_expr(code.op1());
+  typecheck_expr(code.lhs());
+  typecheck_expr(code.rhs());
 
-  make_type_compatible(code.op0(), code.op1().type(), false);
+  make_type_compatible(code.lhs(), code.rhs().type(), false);
 }
 
 /// typechecking procedure declaration; any other symbols should have been

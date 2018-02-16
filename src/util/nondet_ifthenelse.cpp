@@ -61,7 +61,7 @@ void nondet_ifthenelset::begin_if()
   auto assign_choice=
     code_assignt(choice, get_nondet_bool(choice_sym.type));
   assign_choice.add_source_location()=loc;
-  result_code.move_to_operands(assign_choice);
+  result_code.move(assign_choice);
 
   std::ostringstream fresh_label_oss;
   fresh_label_oss << choice_symname << "_else_"
@@ -79,19 +79,19 @@ void nondet_ifthenelset::begin_if()
     choice,
     constant_exprt("0", choice_sym.type));
   test.then_case()=code_gotot(fresh_label);
-  result_code.move_to_operands(test);
+  result_code.move(test);
 }
 
 /// Terminates the if-block and begins the else-block of a nondet if-then-else
 /// diamond. See ::begin_if for detail.
 void nondet_ifthenelset::begin_else()
 {
-  result_code.copy_to_operands(code_gotot(join_label.get_label()));
-  result_code.copy_to_operands(else_label);
+  result_code.add(code_gotot(join_label.get_label()));
+  result_code.add(else_label);
 }
 
 /// Concludes a nondet if-then-else diamond. See ::begin_if for detail.
 void nondet_ifthenelset::finish()
 {
-  result_code.move_to_operands(join_label);
+  result_code.add(join_label);
 }

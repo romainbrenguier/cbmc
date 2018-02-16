@@ -12,6 +12,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "expr.h"
 #include "message.h"
+#include "std_code.h"
 
 class typecheckt:public messaget
 {
@@ -34,7 +35,10 @@ public:
   {
     err_location(src.find_source_location());
   }
-
+  void err_location(const codet &src)
+  {
+    err_location(src.source_location());
+  }
   void err_location(const typet &src)
   {
     err_location(src.source_location());

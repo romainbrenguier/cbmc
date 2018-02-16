@@ -83,7 +83,7 @@ protected:
   void typecheck_code(codet &code);
   void typecheck_function_call(code_function_callt &function_call);
   void typecheck_return(code_returnt &code);
-  void typecheck_block(codet &code);
+  void typecheck_block(code_blockt &code);
   void typecheck_ifthenelse(code_ifthenelset &code);
   void typecheck_assign(code_assignt &code);
   void typecheck_try_catch(code_try_catcht &code);
