@@ -1224,18 +1224,18 @@ void debug_model(
 
 sparse_arrayt::sparse_arrayt(const with_exprt &expr)
 {
-  auto ref = std::ref(static_cast<const exprt &>(expr));
-  while(can_cast_expr<with_exprt>(ref.get()))
+  auto ref_to_current_expr = std::ref(static_cast<const exprt &>(expr));
+  while(can_cast_expr<with_exprt>(ref_to_current_expr.get()))
   {
-    const auto &with_expr = expr_dynamic_cast<with_exprt>(ref.get());
+    const auto &with_expr = expr_dynamic_cast<with_exprt>(ref_to_current_expr.get());
     const auto current_index = numeric_cast_v<std::size_t>(with_expr.where());
     entries.emplace_back(current_index, with_expr.new_value());
-    ref = with_expr.old();
+    ref_to_current_expr = with_expr.old();
   }
 
   // This function only handles 'with' and 'array_of' expressions
-  PRECONDITION(ref.get().id() == ID_array_of);
-  default_value = expr_dynamic_cast<array_of_exprt>(ref.get()).what();
+  PRECONDITION(ref_to_current_expr.get().id() == ID_array_of);
+  default_value = expr_dynamic_cast<array_of_exprt>(ref_to_current_expr.get()).what();
 }
 
 exprt sparse_arrayt::to_if_expression(const exprt &index) const
@@ -1456,6 +1456,25 @@ static exprt substitute_array_access(
   UNREACHABLE;
 }
 
+/// Auxiliary function for substitute_array_access
+/// Performs the same operation but modifies the argument instead of returning
+/// the resulting expression.
+static void substitute_array_access_in_place(
+  exprt &expr,
+  const std::function<symbol_exprt(const irep_idt &, const typet &)>
+    &symbol_generator,
+  const bool left_propagate)
+{
+  if(const auto index_expr = expr_try_dynamic_cast<index_exprt>(expr))
+  {
+    expr =
+      substitute_array_access(*index_expr, symbol_generator, left_propagate);
+  }
+
+  for(auto &op : expr.operands())
+    substitute_array_access_in_place(op, symbol_generator, left_propagate);
+}
+
 /// Create an equivalent expression where array accesses and 'with' expressions
 /// are replaced by 'if' expressions, in particular:
 ///  * for an array access `arr[index]`, where:
@@ -1477,35 +1496,14 @@ static exprt substitute_array_access(
 ///        expressions
 /// \return an expression containing no array access, and a Boolean which is
 ///         true if the expression is unchanged
-std::pair<exprt, bool> substitute_array_access(
-  const exprt &expr,
+exprt substitute_array_access(
+  exprt expr,
   const std::function<symbol_exprt(const irep_idt &, const typet &)>
     &symbol_generator,
   const bool left_propagate)
 {
-  if(const auto index_expr = expr_try_dynamic_cast<index_exprt>(expr))
-  {
-    const exprt substituted =
-      substitute_array_access(*index_expr, symbol_generator, left_propagate);
-    return {substituted, false};
-  }
-
-  exprt::operandst operands;
-  bool unchanged = true;
-  for(auto &op : expr.operands())
-  {
-    std::pair<exprt, bool> pair =
-      substitute_array_access(op, symbol_generator, left_propagate);
-    unchanged = unchanged && pair.second;
-    operands.push_back(pair.first);
-  }
-
-  if(unchanged)
-    return {expr, true};
-
-  exprt copy(expr);
-  copy.operands() = std::move(operands);
-  return {copy, false};
+  substitute_array_access_in_place(expr, symbol_generator, left_propagate);
+  return expr;
 }
 
 /// Negates the constraint to be fed to a solver. The intended usage is to find
@@ -1735,7 +1733,7 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
 
     stream << indent << i << ".\n";
     const exprt with_concretized_arrays =
-      substitute_array_access(negaxiom, gen_symbol, true).first;
+      substitute_array_access(negaxiom, gen_symbol, true);
     debug_check_axioms_step(
       stream, ns, axiom, axiom_in_model, negaxiom, with_concretized_arrays);
 
@@ -1787,7 +1785,7 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
 
     negaxiom = simplify_expr(negaxiom, ns);
     const exprt with_concrete_arrays =
-      substitute_array_access(negaxiom, gen_symbol, true).first;
+      substitute_array_access(negaxiom, gen_symbol, true);
 
     stream << indent << i << ".\n";
     debug_check_axioms_step(

@@ -152,8 +152,8 @@ union_find_replacet string_identifiers_resolution_from_equations(
   messaget::mstreamt &stream);
 
 // Declaration required for unit-test:
-std::pair<exprt, bool> substitute_array_access(
-  const exprt &expr,
+exprt substitute_array_access(
+  exprt expr,
   const std::function<symbol_exprt(const irep_idt &, const typet &)>
     &symbol_generator,
   const bool left_propagate);
