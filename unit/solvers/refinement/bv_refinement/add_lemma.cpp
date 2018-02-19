@@ -16,10 +16,9 @@
 #include <util/symbol_table.h>
 #include <java_bytecode/java_types.h>
 #include <util/config.h>
-#include <iostream>
 
-SCENARIO("add lemma",
-  "[core][solvers][refinement][bv_refinement]")
+SCENARIO("Add lemma to bv_refinementt",
+  "[!mayfail][!throws][core][solvers][refinement][bv_refinement]")
 {
   // Without this line, the program aborts with:
   // `Reason: pointer must have non-zero width`
@@ -41,14 +40,17 @@ SCENARIO("add lemma",
 
     WHEN("We give two contradictory inputs")
     {
+      // Arrange
       const symbol_exprt s1("symbol_var1", java_int_type());
       const exprt constant_int = from_integer(99, java_int_type());
       const binary_relation_exprt lemma1(s1, ID_ge, constant_int);
       const not_exprt lemma2(lemma1);
 
+      // Act
       solver << lemma1;
       solver << lemma2;
 
+      // Assert
       THEN("it should be unsatisfiable")
       {
         const auto result = solver();
@@ -58,6 +60,7 @@ SCENARIO("add lemma",
 
     WHEN("We give an array access")
     {
+      // Arrange
       const symbol_exprt s1("symbol_var1", java_int_type());
       const symbol_exprt s2("symbol_var2", array_typet(java_char_type(), s1));
       const exprt constant_int = from_integer(99, java_int_type());
@@ -65,9 +68,10 @@ SCENARIO("add lemma",
       const index_exprt index_expr(s2, plus_exprt(s1, from_integer(3, java_int_type())));
       const equal_exprt lemma1(index_expr, constant_char);
 
-      std::cerr << "Solver : " << lemma1.pretty() << std::endl;
+      // Act
       solver << lemma1;
 
+      // Assert
       THEN("it should be satisfiable")
       {
         const auto result = solver();
@@ -77,10 +81,10 @@ SCENARIO("add lemma",
 
     WHEN("We give a conjuction of constraints on arrays")
     {
-      const symbol_exprt length("symbol_length_1", java_int_type());
-      const symbol_exprt array(
-        "symbol_array1", array_typet(java_char_type(), length));
-      const symbol_exprt var("symbol_univ_var10", java_int_type());
+      // Arrange
+      const symbol_exprt length("length1", java_int_type());
+      const symbol_exprt array("array1", array_typet(java_char_type(), length));
+      const symbol_exprt var("var1", java_int_type());
 
       exprt::operandst ops;
 
@@ -116,9 +120,12 @@ SCENARIO("add lemma",
       ops.push_back(not_exprt(binary_relation_exprt(
           var, ID_ge, from_integer(87, java_int_type()))));
 
-      exprt lemma1 = conjunction(ops);
+      const exprt lemma1 = conjunction(ops);
+
+      // Act
       solver << lemma1;
-      
+
+      // Assert
       THEN("it should be satisfiable")
       {
         const auto result = solver();

@@ -29,6 +29,9 @@ Author: Alberto Griggio, alberto.griggio@gmail.com
 #include <solvers/refinement/string_constraint_instantiation.h>
 #include <java_bytecode/java_types.h>
 #include <unordered_set>
+#include <iostream>
+
+#define DEBUG
 
 static bool is_valid_string_constraint(
   messaget::mstreamt &stream,
@@ -1647,7 +1650,7 @@ static void debug_check_axioms_step(
 {
   static const std::string indent = "  ";
   static const std::string indent2 = "    ";
-  stream << indent2 << "- axiom:\n" << indent2 << indent;
+  stream << indent2 << "- axiom:" << messaget::eom << indent2 << indent;
 
   if(axiom.id() == ID_string_constraint)
     stream << from_expr(ns, "", to_string_constraint(axiom));
@@ -1655,7 +1658,8 @@ static void debug_check_axioms_step(
     stream << from_expr(ns, "", to_string_not_contains_constraint(axiom));
   else
     stream << from_expr(ns, "", axiom);
-  stream << '\n' << indent2 << "- axiom_in_model:\n" << indent2 << indent;
+  stream << '\n' << indent2 << "- axiom_in_model:" << messaget::eom
+         << indent2 << indent;
 
   if(axiom_in_model.id() == ID_string_constraint)
     stream << from_expr(ns, "", to_string_constraint(axiom_in_model));
@@ -1667,10 +1671,10 @@ static void debug_check_axioms_step(
 
   stream << '\n'
          << indent2 << "- negated_axiom:\n"
-         << indent2 << indent << from_expr(ns, "", negaxiom) << '\n';
+         << indent2 << indent << from_expr(ns, "", negaxiom) << messaget::eom;
   stream << indent2 << "- negated_axiom_with_concretized_arrays:\n"
          << indent2 << indent << from_expr(ns, "", with_concretized_arrays)
-         << '\n';
+         << messaget::eom;
 }
 
 /// \return true if the current model satisfies all the axioms
@@ -1791,7 +1795,7 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
     const exprt with_concrete_arrays =
       substitute_array_access(negaxiom, gen_symbol, true);
 
-    stream << indent << i << ".\n";
+    stream << indent << i << '.' << eom;
     debug_check_axioms_step(
       stream, ns, nc_axiom, nc_axiom_in_model, negaxiom, with_concrete_arrays);
 
@@ -2482,19 +2486,26 @@ static optionalt<exprt> find_counter_example(
 {
   satcheck_no_simplifiert sat_check;
   bv_refinementt::infot info;
-  info.ns=&ns;
-  info.prop=&sat_check;
-  info.refine_arithmetic=true;
-  info.refine_arrays=true;
-  info.max_node_refinement=5;
-  info.ui=ui;
+  info.ns = &ns;
+  info.prop = &sat_check;
+  info.refine_arithmetic = true;
+  info.refine_arrays = true;
+  info.max_node_refinement = 5;
+  info.ui = ui;
   bv_refinementt solver(info);
-  solver << axiom;
 
-  if(solver()==decision_proceduret::resultt::D_SATISFIABLE)
+
+  std::cout << "Checking satisfiability" << std::endl;
+  if(solver() == decision_proceduret::resultt::D_SATISFIABLE)
+  {
+    std::cout << "Getting " << var.pretty() << std::endl;
     return solver.get(var);
+  }
   else
-    return { };
+  {
+    std::cout << "Unsat " << var.pretty() << std::endl;
+    return {};
+  }
 }
 
 /// \related string_constraintt
