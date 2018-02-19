@@ -1494,8 +1494,7 @@ static void substitute_array_access_in_place(
 ///        a fresh symbol of the given type
 /// \param left_propagate: should values be propagated to the left in with
 ///        expressions
-/// \return an expression containing no array access, and a Boolean which is
-///         true if the expression is unchanged
+/// \return an expression containing no array access
 exprt substitute_array_access(
   exprt expr,
   const std::function<symbol_exprt(const irep_idt &, const typet &)>
