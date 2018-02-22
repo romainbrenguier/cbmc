@@ -1,18 +1,24 @@
 #include "string_constraint.h"
 
+exprt string_constraintt::get_lower_bound() const
+{
+  return lower_bound ? *lower_bound : from_integer(0, upper_bound.type());
+}
+
 void replace(string_constraintt &axiom, const replace_mapt &symbol_resolve)
 {
   replace_expr(symbol_resolve, axiom.premise);
   replace_expr(symbol_resolve, axiom.body);
   replace_expr(symbol_resolve, axiom.univ_var);
   replace_expr(symbol_resolve, axiom.upper_bound);
-  replace_expr(symbol_resolve, axiom.lower_bound);
+  if(axiom.lower_bound)
+    replace_expr(symbol_resolve, *axiom.lower_bound);
 }
 
 exprt univ_within_bounds(const string_constraintt &axiom)
 {
   return and_exprt(
-    binary_relation_exprt(axiom.lower_bound, ID_le, axiom.univ_var),
+    binary_relation_exprt(axiom.get_lower_bound(), ID_le, axiom.univ_var),
     binary_relation_exprt(axiom.upper_bound, ID_gt, axiom.univ_var));
 }
 
@@ -20,8 +26,8 @@ std::string to_string(const string_constraintt &expr)
 {
   std::ostringstream out;
   out << "forall " << format(expr.univ_var) << " in ["
-      << format(expr.lower_bound) << ", " << format(expr.upper_bound) << "). "
-      << format(expr.premise) << " => " << format(expr.body);
+      << format(expr.get_lower_bound()) << ", " << format(expr.upper_bound)
+      << "). " << format(expr.premise) << " => " << format(expr.body);
   return out.str();
 }
 

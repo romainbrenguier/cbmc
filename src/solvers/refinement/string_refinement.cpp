@@ -1260,7 +1260,7 @@ static exprt negation_of_not_contains_constraint(
 static exprt negation_of_constraint(const string_constraintt &axiom)
 {
   // If the for all is vacuously true, the negation is false.
-  const exprt &lb = axiom.lower_bound;
+  const exprt &lb = axiom.get_lower_bound();
   const exprt &ub = axiom.upper_bound;
   if(lb.id()==ID_constant && ub.id()==ID_constant)
   {
@@ -1356,7 +1356,7 @@ static std::pair<bool, std::vector<exprt>> check_axioms(
   {
     const string_constraintt &axiom=axioms.universal[i];
     const symbol_exprt &univ_var = axiom.univ_var;
-    const exprt &bound_inf = axiom.lower_bound;
+    const exprt &bound_inf = axiom.get_lower_bound();
     const exprt &bound_sup = axiom.upper_bound;
     const exprt &prem = axiom.premise;
     INVARIANT(
@@ -1978,7 +1978,7 @@ static exprt instantiate(
   const exprt r = compute_inverse_function(stream, axiom.univ_var, val, *idx);
   implies_exprt instance(
     and_exprt(
-      binary_relation_exprt(axiom.univ_var, ID_ge, axiom.lower_bound),
+      binary_relation_exprt(axiom.univ_var, ID_ge, axiom.get_lower_bound()),
       binary_relation_exprt(axiom.univ_var, ID_lt, axiom.upper_bound),
       axiom.premise),
     axiom.body);
