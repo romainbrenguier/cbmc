@@ -20,6 +20,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <cassert>
 #include <algorithm>
 #include <queue>
+#include <functional>
 
 #include "invariant.h"
 
@@ -454,19 +455,22 @@ void grapht<N>::visit_reachable(node_indext src)
     nodes[index].visited = true;
 }
 
-template<class N>
-std::vector<typename N::node_indext>
-grapht<N>::get_reachable(node_indext src, bool forwards) const
+template<class NodeIndex>
+std::vector<NodeIndex>
+get_reachable_gen(
+  NodeIndex src,
+  const std::size_t size,
+  const std::function<std::vector<NodeIndex>(NodeIndex)> &get_succs)
 {
-  std::vector<node_indext> result;
-  std::vector<bool> visited(size(), false);
+  std::vector<NodeIndex> result;
+  std::vector<bool> visited(size, false);
 
-  std::stack<node_indext, std::vector<node_indext>> s;
+  std::stack<NodeIndex, std::vector<NodeIndex>> s;
   s.push(src);
 
   while(!s.empty())
   {
-    node_indext n = s.top();
+    NodeIndex n = s.top();
     s.pop();
 
     if(visited[n])
@@ -475,14 +479,27 @@ grapht<N>::get_reachable(node_indext src, bool forwards) const
     result.push_back(n);
     visited[n] = true;
 
-    const auto &node = nodes[n];
-    const auto &succs = forwards ? node.out : node.in;
+    const auto &succs = get_succs(n);
     for(const auto succ : succs)
-      if(!visited[succ.first])
-        s.push(succ.first);
+      if(!visited[succ])
+        s.push(succ);
   }
 
   return result;
+}
+
+template<class N>
+std::vector<typename N::node_indext>
+grapht<N>::get_reachable(node_indext src, bool forwards) const
+{
+  return get_reachable_gen<node_indext>(src, size(), [&](node_indext n) {
+    const auto &node = nodes[n];
+    const auto &succs = forwards ? node.out : node.in;
+    std::vector<node_indext> succ_nodes;
+    for(const auto &pair: succs)
+      succ_nodes.push_back(pair.first);
+    return succ_nodes;
+  });
 }
 
 template<class N>
