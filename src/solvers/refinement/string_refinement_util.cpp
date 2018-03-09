@@ -225,6 +225,17 @@ optionalt<std::vector<mp_integer>> eval_string(
   const array_string_exprt &a,
   const std::function<exprt(const exprt &)> &get_value)
 {
+  if(a.id() == ID_if)
+  {
+    const if_exprt &ite = to_if_expr(a);
+    const exprt cond = get_value(ite.cond());
+    if(!cond.is_constant())
+      return {};
+    return cond.is_true()
+             ? eval_string(to_array_string_expr(ite.true_case()), get_value)
+             : eval_string(to_array_string_expr(ite.false_case()), get_value);
+  }
+
   const auto size = numeric_cast<std::size_t>(get_value(a.length()));
   const exprt content = get_value(a.content());
   const auto &array = expr_try_dynamic_cast<array_exprt>(content);
