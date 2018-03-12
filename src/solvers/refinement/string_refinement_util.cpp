@@ -226,12 +226,13 @@ string_concatenation_builtin_functiont::string_concatenation_builtin_functiont(
   const std::vector<exprt> &fun_args,
   array_poolt &array_pool)
 {
-  PRECONDITION(fun_args.size() == 4);
+  PRECONDITION(fun_args.size() >= 4);
   const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
   input1 = array_pool.find(arg1.op1(), arg1.op0());
   const auto arg2 = expr_checked_cast<struct_exprt>(fun_args[3]);
   input2 = array_pool.find(arg2.op1(), arg2.op0());
   result = array_pool.find(fun_args[1], fun_args[0]);
+  args.insert(args.end(), fun_args.begin() + 4, fun_args.end());
 }
 
 optionalt<std::vector<mp_integer>> eval_string(
@@ -286,9 +287,18 @@ std::vector<mp_integer> string_concatenation_builtin_functiont::eval(
   const std::vector<mp_integer> &input2_value,
   const std::vector<mp_integer> &args_value) const
 {
-  PRECONDITION(args_value.size() == 0);
+  const std::size_t start_index = args_value.size() > 0 && args_value[0] > 0
+                                  ? args_value[0].to_ulong()
+                                  : 0;
+  const std::size_t end_index = args_value.size() > 1 && args_value[1] > 0
+                                ? args_value[1].to_ulong()
+                                : input2_value.size();
+
   std::vector<mp_integer> result(input1_value);
-  result.insert(result.end(), input2_value.begin(), input2_value.end());
+  result.insert(
+    result.end(),
+    input2_value.begin() + start_index,
+    input2_value.begin() + end_index);
   return result;
 }
 
