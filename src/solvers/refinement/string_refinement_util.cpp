@@ -198,7 +198,8 @@ optionalt<exprt> string_transformation_builtin_functiont::eval(
     args.begin(), args.end(), insert, [&](const exprt &e) { // NOLINT
       if(const auto val = numeric_cast<mp_integer>(get_value(e)))
         return *val;
-      // INVARIANT(get_value(e).id() == ID_unknown);
+      INVARIANT(get_value(e).id() == ID_unknown,
+                "array valuation should only contain constants and unknown");
       return mp_integer('?');
     });
 
