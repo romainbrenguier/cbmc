@@ -405,12 +405,12 @@ private:
     } kind;
     std::size_t index;
 
-    nodet(const builtin_function_nodet &builtin)
+    explicit nodet(const builtin_function_nodet &builtin)
       : kind(BUILTIN), index(builtin.index)
     {
     }
 
-    nodet(const string_nodet &string_node)
+    explicit nodet(const string_nodet &string_node)
       : kind(STRING), index(string_node.index)
     {
     }
