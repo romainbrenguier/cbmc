@@ -26,7 +26,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #error "Expected HAVE_MINISAT2"
 #endif
 
-// #define RANDOMIZE_MINISAT
+#define RANDOMIZE_MINISAT
 
 void convert(const bvt &bv, Minisat::vec<Minisat::Lit> &dest)
 {
