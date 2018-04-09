@@ -1372,11 +1372,11 @@ void java_object_factoryt::gen_nondet_array_init(
   code_labelt init_done_label(done_name, code_skipt());
   code_gotot goto_done(done_name);
 
-  code_ifthenelset done_test;
-  done_test.cond()=equal_exprt(counter_expr, length_expr);
-  done_test.then_case()=goto_done;
+  //code_ifthenelset done_test;
+  //done_test.cond()=equal_exprt(counter_expr, length_expr);
+  //done_test.then_case()=goto_done;
 
-  assignments.move_to_operands(done_test);
+  //assignments.move_to_operands(done_test);
 
   if(update_in_place!=update_in_placet::MUST_UPDATE_IN_PLACE)
   {
