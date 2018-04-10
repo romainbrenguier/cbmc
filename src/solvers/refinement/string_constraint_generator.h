@@ -27,6 +27,62 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/constexpr.def>
 #include <solvers/refinement/string_constraint.h>
 
+/// Generation of fresh symbols of a given type
+class symbol_generatort final
+{
+public:
+  symbol_exprt
+  operator()(const irep_idt &prefix, const typet &type = bool_typet());
+
+private:
+  unsigned symbol_count = 0;
+};
+
+/// Correspondance between arrays and pointers string representations
+class array_poolt final
+{
+public:
+  explicit array_poolt(symbol_generatort &symbol_generator)
+    : fresh_symbol(symbol_generator)
+  {
+  }
+
+  const std::unordered_map<exprt, array_string_exprt, irep_hash> &
+  get_arrays_of_pointers() const
+  {
+    return arrays_of_pointers;
+  }
+
+  exprt get_length(const array_string_exprt &s) const;
+
+  void insert(const exprt &pointer_expr, array_string_exprt &array);
+
+  array_string_exprt find(const exprt &pointer, const exprt &length);
+
+  array_string_exprt find(const refined_string_exprt &str);
+
+  /// Converts a struct containing a length and pointer to an array.
+  /// This allows to get a string expression from arguments of a string
+  /// builtion function, because string arguments in these function calls
+  /// are given as a struct containing a length and pointer to an array.
+  array_string_exprt of_argument(const exprt &arg);
+
+private:
+  // associate arrays to char pointers
+  std::unordered_map<exprt, array_string_exprt, irep_hash> arrays_of_pointers;
+
+  // associate length to arrays of infinite size
+  std::unordered_map<array_string_exprt, symbol_exprt, irep_hash>
+    length_of_array;
+
+  // generates fresh symbols
+  symbol_generatort &fresh_symbol;
+
+  array_string_exprt make_char_array_for_char_pointer(
+    const exprt &char_pointer,
+    const typet &char_array_type);
+};
+
 class string_constraint_generatort final
 {
 public:
@@ -49,9 +105,13 @@ public:
   /// Axioms are of three kinds: universally quantified string constraint,
   /// not contains string constraints and simple formulas.
   const std::vector<exprt> &get_lemmas() const;
+  void add_lemma(const exprt &);
   const std::vector<string_constraintt> &get_constraints() const;
   const std::vector<string_not_contains_constraintt> &
   get_not_contains_constraints() const;
+
+  /// Clear all constraints and lemmas
+  void clear_constraints();
 
   /// Boolean symbols for the results of some string functions
   const std::vector<symbol_exprt> &get_boolean_symbols() const;
@@ -69,22 +129,22 @@ public:
     return index_exprt(witness.at(c), univ_val);
   }
 
-  symbol_exprt fresh_symbol(
-    const irep_idt &prefix, const typet &type=bool_typet());
-  symbol_exprt fresh_univ_index(const irep_idt &prefix, const typet &type);
-
-
   exprt add_axioms_for_function_application(
     const function_application_exprt &expr);
 
+  symbol_generatort fresh_symbol;
+
+  symbol_exprt fresh_univ_index(const irep_idt &prefix, const typet &type);
+
   symbol_exprt fresh_exist_index(const irep_idt &prefix, const typet &type);
 
-  const std::map<exprt, array_string_exprt> &get_arrays_of_pointers() const
-  {
-    return arrays_of_pointers_;
-  }
+  array_poolt array_pool;
 
-  exprt get_length_of_string_array(const array_string_exprt &s) const;
+  /// Associate array to pointer, and array to length
+  /// \return an expression if the given function application is one of
+  ///   associate pointer and associate length
+  optionalt<exprt>
+  make_array_pointer_association(const function_application_exprt &expr);
 
   // Type used by primitives to signal errors
   const signedbv_typet get_return_code_type()
@@ -92,16 +152,31 @@ public:
     return signedbv_typet(32);
   }
 
+  exprt add_axioms_for_concat_char(
+    const array_string_exprt &res,
+    const array_string_exprt &s1,
+    const exprt &c);
+  exprt add_axioms_for_concat(
+    const array_string_exprt &res,
+    const array_string_exprt &s1,
+    const array_string_exprt &s2);
+  exprt add_axioms_for_concat_substr(
+    const array_string_exprt &res,
+    const array_string_exprt &s1,
+    const array_string_exprt &s2,
+    const exprt &start_index,
+    const exprt &end_index);
+  exprt add_axioms_for_insert(
+    const array_string_exprt &res,
+    const array_string_exprt &s1,
+    const array_string_exprt &s2,
+    const exprt &offset);
+
 private:
   symbol_exprt fresh_boolean(const irep_idt &prefix);
   array_string_exprt
   fresh_string(const typet &index_type, const typet &char_type);
   array_string_exprt get_string_expr(const exprt &expr);
-  plus_exprt plus_exprt_with_overflow_check(const exprt &op1, const exprt &op2);
-
-  array_string_exprt associate_char_array_to_char_pointer(
-    const exprt &char_pointer,
-    const typet &char_array_type);
 
   static constant_exprt constant_char(int i, const typet &char_type);
 
@@ -150,21 +225,7 @@ private:
   exprt add_axioms_for_empty_string(const function_application_exprt &f);
   exprt add_axioms_for_char_set(const function_application_exprt &f);
   exprt add_axioms_for_copy(const function_application_exprt &f);
-  exprt add_axioms_for_concat(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const array_string_exprt &s2);
-  exprt add_axioms_for_concat_char(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const exprt &c);
   exprt add_axioms_for_concat_char(const function_application_exprt &f);
-  exprt add_axioms_for_concat_substr(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const array_string_exprt &s2,
-    const exprt &start_index,
-    const exprt &end_index);
   exprt add_axioms_for_concat(const function_application_exprt &f);
   exprt add_axioms_for_concat_code_point(const function_application_exprt &f);
   exprt add_axioms_for_constant(
@@ -191,11 +252,6 @@ private:
     const typet &index_type,
     const typet &char_type);
 
-  exprt add_axioms_for_insert(
-    const array_string_exprt &res,
-    const array_string_exprt &s1,
-    const array_string_exprt &s2,
-    const exprt &offset);
   exprt add_axioms_for_insert(const function_application_exprt &f);
   exprt add_axioms_for_insert_int(const function_application_exprt &f);
   exprt add_axioms_for_insert_bool(const function_application_exprt &f);
@@ -349,7 +405,6 @@ public:
   std::map<string_not_contains_constraintt, symbol_exprt> witness;
 private:
   std::set<array_string_exprt> created_strings;
-  unsigned symbol_count=0;
   const messaget message;
 
   std::vector<exprt> lemmas;
@@ -364,12 +419,6 @@ private:
 
   // Pool used for the intern method
   std::map<array_string_exprt, symbol_exprt> intern_of_string;
-
-  // associate arrays to char pointers
-  std::map<exprt, array_string_exprt> arrays_of_pointers_;
-
-  // associate length to arrays of infinite size
-  std::map<array_string_exprt, symbol_exprt> length_of_array_;
 };
 
 exprt is_digit_with_radix(
@@ -389,5 +438,33 @@ size_t max_printed_string_length(const typet &type, unsigned long ul_radix);
 
 std::string
 utf16_constant_array_to_java(const array_exprt &arr, std::size_t length);
+
+/// \return expression representing the minimum of two expressions
+exprt minimum(const exprt &a, const exprt &b);
+
+/// \return expression representing the maximum of two expressions
+exprt maximum(const exprt &a, const exprt &b);
+
+/// \return Boolean true when the sum of the two expressions overflows
+exprt sum_overflows(const plus_exprt &sum);
+
+exprt length_constraint_for_concat_char(
+  const array_string_exprt &res,
+  const array_string_exprt &s1);
+exprt length_constraint_for_concat(
+  const array_string_exprt &res,
+  const array_string_exprt &s1,
+  const array_string_exprt &s2);
+exprt length_constraint_for_concat_substr(
+  const array_string_exprt &res,
+  const array_string_exprt &s1,
+  const array_string_exprt &s2,
+  const exprt &start_index,
+  const exprt &end_index);
+exprt length_constraint_for_insert(
+  const array_string_exprt &res,
+  const array_string_exprt &s1,
+  const array_string_exprt &s2,
+  const exprt &offset);
 
 #endif

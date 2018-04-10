@@ -74,7 +74,8 @@ public:
     const symbol_tablet &outer_symbol_table,
     message_handlert &_message_handler,
     prop_convt &_prop_conv,
-    goto_symext::branch_worklistt &_branch_worklist)
+    goto_symext::branch_worklistt &_branch_worklist,
+    std::function<bool(void)> callback_after_symex)
     : safety_checkert(ns, _message_handler),
       options(_options),
       outer_symbol_table(outer_symbol_table),
@@ -83,16 +84,22 @@ public:
       branch_worklist(_branch_worklist),
       symex(_message_handler, outer_symbol_table, equation, branch_worklist),
       prop_conv(_prop_conv),
-      ui(ui_message_handlert::uit::PLAIN)
+      ui(ui_message_handlert::uit::PLAIN),
+      driver_callback_after_symex(callback_after_symex)
   {
     symex.constant_propagation=options.get_bool_option("propagation");
     symex.record_coverage=
       !options.get_option("symex-coverage-report").empty();
   }
 
-  virtual resultt run(const goto_functionst &goto_functions);
+  virtual resultt run(const goto_functionst &goto_functions)
+  {
+    wrapper_goto_modelt model(outer_symbol_table, goto_functions);
+    return run(model);
+  }
+  resultt run(abstract_goto_modelt &);
   void setup();
-  safety_checkert::resultt execute(const goto_functionst &);
+  safety_checkert::resultt execute(abstract_goto_modelt &);
   virtual ~bmct() { }
 
   // additional stuff
@@ -118,24 +125,14 @@ public:
     symex.add_recursion_unwind_handler(handler);
   }
 
-  /// \brief common BMC code, invoked from language-specific frontends
-  ///
-  /// Do bounded model-checking after all language-specific program
-  /// preprocessing has been completed by language-specific frontends.
-  /// Language-specific frontends may customize the \ref bmct objects
-  /// that are used for model-checking by supplying a function object to
-  /// the `frontend_configure_bmc` parameter of this function; the
-  /// function object will be called with every \ref bmct object that
-  /// is constructed by `do_language_agnostic_bmc`.
   static int do_language_agnostic_bmc(
     const optionst &opts,
-    const goto_modelt &goto_model,
+    abstract_goto_modelt &goto_model,
     const ui_message_handlert::uit &ui,
     messaget &message,
-    std::function<void(bmct &, const goto_modelt &)> frontend_configure_bmc =
-      [](bmct &_bmc, const goto_modelt &) { // NOLINT (*)
-        // Empty default implementation
-      });
+    std::function<void(bmct &, const symbol_tablet &)>
+      driver_configure_bmc = nullptr,
+    std::function<bool(void)> callback_after_symex = nullptr);
 
 protected:
   /// \brief Constructor for path exploration from saved state
@@ -151,7 +148,8 @@ protected:
     message_handlert &_message_handler,
     prop_convt &_prop_conv,
     symex_target_equationt &_equation,
-    goto_symext::branch_worklistt &_branch_worklist)
+    goto_symext::branch_worklistt &_branch_worklist,
+    std::function<bool(void)> callback_after_symex)
     : safety_checkert(ns, _message_handler),
       options(_options),
       outer_symbol_table(outer_symbol_table),
@@ -160,7 +158,8 @@ protected:
       branch_worklist(_branch_worklist),
       symex(_message_handler, outer_symbol_table, equation, branch_worklist),
       prop_conv(_prop_conv),
-      ui(ui_message_handlert::uit::PLAIN)
+      ui(ui_message_handlert::uit::PLAIN),
+      driver_callback_after_symex(callback_after_symex)
   {
     symex.constant_propagation = options.get_bool_option("propagation");
     symex.record_coverage =
@@ -240,8 +239,14 @@ private:
   /// invoke the symbolic executor in a class-specific way. This
   /// implementation invokes goto_symext::operator() to perform
   /// full-program model-checking from the entry point of the program.
-  virtual void
-  perform_symbolic_execution(const goto_functionst &goto_functions);
+  virtual void perform_symbolic_execution(
+    goto_symext::get_goto_functiont get_goto_function);
+
+  /// Optional callback, to be run after symex but before handing the resulting
+  /// equation to the solver. If it returns true then we will skip the solver
+  /// stage and return "safe" (no assertions violated / coverage goals reached),
+  /// similar to the behaviour when 'show-vcc' or 'program-only' are specified.
+  std::function<bool(void)> driver_callback_after_symex;
 };
 
 /// \brief Symbolic execution from a saved branch point
@@ -264,14 +269,16 @@ public:
     prop_convt &_prop_conv,
     symex_target_equationt &saved_equation,
     const goto_symex_statet &saved_state,
-    goto_symext::branch_worklistt &branch_worklist)
+    goto_symext::branch_worklistt &branch_worklist,
+    std::function<bool(void)> callback_after_symex)
     : bmct(
         _options,
         outer_symbol_table,
         _message_handler,
         _prop_conv,
         saved_equation,
-        branch_worklist),
+        branch_worklist,
+        callback_after_symex),
       saved_state(saved_state)
   {
   }
@@ -285,8 +292,8 @@ private:
   /// This overrides the base implementation to call the symbolic executor with
   /// the saved symex_target_equationt, symbol_tablet, and goto_symex_statet
   /// provided as arguments to the constructor of this class.
-  void
-  perform_symbolic_execution(const goto_functionst &goto_functions) override;
+  void perform_symbolic_execution(
+    goto_symext::get_goto_functiont get_goto_function) override;
 
 #define OPT_BMC                                                                \
   "(program-only)"                                                             \

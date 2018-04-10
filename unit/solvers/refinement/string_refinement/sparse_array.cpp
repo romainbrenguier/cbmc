@@ -3,7 +3,7 @@
  Module: Unit tests for sparse arrays
    solvers/refinement/string_refinement.cpp
 
- Author: DiffBlue Limited. All rights reserved.
+ Author: Diffblue Ltd.
 
 \*******************************************************************/
 
@@ -46,19 +46,17 @@ SCENARIO("sparse_array", "[core][solvers][refinement][string_refinement]")
     WHEN("It is converted to a sparse array")
     {
       const sparse_arrayt sparse_array(input_expr);
-      THEN("The resulting if expression is index=4?x:index=1?y:index=100?z:0")
+      THEN("The resulting if expression is index=100?z:index=4?x:index=1?y:0")
       {
         const symbol_exprt index("index", int_type);
         const if_exprt expected(
-          equal_exprt(index, index4),
-          charx,
+          equal_exprt(index, index100),
+          charz,
           if_exprt(
-            equal_exprt(index, index1),
-            chary,
+            equal_exprt(index, index4),
+            charx,
             if_exprt(
-              equal_exprt(index, index100),
-              charz,
-              from_integer(0, char_type))));
+              equal_exprt(index, index1), chary, from_integer(0, char_type))));
         REQUIRE(sparse_array.to_if_expression(index) == expected);
       }
     }

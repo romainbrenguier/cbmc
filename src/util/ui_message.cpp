@@ -15,39 +15,57 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "json.h"
 #include "xml_expr.h"
 #include "json_expr.h"
+#include "json_stream.h"
 #include "cout_message.h"
 #include "cmdline.h"
+
+ui_message_handlert::ui_message_handlert()
+  : _ui(uit::PLAIN),
+    time(timestampert::make(timestampert::clockt::NONE)),
+    out(std::cout),
+    json_stream(nullptr)
+{
+}
 
 ui_message_handlert::ui_message_handlert(
   uit __ui,
   const std::string &program,
   timestampert::clockt clock_type)
-  : _ui(__ui), time(timestampert::make(clock_type))
+  : _ui(__ui),
+    time(timestampert::make(clock_type)),
+    out(std::cout),
+    json_stream(nullptr)
 {
-  switch(__ui)
+  switch(_ui)
   {
   case uit::PLAIN:
     break;
 
   case uit::XML_UI:
-    std::cout << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << "\n";
-    std::cout << "<cprover>" << "\n";
+    out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        << "\n";
+    out << "<cprover>"
+        << "\n";
 
     {
       xmlt program_xml;
       program_xml.name="program";
       program_xml.data=program;
 
-      std::cout << program_xml;
+      out << program_xml;
     }
     break;
 
   case uit::JSON_UI:
     {
-      std::cout << "[\n";
-      json_objectt json_program;
-      json_program["program"] = json_stringt(program);
-      std::cout << json_program;
+      if(!json_stream)
+      {
+        json_stream =
+          std::unique_ptr<json_stream_arrayt>(new json_stream_arrayt(out));
+      }
+
+      INVARIANT(json_stream, "JSON stream must be initialized before use");
+      json_stream->push_back().make_object()["program"] = json_stringt(program);
     }
     break;
   }
@@ -76,11 +94,15 @@ ui_message_handlert::~ui_message_handlert()
   switch(get_ui())
   {
   case uit::XML_UI:
-    std::cout << "</cprover>" << "\n";
+
+    out << "</cprover>"
+        << "\n";
     break;
 
   case uit::JSON_UI:
-    std::cout << "\n]\n";
+    INVARIANT(json_stream, "JSON stream must be initialized before use");
+    json_stream->close();
+    out << '\n';
     break;
 
   case uit::PLAIN:
@@ -110,7 +132,8 @@ void ui_message_handlert::print(
     {
       console_message_handlert console_message_handler;
       std::stringstream ss;
-      ss << time->stamp() << message;
+      const std::string timestamp = time->stamp();
+      ss << timestamp << (timestamp.empty() ? "" : " ") << message;
       console_message_handler.print(level, ss.str());
     }
     break;
@@ -139,7 +162,7 @@ void ui_message_handlert::print(
       INVARIANT(false, "Cannot print xml data on PLAIN UI");
       break;
     case uit::XML_UI:
-      std::cout << data << '\n';
+      out << data << '\n';
       flush(level);
       break;
     case uit::JSON_UI:
@@ -164,7 +187,8 @@ void ui_message_handlert::print(
       INVARIANT(false, "Cannot print json data on XML UI");
       break;
     case uit::JSON_UI:
-      std::cout << ',' << '\n' << data;
+      INVARIANT(json_stream, "JSON stream must be initialized before use");
+      json_stream->push_back(data);
       flush(level);
       break;
     }
@@ -244,9 +268,12 @@ void ui_message_handlert::xml_ui_msg(
 
   result.new_element("text").data=msg1;
   result.set_attribute("type", type);
+  const std::string timestamp = time->stamp();
+  if(!timestamp.empty())
+    result.set_attribute("timestamp", timestamp);
 
-  std::cout << result;
-  std::cout << '\n';
+  out << result;
+  out << '\n';
 }
 
 void ui_message_handlert::json_ui_msg(
@@ -255,7 +282,8 @@ void ui_message_handlert::json_ui_msg(
   const std::string &msg2,
   const source_locationt &location)
 {
-  json_objectt result;
+  INVARIANT(json_stream, "JSON stream must be initialized before use");
+  json_objectt &result = json_stream->push_back().make_object();
 
   if(location.is_not_nil() &&
      !location.get_file().empty())
@@ -263,6 +291,9 @@ void ui_message_handlert::json_ui_msg(
 
   result["messageType"] = json_stringt(type);
   result["messageText"] = json_stringt(msg1);
+  const std::string timestamp = time->stamp();
+  if(!timestamp.empty())
+    result["timestamp"] = json_stringt(timestamp);
 
   // By convention a leading comma is created by every new array entry.
   // The first entry is generated in the constructor and does not have
@@ -284,7 +315,7 @@ void ui_message_handlert::flush(unsigned level)
   case uit::XML_UI:
   case uit::JSON_UI:
   {
-    std::cout << std::flush;
+    out << std::flush;
   }
   break;
   }

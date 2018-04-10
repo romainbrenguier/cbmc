@@ -2,7 +2,7 @@
 
  Module: Unit tests for parsing generic classes
 
- Author: DiffBlue Limited. All rights reserved.
+ Author: Diffblue Ltd.
 
 \*******************************************************************/
 
@@ -24,7 +24,8 @@ SCENARIO(
 
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -36,8 +37,6 @@ SCENARIO(
         {{require_type::type_argument_kindt::Inst,
           "java::Interface_Implementation"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1419
   }
 
   THEN("There should be a symbol for the DerivedGenericInst2 class")
@@ -48,7 +47,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -61,8 +61,6 @@ SCENARIO(
           "java::Interface_Implementation"},
          {require_type::type_argument_kindt::Inst, "java::java.lang.Integer"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1419
   }
 
   THEN("There should be a symbol for the DerivedGenericUninst class")
@@ -73,7 +71,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The base for superclasss has the correct generic type information")
     {
@@ -85,8 +83,6 @@ SCENARIO(
         {{require_type::type_argument_kindt::Var,
           "java::DerivedGenericUninst::T"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418
   }
 
   THEN("There should be a symbol for the DerivedGenericMixed1 class")
@@ -97,7 +93,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -109,8 +105,6 @@ SCENARIO(
         {{require_type::type_argument_kindt::Inst,
           "java::Interface_Implementation"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN("There should be a symbol for the DerivedGenericMixed2 class")
@@ -121,7 +115,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -134,8 +128,6 @@ SCENARIO(
           "java::DerivedGenericMixed2::T"},
          {require_type::type_argument_kindt::Inst, "java::java.lang.Integer"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN("There should be a symbol for the ContainsInnerClass$InnerClass class")
@@ -146,7 +138,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -157,8 +150,6 @@ SCENARIO(
         "java::Generic",
         {{require_type::type_argument_kindt::Inst, "java::java.lang.Integer"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -171,7 +162,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -183,8 +174,6 @@ SCENARIO(
         {{require_type::type_argument_kindt::Var,
           "java::ContainsInnerClass$InnerClassGeneric::T"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -197,7 +186,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_implicitly_generic_class(
+      require_type::require_complete_java_implicitly_generic_class(
         derived_symbol.type, {"java::ContainsInnerClassGeneric::T"});
 
     THEN("The base for superclass has the correct generic type information")
@@ -210,8 +199,6 @@ SCENARIO(
         {{require_type::type_argument_kindt::Var,
           "java::ContainsInnerClassGeneric::T"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN("There should be a symbol for the ThreeHierarchy class")
@@ -222,7 +209,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass has the correct generic type information")
     {
@@ -233,8 +221,6 @@ SCENARIO(
         "java::DerivedGenericMixed2",
         {{require_type::type_argument_kindt::Inst, "java::java.lang.String"}});
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -247,7 +233,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -268,8 +255,6 @@ SCENARIO(
             "java::java.lang.Integer"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -281,7 +266,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -302,8 +287,6 @@ SCENARIO(
             "java::ImplementsInterfaceGenericUnspec::E"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -316,7 +299,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -342,8 +326,6 @@ SCENARIO(
         require_type::require_symbol(base_type, "java::Interface");
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -356,7 +338,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -386,8 +369,6 @@ SCENARIO(
             "java::java.lang.Integer"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -400,7 +381,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -432,8 +413,6 @@ SCENARIO(
             "java::ExtendsAndImplementsGeneric::T"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -446,7 +425,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -471,8 +451,6 @@ SCENARIO(
              "java::java.lang.Integer"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -485,7 +463,8 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_non_generic_class(derived_symbol.type);
+      require_type::require_complete_java_non_generic_class(
+        derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -517,8 +496,6 @@ SCENARIO(
              "java::java.lang.Integer"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN(
@@ -531,7 +508,7 @@ SCENARIO(
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
 
     const class_typet &derived_class_type =
-      require_type::require_java_generic_class(derived_symbol.type);
+      require_type::require_complete_java_generic_class(derived_symbol.type);
 
     THEN("The bases have the correct generic type information")
     {
@@ -556,8 +533,6 @@ SCENARIO(
              "java::ExtendsAndImplementsSameInterfaceGeneric::T"}});
       }
     }
-
-    // TODO: Check that specialised superclass is created. TG-1418, TG-1419
   }
 
   THEN("There should be a symbol for the `ExtendImplicit` class")
@@ -567,7 +542,8 @@ SCENARIO(
 
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
     const class_typet &derived_class_type =
-      require_type::require_java_implicitly_generic_class(derived_symbol.type);
+      require_type::require_complete_java_implicitly_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass is implicitly generic")
     {
@@ -587,7 +563,8 @@ SCENARIO(
 
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
     const class_typet &derived_class_type =
-      require_type::require_java_implicitly_generic_class(derived_symbol.type);
+      require_type::require_complete_java_implicitly_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass is generic *and* implicitly generic")
     {
@@ -609,7 +586,8 @@ SCENARIO(
 
     const symbolt &derived_symbol = new_symbol_table.lookup_ref(class_prefix);
     const class_typet &derived_class_type =
-      require_type::require_java_implicitly_generic_class(derived_symbol.type);
+      require_type::require_complete_java_implicitly_generic_class(
+        derived_symbol.type);
 
     THEN("The base for superclass is generic *and* implicitly generic")
     {

@@ -20,7 +20,6 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <solvers/refinement/string_constraint_generator.h>
 
 #include <limits>
-#include <java_bytecode/java_types.h>
 #include <solvers/refinement/string_refinement_invariant.h>
 
 #include <util/arith_tools.h>
@@ -31,14 +30,18 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 string_constraint_generatort::string_constraint_generatort(
   const string_constraint_generatort::infot &info,
   const namespacet &ns)
-  : max_string_length(info.string_max_length),
-    ns(ns)
+  : array_pool(fresh_symbol), max_string_length(info.string_max_length), ns(ns)
 {
 }
 
 const std::vector<exprt> &string_constraint_generatort::get_lemmas() const
 {
   return lemmas;
+}
+
+void string_constraint_generatort::add_lemma(const exprt &expr)
+{
+  lemmas.push_back(expr);
 }
 
 const std::vector<string_constraintt> &
@@ -87,8 +90,8 @@ constant_exprt string_constraint_generatort::constant_char(
 /// \par parameters: a prefix and a type
 /// \return a symbol of type tp whose name starts with "string_refinement#"
 ///   followed by prefix
-symbol_exprt string_constraint_generatort::fresh_symbol(
-  const irep_idt &prefix, const typet &type)
+symbol_exprt symbol_generatort::
+operator()(const irep_idt &prefix, const typet &type)
 {
   std::ostringstream buf;
   buf << "string_refinement#" << prefix << "#" << ++symbol_count;
@@ -127,43 +130,30 @@ symbol_exprt string_constraint_generatort::fresh_boolean(
   return b;
 }
 
-/// Create a plus expression while adding extra constraints to axioms in order
-/// to prevent overflows.
-/// \param op1: First term of the sum
-/// \param op2: Second term of the sum
-/// \return A plus expression representing the sum of the arguments
-plus_exprt string_constraint_generatort::plus_exprt_with_overflow_check(
-  const exprt &op1, const exprt &op2)
+exprt sum_overflows(const plus_exprt &sum)
 {
-  plus_exprt sum(plus_exprt(op1, op2));
+  PRECONDITION(sum.operands().size() == 2);
+  const exprt zero = from_integer(0, sum.op0().type());
+  const binary_relation_exprt op0_negative(sum.op0(), ID_lt, zero);
+  const binary_relation_exprt op1_negative(sum.op1(), ID_lt, zero);
+  const binary_relation_exprt sum_negative(sum, ID_lt, zero);
 
-  exprt zero=from_integer(0, op1.type());
-
-  binary_relation_exprt neg1(op1, ID_lt, zero);
-  binary_relation_exprt neg2(op2, ID_lt, zero);
-  binary_relation_exprt neg_sum(sum, ID_lt, zero);
-
-  // We prevent overflows by adding the following constraint:
-  // If the signs of the two operands are the same, then the sign of the sum
-  // should also be the same.
-  implies_exprt no_overflow(equal_exprt(neg1, neg2),
-                            equal_exprt(neg1, neg_sum));
-
-  lemmas.push_back(no_overflow);
-
-  return sum;
+  // overflow happens when we add two values of same sign but their sum has a
+  // different sign
+  return and_exprt(
+    equal_exprt(op0_negative, op1_negative),
+    notequal_exprt(op1_negative, sum_negative));
 }
 
 /// Associate an actual finite length to infinite arrays
 /// \param s: array expression representing a string
 /// \return expression for the length of `s`
-exprt string_constraint_generatort::get_length_of_string_array(
-  const array_string_exprt &s) const
+exprt array_poolt::get_length(const array_string_exprt &s) const
 {
   if(s.length() == infinity_exprt(s.length().type()))
   {
-    auto it = length_of_array_.find(s);
-    if(it != length_of_array_.end())
+    auto it = length_of_array.find(s);
+    if(it != length_of_array.end())
       return it->second;
   }
   return s.length();
@@ -185,10 +175,9 @@ array_string_exprt string_constraint_generatort::fresh_string(
   return str;
 }
 
-// Associate a char array to a char pointer. The size of the char array is a
+// Make a new char array for a char pointer. The size of the char array is a
 // variable with no constraint.
-array_string_exprt
-string_constraint_generatort::associate_char_array_to_char_pointer(
+array_string_exprt array_poolt::make_char_array_for_char_pointer(
   const exprt &char_pointer,
   const typet &char_array_type)
 {
@@ -214,10 +203,10 @@ string_constraint_generatort::associate_char_array_to_char_pointer(
   else if(char_pointer.id() == ID_if)
   {
     const if_exprt &if_expr = to_if_expr(char_pointer);
-    const array_string_exprt t = associate_char_array_to_char_pointer(
-      if_expr.true_case(), char_array_type);
-    const array_string_exprt f = associate_char_array_to_char_pointer(
-      if_expr.false_case(), char_array_type);
+    const array_string_exprt t =
+      make_char_array_for_char_pointer(if_expr.true_case(), char_array_type);
+    const array_string_exprt f =
+      make_char_array_for_char_pointer(if_expr.false_case(), char_array_type);
     array_typet array_type(
       char_array_type.subtype(),
       if_exprt(
@@ -247,16 +236,32 @@ string_constraint_generatort::associate_char_array_to_char_pointer(
   array_string_exprt array_sym =
     to_array_string_expr(fresh_symbol(symbol_name, char_array_type));
   auto insert_result =
-    arrays_of_pointers_.insert(std::make_pair(char_pointer, array_sym));
+    arrays_of_pointers.insert(std::make_pair(char_pointer, array_sym));
   array_string_exprt result = to_array_string_expr(insert_result.first->second);
-  add_default_axioms(result);
   return result;
 }
 
+void array_poolt::insert(
+  const exprt &pointer_expr,
+  array_string_exprt &array_expr)
+{
+  const exprt &length = array_expr.length();
+  if(length == infinity_exprt(length.type()))
+  {
+    auto pair = length_of_array.insert(
+      std::make_pair(array_expr, fresh_symbol("string_length", length.type())));
+    array_expr.length() = pair.first->second;
+  }
+
+  const auto it_bool =
+    arrays_of_pointers.insert(std::make_pair(pointer_expr, array_expr));
+  INVARIANT(
+    it_bool.second, "should not associate two arrays to the same pointer");
+}
+
 /// Associate a char array to a char pointer.
-/// Insert in `arrays_of_pointers_` a binding from `ptr` to `arr`.
-/// If the length of `arr` is infinite, we create a new integer symbol and add
-/// a binding from `arr` to this length in `length_of_array_`.
+/// Insert in `array_pool` a binding from `ptr` to `arr`. If the length of `arr`
+/// is infinite, a new integer symbol is created and stored in `array_pool`.
 /// This also adds the default axioms for `arr`.
 /// \param f: a function application with argument a character array `arr` and
 /// a character pointer `ptr`.
@@ -272,21 +277,7 @@ exprt string_constraint_generatort::associate_array_to_pointer(
                                       : f.arguments()[0]);
 
   const exprt &pointer_expr = f.arguments()[1];
-
-  const auto &length = array_expr.length();
-  if(length == infinity_exprt(length.type()))
-  {
-    auto pair = length_of_array_.insert(
-      std::make_pair(array_expr, fresh_symbol("string_length", length.type())));
-    array_expr.length() = pair.first->second;
-  }
-
-  /// \todo We should use a function for inserting the correspondance
-  /// between array and pointers.
-  const auto it_bool =
-    arrays_of_pointers_.insert(std::make_pair(pointer_expr, array_expr));
-  INVARIANT(
-    it_bool.second, "should not associate two arrays to the same pointer");
+  array_pool.insert(pointer_expr, array_expr);
   add_default_axioms(to_array_string_expr(array_expr));
   return from_integer(0, f.type());
 }
@@ -303,7 +294,7 @@ exprt string_constraint_generatort::associate_length_to_array(
   array_string_exprt array_expr = to_array_string_expr(f.arguments()[0]);
   const exprt &new_length = f.arguments()[1];
 
-  const auto &length = get_length_of_string_array(array_expr);
+  const auto &length = array_pool.get_length(array_expr);
   lemmas.push_back(equal_exprt(length, new_length));
   return from_integer(0, f.type());
 }
@@ -318,6 +309,13 @@ string_constraint_generatort::get_string_expr(const exprt &expr)
   PRECONDITION(is_refined_string_type(expr.type()));
   const refined_string_exprt &str = to_string_expr(expr);
   return char_array_of_pointer(str.content(), str.length());
+}
+
+void string_constraint_generatort::clear_constraints()
+{
+  lemmas.clear();
+  constraints.clear();
+  not_contains_constraints.clear();
 }
 
 /// adds standard axioms about the length of the string and its content: * its
@@ -371,7 +369,7 @@ void string_constraint_generatort::add_constraint_on_characters(
   const and_exprt char_in_set(
     binary_relation_exprt(chr, ID_ge, from_integer(low_char, chr.type())),
     binary_relation_exprt(chr, ID_le, from_integer(high_char, chr.type())));
-  const string_constraintt sc(qvar, start, end, true_exprt(), char_in_set);
+  const string_constraintt sc(qvar, start, end, char_in_set);
   constraints.push_back(sc);
 }
 
@@ -401,16 +399,53 @@ exprt string_constraint_generatort::add_axioms_for_constrain_characters(
   return from_integer(0, get_return_code_type());
 }
 
+/// Creates a new array if the pointer is not pointing to an array
+/// \todo This should be replaced by make_char_array_for_char_pointer
+array_string_exprt array_poolt::find(const exprt &pointer, const exprt &length)
+{
+  const array_typet array_type(pointer.type().subtype(), length);
+  return make_char_array_for_char_pointer(pointer, array_type);
+}
+
 /// Adds creates a new array if it does not already exists
 /// \todo This should be replaced by associate_char_array_to_char_pointer
 array_string_exprt string_constraint_generatort::char_array_of_pointer(
   const exprt &pointer,
   const exprt &length)
 {
-  const array_typet array_type(pointer.type().subtype(), length);
-  const array_string_exprt array =
-    associate_char_array_to_char_pointer(pointer, array_type);
+  const array_string_exprt array = array_pool.find(pointer, length);
+  add_default_axioms(array);
   return array;
+}
+
+array_string_exprt array_poolt::find(const refined_string_exprt &str)
+{
+  return find(str.content(), str.length());
+}
+
+array_string_exprt array_poolt::of_argument(const exprt &arg)
+{
+  const auto string_argument = expr_checked_cast<struct_exprt>(arg);
+  return find(string_argument.op1(), string_argument.op0());
+}
+
+static irep_idt get_function_name(const function_application_exprt &expr)
+{
+  const exprt &name = expr.function();
+  PRECONDITION(name.id() == ID_symbol);
+  return is_ssa_expr(name) ? to_ssa_expr(name).get_object_name()
+                           : to_symbol_expr(name).get_identifier();
+}
+
+optionalt<exprt> string_constraint_generatort::make_array_pointer_association(
+  const function_application_exprt &expr)
+{
+  const irep_idt &id = get_function_name(expr);
+  if(id == ID_cprover_associate_array_to_pointer_func)
+    return associate_array_to_pointer(expr);
+  else if(id == ID_cprover_associate_length_to_array_func)
+    return associate_length_to_array(expr);
+  return {};
 }
 
 /// strings contained in this call are converted to objects of type
@@ -421,12 +456,7 @@ array_string_exprt string_constraint_generatort::char_array_of_pointer(
 exprt string_constraint_generatort::add_axioms_for_function_application(
   const function_application_exprt &expr)
 {
-  const exprt &name=expr.function();
-  PRECONDITION(name.id()==ID_symbol);
-
-  const irep_idt &id=is_ssa_expr(name)?to_ssa_expr(name).get_object_name():
-    to_symbol_expr(name).get_identifier();
-
+  const irep_idt &id = get_function_name(expr);
   exprt res;
 
   if(id==ID_cprover_char_literal_func)
@@ -533,10 +563,6 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
     res=add_axioms_for_intern(expr);
   else if(id==ID_cprover_string_format_func)
     res=add_axioms_for_format(expr);
-  else if(id == ID_cprover_associate_array_to_pointer_func)
-    res = associate_array_to_pointer(expr);
-  else if(id == ID_cprover_associate_length_to_array_func)
-    res = associate_length_to_array(expr);
   else if(id == ID_cprover_string_constrain_characters_func)
     res = add_axioms_for_constrain_characters(expr);
   else
@@ -635,4 +661,14 @@ exprt string_constraint_generatort::add_axioms_for_char_at(
   symbol_exprt char_sym = fresh_symbol("char", str.type().subtype());
   lemmas.push_back(equal_exprt(char_sym, str[f.arguments()[1]]));
   return char_sym;
+}
+
+exprt minimum(const exprt &a, const exprt &b)
+{
+  return if_exprt(binary_relation_exprt(a, ID_le, b), a, b);
+}
+
+exprt maximum(const exprt &a, const exprt &b)
+{
+  return if_exprt(binary_relation_exprt(a, ID_le, b), b, a);
 }

@@ -22,10 +22,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "expr_cast.h"
 
 
-/*! \defgroup gr_std_expr Conversion to specific expressions
- *  Conversion to subclasses of @ref exprt
-*/
-
 /*! \brief A transition system, consisting of
            state invariant, initial state predicate,
            and transition predicate
@@ -56,7 +52,7 @@ public:
  * \param expr Source expression
  * \return Object of type \ref transt
  *
- * \ingroup gr_std_expr
+
 */
 inline const transt &to_trans_expr(const exprt &expr)
 {
@@ -1653,6 +1649,26 @@ template<> inline bool can_cast_expr<array_exprt>(const exprt &base)
   return base.id()==ID_array;
 }
 
+/// Array constructor from a list of index-element pairs
+/// Operands are index/value pairs, alternating.
+class array_list_exprt:public exprt
+{
+public:
+  explicit array_list_exprt(const array_typet &_type):
+    exprt(ID_array_list, _type)
+  {
+  }
+};
+
+template<> inline bool can_cast_expr<array_list_exprt>(const exprt &base)
+{
+  return base.id() == ID_array_list;
+}
+
+inline void validate_expr(const array_list_exprt &value)
+{
+  PRECONDITION(value.operands().size() % 2 == 0);
+}
 
 /*! \brief vector constructor from list of elements
 */
@@ -4754,6 +4770,14 @@ public:
     op0()=symbol_exprt();
   }
 
+  quantifier_exprt(
+    const irep_idt &_id,
+    const symbol_exprt &_symbol,
+    const exprt &_where)
+    : binary_predicate_exprt(_symbol, _id, _where)
+  {
+  }
+
   symbol_exprt &symbol()
   {
     return static_cast<symbol_exprt &>(op0());
@@ -4804,8 +4828,9 @@ inline quantifier_exprt &to_quantifier_expr(exprt &expr)
 
 template<> inline bool can_cast_expr<quantifier_exprt>(const exprt &base)
 {
-  return true;
+  return base.id() == ID_forall || base.id() == ID_exists;
 }
+
 inline void validate_expr(const quantifier_exprt &value)
 {
   validate_operands(value, 2,
@@ -4820,6 +4845,11 @@ public:
   forall_exprt():quantifier_exprt(ID_forall)
   {
   }
+
+  forall_exprt(const symbol_exprt &_symbol, const exprt &_where)
+    : quantifier_exprt(ID_forall, _symbol, _where)
+  {
+  }
 };
 
 /*! \brief An exists expression
@@ -4828,6 +4858,11 @@ class exists_exprt:public quantifier_exprt
 {
 public:
   exists_exprt():quantifier_exprt(ID_exists)
+  {
+  }
+
+  exists_exprt(const symbol_exprt &_symbol, const exprt &_where)
+    : quantifier_exprt(ID_exists, _symbol, _where)
   {
   }
 };

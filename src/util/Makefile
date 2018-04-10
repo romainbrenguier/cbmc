@@ -17,7 +17,9 @@ SRC = arith_tools.cpp \
       find_symbols.cpp \
       fixedbv.cpp \
       format_constant.cpp \
+      format_expr.cpp \
       format_number_range.cpp \
+      format_type.cpp \
       fresh_symbol.cpp \
       get_base_name.cpp \
       get_module.cpp \
@@ -35,6 +37,7 @@ SRC = arith_tools.cpp \
       json.cpp \
       json_expr.cpp \
       json_irep.cpp \
+      json_stream.cpp \
       lispexpr.cpp \
       lispirep.cpp \
       memory_info.cpp \

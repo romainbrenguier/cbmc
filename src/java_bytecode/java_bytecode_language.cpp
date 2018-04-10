@@ -34,7 +34,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_static_initializers.h"
 #include "java_utils.h"
 #include <java_bytecode/ci_lazy_methods.h>
-#include <java_bytecode/generate_java_generic_type.h>
 
 #include "expr2java.h"
 
@@ -59,8 +58,8 @@ void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
   object_factory_parameters.string_printable = cmd.isset("string-printable");
   if(cmd.isset("java-max-vla-length"))
     max_user_array_length=std::stoi(cmd.get_value("java-max-vla-length"));
-  if(cmd.isset("lazy-methods-context-sensitive"))
-    lazy_methods_mode=LAZY_METHODS_MODE_CONTEXT_SENSITIVE;
+  if(cmd.isset("symex-driven-lazy-loading"))
+    lazy_methods_mode=LAZY_METHODS_MODE_EXTERNAL_DRIVER;
   else if(cmd.isset("lazy-methods"))
     lazy_methods_mode=LAZY_METHODS_MODE_CONTEXT_INSENSITIVE;
   else
@@ -79,6 +78,11 @@ void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
     const auto &values = cmd.get_values("java-load-class");
     java_load_classes.insert(
         java_load_classes.end(), values.begin(), values.end());
+  }
+  if(cmd.isset("java-no-load-class"))
+  {
+    const auto &values = cmd.get_values("java-no-load-class");
+    no_load_classes = {values.begin(), values.end()};
   }
 
   const std::list<std::string> &extra_entry_points=
@@ -577,13 +581,15 @@ bool java_bytecode_languaget::typecheck(
     java_class_loader.class_map.find("java.lang.Object");
   if(it!=java_class_loader.class_map.end())
   {
-    if(java_bytecode_convert_class(
-     it->second,
-     symbol_table,
-     get_message_handler(),
-     max_user_array_length,
-     method_bytecode,
-     string_preprocess))
+    if(
+      java_bytecode_convert_class(
+        it->second,
+        symbol_table,
+        get_message_handler(),
+        max_user_array_length,
+        method_bytecode,
+        string_preprocess,
+        no_load_classes))
     {
       return true;
     }
@@ -606,7 +612,8 @@ bool java_bytecode_languaget::typecheck(
         get_message_handler(),
         max_user_array_length,
         method_bytecode,
-        string_preprocess))
+        string_preprocess,
+        no_load_classes))
     {
       return true;
     }
@@ -814,6 +821,9 @@ void java_bytecode_languaget::methods_provided(id_sett &methods) const
   string_preprocess.get_all_function_names(methods);
   // Add all concrete methods to map
   for(const auto &kv : method_bytecode)
+    methods.insert(kv.first);
+  // Add all synthetic methods to map
+  for(const auto &kv : synthetic_methods)
     methods.insert(kv.first);
 }
 

@@ -37,12 +37,14 @@ public:
     message_handlert &_message_handler,
     size_t _max_array_length,
     method_bytecodet &method_bytecode,
-    java_string_library_preprocesst &_string_preprocess)
+    java_string_library_preprocesst &_string_preprocess,
+    const std::unordered_set<std::string> &no_load_classes)
     : messaget(_message_handler),
       symbol_table(_symbol_table),
       max_array_length(_max_array_length),
       method_bytecode(method_bytecode),
-      string_preprocess(_string_preprocess)
+      string_preprocess(_string_preprocess),
+      no_load_classes(no_load_classes)
   {
   }
 
@@ -51,7 +53,9 @@ public:
     // add array types to the symbol table
     add_array_types(symbol_table);
 
-    bool loading_success=parse_tree.loading_successful;
+    const bool loading_success =
+      parse_tree.loading_successful &&
+      !no_load_classes.count(id2string(parse_tree.parsed_class.name));
     if(loading_success)
       convert(parse_tree.parsed_class);
 
@@ -81,6 +85,7 @@ protected:
 
   // see definition below for more info
   static void add_array_types(symbol_tablet &symbol_table);
+  std::unordered_set<std::string> no_load_classes;
 };
 
 /// Auxiliary function to extract the generic superclass reference from the
@@ -151,7 +156,16 @@ static optionalt<std::string> extract_generic_interface_reference(
     start =
       find_closing_semi_colon_for_reference_type(signature.value(), start) + 1;
 
-    start = signature.value().find("L" + interface_name + "<", start);
+    // if the interface name includes package name, convert dots to slashes
+    std::string interface_name_slash_to_dot = interface_name;
+    std::replace(
+      interface_name_slash_to_dot.begin(),
+      interface_name_slash_to_dot.end(),
+      '.',
+      '/');
+
+    start =
+      signature.value().find("L" + interface_name_slash_to_dot + "<", start);
     if(start != std::string::npos)
     {
       const size_t &end =
@@ -193,10 +207,12 @@ void java_bytecode_convert_classt::convert(const classt &c)
       }
       class_type=generic_class_type;
     }
-    catch(unsupported_java_class_signature_exceptiont)
+    catch(const unsupported_java_class_signature_exceptiont &e)
     {
-      warning() << "we currently don't support parsing for example double "
-        "bounded, recursive and wild card generics" << eom;
+      warning() << "Class: " << c.name
+                << "\n could not parse signature: " << c.signature.value()
+                << "\n " << e.what() << "\n ignoring that the class is generic"
+                << eom;
     }
   }
 
@@ -244,11 +260,12 @@ void java_bytecode_convert_classt::convert(const classt &c)
           base, superclass_ref.value(), qualified_classname);
         class_type.add_base(generic_base);
       }
-      catch(unsupported_java_class_signature_exceptiont)
+      catch(const unsupported_java_class_signature_exceptiont &e)
       {
-        debug() << "unsupported generic superclass signature "
-                << id2string(*superclass_ref)
-                << " falling back on using the descriptor" << eom;
+        warning() << "Superclass: " << c.extends << " of class: " << c.name
+                  << "\n could not parse signature: " << superclass_ref.value()
+                  << "\n " << e.what()
+                  << "\n ignoring that the superclass is generic" << eom;
         class_type.add_base(base);
       }
     }
@@ -283,11 +300,12 @@ void java_bytecode_convert_classt::convert(const classt &c)
           base, interface_ref.value(), qualified_classname);
         class_type.add_base(generic_base);
       }
-      catch(unsupported_java_class_signature_exceptiont)
+      catch(const unsupported_java_class_signature_exceptiont &e)
       {
-        debug() << "unsupported generic interface signature "
-                << id2string(*interface_ref)
-                << " falling back on using the descriptor" << eom;
+        warning() << "Interface: " << interface << " of class: " << c.name
+                  << "\n could not parse signature: " << interface_ref.value()
+                  << "\n " << e.what()
+                  << "\n ignoring that the interface is generic" << eom;
         class_type.add_base(base);
       }
     }
@@ -295,6 +313,18 @@ void java_bytecode_convert_classt::convert(const classt &c)
     {
       class_type.add_base(base);
     }
+  }
+
+  // now do lambda method handles (bootstrap methods)
+  for(const auto &lambda_entry : c.lambda_method_handle_map)
+  {
+    // if the handle is of unknown type, we still need to store it to preserve
+    // the correct indexing (invokedynamic instructions will retrieve
+    // method handles by index)
+    lambda_entry.second.is_unknown_handle()
+      ? class_type.add_unknown_lambda_method_handle()
+      : class_type.add_lambda_method_handle(
+          "java::" + id2string(lambda_entry.second.lambda_method_ref));
   }
 
   // produce class symbol
@@ -478,31 +508,33 @@ void java_bytecode_convert_classt::add_array_types(symbol_tablet &symbol_table)
     if(symbol_table.has_symbol(symbol_type_identifier))
       return;
 
-    struct_typet struct_type;
+    class_typet class_type;
     // we have the base class, java.lang.Object, length and data
     // of appropriate type
-    struct_type.set_tag(symbol_type_identifier);
+    class_type.set_tag(symbol_type_identifier);
 
-    struct_type.components().reserve(3);
-    struct_typet::componentt
-      comp0("@java.lang.Object", symbol_typet("java::java.lang.Object"));
-    comp0.set_pretty_name("@java.lang.Object");
-    comp0.set_base_name("@java.lang.Object");
-    struct_type.components().push_back(comp0);
+    class_type.components().reserve(3);
+    class_typet::componentt base_class_component(
+      "@java.lang.Object", symbol_typet("java::java.lang.Object"));
+    base_class_component.set_pretty_name("@java.lang.Object");
+    base_class_component.set_base_name("@java.lang.Object");
+    class_type.components().push_back(base_class_component);
 
-    struct_typet::componentt comp1("length", java_int_type());
-    comp1.set_pretty_name("length");
-    comp1.set_base_name("length");
-    struct_type.components().push_back(comp1);
+    class_typet::componentt length_component("length", java_int_type());
+    length_component.set_pretty_name("length");
+    length_component.set_base_name("length");
+    class_type.components().push_back(length_component);
 
-    struct_typet::componentt
-      comp2("data", java_reference_type(java_type_from_char(l)));
-    comp2.set_pretty_name("data");
-    comp2.set_base_name("data");
-    struct_type.components().push_back(comp2);
+    class_typet::componentt data_component(
+      "data", java_reference_type(java_type_from_char(l)));
+    data_component.set_pretty_name("data");
+    data_component.set_base_name("data");
+    class_type.components().push_back(data_component);
+
+    class_type.add_base(symbol_typet("java::java.lang.Object"));
 
     INVARIANT(
-      is_valid_java_array(struct_type),
+      is_valid_java_array(class_type),
       "Constructed a new type representing a Java Array "
       "object that doesn't match expectations");
 
@@ -510,7 +542,7 @@ void java_bytecode_convert_classt::add_array_types(symbol_tablet &symbol_table)
     symbol.name=symbol_type_identifier;
     symbol.base_name=symbol_type.get(ID_C_base_name);
     symbol.is_type=true;
-    symbol.type=struct_type;
+    symbol.type = class_type;
     symbol_table.add(symbol);
 
     // Also provide a clone method:
@@ -557,14 +589,16 @@ void java_bytecode_convert_classt::add_array_types(symbol_tablet &symbol_table)
       java_reference_type(symbol_type));
     dereference_exprt old_array(this_symbol.symbol_expr(), symbol_type);
     dereference_exprt new_array(local_symexpr, symbol_type);
-    member_exprt old_length(old_array, comp1.get_name(), comp1.type());
+    member_exprt old_length(
+      old_array, length_component.get_name(), length_component.type());
     java_new_array.copy_to_operands(old_length);
     code_assignt create_blank(local_symexpr, java_new_array);
     clone_body.move_to_operands(create_blank);
 
-
-    member_exprt old_data(old_array, comp2.get_name(), comp2.type());
-    member_exprt new_data(new_array, comp2.get_name(), comp2.type());
+    member_exprt old_data(
+      old_array, data_component.get_name(), data_component.type());
+    member_exprt new_data(
+      new_array, data_component.get_name(), data_component.type());
 
     /*
       // TODO use this instead of a loop.
@@ -583,7 +617,7 @@ void java_bytecode_convert_classt::add_array_types(symbol_tablet &symbol_table)
     index_symbol.name=index_name;
     index_symbol.base_name="index";
     index_symbol.pretty_name=index_symbol.base_name;
-    index_symbol.type=comp1.type();
+    index_symbol.type = length_component.type();
     index_symbol.mode=ID_java;
     symbol_table.add(index_symbol);
     const auto &index_symexpr=index_symbol.symbol_expr();
@@ -614,7 +648,8 @@ void java_bytecode_convert_classt::add_array_types(symbol_tablet &symbol_table)
     // End for-loop
     clone_body.move_to_operands(copy_loop);
 
-    member_exprt new_base_class(new_array, comp0.get_name(), comp0.type());
+    member_exprt new_base_class(
+      new_array, base_class_component.get_name(), base_class_component.type());
     address_of_exprt retval(new_base_class);
     code_returnt return_inst(retval);
     clone_body.move_to_operands(return_inst);
@@ -637,14 +672,16 @@ bool java_bytecode_convert_class(
   message_handlert &message_handler,
   size_t max_array_length,
   method_bytecodet &method_bytecode,
-  java_string_library_preprocesst &string_preprocess)
+  java_string_library_preprocesst &string_preprocess,
+  const std::unordered_set<std::string> &no_load_classes)
 {
   java_bytecode_convert_classt java_bytecode_convert_class(
     symbol_table,
     message_handler,
     max_array_length,
     method_bytecode,
-    string_preprocess);
+    string_preprocess,
+    no_load_classes);
 
   try
   {

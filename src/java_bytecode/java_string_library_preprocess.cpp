@@ -930,53 +930,56 @@ java_string_library_preprocesst::string_literal_to_string_expr(
 /// \param symbol_table: symbol table
 /// \return Code corresponding to:
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// string_expr1 = {this->length; *this->data}
-/// string_expr2 = {arg->length; *arg->data}
-/// return cprover_string_equal(string_expr1, string_expr2)
+/// IF arg->@class_identifier == "java.lang.String"
+/// THEN
+///   string_expr1 = {this->length; *this->data}
+///   string_expr2 = {arg->length; *arg->data}
+///   bool string_equals_tmp = cprover_string_equal(string_expr1, string_expr2)
+///   return string_equals_tmp
+/// ELSE
+///   return false
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 codet java_string_library_preprocesst::make_equals_function_code(
   const code_typet &type,
   const source_locationt &loc,
   symbol_table_baset &symbol_table)
 {
-  code_blockt code;
+  const typet &return_type = type.return_type();
   exprt::operandst ops;
   for(const auto &p : type.parameters())
   {
     symbol_exprt sym(p.get_identifier(), p.type());
     ops.push_back(sym);
   }
-  exprt::operandst args=process_equals_function_operands(
-    ops, loc, symbol_table, code);
 
-  member_exprt class_identifier(
-    checked_dereference(ops[1], ops[1].type().subtype()),
-    "@class_identifier",
-    string_typet());
+  code_ifthenelset code;
+  code.cond() = [&] {
+    const member_exprt class_identifier(
+      checked_dereference(ops[1], ops[1].type().subtype()),
+      "@class_identifier",
+      string_typet());
+    return equal_exprt(
+      class_identifier,
+      constant_exprt("java::java.lang.String", string_typet()));
+  }();
 
-  // Check the object argument is a String.
-  equal_exprt arg_is_string(
-    class_identifier, constant_exprt("java::java.lang.String", string_typet()));
+  code.then_case() = [&] {
+    code_blockt instance_case;
+    // Check content equality
+    const symbolt string_equals_sym = get_fresh_aux_symbol(
+      return_type, "string_equals", "str_eq", loc, ID_java, symbol_table);
+    const symbol_exprt string_equals = string_equals_sym.symbol_expr();
+    instance_case.add(code_declt(string_equals), loc);
+    const exprt::operandst args =
+      process_equals_function_operands(ops, loc, symbol_table, instance_case);
+    const auto fun_app = make_function_application(
+      ID_cprover_string_equal_func, args, return_type, symbol_table);
+    instance_case.add(code_assignt(string_equals, fun_app), loc);
+    instance_case.add(code_returnt(string_equals), loc);
+    return instance_case;
+  }();
 
-  // Check content equality
-  const symbolt string_equals_sym = get_fresh_aux_symbol(
-    java_boolean_type(), "string_equals", "str_eq", loc, ID_java, symbol_table);
-  const symbol_exprt string_equals = string_equals_sym.symbol_expr();
-  code.add(code_declt(string_equals), loc);
-  code.add(
-    code_assignt(
-      string_equals,
-      make_function_application(
-        ID_cprover_string_equal_func, args, type.return_type(), symbol_table)),
-    loc);
-
-  code.add(
-    code_returnt(
-      if_exprt(
-        arg_is_string,
-        string_equals,
-        from_integer(false, java_boolean_type()))),
-    loc);
+  code.else_case() = code_returnt(from_integer(false, return_type));
   return code;
 }
 
@@ -993,7 +996,7 @@ codet java_string_library_preprocesst::make_float_to_string_code(
   // Getting the argument
   code_typet::parameterst params=type.parameters();
   PRECONDITION(params.size()==1);
-  exprt arg=symbol_exprt(params[0].get_identifier(), params[0].type());
+  const symbol_exprt arg(params[0].get_identifier(), params[0].type());
 
   // Holder for output code
   code_blockt code;
@@ -1137,7 +1140,7 @@ codet java_string_library_preprocesst::make_init_function_from_call(
 
   // The first parameter is the object to be initialized
   PRECONDITION(!params.empty());
-  exprt arg_this=symbol_exprt(params[0].get_identifier(), params[0].type());
+  const symbol_exprt arg_this(params[0].get_identifier(), params[0].type());
   if(ignore_first_arg)
     params.erase(params.begin());
 
@@ -1180,7 +1183,7 @@ codet java_string_library_preprocesst::
   code.add(
     make_assign_function_from_call(function_name, type, loc, symbol_table),
     loc);
-  exprt arg_this=symbol_exprt(params[0].get_identifier(), params[0].type());
+  const symbol_exprt arg_this(params[0].get_identifier(), params[0].type());
   code.add(code_returnt(arg_this), loc);
   return code;
 }
@@ -1525,7 +1528,7 @@ codet java_string_library_preprocesst::make_object_get_class_code(
   symbol_table_baset &symbol_table)
 {
   code_typet::parameterst params=type.parameters();
-  exprt this_obj=symbol_exprt(params[0].get_identifier(), params[0].type());
+  const symbol_exprt this_obj(params[0].get_identifier(), params[0].type());
 
   // Code to be returned
   code_blockt code;
@@ -1577,7 +1580,8 @@ codet java_string_library_preprocesst::make_object_get_class_code(
   fun_call.lhs()=class1;
   fun_call.arguments().push_back(string1);
   code_typet fun_type;
-  fun_type.return_type()=string1.type();
+  fun_type.parameters().push_back(code_typet::parametert(string_ptr_type));
+  fun_type.return_type()=class_type;
   fun_call.function().type()=fun_type;
   code.add(fun_call, loc);
 

@@ -46,11 +46,10 @@ src/cpp/ @kroening @tautschnig @peterschrammel
 
 # These files change frequently and changes are low-risk
 
+src/util/irep_ids.def @diffblue/cbmc-developers
+
 unit/ @diffblue/cbmc-developers
 regression/ @diffblue/cbmc-developers
-
-CMakeLists.txt @reuk @chrisr-diffblue
-cmake/ @reuk @chrisr-diffblue
 
 scripts/ @diffblue/devops @thk123 @forejtv @peterschrammel
 .travis.yml @diffblue/devops @thk123 @forejtv @peterschrammel

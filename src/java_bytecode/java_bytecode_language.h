@@ -37,7 +37,8 @@ Author: Daniel Kroening, kroening@kroening.com
   "(java-cp-include-files):"                                                   \
   "(lazy-methods)"                                                             \
   "(lazy-methods-extra-entry-point):"                                          \
-  "(java-load-class):"
+  "(java-load-class):"                                                         \
+  "(java-no-load-class):"
 
 #define JAVA_BYTECODE_LANGUAGE_OPTIONS_HELP /*NOLINT*/                                          \
   " --no-core-models                 don't load internally provided models for core classes in\n"/* NOLINT(*) */ \
@@ -52,6 +53,8 @@ Author: Daniel Kroening, kroening@kroening.com
   " --java-cp-include-files          regexp or JSON list of files to load (with '@' prefix)\n"   /* NOLINT(*) */ \
   " --lazy-methods                   only translate methods that appear to be reachable from\n"  /* NOLINT(*) */ \
   "                                  the --function entry point or main class\n"                 /* NOLINT(*) */ \
+  "                                  Note --show-symbol-table/goto-functions/properties output\n"/* NOLINT(*) */ \
+  "                                  will be restricted to loaded methods in this case\n"        /* NOLINT(*) */ \
   " --lazy-methods-extra-entry-point METHODNAME\n"                                               /* NOLINT(*) */ \
   "                                  treat METHODNAME as a possible program entry point for\n"   /* NOLINT(*) */ \
   "                                  the purpose of lazy method loading\n"                       /* NOLINT(*) */ \
@@ -63,7 +66,7 @@ enum lazy_methods_modet
 {
   LAZY_METHODS_MODE_EAGER,
   LAZY_METHODS_MODE_CONTEXT_INSENSITIVE,
-  LAZY_METHODS_MODE_CONTEXT_SENSITIVE
+  LAZY_METHODS_MODE_EXTERNAL_DRIVER
 };
 
 class java_bytecode_languaget:public languaget
@@ -172,9 +175,15 @@ protected:
 
 private:
   const std::unique_ptr<const select_pointer_typet> pointer_type_selector;
+
+  /// Maps synthetic method names on to the particular type of synthetic method
+  /// (static initializer, initializer wrapper, etc). For full documentation see
+  /// synthetic_method_map.h
   synthetic_methods_mapt synthetic_methods;
   stub_global_initializer_factoryt stub_global_initializer_factory;
   class_hierarchyt class_hierarchy;
+  // List of classes to never load
+  std::unordered_set<std::string> no_load_classes;
 };
 
 std::unique_ptr<languaget> new_java_bytecode_language();

@@ -216,7 +216,8 @@ bvt boolbvt::convert_bitvector(const exprt &expr)
     return convert_div(to_div_expr(expr));
   else if(expr.id()==ID_mod)
     return convert_mod(to_mod_expr(expr));
-  else if(expr.id()==ID_shl || expr.id()==ID_ashr || expr.id()==ID_lshr)
+  else if(expr.id()==ID_shl || expr.id()==ID_ashr || expr.id()==ID_lshr ||
+          expr.id()==ID_rol || expr.id()==ID_ror)
     return convert_shift(to_shift_expr(expr));
   else if(expr.id()==ID_floatbv_plus || expr.id()==ID_floatbv_minus ||
           expr.id()==ID_floatbv_mult || expr.id()==ID_floatbv_div ||
@@ -278,14 +279,10 @@ bvt boolbvt::convert_bitvector(const exprt &expr)
   else if(expr.id()==ID_array_of)
     return convert_array_of(to_array_of_expr(expr));
   else if(expr.id()==ID_let)
-  {
-    // const let_exprt &let_expr=to_let_expr(expr);
-    throw "let is todo";
-  }
+    return convert_let(to_let_expr(expr));
   else if(expr.id()==ID_function_application)
-  {
-    return convert_function_application(to_function_application_expr(expr));
-  }
+    return convert_function_application(
+      to_function_application_expr(expr));
   else if(expr.id()==ID_reduction_or  || expr.id()==ID_reduction_and  ||
           expr.id()==ID_reduction_nor || expr.id()==ID_reduction_nand ||
           expr.id()==ID_reduction_xor || expr.id()==ID_reduction_xnor)
@@ -463,6 +460,15 @@ literalt boolbvt::convert_rest(const exprt &expr)
     return convert_quantifier(expr);
   else if(expr.id()==ID_exists)
     return convert_quantifier(expr);
+  else if(expr.id()==ID_let)
+  {
+    bvt bv=convert_let(to_let_expr(expr));
+
+    DATA_INVARIANT(bv.size()==1,
+      "convert_let must return 1-bit vector for boolean let");
+
+    return bv[0];
+  }
   else if(expr.id()==ID_index)
   {
     bvt bv=convert_index(to_index_expr(expr));

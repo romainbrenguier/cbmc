@@ -25,7 +25,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 class constant_exprt;
 
-/*! \defgroup gr_std_types Conversion to specific types
+/*!
  *  Conversion to subclasses of @ref typet
 */
 
@@ -889,6 +889,16 @@ public:
     return set(ID_access, access);
   }
 
+  bool get_is_constructor() const
+  {
+    return get_bool(ID_constructor);
+  }
+
+  void set_is_constructor()
+  {
+    set(ID_constructor, true);
+  }
+
   // this produces the list of parameter identifiers
   std::vector<irep_idt> parameter_identifiers() const
   {
@@ -1741,5 +1751,32 @@ public:
     return subtypes()[1];
   }
 };
+
+/*! \brief Cast a generic typet to a \ref mathematical_function_typet
+ *
+ * This is an unchecked conversion. \a type must be known to be \ref
+ * mathematical_function_typet.
+ *
+ * \param type Source type
+ * \return Object of type \ref mathematical_function_typet
+ *
+ * \ingroup gr_std_types
+*/
+inline const mathematical_function_typet &
+  to_mathematical_function_type(const typet &type)
+{
+  PRECONDITION(type.id()==ID_mathematical_function);
+  return static_cast<const mathematical_function_typet &>(type);
+}
+
+/*! \copydoc to_mathematical_function_type(const typet &)
+ * \ingroup gr_std_types
+*/
+inline mathematical_function_typet &
+  to_mathematical_function_type(typet &type)
+{
+  PRECONDITION(type.id()==ID_mathematical_function);
+  return static_cast<mathematical_function_typet &>(type);
+}
 
 #endif // CPROVER_UTIL_STD_TYPES_H

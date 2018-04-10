@@ -407,8 +407,7 @@ bvt bv_pointerst::convert_pointer_type(const exprt &expr)
       return bv;
     }
 
-    exprt neg_op1=unary_exprt(
-      ID_unary_minus, expr.op1(), expr.op1().type());
+    const unary_minus_exprt neg_op1(expr.op1());
 
     bv=convert_bv(expr.op0());
 
@@ -441,6 +440,12 @@ bvt bv_pointerst::convert_pointer_type(const exprt &expr)
           expr.id()==ID_byte_extract_big_endian)
   {
     return SUB::convert_byte_extract(to_byte_extract_expr(expr));
+  }
+  else if(
+    expr.id() == ID_byte_update_little_endian ||
+    expr.id() == ID_byte_update_big_endian)
+  {
+    throw "byte-wise updates of pointers are unsupported";
   }
 
   return conversion_failed(expr);

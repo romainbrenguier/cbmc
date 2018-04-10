@@ -2,7 +2,7 @@
 
  Module: Unit tests for parsing generic classes
 
- Author: DiffBlue Limited. All rights reserved.
+ Author: Diffblue Ltd.
 
 \*******************************************************************/
 
@@ -26,7 +26,7 @@ SCENARIO(
     REQUIRE(new_symbol_table.has_symbol(class_prefix));
     const symbolt &class_symbol = new_symbol_table.lookup_ref(class_prefix);
     const java_generic_class_typet &java_generic_class =
-      require_type::require_java_generic_class(
+      require_type::require_complete_java_generic_class(
         class_symbol.type, {class_prefix + "::T"});
 
     THEN(

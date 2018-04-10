@@ -944,6 +944,26 @@ std::string expr2ct::convert_with(
   return dest;
 }
 
+std::string expr2ct::convert_let(
+  const let_exprt &src,
+  unsigned precedence)
+{
+  if(src.operands().size()<3)
+    return convert_norep(src, precedence);
+
+  unsigned p0;
+  std::string op0=convert_with_precedence(src.op0(), p0);
+
+  std::string dest="LET ";
+  dest+=convert(src.symbol());
+  dest+='=';
+  dest+=convert(src.value());
+  dest+=" IN ";
+  dest+=convert(src.where());
+
+  return dest;
+}
+
 std::string expr2ct::convert_update(
   const exprt &src,
   unsigned precedence)
@@ -1890,8 +1910,7 @@ std::string expr2ct::convert_constant(
       if(src.find(ID_C_c_sizeof_type).is_not_nil() &&
          sizeof_nesting==0)
       {
-        exprt sizeof_expr=nil_exprt();
-        sizeof_expr=build_sizeof_expr(to_constant_expr(src), ns);
+        const exprt sizeof_expr = build_sizeof_expr(to_constant_expr(src), ns);
 
         if(sizeof_expr.is_not_nil())
         {
@@ -3894,7 +3913,7 @@ std::string expr2ct::convert_with_precedence(
   else if(src.id()==ID_array)
     return convert_array(src, precedence);
 
-  else if(src.id()=="array-list")
+  else if(src.id()==ID_array_list)
     return convert_array_list(src, precedence);
 
   else if(src.id()==ID_typecast)
@@ -3936,6 +3955,9 @@ std::string expr2ct::convert_with_precedence(
 
   else if(src.id()==ID_sizeof)
     return convert_sizeof(src, precedence);
+
+  else if(src.id()==ID_let)
+    return convert_let(to_let_expr(src), precedence=16);
 
   else if(src.id()==ID_type)
     return convert(src.type());

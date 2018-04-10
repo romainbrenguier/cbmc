@@ -161,10 +161,6 @@ protected:
   void pop_residue(std::size_t n);
   void push(const exprt::operandst &o);
 
-  /// Determines whether the `method` is a constructor or a static initializer,
-  /// by checking whether its name equals either <init> or <clinit>
-  bool is_constructor(const class_typet::methodt &method);
-
   /// Returns true iff the slot index of the local variable of a method (coming
   /// from the LVT) is a parameter of that method. Assumes that
   /// `slots_for_parameters` is initialized upon call.
@@ -239,18 +235,21 @@ protected:
     const address_mapt &amap,
     bool allow_merge=true);
 
+  optionalt<symbolt> get_lambda_method_symbol(
+    const java_class_typet::java_lambda_method_handlest &lambda_method_handles,
+    const size_t index);
+
   // conversion
   void convert(const symbolt &class_symbol, const methodt &);
 
   codet convert_instructions(
     const methodt &,
     const code_typet &,
-    const irep_idt &);
+    const irep_idt &,
+    const java_class_typet::java_lambda_method_handlest &);
 
   const bytecode_infot &get_bytecode_info(const irep_idt &statement);
 
-  bool class_needs_clinit(const irep_idt &classname);
-  exprt get_or_create_clinit_wrapper(const irep_idt &classname);
   codet get_clinit_call(const irep_idt &classname);
 
   bool is_method_inherited(

@@ -19,9 +19,13 @@ SRC += unit_tests.cpp \
        goto-programs/goto_trace_output.cpp \
        goto-programs/class_hierarchy_output.cpp \
        goto-programs/class_hierarchy_graph.cpp \
+       goto-programs/remove_virtual_functions_without_fallback.cpp \
        java_bytecode/java_bytecode_convert_class/convert_abstract_class.cpp \
+       java_bytecode/java_bytecode_convert_method/convert_invoke_dynamic.cpp \
        java_bytecode/java_bytecode_parse_generics/parse_generic_class.cpp \
        java_bytecode/java_object_factory/gen_nondet_string_init.cpp \
+       java_bytecode/java_bytecode_parse_lambdas/java_bytecode_parse_lambda_method_table.cpp \
+       java_bytecode/java_bytecode_parse_lambdas/java_bytecode_convert_class_lambda_method_handles.cpp \
        miniBDD_new.cpp \
        java_bytecode/java_string_library_preprocess/convert_exprt_to_string_exprt.cpp \
        java_bytecode/java_utils_test.cpp \
@@ -33,6 +37,7 @@ SRC += unit_tests.cpp \
        solvers/refinement/string_constraint_generator_valueof/is_digit_with_radix.cpp \
        solvers/refinement/string_constraint_instantiation/instantiate_not_contains.cpp \
        solvers/refinement/string_refinement/concretize_array.cpp \
+       solvers/refinement/string_refinement/dependency_graph.cpp \
        solvers/refinement/string_refinement/has_subtype.cpp \
        solvers/refinement/string_refinement/substitute_array_list.cpp \
        solvers/refinement/string_refinement/string_symbol_resolution.cpp \
@@ -40,6 +45,8 @@ SRC += unit_tests.cpp \
        solvers/refinement/string_refinement/union_find_replace.cpp \
        util/expr_cast/expr_cast.cpp \
        util/expr_iterator.cpp \
+       util/irep.cpp \
+       util/irep_sharing.cpp \
        util/message.cpp \
        util/parameter_indices.cpp \
        util/simplify_expr.cpp \

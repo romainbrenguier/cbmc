@@ -6,13 +6,12 @@ Author: Daniel Kroening, kroening@kroening.com
 
 \*******************************************************************/
 
-
 #ifndef CPROVER_UTIL_EXPR_H
 #define CPROVER_UTIL_EXPR_H
 
-#include <functional>
 #include "type.h"
 
+#include <functional>
 #include <list>
 
 #define forall_operands(it, expr) \
@@ -113,11 +112,6 @@ public:
   void make_true();
   void make_false();
   void make_bool(bool value);
-  void negate();
-
-  bool sum(const exprt &expr);
-  bool mul(const exprt &expr);
-  bool subtract(const exprt &expr);
 
   bool is_constant() const;
   bool is_true() const;
