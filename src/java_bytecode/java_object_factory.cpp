@@ -447,6 +447,7 @@ void java_object_factoryt::gen_pointer_target_init(
       "",      // class_identifier
       false,   // skip_classid
       alloc_type,
+      target_type,
       // {}, // override type immaterial
       true,    // allow_null always enabled in sub-objects
       depth+1,
@@ -1065,12 +1066,17 @@ void java_object_factoryt::gen_nondet_struct_init(
   if(!is_sub)
     class_identifier=struct_tag;
 
+  auto copy = expr;
+  if(copy.id() == ID_dereference && copy.op0().id() == ID_typecast
+     && copy.op0().op0().id() == ID_address_of)
+    copy = copy.op0().op0().op0();
+
   for(const auto &component : components)
   {
     const typet &component_type=component.type();
     irep_idt name=component.get_name();
 
-    member_exprt me(expr, name, component_type);
+    member_exprt me(copy, name, component_type);
 
     if(name=="@class_identifier")
     {
@@ -1136,7 +1142,7 @@ void java_object_factoryt::gen_nondet_struct_init(
     code_function_callt fun_call;
     fun_call.function() = func->symbol_expr();
     if(type.has_this())
-      fun_call.arguments().push_back(address_of_exprt(expr));
+      fun_call.arguments().push_back(address_of_exprt(copy));
 
     assignments.add(fun_call);
   }
