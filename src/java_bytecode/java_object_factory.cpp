@@ -127,8 +127,7 @@ public:
     irep_idt class_identifier,
     bool skip_classid,
     allocation_typet alloc_type,
-    bool override_,
-    const typet &override_type,
+    const optionalt<typet> &override_type,
     bool allow_null,
     size_t depth,
     update_in_placet);
@@ -448,8 +447,7 @@ void java_object_factoryt::gen_pointer_target_init(
       "",      // class_identifier
       false,   // skip_classid
       alloc_type,
-      false,   // override
-      typet(), // override type immaterial
+      // {}, // override type immaterial
       true,    // allow_null always enabled in sub-objects
       depth+1,
       update_in_place);
@@ -1008,8 +1006,7 @@ symbol_exprt java_object_factoryt::gen_nondet_subtype_pointer_init(
     "",      // class_identifier
     false,   // skip_classid
     alloc_type,
-    false,   // override
-    typet(), // override_type
+    {},   // override
     true,    // allow_null
     depth,
     update_in_placet::NO_UPDATE_IN_PLACE);
@@ -1117,8 +1114,7 @@ void java_object_factoryt::gen_nondet_struct_init(
         class_identifier,
         false,   // skip_classid
         alloc_type,
-        false,   // override
-        typet(), // override_type
+        {},   // override
         true,    // allow_null always true for sub-objects
         depth,
         substruct_in_place);
@@ -1189,15 +1185,13 @@ void java_object_factoryt::gen_nondet_init(
   irep_idt class_identifier,
   bool skip_classid,
   allocation_typet alloc_type,
-  bool override_,
-  const typet &override_type,
+  const optionalt<typet> &override_type,
   bool allow_null,
   size_t depth,
   update_in_placet update_in_place)
 {
-  const typet &type=
-    override_ ? ns.follow(override_type) : ns.follow(expr.type());
-
+  const typet &type = override_type ? ns.follow(*override_type)
+                                    : ns.follow(expr.type());
 
   if(type.id()==ID_pointer)
   {
@@ -1234,7 +1228,7 @@ void java_object_factoryt::gen_nondet_init(
         generic_parameter_specialization_map);
     if(is_sub)
     {
-      const typet &symbol = override_ ? override_type : expr.type();
+      const typet &symbol = override_type ? *override_type : expr.type();
       PRECONDITION(symbol.id() == ID_symbol);
       generic_parameter_specialization_map_keys.insert_pairs_for_symbol(
         to_symbol_type(symbol), struct_type);
@@ -1302,8 +1296,7 @@ void java_object_factoryt::allocate_nondet_length_array(
     irep_idt(),
     false,   // skip_classid
     allocation_typet::LOCAL, // immaterial, type is primitive
-    false,   // override
-    typet(), // override type is immaterial
+    {},   // override
     false,   // allow_null
     0,       // depth is immaterial
     update_in_placet::NO_UPDATE_IN_PLACE);
@@ -1454,7 +1447,6 @@ void java_object_factoryt::gen_nondet_array_init(
     false, // skip_classid
     // These are variable in number, so use dynamic allocator:
     allocation_typet::DYNAMIC,
-    true,  // override
     element_type,
     true,  // allow_null
     depth,
@@ -1546,8 +1538,7 @@ exprt object_factory(
     "",      // class_identifier
     false,   // skip_classid
     alloc_type,
-    false,   // override
-    typet(), // override_type is immaterial
+    {},
     allow_null,
     0,       // initial depth
     update_in_placet::NO_UPDATE_IN_PLACE);
@@ -1628,8 +1619,7 @@ void gen_nondet_init(
     "",      // class_identifier
     skip_classid,
     alloc_type,
-    false,   // override
-    typet(), // override_type is immaterial
+    {},   // override
     allow_null,
     0,       // initial depth
     update_in_place);
