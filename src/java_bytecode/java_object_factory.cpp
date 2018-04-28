@@ -719,6 +719,14 @@ static bool add_nondet_string_pointer_initialization(
   return false;
 }
 
+static optionalt<irep_idt> get_tag(const namespacet &ns, const typet &type)
+{
+  const auto &resolved_type = ns.follow(type);
+  if(const auto struct_type = type_try_dynamic_cast<struct_typet>(resolved_type))
+    return irep_idt("java::" + id2string(struct_type->get_tag()));
+  return {};
+}
+
 /// Initializes a pointer \p expr of type \p pointer_type to a primitive-typed
 /// value or an object tree.  It allocates child objects as necessary and
 /// nondet-initializes their members, or if MUST_UPDATE_IN_PLACE is set,
@@ -868,6 +876,18 @@ void java_object_factoryt::gen_nondet_pointer_init(
       loc,
       object_factory_parameters.function_id,
       assignments);
+  }
+  else if(expr.type().id()==ID_pointer
+          && get_tag(ns, to_pointer_type(expr.type()).subtype())
+             == irep_idt("java::java.lang.Object"))
+  {
+    gen_pointer_target_init(
+      non_null_inst,
+      expr,
+      symbol_typet("java::java.lang.Integer"),
+      alloc_type,
+      depth,
+      update_in_placet::NO_UPDATE_IN_PLACE);
   }
   else
   {
