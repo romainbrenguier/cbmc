@@ -39,6 +39,10 @@ struct object_factory_parameterst final
 
   /// Function id, used as a prefix for identifiers of temporaries
   irep_idt function_id;
+
+
+  /// Name of the method to call after initialization of input objects
+  std::string cprover_nondet_initialize = "cproverNondetInitialize";
 };
 
 #endif

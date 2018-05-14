@@ -40,6 +40,10 @@ bool ci_lazy_methods_neededt::add_needed_class(
     class_name_string + ".cproverNondetInitialize:()V");
   if(symbol_table.symbols.count(cprover_validate))
     add_needed_method(cprover_validate);
+  const irep_idt cprover_default(
+    class_name_string + ".cproverDefaultInputs:()V");
+  if(symbol_table.symbols.count(cprover_default))
+    add_needed_method(cprover_default);
 
   return true;
 }

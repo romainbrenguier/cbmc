@@ -489,6 +489,34 @@ public:
   }
 };
 
+/// If <class_identifier>.cproverNondetInitialize() can be found in the
+/// symbol table, we add a call:
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// expr.cproverNondetInitialize();
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+static void add_cprover_nondet_initialize_call(
+  code_blockt &assignments,
+  const exprt &expr,
+  const irep_idt &struct_tag,
+  const symbol_tablet &symbol_table,
+  const std::string &cprover_nondet_initialize)
+{
+  const irep_idt init_method_name =
+    "java::" + id2string(struct_tag) + '.' +
+    cprover_nondet_initialize + ":()V";
+
+  if(const auto func = symbol_table.lookup(init_method_name))
+  {
+    const code_typet &type = to_code_type(func->type);
+    code_function_callt fun_call;
+    fun_call.function() = func->symbol_expr();
+    if(type.has_this())
+      fun_call.arguments().push_back(address_of_exprt(expr));
+
+    assignments.add(fun_call);
+  }
+}
+
 /// Get max value for an integer type
 /// \param type:
 ///   Type to find maximum value for
@@ -539,6 +567,7 @@ static codet make_allocate_code(const symbol_exprt &lhs, const exprt &size)
 ///   *string_data_pointer, *string_data_pointer);
 /// cprover_associate_length_to_array_func(
 ///   *string_data_pointer, tmp_object_factory);
+/// nondet_initialize_method()
 /// arg = { .@java.lang.Object={
 ///   .@class_identifier=\"java::java.lang.String\", .@lock=false },
 ///   .length=tmp_object_factory,
@@ -552,7 +581,8 @@ codet initialize_nondet_string_struct(
   const source_locationt &loc,
   const irep_idt &function_id,
   symbol_table_baset &symbol_table,
-  bool printable)
+  bool printable,
+  const std::string nondet_initialize_method)
 {
   PRECONDITION(
     java_string_library_preprocesst::implements_java_char_sequence(obj.type()));
@@ -659,6 +689,9 @@ codet initialize_nondet_string_struct(
 
   // tmp_object = struct_expr;
   code.add(code_assignt(obj, struct_expr));
+  // cproverNondetInitialize(struct_expr)
+  add_cprover_nondet_initialize_call(
+    code, obj, struct_type.get_tag(), symbol_table, nondet_initialize_method);
   return code;
 }
 
@@ -680,7 +713,8 @@ static bool add_nondet_string_pointer_initialization(
   symbol_table_baset &symbol_table,
   const source_locationt &loc,
   const irep_idt &function_id,
-  code_blockt &code)
+  code_blockt &code,
+  const std::string &nondet_initialize_method)
 {
   const namespacet ns(symbol_table);
   const dereference_exprt obj(expr, expr.type().subtype());
@@ -700,7 +734,8 @@ static bool add_nondet_string_pointer_initialization(
       loc,
       function_id,
       symbol_table,
-      printable));
+      printable,
+      nondet_initialize_method));
   return false;
 }
 
@@ -858,7 +893,8 @@ void java_object_factoryt::gen_nondet_pointer_init(
         symbol_table,
         loc,
         object_factory_parameters.function_id,
-        assignments);
+        assignments,
+        object_factory_parameters.cprover_nondet_initialize);
   }
 
   if(!string_init_succeeded)
@@ -1110,25 +1146,12 @@ void java_object_factoryt::gen_nondet_struct_init(
     }
   }
 
-  // If <class_identifier>.cproverNondetInitialize() can be found in the
-  // symbol table, we add a call:
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // expr.cproverNondetInitialize();
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  const irep_idt init_method_name =
-    "java::" + id2string(struct_tag) + ".cproverNondetInitialize:()V";
-
-  if(const auto func = symbol_table.lookup(init_method_name))
-  {
-    const code_typet &type = to_code_type(func->type);
-    code_function_callt fun_call;
-    fun_call.function() = func->symbol_expr();
-    if(type.has_this())
-      fun_call.arguments().push_back(address_of_exprt(expr));
-
-    assignments.add(fun_call);
-  }
+  add_cprover_nondet_initialize_call(
+    assignments,
+    expr,
+    struct_tag,
+    symbol_table,
+    object_factory_parameters.cprover_nondet_initialize);
 }
 
 /// Initializes a primitive-typed or referece-typed object tree rooted at
