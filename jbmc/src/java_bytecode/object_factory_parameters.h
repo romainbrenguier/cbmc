@@ -42,7 +42,7 @@ struct object_factory_parameterst final
 
 
   /// Name of the method to call after initialization of input objects
-  std::string cprover_nondet_initialize = "cproverNondetInitialize";
+  std::vector<std::string> cprover_nondet_initialize;
 };
 
 #endif

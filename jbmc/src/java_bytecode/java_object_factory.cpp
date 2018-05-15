@@ -499,21 +499,22 @@ static void add_cprover_nondet_initialize_call(
   const exprt &expr,
   const irep_idt &struct_tag,
   const symbol_tablet &symbol_table,
-  const std::string &cprover_nondet_initialize)
+  const std::vector<std::string> &cprover_nondet_initialize)
 {
-  const irep_idt init_method_name =
-    "java::" + id2string(struct_tag) + '.' +
-    cprover_nondet_initialize + ":()V";
-
-  if(const auto func = symbol_table.lookup(init_method_name))
+  for(const auto &name : cprover_nondet_initialize)
   {
-    const code_typet &type = to_code_type(func->type);
-    code_function_callt fun_call;
-    fun_call.function() = func->symbol_expr();
-    if(type.has_this())
-      fun_call.arguments().push_back(address_of_exprt(expr));
+    const irep_idt init_method_name =
+      "java::" + id2string(struct_tag) + '.' + name + ":()V";
+    if(const auto func = symbol_table.lookup(init_method_name))
+    {
+      const code_typet &type = to_code_type(func->type);
+      code_function_callt fun_call;
+      fun_call.function() = func->symbol_expr();
+      if(type.has_this())
+        fun_call.arguments().push_back(address_of_exprt(expr));
 
-    assignments.add(fun_call);
+      assignments.add(fun_call);
+    }
   }
 }
 
@@ -582,7 +583,7 @@ codet initialize_nondet_string_struct(
   const irep_idt &function_id,
   symbol_table_baset &symbol_table,
   bool printable,
-  const std::string nondet_initialize_method)
+  const std::vector<std::string> nondet_initialize_method)
 {
   PRECONDITION(
     java_string_library_preprocesst::implements_java_char_sequence(obj.type()));
@@ -714,7 +715,7 @@ static bool add_nondet_string_pointer_initialization(
   const source_locationt &loc,
   const irep_idt &function_id,
   code_blockt &code,
-  const std::string &nondet_initialize_method)
+  const std::vector<std::string> &nondet_initialize_method)
 {
   const namespacet ns(symbol_table);
   const dereference_exprt obj(expr, expr.type().subtype());
