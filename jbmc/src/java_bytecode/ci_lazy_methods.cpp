@@ -16,6 +16,7 @@
 #include <util/suffix.h>
 
 #include <goto-programs/resolve_inherited_component.h>
+#include <iostream>
 
 /// Constructor for lazy-method loading
 /// \param symbol_table: the symbol table to use
@@ -210,12 +211,34 @@ bool ci_lazy_methodst::operator()(
     }
   }
 
+  std::multimap<std::string, irep_idt> class_constructors;
+  for(const auto &sym : symbol_table)
+  {
+    std::cout << "SYMBOL " << sym.first << std::endl;
+    const auto constructor_name = id2string(sym.first);
+    const auto class_name_size = constructor_name.find(".<init>");
+    if(class_name_size != std::string::npos)
+      class_constructors.emplace(
+        constructor_name.substr(0, class_name_size), sym.first);
+  }
+
+
   for(const auto &class_name : instantiated_classes)
   {
     const irep_idt cprover_validate =
       id2string(class_name) + ".cproverNondetInitialize:()V";
     if(symbol_table.symbols.count(cprover_validate))
       methods_already_populated.insert(cprover_validate);
+    const auto constructor_range =
+      class_constructors.equal_range(id2string(class_name));
+    if(constructor_range.first == constructor_range.second)
+      std::cout << "NO CONSTRUCTOR for " << class_name << std::endl;
+    for(auto it = constructor_range.first; it != constructor_range.second; ++it)
+    {
+      std::cout << "Constructor " << it->second << std::endl;
+      if(symbol_table.symbols.count(it->second))
+        methods_already_populated.insert(it->second);
+    }
   }
 
   // Remove symbols for methods that were declared but never used:
