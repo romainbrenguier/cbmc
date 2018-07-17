@@ -2833,15 +2833,14 @@ std::string expr2ct::convert_code_block(
   std::string dest=indent_str(indent);
   dest+="{\n";
 
-  forall_operands(it, src)
-  {
-    if(it->get(ID_statement)==ID_label)
-      dest+=convert_code(to_code(*it), indent);
+  for_each(src, [&](const codet &code){
+    if(code.get(ID_statement)==ID_label)
+      dest+=convert_code(code, indent);
     else
-      dest+=convert_code(to_code(*it), indent+2);
+      dest+=convert_code(code, indent+2);
 
     dest+="\n";
-  }
+  });
 
   dest+=indent_str(indent);
   dest+='}';

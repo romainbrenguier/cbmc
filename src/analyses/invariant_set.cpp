@@ -1073,8 +1073,7 @@ void invariant_sett::apply_code(const codet &code)
 
   if(statement==ID_block)
   {
-    forall_operands(it, code)
-      apply_code(to_code(*it));
+    for_each(to_code_block(code), [&](const codet &c){ apply_code(c); });
   }
   else if(statement==ID_assign ||
           statement==ID_init)
