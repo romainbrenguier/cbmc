@@ -132,7 +132,7 @@ private:
     ci_lazy_methods_neededt &needed_lazy_methods);
 
   void gather_virtual_callsites(
-    const exprt &e,
+    const codet &c,
     std::unordered_set<exprt, irep_hash> &result);
 
   void get_virtual_method_targets(

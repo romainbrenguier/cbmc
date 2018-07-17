@@ -306,7 +306,8 @@ ci_lazy_methodst::convert_and_analyze_method(
     return result;
 
   const exprt &method_body = symbol_table.lookup_ref(method_name).value;
-  gather_virtual_callsites(method_body, virtual_function_calls);
+  if(method_body.id() == ID_code)
+    gather_virtual_callsites(to_code(method_body), virtual_function_calls);
 
   if(!class_initializer_already_seen && references_class_model(method_body))
   {
@@ -519,25 +520,22 @@ void ci_lazy_methodst::initialize_instantiated_classes_from_pointer(
 }
 
 /// Get places where virtual functions are called.
-/// \param e: expression tree to search
+/// \param c: code tree to search
 /// \param [out] result: filled with pointers to each function call within
 ///   e that calls a virtual function.
 void ci_lazy_methodst::gather_virtual_callsites(
-  const exprt &e,
+  const codet &c,
   std::unordered_set<exprt, irep_hash> &result)
 {
-  if(e.id()!=ID_code)
-    return;
-  const codet &c=to_code(e);
-  if(c.get_statement()==ID_function_call &&
-     to_code_function_call(c).function().id()==ID_virtual_function)
+  if(c.get_statement() == ID_function_call &&
+     to_code_function_call(c).function().id() == ID_virtual_function)
   {
     result.insert(to_code_function_call(c).function());
   }
   else
   {
-    for(const exprt &op : e.operands())
-      gather_virtual_callsites(op, result);
+    for(const exprt &op : c.operands())
+      gather_virtual_callsites(to_code(op), result);
   }
 }
 
