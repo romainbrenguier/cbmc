@@ -153,6 +153,10 @@ public:
   }
 };
 
+void for_each(
+  const code_blockt &block,
+  const std::function<void(const codet&)> &proc);
+
 template<> inline bool can_cast_expr<code_blockt>(const exprt &base)
 {
   return detail::can_cast_code_impl(base, ID_block);

@@ -119,3 +119,11 @@ code_blockt create_fatal_assertion(
   result.add_source_location() = loc;
   return result;
 }
+
+void for_each(
+  const code_blockt &block,
+  const std::function<void(const codet&)> &proc)
+{
+  for(const auto &c : block.operands())
+    proc(to_code(c));
+}
