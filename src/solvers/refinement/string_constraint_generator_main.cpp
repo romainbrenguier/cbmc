@@ -414,9 +414,7 @@ exprt string_constraint_generatort::add_axioms_for_function_application(
   const irep_idt &id = get_function_name(expr);
   exprt res;
 
-  if(id==ID_cprover_char_literal_func)
-    res=add_axioms_for_char_literal(expr);
-  else if(id==ID_cprover_string_length_func)
+  if(id==ID_cprover_string_length_func)
     res=add_axioms_for_length(expr);
   else if(id==ID_cprover_string_equal_func)
     res=add_axioms_for_equals(expr);
@@ -569,37 +567,6 @@ exprt string_constraint_generatort::add_axioms_for_length(
 exprt string_constraint_generatort::axiom_for_is_positive_index(const exprt &x)
 {
   return binary_relation_exprt(x, ID_ge, from_integer(0, x.type()));
-}
-
-/// add axioms stating that the returned value is equal to the argument
-/// \param f: function application with one character argument
-/// \return a new character expression
-exprt string_constraint_generatort::add_axioms_for_char_literal(
-  const function_application_exprt &f)
-{
-  const function_application_exprt::argumentst &args=f.arguments();
-  PRECONDITION(args.size()==1); // there should be exactly 1 arg to char literal
-
-  const exprt &arg=args[0];
-  // for C programs argument to char literal should be one string constant
-  // of size 1.
-  if(arg.operands().size()==1 &&
-     arg.op0().operands().size()==1 &&
-     arg.op0().op0().operands().size()==2 &&
-     arg.op0().op0().op0().id()==ID_string_constant)
-  {
-    const string_constantt s=to_string_constant(arg.op0().op0().op0());
-    irep_idt sval=s.get_value();
-    CHECK_RETURN(sval.size()==1);
-    return from_integer(unsigned(sval[0]), arg.type());
-  }
-  else
-  {
-    // convert_char_literal unimplemented
-    UNIMPLEMENTED;
-    // For the compiler
-    throw 0;
-  }
 }
 
 /// Character at a given position

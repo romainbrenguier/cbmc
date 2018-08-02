@@ -1981,7 +1981,7 @@ void java_string_library_preprocesst::initialize_conversion_table()
    "Ljava/lang/String;"]=
     ID_cprover_string_substring_func;
 
-  // StringBuilder function should disapear as we only want to
+  // StringBuilder function should disappear as we only want to
   // preprocess Strings
   cprover_equivalent_to_java_assign_and_return_function
   ["java::org.cprover.CProverString.append:(Ljava/lang/StringBuilder;Ljava/"
