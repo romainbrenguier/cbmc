@@ -253,7 +253,8 @@ public:
 
   string_constraintst constraints(class symbol_generatort &fresh_symbol) const;
 
-  /// \copydoc constraints(class symbol_generatort&)
+  // NOLINTNEXTLINE(whitespace/line_length)
+  /// \copydoc string_to_upper_case_builtin_functiont::constraints(symbol_generatort&)
   string_constraintst
   constraints(string_constraint_generatort &generator) const override
   {
