@@ -2019,12 +2019,6 @@ void java_string_library_preprocesst::initialize_conversion_table()
   cprover_equivalent_to_java_function
     ["java::java.lang.String.contains:(Ljava/lang/CharSequence;)Z"]=
     ID_cprover_string_contains_func;
-  cprover_equivalent_to_java_string_returning_function
-    ["java::java.lang.String.copyValueOf:([CII)Ljava/lang/String;"]=
-    ID_cprover_string_copy_func;
-  cprover_equivalent_to_java_string_returning_function
-    ["java::java.lang.String.copyValueOf:([C)Ljava/lang/String;"]=
-    ID_cprover_string_copy_func;
   cprover_equivalent_to_java_function
     ["java::java.lang.String.endsWith:(Ljava/lang/String;)Z"]=
       ID_cprover_string_endswith_func;
