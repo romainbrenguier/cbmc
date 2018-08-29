@@ -287,6 +287,99 @@ exprt string_set_char_builtin_functiont::length_constraint() const
     equal_exprt(return_code, return_value));
 }
 
+/// Constructor from arguments of a function application.
+/// The arguments in `fun_args` should be in order:
+/// an integer `result.length`, a character pointer `&result[0]`,
+/// a string `arg1` of type refined_string_typet, an integer`start` and
+/// optionally a integer `end`.
+string_substring_builtin_functiont::string_substring_builtin_functiont(
+  const exprt &return_code,
+  const std::vector<exprt> &fun_args,
+  array_poolt &array_pool)
+  : string_transformation_builtin_functiont(return_code, fun_args, array_pool)
+{
+  PRECONDITION(fun_args.size() == 4 || fun_args.size() == 5);
+  start = fun_args[3];
+  end = fun_args.size() == 5 ? fun_args[4] : input.length();
+}
+
+exprt string_substring_builtin_functiont::length_constraint() const
+{
+  const exprt zero = from_integer(0, input.length().type());
+  return equal_exprt(
+    result.length(),
+    maximum(zero, minus_exprt(end, maximum(zero, start))));
+}
+
+optionalt<exprt> string_substring_builtin_functiont::eval(
+  const std::function<exprt(const exprt &)> &get_value) const
+{
+  const auto input_opt = eval_string(input, get_value);
+  const auto start_opt = numeric_cast<std::size_t >(get_value(start));
+  const auto end_opt = numeric_cast<std::size_t >(get_value(end));
+  if(!input_opt || !start_opt || !end_opt)
+    return {};
+  const std::size_t start_val = *start_opt < 0 ? 0 : *start_opt;
+  const std::size_t end_val = *end_opt < start_val
+    ? start_val
+    : *end_opt > input_opt->size() ? input_opt->size() : *end_opt;
+  const auto length =
+    from_integer(end_val - start_val, result.length().type());
+  std::vector<mp_integer> result_vector;
+  result_vector.insert(
+    result_vector.begin(),
+    input_opt->begin() + start_val,
+    input_opt->end() + end_val);
+  const array_typet type(result.type().subtype(), length);
+  return make_string(result_vector, type);
+}
+
+/// Add axioms ensuring that `res` corresponds to the substring of `str`
+/// between indexes `start' = max(start, 0)` and
+/// `end' = max(min(end, |str|), start')`.
+///
+/// These axioms are:
+///   1. \f$ |{\tt res}| = end' - start' \f$
+///   2. \f$ \forall i<|{\tt res}|.\ {\tt res}[i]={\tt str}[{\tt start'}+i] \f$
+/// \todo Should return code different from 0 if `start' != start` or
+///       `end' != end`
+/// \param fresh_symbol: generator of fresh symbols
+/// \param res: array of characters expression
+/// \param str: array of characters expression
+/// \param start: integer expression
+/// \param end: integer expression
+/// \return integer expression equal to zero
+string_constraintst string_substring_builtin_functiont::constraints(
+  string_constraint_generatort &generator) const
+{
+  const typet &index_type = input.length().type();
+  PRECONDITION(start.type()==index_type);
+  PRECONDITION(end.type()==index_type);
+
+  string_constraintst constraints;
+  const exprt start1 = maximum(start, from_integer(0, start.type()));
+  const exprt end1 = maximum(minimum(end, input.length()), start1);
+
+  // Axiom 1.
+  constraints.existential.push_back(length_constraint());
+
+  // Axiom 2.
+  constraints.universal.push_back([&] {
+    const symbol_exprt idx =
+      generator.fresh_symbol("QA_index_substring", index_type);
+    return string_constraintt(
+      idx,
+      zero_if_negative(result.length()),
+      equal_exprt(result[idx], input[plus_exprt(start1, idx)]));
+  }());
+
+  // Return code
+  constraints.existential.push_back(equal_exprt(
+    return_code, from_integer(0,return_code.type())));
+
+  return constraints
+}
+
 static bool eval_is_upper_case(const mp_integer &c)
 {
   // Characters between 'A' and 'Z' are upper-case

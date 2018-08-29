@@ -185,6 +185,33 @@ public:
   exprt length_constraint() const override;
 };
 
+/// Substring of a string between two indices
+class string_substring_builtin_functiont
+  : public string_transformation_builtin_functiont
+{
+public:
+  exprt start;
+  exprt end;
+
+  string_substring_builtin_functiont(
+    const exprt &return_code,
+    const std::vector<exprt> &fun_args,
+    array_poolt &array_pool);
+
+  optionalt<exprt>
+  eval(const std::function<exprt(const exprt &)> &get_value) const override;
+
+  std::string name() const override
+  {
+    return "substring";
+  }
+
+  string_constraintst
+  constraints(string_constraint_generatort &generator) const override;
+
+  exprt length_constraint() const override;
+};
+
 /// Converting each uppercase character of Basic Latin and Latin-1 supplement
 /// to the corresponding lowercase character.
 class string_to_lower_case_builtin_functiont
