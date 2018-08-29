@@ -106,21 +106,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_substring(
   return add_axioms_for_substring(fresh_symbol, res, str, i, j);
 }
 
-/// Add axioms ensuring that `res` corresponds to the substring of `str`
-/// between indexes `start' = max(start, 0)` and
-/// `end' = max(min(end, |str|), start')`.
-///
-/// These axioms are:
-///   1. \f$ |{\tt res}| = end' - start' \f$
-///   2. \f$ \forall i<|{\tt res}|.\ {\tt res}[i]={\tt str}[{\tt start'}+i] \f$
-/// \todo Should return code different from 0 if `start' != start` or
-///       `end' != end`
-/// \param fresh_symbol: generator of fresh symbols
-/// \param res: array of characters expression
-/// \param str: array of characters expression
-/// \param start: integer expression
-/// \param end: integer expression
-/// \return integer expression equal to zero
 std::pair<exprt, string_constraintst> add_axioms_for_substring(
   symbol_generatort &fresh_symbol,
   const array_string_exprt &res,
@@ -128,28 +113,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_substring(
   const exprt &start,
   const exprt &end)
 {
-  const typet &index_type = str.length().type();
-  PRECONDITION(start.type()==index_type);
-  PRECONDITION(end.type()==index_type);
-
-  string_constraintst constraints;
-  const exprt start1 = maximum(start, from_integer(0, start.type()));
-  const exprt end1 = maximum(minimum(end, str.length()), start1);
-
-  // Axiom 1.
-  constraints.existential.push_back(
-    equal_exprt(res.length(), minus_exprt(end1, start1)));
-
-  // Axiom 2.
-  constraints.universal.push_back([&] {
-    const symbol_exprt idx = fresh_symbol("QA_index_substring", index_type);
-    return string_constraintt(
-      idx,
-      zero_if_negative(res.length()),
-      equal_exprt(res[idx], str[plus_exprt(start1, idx)]));
-  }());
-
-  return {from_integer(0, get_return_code_type()), std::move(constraints)};
 }
 
 /// Remove leading and trailing whitespaces
