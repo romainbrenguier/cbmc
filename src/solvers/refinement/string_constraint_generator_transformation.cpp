@@ -73,39 +73,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_set_length(
   return {from_integer(0, get_return_code_type()), std::move(constraints)};
 }
 
-/// Substring of a string between two indices
-///
-// NOLINTNEXTLINE
-/// \copybrief add_axioms_for_substring(symbol_generatort &fresh_symbol, const array_string_exprt &res, const array_string_exprt &str, const exprt &start, const exprt &end)
-// NOLINTNEXTLINE
-/// \link string_constraint_generatort::add_axioms_for_substring(symbol_generatort &fresh_symbol, const array_string_exprt &res, const array_string_exprt &str, const exprt &start, const exprt &end)
-///   (More...) \endlink
-/// \warning The specification may not be correct for the case where the string
-/// is shorter than the end index
-/// \todo Should return a integer different from zero when the string is shorter
-///   tan the end index.
-/// \param fresh_symbol: generator of fresh symbols
-/// \param f: function application with arguments integer `|res|`, character
-///           pointer `&res[0]`, refined_string `str`, integer `start`,
-///           optional integer `end` with default value `|str|`.
-/// \param array_pool: pool of arrays representing strings
-/// \return integer expression which is different from 0 when there is an
-///         exception to signal
-std::pair<exprt, string_constraintst> add_axioms_for_substring(
-  symbol_generatort &fresh_symbol,
-  const function_application_exprt &f,
-  array_poolt &array_pool)
-{
-  const function_application_exprt::argumentst &args=f.arguments();
-  PRECONDITION(args.size() == 4 || args.size() == 5);
-  const array_string_exprt str = get_string_expr(array_pool, args[2]);
-  const array_string_exprt res =
-    char_array_of_pointer(array_pool, args[1], args[0]);
-  const exprt &i = args[3];
-  const exprt j = args.size() == 5 ? args[4] : str.length();
-  return add_axioms_for_substring(fresh_symbol, res, str, i, j);
-}
-
 std::pair<exprt, string_constraintst> add_axioms_for_substring(
   symbol_generatort &fresh_symbol,
   const array_string_exprt &res,
