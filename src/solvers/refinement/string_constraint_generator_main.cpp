@@ -450,10 +450,6 @@ string_constraint_generatort::add_axioms_for_function_application(
     return add_axioms_from_char(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_set_length_func)
     return add_axioms_for_set_length(fresh_symbol, expr, array_pool);
-  else if(id==ID_cprover_string_delete_func)
-    return add_axioms_for_delete(fresh_symbol, expr, array_pool);
-  else if(id==ID_cprover_string_delete_char_at_func)
-    return add_axioms_for_delete_char_at(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_replace_func)
     return add_axioms_for_replace(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_intern_func)

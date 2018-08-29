@@ -288,21 +288,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_constant(
   irep_idt sval,
   const exprt &guard = true_exprt());
 
-std::pair<exprt, string_constraintst> add_axioms_for_delete(
-  symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
-  const array_string_exprt &str,
-  const exprt &start,
-  const exprt &end,
-  array_poolt &array_pool);
-std::pair<exprt, string_constraintst> add_axioms_for_delete(
-  symbol_generatort &fresh_symbol,
-  const function_application_exprt &f,
-  array_poolt &array_pool);
-std::pair<exprt, string_constraintst> add_axioms_for_delete_char_at(
-  symbol_generatort &fresh_symbol,
-  const function_application_exprt &expr,
-  array_poolt &array_pool);
 std::pair<exprt, string_constraintst> add_axioms_for_format(
   symbol_generatort &fresh_symbol,
   const function_application_exprt &f,
