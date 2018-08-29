@@ -1,0 +1,11 @@
+CORE
+TestBuiltin.class
+--max-nondet-string-length 100 --function TestBuiltin.check2args --depth 10000  --verbosity 10 --unwind 100
+^EXIT=10$
+^SIGNAL=0$
+^VERIFICATION FAILED$
+--
+check_SAT: got SAT but the model is not correct
+--
+Using the string dependencies information to compute the model, refinement
+should not be needed when the execution is deterministic.
