@@ -435,8 +435,6 @@ string_constraint_generatort::add_axioms_for_function_application(
     return add_axioms_for_trim(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_empty_string_func)
     return add_axioms_for_empty_string(fresh_symbol, expr);
-  else if(id==ID_cprover_string_copy_func)
-    return add_axioms_for_copy(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_of_int_hex_func)
     return add_axioms_from_int_hex(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_of_float_func)
@@ -474,32 +472,6 @@ string_constraint_generatort::add_axioms_for_function_application(
     DATA_INVARIANT(false, string_refinement_invariantt(msg));
   }
   UNREACHABLE;
-}
-
-/// add axioms to say that the returned string expression is equal to the
-/// argument of the function application
-/// \deprecated should use substring instead
-/// \param fresh_symbol: generator of fresh symbols
-/// \param f: function application with one argument, which is a string,
-/// or three arguments: string, integer offset and count
-/// \param array_pool: pool of arrays representing strings
-/// \return a new string expression
-DEPRECATED("should use substring instead")
-std::pair<exprt, string_constraintst> add_axioms_for_copy(
-  symbol_generatort &fresh_symbol,
-  const function_application_exprt &f,
-  array_poolt &array_pool)
-{
-  const auto &args=f.arguments();
-  PRECONDITION(args.size() == 3 || args.size() == 5);
-  const array_string_exprt res =
-    char_array_of_pointer(array_pool, args[1], args[0]);
-  const array_string_exprt str = get_string_expr(array_pool, args[2]);
-  const typet &index_type = str.length().type();
-  const exprt offset = args.size() == 3 ? from_integer(0, index_type) : args[3];
-  const exprt count = args.size() == 3 ? str.length() : args[4];
-  return add_axioms_for_substring(
-    fresh_symbol, res, str, offset, plus_exprt(offset, count));
 }
 
 /// Length of a string
