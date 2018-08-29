@@ -319,9 +319,11 @@ static union_find_replacet generate_symbol_resolution_from_equations(
   union_find_replacet solver;
   for(const equal_exprt &eq : equations)
   {
-    const exprt &lhs = eq.lhs();
-    const exprt &rhs = eq.rhs();
-    if(lhs.id()!=ID_symbol)
+    exprt lhs = eq.lhs();
+    exprt rhs = eq.rhs();
+    if(lhs.id() != ID_symbol)
+      rhs.swap(lhs);
+    if(lhs.id() != ID_symbol)
     {
       stream << log_message << "non symbol lhs: " << format(lhs)
              << " with rhs: " << format(rhs) << eom;
