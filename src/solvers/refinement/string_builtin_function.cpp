@@ -377,7 +377,7 @@ string_constraintst string_substring_builtin_functiont::constraints(
   constraints.existential.push_back(equal_exprt(
     return_code, from_integer(0,return_code.type())));
 
-  return constraints
+  return constraints;
 }
 
 static bool eval_is_upper_case(const mp_integer &c)
