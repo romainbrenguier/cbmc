@@ -73,15 +73,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_set_length(
   return {from_integer(0, get_return_code_type()), std::move(constraints)};
 }
 
-std::pair<exprt, string_constraintst> add_axioms_for_substring(
-  symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
-  const array_string_exprt &str,
-  const exprt &start,
-  const exprt &end)
-{
-}
-
 /// Remove leading and trailing whitespaces
 ///
 /// Add axioms ensuring `res` corresponds to `str` from which leading and

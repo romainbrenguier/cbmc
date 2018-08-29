@@ -451,7 +451,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
   if(intermediary_strings.size() == 1)
   {
     // Copy the first string
-    auto result = add_axioms_for_substring(
+    auto result = constraints_for_substring(
       fresh_symbol, res, str, from_integer(0, index_type), str.length());
     merge(constraints, std::move(result.second));
     return {result.first, std::move(constraints)};

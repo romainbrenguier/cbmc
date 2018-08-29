@@ -212,6 +212,13 @@ public:
   exprt length_constraint() const override;
 };
 
+std::pair<exprt, string_constraintst> constraints_for_substring(
+  symbol_generatort &fresh_symbol,
+  const array_string_exprt &result,
+  const array_string_exprt &input,
+  const exprt &start,
+  const exprt &end);
+
 /// Converting each uppercase character of Basic Latin and Latin-1 supplement
 /// to the corresponding lowercase character.
 class string_to_lower_case_builtin_functiont

@@ -303,12 +303,21 @@ string_substring_builtin_functiont::string_substring_builtin_functiont(
   end = fun_args.size() == 5 ? fun_args[4] : input.length();
 }
 
-exprt string_substring_builtin_functiont::length_constraint() const
+static exprt substring_length_constraint(
+  const array_string_exprt &result,
+  const array_string_exprt &input,
+  const exprt &start,
+  const exprt &end)
 {
   const exprt zero = from_integer(0, input.length().type());
   return equal_exprt(
     result.length(),
     maximum(zero, minus_exprt(end, maximum(zero, start))));
+}
+
+exprt string_substring_builtin_functiont::length_constraint() const
+{
+  return substring_length_constraint(result, input, start, end);
 }
 
 optionalt<exprt> string_substring_builtin_functiont::eval(
@@ -334,13 +343,13 @@ optionalt<exprt> string_substring_builtin_functiont::eval(
   return make_string(result_vector, type);
 }
 
-/// Add axioms ensuring that `res` corresponds to the substring of `str`
+/// Add axioms ensuring that `result` corresponds to the substring of `input`
 /// between indexes `start' = max(start, 0)` and
 /// `end' = max(min(end, |str|), start')`.
 ///
 /// These axioms are:
-///   1. \f$ |{\tt res}| = end' - start' \f$
-///   2. \f$ \forall i<|{\tt res}|.\ {\tt res}[i]={\tt str}[{\tt start'}+i] \f$
+///   1. |result| = end' - start'
+///   2. forall i<|result|. result[i] = input[start' + i]
 /// \todo Should return code different from 0 if `start' != start` or
 ///       `end' != end`
 /// \param fresh_symbol: generator of fresh symbols
@@ -348,9 +357,13 @@ optionalt<exprt> string_substring_builtin_functiont::eval(
 /// \param str: array of characters expression
 /// \param start: integer expression
 /// \param end: integer expression
-/// \return integer expression equal to zero
-string_constraintst string_substring_builtin_functiont::constraints(
-  string_constraint_generatort &generator) const
+/// \return integer expression equal to zero and constraints
+std::pair<exprt, string_constraintst> constraints_for_substring(
+  symbol_generatort &fresh_symbol,
+  const array_string_exprt &result,
+  const array_string_exprt &input,
+  const exprt &start,
+  const exprt &end)
 {
   const typet &index_type = input.length().type();
   PRECONDITION(start.type()==index_type);
@@ -361,23 +374,28 @@ string_constraintst string_substring_builtin_functiont::constraints(
   const exprt end1 = maximum(minimum(end, input.length()), start1);
 
   // Axiom 1.
-  constraints.existential.push_back(length_constraint());
+  constraints.existential.push_back(
+    substring_length_constraint(result, input, start, end));
 
   // Axiom 2.
   constraints.universal.push_back([&] {
-    const symbol_exprt idx =
-      generator.fresh_symbol("QA_index_substring", index_type);
+    const symbol_exprt idx = fresh_symbol("QA_index_substring", index_type);
     return string_constraintt(
       idx,
       zero_if_negative(result.length()),
       equal_exprt(result[idx], input[plus_exprt(start1, idx)]));
   }());
 
-  // Return code
-  constraints.existential.push_back(equal_exprt(
-    return_code, from_integer(0,return_code.type())));
+  return {from_integer(0, get_return_code_type()), constraints};
+}
 
-  return constraints;
+string_constraintst string_substring_builtin_functiont::constraints(
+  string_constraint_generatort &generator) const
+{
+  auto pair = constraints_for_substring(
+    generator.fresh_symbol, result, input, start, end);
+  pair.second.existential.push_back(equal_exprt(return_code, pair.first));
+  return pair.second;
 }
 
 static bool eval_is_upper_case(const mp_integer &c)
