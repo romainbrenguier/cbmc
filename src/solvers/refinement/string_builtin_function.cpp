@@ -338,7 +338,7 @@ optionalt<exprt> string_substring_builtin_functiont::eval(
   result_vector.insert(
     result_vector.begin(),
     input_opt->begin() + start_val,
-    input_opt->end() + end_val);
+    input_opt->begin() + end_val);
   const array_typet type(result.type().subtype(), length);
   return make_string(result_vector, type);
 }
