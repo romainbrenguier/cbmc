@@ -1,6 +1,6 @@
 CORE
 TestBuiltin.class
---max-nondet-string-length 100 --function TestBuiltin.check1arg --depth 10000  --verbosity 10 --unwind 100
+--max-nondet-string-length 500 --function TestBuiltin.det1arg --depth 10000  --verbosity 10 --unwind 100
 ^EXIT=10$
 ^SIGNAL=0$
 ^VERIFICATION FAILED$
