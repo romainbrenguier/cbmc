@@ -318,10 +318,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
   const messaget &message,
   const namespacet &ns);
 
-std::pair<exprt, string_constraintst> add_axioms_for_insert(
-  symbol_generatort &fresh_symbol,
-  const function_application_exprt &f,
-  array_poolt &pool);
 std::pair<exprt, string_constraintst> add_axioms_for_insert_int(
   symbol_generatort &fresh_symbol,
   const function_application_exprt &f,
