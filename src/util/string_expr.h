@@ -97,7 +97,7 @@ inline binary_relation_exprt length_le(
 }
 
 template <typename T>
-inline equal_exprt axiom_for_has_length(
+inline equal_exprt length_eq(
   const T &lhs, const exprt &rhs)
 {
   PRECONDITION(rhs.type() == lhs.length().type());
@@ -107,7 +107,7 @@ inline equal_exprt axiom_for_has_length(
 template <typename T>
 inline equal_exprt axiom_for_has_length(const T &lhs, mp_integer i)
 {
-  return axiom_for_has_length(lhs, from_integer(i, lhs.length().type()));
+  return length_eq(lhs, from_integer(i, lhs.length().type()));
 }
 
 // Representation of strings as arrays
