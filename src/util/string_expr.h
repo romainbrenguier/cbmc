@@ -90,7 +90,7 @@ inline binary_relation_exprt length_le(
 }
 
 template <typename T>
-inline binary_relation_exprt axiom_for_length_le(
+inline binary_relation_exprt length_le(
   const T &lhs, mp_integer i)
 {
   return length_le(lhs, from_integer(i, lhs.length().type()));
