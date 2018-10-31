@@ -124,11 +124,6 @@ public:
   {
   }
 
-  explicit refined_string_exprt(const typet &type) : struct_exprt(type)
-  {
-    operands().resize(2);
-  }
-
   refined_string_exprt(
     const exprt &_length,
     const exprt &_content,
