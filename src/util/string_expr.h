@@ -83,6 +83,16 @@ inline equal_exprt length_eq(const T &lhs, mp_integer i)
   return length_eq(lhs, from_integer(i, lhs.length().type()));
 }
 
+exprt &length(expr_with_typet<array_typet> &expr)
+{
+  return expr.type.size();
+}
+
+const exprt &length(const expr_with_typet<array_typet> &expr)
+{
+  return expr.type.size();
+}
+
 // Representation of strings as arrays
 class array_string_exprt : public expr_with_typet<array_typet>
 {
