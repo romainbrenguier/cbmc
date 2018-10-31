@@ -16,6 +16,20 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include "refined_string_type.h"
 #include "std_expr.h"
 
+/// Wrapper for expressions which have a fixed type
+template<typename T_typet, typename T_exprt=exprt>
+struct expr_with_typet
+{
+  T_exprt expr;
+  T_typet &type;
+
+  explicit expr_with_typet(T_exprt e)
+    : expr(std::move(e)),
+      type(type_checked_cast<T_typet>(expr.type()))
+  {
+  }
+};
+
 // Comparison on the length of the strings
 template <typename T>
 inline binary_relation_exprt length_ge(
@@ -70,27 +84,33 @@ inline equal_exprt length_eq(const T &lhs, mp_integer i)
 }
 
 // Representation of strings as arrays
-class array_string_exprt : public exprt
+class array_string_exprt : public expr_with_typet<array_typet>
 {
+  array_string_exprt();
 public:
+  array_string_exprt(exprt e)
+    : expr_with_typet<array_typet>(std::move(e))
+  {
+  }
+
   exprt &length()
   {
-    return to_array_type(type()).size();
+    return type.size();
   }
 
   const exprt &length() const
   {
-    return to_array_type(type()).size();
+    return type.size();
   }
 
   exprt &content()
   {
-    return *this;
+    return expr;
   }
 
   const exprt &content() const
   {
-    return *this;
+    return expr;
   }
 
   exprt operator[](const exprt &i) const
@@ -103,18 +123,6 @@ public:
     return index_exprt(content(), from_integer(i, length().type()));
   }
 };
-
-inline array_string_exprt &to_array_string_expr(exprt &expr)
-{
-  PRECONDITION(expr.type().id() == ID_array);
-  return static_cast<array_string_exprt &>(expr);
-}
-
-inline const array_string_exprt &to_array_string_expr(const exprt &expr)
-{
-  PRECONDITION(expr.type().id() == ID_array);
-  return static_cast<const array_string_exprt &>(expr);
-}
 
 // Represent strings as a struct with a length field and a content field
 class refined_string_exprt : public struct_exprt
