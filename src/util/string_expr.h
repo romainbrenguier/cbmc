@@ -134,6 +134,26 @@ public:
   }
 };
 
+inline bool operator==(
+  const array_string_exprt &left, const array_string_exprt &right)
+{
+  return left.expr == right.expr;
+}
+
+// NOLINTNEXTLINE [allow specialisation within 'std']
+namespace std
+{
+  template<>
+// NOLINTNEXTLINE [struct identifier 'hash' does not end in t]
+  struct hash<array_string_exprt>
+  {
+    size_t operator()(const array_string_exprt &array) const
+    {
+      return irep_hash()(array.expr);
+    }
+  };
+}
+
 // Represent strings as a struct with a length field and a content field
 class refined_string_exprt : public struct_exprt
 {

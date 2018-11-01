@@ -20,33 +20,23 @@ static array_string_exprt make_string(
   const std::vector<mp_integer> &array,
   const array_typet &array_type);
 
-string_transformation_builtin_functiont::
-  string_transformation_builtin_functiont(
-    const exprt &return_code,
-    const std::vector<exprt> &fun_args,
-    array_poolt &array_pool)
-  : string_builtin_functiont(return_code)
-{
-  PRECONDITION(fun_args.size() > 2);
-  const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
-  input = array_pool.find(arg1.op1(), arg1.op0());
-  result = array_pool.find(fun_args[1], fun_args[0]);
-}
-
-string_insertion_builtin_functiont::string_insertion_builtin_functiont(
+string_insertion_builtin_functiont
+string_insertion_builtin_functiont::make(
   const exprt &return_code,
   const std::vector<exprt> &fun_args,
   array_poolt &array_pool)
-  : string_builtin_functiont(return_code)
 {
   PRECONDITION(fun_args.size() > 4);
   const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
-  input1 = array_pool.find(arg1.op1(), arg1.op0());
   const auto arg2 = expr_checked_cast<struct_exprt>(fun_args[4]);
-  input2 = array_pool.find(arg2.op1(), arg2.op0());
-  result = array_pool.find(fun_args[1], fun_args[0]);
+  std::vector<exprt> args;
   args.push_back(fun_args[3]);
   args.insert(args.end(), fun_args.begin() + 5, fun_args.end());
+  return {return_code,
+          array_pool.find(arg1.op1(), arg1.op0()),
+          array_pool.find(arg2.op1(), arg2.op0()),
+          array_pool.find(fun_args[1], fun_args[0]),
+          args};
 }
 
 string_concatenation_builtin_functiont::string_concatenation_builtin_functiont(

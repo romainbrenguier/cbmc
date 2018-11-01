@@ -153,8 +153,8 @@ namespace std
              irep_hash()(constraint.exists_lower_bound)^
              irep_hash()(constraint.exists_upper_bound)^
              irep_hash()(constraint.premise)^
-             irep_hash()(constraint.s0)^
-             irep_hash()(constraint.s1);
+             irep_hash()(constraint.s0.expr)^
+             irep_hash()(constraint.s1.expr);
     }
   };
 }

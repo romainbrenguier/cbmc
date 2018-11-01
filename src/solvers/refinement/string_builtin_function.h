@@ -87,16 +87,6 @@ public:
   {
   }
 
-  /// Constructor from arguments of a function application.
-  /// The arguments in `fun_args` should be in order:
-  /// an integer `result.length`, a character pointer `&result[0]`,
-  /// a string `arg1` of type refined_string_typet, and potentially some
-  /// arguments of primitive types.
-  string_transformation_builtin_functiont(
-    const exprt &return_code,
-    const std::vector<exprt> &fun_args,
-    array_poolt &array_pool);
-
   optionalt<array_string_exprt> string_result() const override
   {
     return result;
@@ -122,14 +112,22 @@ public:
   /// The arguments in `fun_args` should be in order:
   /// an integer `result.length`, a character pointer `&result[0]`,
   /// a string `arg1` of type refined_string_typet, and a character.
-  string_concat_char_builtin_functiont(
+  static string_concat_char_builtin_functiont make(
     const exprt &return_code,
     const std::vector<exprt> &fun_args,
     array_poolt &array_pool)
-    : string_transformation_builtin_functiont(return_code, fun_args, array_pool)
   {
     PRECONDITION(fun_args.size() == 4);
     character = fun_args[3];
+    PRECONDITION(fun_args.size() > 2);
+    const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
+    return string_transformation_builtin_functiont{
+      return_code,
+      array_pool.find(arg1.op1(), arg1.op0()),
+      array_pool.find(fun_args[1], fun_args[0]),
+      arg1,
+      character ?
+    };
   }
 
   optionalt<exprt>
@@ -282,7 +280,7 @@ public:
   /// a string `arg1` of type refined_string_typet,
   /// a string `arg2` of type refined_string_typet,
   /// and potentially some arguments of primitive types.
-  string_insertion_builtin_functiont(
+  static string_insertion_builtin_functiont make(
     const exprt &return_code,
     const std::vector<exprt> &fun_args,
     array_poolt &array_pool);
