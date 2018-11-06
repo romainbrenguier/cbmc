@@ -250,7 +250,7 @@ protected:
   {
     goto_programt::const_targett next=state.source.pc;
     ++next;
-    symex_transition(state, next);
+    symex_transition(state, next, false);
   }
 
   virtual void symex_goto(statet &);
