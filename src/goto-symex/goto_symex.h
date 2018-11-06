@@ -244,7 +244,7 @@ protected:
   virtual void symex_transition(
     statet &,
     goto_programt::const_targett to,
-    bool is_backwards_goto=false);
+    bool is_backwards_goto);
 
   virtual void symex_transition(statet &state)
   {
