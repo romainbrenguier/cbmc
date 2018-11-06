@@ -247,18 +247,6 @@ void goto_symext::resume_symex_from_saved_state(
       new_symbol_table);
 }
 
-void goto_symext::symex_instruction_range(
-  statet &state,
-  const get_goto_functiont &get_goto_function,
-  const goto_programt::const_targett first,
-  const goto_programt::const_targett limit)
-{
-  initialize_entry_point(state, get_goto_function, first, limit);
-  ns = namespacet(outer_symbol_table, state.symbol_table);
-  while(state.source.pc->function!=limit->function || state.source.pc!=limit)
-    symex_threaded_step(state, get_goto_function);
-}
-
 void goto_symext::symex_from_entry_point_of(
   const get_goto_functiont &get_goto_function,
   symbol_tablet &new_symbol_table)
