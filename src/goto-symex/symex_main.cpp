@@ -249,16 +249,6 @@ void goto_symext::resume_symex_from_saved_state(
 
 void goto_symext::symex_instruction_range(
   statet &state,
-  const goto_functionst &goto_functions,
-  const goto_programt::const_targett first,
-  const goto_programt::const_targett limit)
-{
-  symex_instruction_range(
-    state, get_function_from_goto_functions(goto_functions), first, limit);
-}
-
-void goto_symext::symex_instruction_range(
-  statet &state,
   const get_goto_functiont &get_goto_function,
   const goto_programt::const_targett first,
   const goto_programt::const_targett limit)
