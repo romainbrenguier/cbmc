@@ -21,6 +21,23 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <analyses/dirty.h>
 #include <iostream>
 #include <util/format_expr.h>
+#include <iomanip>
+#include <solvers/prop/bdd_expr.h>
+
+#if 0
+static std::string escape_quotes(const std::string &to_escape)
+{
+  std::ostringstream escaped;
+  for(auto &ch : to_escape)
+  {
+    if(ch == '"' || ch == '\\')
+      escaped << "\\" << ch;
+    else
+      escaped << ch;
+  }
+  return escaped.str();
+}
+#endif
 
 void goto_symext::symex_goto(statet &state)
 {
@@ -53,11 +70,17 @@ void goto_symext::symex_goto(statet &state)
     instruction.get_target();
 
   const bool backward = instruction.is_backwards_goto();
+#ifdef DEBUG
+  std::ostringstream string_stream;
+  string_stream << format(new_guard);
   std::cout << ",\n  {\n    \"symex_goto.cpp\" : 55,\n"
-            << "\n   \"function\": \"" << state.source.pc->source_location.get_function()
-            << "\",\n    \"line number\": \"" << state.source.pc->source_location.get_line()
+            << "\n   \"function\": \""
+               << state.source.pc->source_location.get_function()
+            << "\",\n    \"line number\": \""
+               << state.source.pc->source_location.get_line()
             << "\",\n    \"new_guard\": \""
-            << format(new_guard) << "\"\n  }" << std::endl;
+            << escape_quotes(string_stream.str()) << "\"\n  }" << std::endl;
+#endif
 
   if(backward)
   {
@@ -93,7 +116,8 @@ void goto_symext::symex_goto(statet &state)
       return;
     }
 
-    //std::cout << "symex_goto.cpp:91 new_guard " << new_guard.pretty() << std::endl;
+    //std::cout << "symex_goto.cpp:91 new_guard "
+    // << new_guard.pretty() << std::endl;
     if(new_guard.is_true())
     {
       symex_transition(state, goto_target, true);
@@ -101,9 +125,24 @@ void goto_symext::symex_goto(statet &state)
     }
   }
 
-  const exprt simpl_state_guard = do_simplify_copy(state.guard.as_expr());
-  std::cout << ",{\"symex_goto.cpp\":100,\n    \"simple guard\": \""
-            << simpl_state_guard.pretty() << "\"}" << std::endl;
+  exprt simpl_state_guard = do_simplify_copy(state.guard.as_expr());
+#if 0
+  std::ostringstream ostringstream;
+  ostringstream << format(simpl_state_guard);
+  std::cout << ",\n  {\"symex_goto.cpp\":124,\n    \"simple guard\": \""
+            << escape_quotes(ostringstream.str()) << "\"}" << std::endl;
+#endif
+
+  bdd_exprt bdd_expr(ns);
+  bdd_expr.from_expr(simpl_state_guard);
+  exprt simple_state_guard = bdd_expr.as_expr();
+#if 0
+  std::ostringstream ostringstream2;
+  ostringstream2 << format(simple_state_guard);
+  std::cout << ",\n  {\"symex_goto.cpp\":132,\n    \"even_simpler_guard\": \""
+          << escape_quotes(ostringstream2.str()) << "\"}" << std::endl;
+#endif
+  simpl_state_guard.swap(simple_state_guard);
 
   // No point executing both branches of an unconditional goto.
   if(
@@ -255,7 +294,8 @@ void goto_symext::symex_goto(statet &state)
         log.debug(),
         [this, &new_lhs](messaget::mstreamt &mstream) {
           mstream << "Assignment to " << new_lhs.get_identifier()
-                  << " [" << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
+                  << " ["
+                  << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
                   << messaget::eom;
         });
 
