@@ -149,3 +149,13 @@ void goto_symext::clean_expr(
   if(write)
     adjust_byte_extract_rec(expr, ns);
 }
+
+/// Same as goto_symext::clean_expr but first do a copy of the expression
+exprt goto_symext::clean_expr_copy(
+  exprt expr,
+  statet &state,
+  const bool write)
+{
+  clean_expr(expr, state, write);
+  return expr;
+}

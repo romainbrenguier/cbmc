@@ -211,6 +211,8 @@ protected:
   void clean_expr(
     exprt &, statet &, bool write);
 
+  exprt clean_expr_copy(exprt, statet &, bool write);
+
   void trigger_auto_object(const exprt &, statet &);
   void initialize_auto_object(const exprt &, statet &);
   void process_array_expr(exprt &);
