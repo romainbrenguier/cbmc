@@ -346,6 +346,7 @@ protected:
   void symex_catch(statet &);
 
   virtual void do_simplify(exprt &);
+  exprt do_simplify_copy(exprt);
 
   void symex_assign(statet &, const code_assignt &);
 

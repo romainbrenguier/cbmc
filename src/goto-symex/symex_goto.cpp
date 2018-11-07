@@ -93,8 +93,7 @@ void goto_symext::symex_goto(statet &state)
     }
   }
 
-  exprt simpl_state_guard = state.guard.as_expr();
-  do_simplify(simpl_state_guard);
+  const exprt simpl_state_guard = do_simplify_copy(state.guard.as_expr());
 
   // No point executing both branches of an unconditional goto.
   if(

@@ -484,3 +484,9 @@ void goto_symext::symex_assign_byte_extract(
   symex_assign_rec(
     state, lhs.op(), new_full_lhs, new_rhs, guard, assignment_type);
 }
+
+exprt goto_symext::do_simplify_copy(exprt e)
+{
+  do_simplify(e);
+  return e;
+}
