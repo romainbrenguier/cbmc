@@ -165,6 +165,7 @@ public:
 
   // performs renaming _up to_ the given level
   void rename(exprt &expr, const namespacet &ns, levelt level=L2);
+  exprt rename_copy(exprt expr, const namespacet &ns, levelt level=L2);
   void rename(
     typet &type,
     const irep_idt &l1_identifier,
