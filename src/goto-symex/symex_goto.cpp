@@ -29,12 +29,10 @@ void goto_symext::symex_goto(statet &state)
   exprt new_guard = state.rename_copy(old_guard, ns);
   do_simplify(new_guard);
 
-  if(new_guard.is_false() ||
-     state.guard.is_false())
+  if(new_guard.is_false())
+    target.location(state.guard.as_expr(), state.source);
+  if(new_guard.is_false() || state.guard.is_false())
   {
-    if(!state.guard.is_false())
-      target.location(state.guard.as_expr(), state.source);
-
     // next instruction
     symex_transition(state);
     return; // nothing to do
