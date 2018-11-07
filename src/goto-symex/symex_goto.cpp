@@ -297,6 +297,10 @@ void goto_symext::symex_goto(statet &state)
                   << messaget::eom;
         });
 
+      for(std::size_t i = 0; i < state.call_stack().size() - 1; ++i)
+        std::cout << " ";
+      std::cout << "+--- "
+                << "\"" << escape_quotes(new_rhs, 150) << "\"" << std::endl;
       target.assignment(
         guard.as_expr(),
         new_lhs, new_lhs, guard_symbol_expr,
