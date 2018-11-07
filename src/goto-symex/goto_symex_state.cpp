@@ -444,6 +444,16 @@ void goto_symex_statet::rename(
   }
 }
 
+/// Same as goto_symex_statet::rename but first make a copy of expr
+exprt goto_symex_statet::rename_copy(
+  exprt expr,
+  const namespacet &ns,
+  levelt level)
+{
+  rename(expr, ns, level);
+  return expr;
+}
+
 /// thread encoding
 bool goto_symex_statet::l2_thread_read_encoding(
   ssa_exprt &expr,

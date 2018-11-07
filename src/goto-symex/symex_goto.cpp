@@ -26,9 +26,7 @@ void goto_symext::symex_goto(statet &state)
   statet::framet &frame=state.top();
 
   exprt old_guard = clean_expr_copy(instruction.guard, state, false);
-
-  exprt new_guard=old_guard;
-  state.rename(new_guard, ns);
+  exprt new_guard = state.rename_copy(old_guard, ns);
   do_simplify(new_guard);
 
   if(new_guard.is_false() ||
