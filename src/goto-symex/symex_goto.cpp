@@ -77,10 +77,8 @@ void goto_symext::symex_goto(statet &state)
       frame.loop_iterations[goto_programt::loop_id(*state.source.pc)].count;
     unwind++;
 
-    // continue unwinding?
     if(stop_unwind(state.source, state.call_stack(), unwind))
     {
-      // no!
       loop_bound_exceeded(state, new_guard);
 
       // next instruction
