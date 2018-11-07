@@ -19,6 +19,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_expr.h>
 
 #include <analyses/dirty.h>
+#include <iostream>
+#include <util/format_expr.h>
 
 void goto_symext::symex_goto(statet &state)
 {
@@ -51,6 +53,11 @@ void goto_symext::symex_goto(statet &state)
     instruction.get_target();
 
   const bool backward = instruction.is_backwards_goto();
+  std::cout << ",\n  {\n    \"symex_goto.cpp\" : 55,\n"
+            << "\n   \"function\": \"" << state.source.pc->source_location.get_function()
+            << "\",\n    \"line number\": \"" << state.source.pc->source_location.get_line()
+            << "\",\n    \"new_guard\": \""
+            << format(new_guard) << "\"\n  }" << std::endl;
 
   if(backward)
   {
@@ -86,6 +93,7 @@ void goto_symext::symex_goto(statet &state)
       return;
     }
 
+    //std::cout << "symex_goto.cpp:91 new_guard " << new_guard.pretty() << std::endl;
     if(new_guard.is_true())
     {
       symex_transition(state, goto_target, true);
@@ -94,6 +102,8 @@ void goto_symext::symex_goto(statet &state)
   }
 
   const exprt simpl_state_guard = do_simplify_copy(state.guard.as_expr());
+  std::cout << ",{\"symex_goto.cpp\":100,\n    \"simple guard\": \""
+            << simpl_state_guard.pretty() << "\"}" << std::endl;
 
   // No point executing both branches of an unconditional goto.
   if(
