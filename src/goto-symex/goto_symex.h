@@ -290,7 +290,7 @@ protected:
 
   // determine whether to unwind a loop -- true indicates abort,
   // with false we continue.
-  virtual bool get_unwind(
+  virtual bool stop_unwind(
     const symex_targett::sourcet &source,
     const goto_symex_statet::call_stackt &context,
     unsigned unwind);
