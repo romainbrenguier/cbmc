@@ -21,15 +21,15 @@ class symex_dereference_statet:
 {
 public:
   symex_dereference_statet(
-    goto_symext &_goto_symex,
+    namespacet &ns,
     goto_symext::statet &_state):
-    goto_symex(_goto_symex),
+    ns(ns),
     state(_state)
   {
   }
 
 protected:
-  goto_symext &goto_symex;
+  namespacet &ns;
   goto_symext::statet &state;
 
   void get_value_set(
