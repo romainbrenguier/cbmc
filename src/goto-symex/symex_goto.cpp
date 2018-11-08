@@ -37,11 +37,14 @@ std::string escape_quotes(const std::string &to_escape)
   return escaped.str();
 }
 
-std::string escape_quotes(const exprt &to_format)
+std::string escape_quotes(const exprt &to_format, std::size_t limit)
 {
   std::ostringstream to_escape;
   to_escape << format(to_format);
-  return escape_quotes(to_escape.str());
+  const std::string in_quotes = to_escape.str();
+  if(in_quotes.size() < limit)
+    return escape_quotes(to_escape.str());
+  return escape_quotes(in_quotes.substr(0, limit - 3) + "...");
 }
 
 void goto_symext::symex_goto(statet &state)
@@ -307,11 +310,16 @@ void goto_symext::symex_goto(statet &state)
         [&](messaget::mstreamt &mstream) {
           mstream << ",\n  { \"symex_goto.cpp:296\": {"
                   << "\n    { lhs: " << new_lhs.get_identifier() << "}\n"
-                  << "      rhs:  \"" << escape_quotes(new_rhs)
+                  << "      rhs:  \"" << escape_quotes(new_rhs, 100)
                   << "\"}\n  }"
                   << messaget::eom;
         });
 
+      for(std::size_t i = 0; i < state.call_stack().size() - 1; ++i)
+        std::cout << " ";
+      std::cout << "+--- "
+                // << new_lhs.get_identifier() << " <-"
+                << "\"" << escape_quotes(new_rhs, 150) << "\"" << std::endl;
       target.assignment(
         guard.as_expr(),
         new_lhs, new_lhs, guard_symbol_expr,
@@ -527,7 +535,7 @@ void goto_symext::phi_function(
         mstream << ",\n  {\n    \"symex_goto.cpp\": 520,\n"
                 << "    lhs: \"" << new_lhs.get_identifier()
                 << "\",\n"
-                << "    rhs: \"" << escape_quotes(rhs) << "\"\n  }"
+                << "    rhs: \"" << escape_quotes(rhs, 100) << "\"\n  }"
                 << messaget::eom;
       });
 

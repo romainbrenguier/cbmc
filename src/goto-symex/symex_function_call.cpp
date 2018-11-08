@@ -176,9 +176,9 @@ void goto_symext::symex_function_call(
 {
   const exprt &function=code.function();
 
-  std::cout << "+";
   for(std::size_t i = 0; i < state.call_stack().size(); ++i)
-    std::cout << "-";
+    if(i % 2 == 0) std::cout << "|";
+    else std::cout << " ";
   std::cout << format(function) << std::endl;
 
   // If at some point symex_function_call can support more

@@ -472,6 +472,6 @@ public:
 
 
 std::string escape_quotes(const std::string &to_escape);
-std::string escape_quotes(const exprt &to_format);
+std::string escape_quotes(const exprt &to_format, std::size_t limit = 100);
 
 #endif // CPROVER_GOTO_SYMEX_GOTO_SYMEX_H
