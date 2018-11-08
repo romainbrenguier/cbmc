@@ -17,6 +17,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/c_types.h>
 #include <util/exception_utils.h>
 #include <util/invariant.h>
+#include <iostream>
+#include <util/format_expr.h>
 
 bool goto_symext::get_unwind_recursion(
   const irep_idt &,
@@ -173,6 +175,11 @@ void goto_symext::symex_function_call(
   const code_function_callt &code)
 {
   const exprt &function=code.function();
+
+  std::cout << "+";
+  for(std::size_t i = 0; i < state.call_stack().size(); ++i)
+    std::cout << "-";
+  std::cout << format(function) << std::endl;
 
   // If at some point symex_function_call can support more
   // expression ids(), like ID_Dereference, please expand the
