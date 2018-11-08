@@ -29,6 +29,8 @@ public:
   struct sourcet
   {
     unsigned thread_nr;
+    // The program counter is an iterator which indicates where the execution
+    // is in its program sequence
     goto_programt::const_targett pc;
     bool is_set;
 
