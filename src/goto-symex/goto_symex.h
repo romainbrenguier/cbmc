@@ -331,8 +331,6 @@ protected:
     statet &,
     const goto_functionst::goto_functiont &);
 
-  nondet_symbol_exprt build_symex_nondet(typet &type);
-
   // exceptions
   void symex_throw(statet &);
   void symex_catch(statet &);
@@ -416,7 +414,6 @@ protected:
   static unsigned nondet_count;
   static unsigned dynamic_counter;
 
-  void replace_nondet(exprt &);
   void rewrite_quantifiers(exprt &, statet &);
 
   path_storaget &path_storage;
@@ -463,6 +460,10 @@ public:
     return _remaining_vccs;
   }
 };
+
+nondet_symbol_exprt build_symex_nondet(typet &type, unsigned &nondet_count);
+
+void replace_nondet(exprt &, unsigned &);
 
 void symex_transition(goto_symext::statet &state);
 
