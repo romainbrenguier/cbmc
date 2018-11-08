@@ -97,7 +97,7 @@ void goto_symext::symex_goto(statet &state)
   {
     // is it label: goto label; or while(cond); - popular in SV-COMP
     if(
-      self_loops_to_assumptions &&
+      info.self_loops_to_assumptions &&
       (goto_target == state.source.pc ||
        (instruction.incoming_edges.size() == 1 &&
         *instruction.incoming_edges.begin() == goto_target)))
@@ -167,7 +167,7 @@ void goto_symext::symex_goto(statet &state)
     (simpl_state_guard.is_true() ||
      // or there is another block, but we're doing path exploration so
      // we're going to skip over it for now and return to it later.
-     doing_path_exploration))
+     info.doing_path_exploration))
   {
     DATA_INVARIANT(
       instruction.targets.size() > 0,
@@ -234,7 +234,7 @@ void goto_symext::symex_goto(statet &state)
     log.debug() << "Resuming from next instruction '"
                 << state_pc->source_location << "'" << log.eom;
   }
-  else if(doing_path_exploration)
+  else if(info.doing_path_exploration)
   {
     // We should save both the instruction after this goto, and the target of
     // the goto.
@@ -561,9 +561,9 @@ void goto_symext::loop_bound_exceeded(
   else
     negated_cond=not_exprt(guard);
 
-  if(!partial_loops)
+  if(!info.partial_loops)
   {
-    if(unwinding_assertions)
+    if(info.unwinding_assertions)
     {
       // Generate VCC for unwinding assertion.
       vcc(negated_cond,

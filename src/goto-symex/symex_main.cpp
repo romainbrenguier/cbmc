@@ -290,11 +290,11 @@ void goto_symext::symex_step(
 
   const goto_programt::instructiont &instruction=*state.source.pc;
 
-  if(!doing_path_exploration)
+  if(!info.doing_path_exploration)
     merge_gotos(state);
 
   // depth exceeded?
-  if(max_depth != 0 && state.depth > max_depth)
+  if(info.max_depth != 0 && state.depth > info.max_depth)
     state.guard.add(false_exprt());
   state.depth++;
 
