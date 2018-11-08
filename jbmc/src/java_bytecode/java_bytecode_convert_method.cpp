@@ -968,6 +968,8 @@ static void gather_symbol_live_ranges(
 codet java_bytecode_convert_methodt::get_clinit_call(
   const irep_idt &classname)
 {
+  return code_skipt();
+#if 0
   auto findit = symbol_table.symbols.find(clinit_wrapper_name(classname));
   if(findit == symbol_table.symbols.end())
     return code_skipt();
@@ -978,6 +980,7 @@ codet java_bytecode_convert_methodt::get_clinit_call(
       needed_lazy_methods->add_needed_method(findit->second.name);
     return ret;
   }
+#endif
 }
 
 static std::size_t get_bytecode_type_width(const typet &ty)
