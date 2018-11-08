@@ -232,7 +232,8 @@ protected:
     exprt &,
     statet &,
     guardt &,
-    bool write);
+    const bool write,
+    namespacet &ns);
 
   void dereference_rec_address_of(
     exprt &,
