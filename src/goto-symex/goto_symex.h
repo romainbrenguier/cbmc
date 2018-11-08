@@ -470,4 +470,8 @@ public:
   }
 };
 
+
+std::string escape_quotes(const std::string &to_escape);
+std::string escape_quotes(const exprt &to_format);
+
 #endif // CPROVER_GOTO_SYMEX_GOTO_SYMEX_H
