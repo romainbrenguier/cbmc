@@ -231,7 +231,8 @@ protected:
     statet &,
     guardt &,
     const bool write,
-    namespacet &ns);
+    namespacet &ns,
+    const irep_idt &language_mode);
 
   void dereference_rec_address_of(
     exprt &,
