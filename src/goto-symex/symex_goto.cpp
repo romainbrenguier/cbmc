@@ -24,8 +24,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <iomanip>
 #include <solvers/prop/bdd_expr.h>
 
-#if 0
-static std::string escape_quotes(const std::string &to_escape)
+std::string escape_quotes(const std::string &to_escape)
 {
   std::ostringstream escaped;
   for(auto &ch : to_escape)
@@ -37,7 +36,13 @@ static std::string escape_quotes(const std::string &to_escape)
   }
   return escaped.str();
 }
-#endif
+
+std::string escape_quotes(const exprt &to_format)
+{
+  std::ostringstream to_escape;
+  to_escape << format(to_format);
+  return escape_quotes(to_escape.str());
+}
 
 void goto_symext::symex_goto(statet &state)
 {
@@ -70,17 +75,20 @@ void goto_symext::symex_goto(statet &state)
     instruction.get_target();
 
   const bool backward = instruction.is_backwards_goto();
-#ifdef DEBUG
-  std::ostringstream string_stream;
-  string_stream << format(new_guard);
-  std::cout << ",\n  {\n    \"symex_goto.cpp\" : 55,\n"
-            << "\n   \"function\": \""
-               << state.source.pc->source_location.get_function()
-            << "\",\n    \"line number\": \""
-               << state.source.pc->source_location.get_line()
-            << "\",\n    \"new_guard\": \""
-            << escape_quotes(string_stream.str()) << "\"\n  }" << std::endl;
-#endif
+  log.conditional_output(
+    log.debug(),
+    [&](messaget::mstreamt &mstream) {
+      std::ostringstream string_stream;
+      string_stream << format(new_guard);
+      mstream << ",\n  {\n    \"symex_goto.cpp\" : 81,\n"
+              << "\n   \"function\": \""
+              << state.source.pc->source_location.get_function()
+              << "\",\n    \"line number\": \""
+              << state.source.pc->source_location.get_line()
+              << "\",\n    \"new_guard\": \""
+              << escape_quotes(string_stream.str()) << "\"\n  }"
+              << messaget::eom;
+    });
 
   if(backward)
   {
@@ -136,12 +144,16 @@ void goto_symext::symex_goto(statet &state)
   bdd_exprt bdd_expr(ns);
   bdd_expr.from_expr(simpl_state_guard);
   exprt simple_state_guard = bdd_expr.as_expr();
-#if 0
-  std::ostringstream ostringstream2;
-  ostringstream2 << format(simple_state_guard);
-  std::cout << ",\n  {\"symex_goto.cpp\":132,\n    \"even_simpler_guard\": \""
-          << escape_quotes(ostringstream2.str()) << "\"}" << std::endl;
-#endif
+// #if 0
+  log.conditional_output(
+    log.debug(),
+    [&](messaget::mstreamt &mstream){
+    std::ostringstream ostringstream2;
+    ostringstream2 << format(simple_state_guard);
+    log.debug() << ",\n  {\"symex_goto.cpp\":132,\n    \"even_simpler_guard\": \""
+              << escape_quotes(ostringstream2.str()) << "\"}" << messaget::eom;
+  });
+// #endif
   simpl_state_guard.swap(simple_state_guard);
 
   // No point executing both branches of an unconditional goto.
@@ -292,10 +304,11 @@ void goto_symext::symex_goto(statet &state)
 
       log.conditional_output(
         log.debug(),
-        [this, &new_lhs](messaget::mstreamt &mstream) {
-          mstream << "Assignment to " << new_lhs.get_identifier()
-                  << " ["
-                  << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
+        [&](messaget::mstreamt &mstream) {
+          mstream << ",\n  { \"symex_goto.cpp:296\": {"
+                  << "\n    { lhs: " << new_lhs.get_identifier() << "}\n"
+                  << "      rhs:  \"" << escape_quotes(new_rhs)
+                  << "\"}\n  }"
                   << messaget::eom;
         });
 
@@ -510,9 +523,11 @@ void goto_symext::phi_function(
 
     log.conditional_output(
       log.debug(),
-      [this, &new_lhs](messaget::mstreamt &mstream) {
-        mstream << "Assignment to " << new_lhs.get_identifier()
-                << " [" << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
+      [&](messaget::mstreamt &mstream) {
+        mstream << ",\n  {\n    \"symex_goto.cpp\": 520,\n"
+                << "    lhs: \"" << new_lhs.get_identifier()
+                << "\",\n"
+                << "    rhs: \"" << escape_quotes(rhs) << "\"\n  }"
                 << messaget::eom;
       });
 
