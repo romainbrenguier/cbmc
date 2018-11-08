@@ -21,7 +21,6 @@ Author: Daniel Kroening, kroening@kroening.com
 class symbol_tablet;
 class guardt;
 class optionst;
-class modet;
 class symbolt;
 
 /*! \brief TO_BE_DOCUMENTED
@@ -86,7 +85,6 @@ private:
   /// Flag indicating whether `value_set_dereferencet::dereference` should
   /// disregard an apparent attempt to dereference NULL
   const bool exclude_null_derefs;
-  static unsigned invalid_counter;
 
   bool dereference_type_compare(
     const typet &object_type,
