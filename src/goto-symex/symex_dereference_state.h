@@ -32,13 +32,13 @@ protected:
   goto_symext &goto_symex;
   goto_symext::statet &state;
 
-  virtual void get_value_set(
+  void get_value_set(
     const exprt &expr,
-    value_setst::valuest &value_set);
+    value_setst::valuest &value_set) override;
 
-  virtual bool has_failed_symbol(
+  bool has_failed_symbol(
     const exprt &expr,
-    const symbolt *&symbol);
+    const symbolt *&symbol) override;
 };
 
 #endif // CPROVER_GOTO_SYMEX_SYMEX_DEREFERENCE_STATE_H
