@@ -249,19 +249,6 @@ protected:
 
   const irep_idt guard_identifier;
 
-  // symex
-  virtual void symex_transition(
-    statet &,
-    goto_programt::const_targett to,
-    bool is_backwards_goto);
-
-  virtual void symex_transition(statet &state)
-  {
-    goto_programt::const_targett next=state.source.pc;
-    ++next;
-    symex_transition(state, next, false);
-  }
-
   virtual void symex_goto(statet &);
   virtual void symex_start_thread(statet &);
   virtual void symex_atomic_begin(statet &);
@@ -477,6 +464,12 @@ public:
   }
 };
 
+void symex_transition(goto_symext::statet &state);
+
+void symex_transition(
+  goto_symext::statet &,
+  goto_programt::const_targett to,
+  bool is_backwards_goto);
 
 std::string escape_quotes(const std::string &to_escape);
 std::string escape_quotes(const exprt &to_format, std::size_t limit = 100);
