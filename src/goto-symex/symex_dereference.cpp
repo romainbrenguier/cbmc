@@ -36,7 +36,13 @@ void goto_symext::dereference_rec_address_of(
   else if(expr.id()==ID_if)
   {
     // the condition is not an address
-    dereference_rec(to_if_expr(expr).cond(), state, guard, false, ns);
+    dereference_rec(
+      to_if_expr(expr).cond(),
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
 
     // add to guard?
     dereference_rec_address_of(
@@ -47,7 +53,13 @@ void goto_symext::dereference_rec_address_of(
   else if(expr.id()==ID_index)
   {
     // the index is not an address
-    dereference_rec(to_index_expr(expr).index(), state, guard, false, ns);
+    dereference_rec(
+      to_index_expr(expr).index(),
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
 
     // the array _is_ an address
     dereference_rec_address_of(
@@ -57,7 +69,13 @@ void goto_symext::dereference_rec_address_of(
   {
     // give up and dereference
 
-    dereference_rec(expr, state, guard, false, ns);
+    dereference_rec(
+      expr,
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
   }
 }
 
@@ -123,7 +141,13 @@ exprt goto_symext::address_arithmetic(
 
     // there could be further dereferencing in the offset
     exprt offset=be.offset();
-    dereference_rec(offset, state, guard, false, ns);
+    dereference_rec(
+      offset,
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
 
     result=plus_exprt(result, offset);
 
@@ -159,14 +183,26 @@ exprt goto_symext::address_arithmetic(
     // just grab the pointer, but be wary of further dereferencing
     // in the pointer itself
     result=to_dereference_expr(expr).pointer();
-    dereference_rec(result, state, guard, false, ns);
+    dereference_rec(
+      result,
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
   }
   else if(expr.id()==ID_if)
   {
     if_exprt if_expr=to_if_expr(expr);
 
     // the condition is not an address
-    dereference_rec(if_expr.cond(), state, guard, false, ns);
+    dereference_rec(
+      if_expr.cond(),
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
 
     // recursive call
     if_expr.true_case()=
@@ -183,7 +219,13 @@ exprt goto_symext::address_arithmetic(
   {
     // give up, just dereference
     result=expr;
-    dereference_rec(result, state, guard, false, ns);
+    dereference_rec(
+      result,
+      state,
+      guard,
+      false,
+      ns,
+      language_mode);
 
     // turn &array into &array[0]
     if(ns.follow(result.type()).id()==ID_array && !keep_array)
@@ -248,7 +290,8 @@ void goto_symext::dereference_rec(
   statet &state,
   guardt &guard,
   const bool write,
-  namespacet &ns)
+  namespacet &ns,
+  const irep_idt &language_mode)
 {
   if(expr.id()==ID_dereference)
   {
@@ -272,7 +315,7 @@ void goto_symext::dereference_rec(
     tmp1.swap(to_dereference_expr(expr).pointer());
 
     // first make sure there are no dereferences in there
-    dereference_rec(tmp1, state, guard, false, ns);
+    dereference_rec(tmp1, state, guard, false, ns, language_mode);
 
     // we need to set up some elaborate call-backs
     symex_dereference_statet symex_dereference_state(ns, state);
@@ -319,7 +362,13 @@ void goto_symext::dereference_rec(
     tmp.add_source_location()=expr.source_location();
 
     // recursive call
-    dereference_rec(tmp, state, guard, write, ns);
+    dereference_rec(
+      tmp,
+      state,
+      guard,
+      write,
+      ns,
+      language_mode);
 
     expr.swap(tmp);
   }
@@ -360,17 +409,34 @@ void goto_symext::dereference_rec(
             to_address_of_expr(tc_op).object(),
             from_integer(0, index_type())));
 
-      dereference_rec(expr, state, guard, write, ns);
+      dereference_rec(
+        expr,
+        state,
+        guard,
+        write,
+        ns,
+        language_mode);
     }
     else
     {
-      dereference_rec(tc_op, state, guard, write, ns);
+      dereference_rec(
+        tc_op,
+        state,
+        guard,
+        write,
+        ns,
+        language_mode);
     }
   }
   else
   {
-    Forall_operands(it, expr)
-      dereference_rec(*it, state, guard, write, ns);
+    Forall_operands(it, expr)dereference_rec(
+          *it,
+          state,
+          guard,
+          write,
+          ns,
+          language_mode);
   }
 }
 
@@ -388,7 +454,13 @@ void goto_symext::dereference(
 
   // start the recursion!
   guardt guard;
-  dereference_rec(expr, state, guard, write, ns);
+  dereference_rec(
+    expr,
+    state,
+    guard,
+    write,
+    ns,
+    language_mode);
   // dereferencing may introduce new symbol_exprt
   // (like __CPROVER_memory)
   state.rename(expr, ns, goto_symex_statet::L1);
