@@ -40,7 +40,8 @@ static exprt make_auto_object(
 void goto_symext::initialize_auto_object(
   const exprt &expr,
   statet &state,
-  const namespacet &ns)
+  const namespacet &ns,
+  unsigned int &dynamic_counter)
 {
   const typet &type= ns.follow(expr.type());
 
@@ -55,7 +56,11 @@ void goto_symext::initialize_auto_object(
       member_expr.set_component_name(comp.get_name());
       member_expr.type()=comp.type();
 
-      initialize_auto_object(member_expr, state, ns);
+      initialize_auto_object(
+        member_expr,
+        state,
+        ns,
+        dynamic_counter);
     }
   }
   else if(type.id()==ID_pointer)
@@ -105,7 +110,11 @@ void goto_symext::trigger_auto_object(
         if(state.level2.current_names.find(ssa_expr.get_identifier())==
            state.level2.current_names.end())
         {
-          initialize_auto_object(expr, state, ns);
+          initialize_auto_object(
+            expr,
+            state,
+            ns,
+            dynamic_counter);
         }
       }
     }

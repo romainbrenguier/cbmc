@@ -226,7 +226,8 @@ protected:
   void initialize_auto_object(
     const exprt &,
     statet &,
-    const namespacet &ns);
+    const namespacet &ns,
+    unsigned int &dynamic_counter);
   void process_array_expr(exprt &);
   virtual void dereference(exprt &, statet &, bool write);
 
