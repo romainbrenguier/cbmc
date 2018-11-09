@@ -271,7 +271,7 @@ void goto_symext::symex_assign_symbol(
     ssa_lhs,
     ssa_rhs,
     ns,
-    info.simplify_opt,
+    simplify_opt,
     info.constant_propagation,
     info.allow_pointer_unsoundness);
 
