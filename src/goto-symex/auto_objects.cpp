@@ -19,7 +19,7 @@ Author: Daniel Kroening, kroening@kroening.com
 static exprt make_auto_object(
   const typet &type,
   goto_symext::statet &state,
-  unsigned int dynamic_counter)
+  unsigned int &dynamic_counter)
 {
   dynamic_counter++;
 
