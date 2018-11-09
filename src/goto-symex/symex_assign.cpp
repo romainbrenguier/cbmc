@@ -16,6 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/cprover_prefix.h>
 #include <util/exception_utils.h>
 #include <util/pointer_offset_size.h>
+#include <util/simplify_expr.h>
 
 #include "goto_symex_state.h"
 
@@ -229,12 +230,13 @@ static void symex_assign_rec(
 
 void goto_symext::symex_assign_symbol(
   statet &state,
-  const ssa_exprt &lhs, // L1
+  const ssa_exprt &lhs,
   const exprt &full_lhs,
   const exprt &rhs,
   guardt &guard,
   assignment_typet assignment_type,
-  const namespacet &ns)
+  const namespacet &ns,
+  bool simplify_opt)
 {
   // do not assign to L1 objects that have gone out of scope --
   // pointer dereferencing may yield such objects; parameters do not
@@ -261,7 +263,8 @@ void goto_symext::symex_assign_symbol(
   }
 
   state.rename(ssa_rhs, ns);
-  do_simplify(ssa_rhs);
+  if(simplify_opt)
+    simplify(ssa_rhs, ns);
 
   ssa_exprt ssa_lhs=lhs;
   state.assignment(

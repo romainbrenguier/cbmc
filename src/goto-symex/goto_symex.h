@@ -354,7 +354,8 @@ protected:
     const exprt &rhs,
     guardt &,
     assignment_typet,
-    const namespacet &ns);
+    const namespacet &ns,
+    bool simplify_opt);
   void symex_assign_typecast(
     statet &,
     const typecast_exprt &lhs,
