@@ -225,16 +225,18 @@ protected:
   void trigger_auto_object(const exprt &, statet &);
   void initialize_auto_object(const exprt &, statet &);
   void process_array_expr(exprt &);
-  exprt make_auto_object(const typet &, statet &);
   virtual void dereference(exprt &, statet &, bool write);
 
   void dereference_rec(
     exprt &,
+  exprt make_auto_object(
+    const typet &,
     statet &,
     guardt &,
     const bool write,
     namespacet &ns,
     const irep_idt &language_mode);
+    unsigned int dynamic_counter);
 
   void dereference_rec_address_of(
     exprt &,
