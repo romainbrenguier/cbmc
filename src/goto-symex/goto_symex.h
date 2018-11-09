@@ -227,8 +227,6 @@ protected:
   void process_array_expr(exprt &);
   virtual void dereference(exprt &, statet &, bool write);
 
-  void dereference_rec(
-    exprt &,
   void dereference_rec_address_of(
     exprt &,
     statet &,

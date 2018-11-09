@@ -23,6 +23,14 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "symex_dereference_state.h"
 
+static void dereference_rec(
+  exprt &expr,
+  goto_symext::statet &state,
+  guardt &guard,
+  const bool write,
+  namespacet &ns,
+  const irep_idt &language_mode);
+
 void goto_symext::dereference_rec_address_of(
   exprt &expr,
   statet &state,
@@ -285,9 +293,9 @@ exprt goto_symext::address_arithmetic(
   return result;
 }
 
-void goto_symext::dereference_rec(
+static void dereference_rec(
   exprt &expr,
-  statet &state,
+  goto_symext::statet &state,
   guardt &guard,
   const bool write,
   namespacet &ns,
