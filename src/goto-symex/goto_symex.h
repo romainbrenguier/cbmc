@@ -223,11 +223,6 @@ protected:
   exprt clean_expr_copy(exprt, statet &, bool write);
 
   void trigger_auto_object(const exprt &, statet &);
-  void initialize_auto_object(
-    const exprt &,
-    statet &,
-    const namespacet &ns,
-    unsigned int &dynamic_counter);
   void process_array_expr(exprt &);
   virtual void dereference(exprt &, statet &, bool write);
 

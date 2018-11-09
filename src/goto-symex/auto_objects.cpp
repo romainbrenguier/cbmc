@@ -37,9 +37,9 @@ static exprt make_auto_object(
   return symbol_exprt(symbol.name, symbol.type);
 }
 
-void goto_symext::initialize_auto_object(
+static void initialize_auto_object(
   const exprt &expr,
-  statet &state,
+  goto_symext::statet &state,
   const namespacet &ns,
   unsigned int &dynamic_counter)
 {
