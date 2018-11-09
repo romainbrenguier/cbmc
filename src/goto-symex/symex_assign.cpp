@@ -87,7 +87,14 @@ void goto_symext::symex_assign(
       assignment_type=symex_targett::assignment_typet::HIDDEN;
 
     guardt guard; // NOT the state guard!
-    symex_assign_rec(state, lhs, nil_exprt(), rhs, guard, assignment_type);
+    symex_assign_rec(
+      state,
+      lhs,
+      nil_exprt(),
+      rhs,
+      guard,
+      assignment_type,
+      ns);
   }
 }
 
@@ -131,7 +138,8 @@ void goto_symext::symex_assign_rec(
   const exprt &full_lhs,
   const exprt &rhs,
   guardt &guard,
-  assignment_typet assignment_type)
+  assignment_typet assignment_type,
+  const namespacet &ns)
 {
   if(lhs.id()==ID_symbol &&
      lhs.get_bool(ID_C_SSA_symbol))
@@ -142,7 +150,7 @@ void goto_symext::symex_assign_rec(
       state, to_index_expr(lhs), full_lhs, rhs, guard, assignment_type);
   else if(lhs.id()==ID_member)
   {
-    const typet &type=ns.follow(to_member_expr(lhs).struct_op().type());
+    const typet &type= ns.follow(to_member_expr(lhs).struct_op().type());
     if(type.id()==ID_struct)
       symex_assign_struct_member(
         state, to_member_expr(lhs), full_lhs, rhs, guard, assignment_type);
@@ -188,7 +196,13 @@ void goto_symext::symex_assign_rec(
       rhs, complex_imag_expr, to_complex_type(complex_real_expr.op().type()));
 
     symex_assign_rec(
-      state, complex_real_expr.op(), full_lhs, new_rhs, guard, assignment_type);
+      state,
+      complex_real_expr.op(),
+      full_lhs,
+      new_rhs,
+      guard,
+      assignment_type,
+      ns);
   }
   else if(lhs.id() == ID_complex_imag)
   {
@@ -200,7 +214,13 @@ void goto_symext::symex_assign_rec(
       complex_real_expr, rhs, to_complex_type(complex_imag_expr.op().type()));
 
     symex_assign_rec(
-      state, complex_imag_expr.op(), full_lhs, new_rhs, guard, assignment_type);
+      state,
+      complex_imag_expr.op(),
+      full_lhs,
+      new_rhs,
+      guard,
+      assignment_type,
+      ns);
   }
   else
     throw unsupported_operation_exceptiont(
@@ -302,7 +322,13 @@ void goto_symext::symex_assign_typecast(
   exprt new_full_lhs=add_to_lhs(full_lhs, lhs);
 
   symex_assign_rec(
-    state, lhs.op0(), new_full_lhs, rhs_typecasted, guard, assignment_type);
+    state,
+    lhs.op0(),
+    new_full_lhs,
+    rhs_typecasted,
+    guard,
+    assignment_type,
+    ns);
 }
 
 void goto_symext::symex_assign_array(
@@ -348,7 +374,13 @@ void goto_symext::symex_assign_array(
   exprt new_full_lhs=add_to_lhs(full_lhs, lhs);
 
   symex_assign_rec(
-    state, lhs_array, new_full_lhs, new_rhs, guard, assignment_type);
+    state,
+    lhs_array,
+    new_full_lhs,
+    new_rhs,
+    guard,
+    assignment_type,
+    ns);
   #endif
 }
 
@@ -419,7 +451,13 @@ void goto_symext::symex_assign_struct_member(
   exprt new_full_lhs=add_to_lhs(full_lhs, lhs);
 
   symex_assign_rec(
-    state, lhs_struct, new_full_lhs, new_rhs, guard, assignment_type);
+    state,
+    lhs_struct,
+    new_full_lhs,
+    new_rhs,
+    guard,
+    assignment_type,
+    ns);
   #endif
 }
 
@@ -443,7 +481,13 @@ void goto_symext::symex_assign_if(
   {
     guard.add(renamed_guard);
     symex_assign_rec(
-      state, lhs.true_case(), full_lhs, rhs, guard, assignment_type);
+      state,
+      lhs.true_case(),
+      full_lhs,
+      rhs,
+      guard,
+      assignment_type,
+      ns);
     guard.swap(old_guard);
   }
 
@@ -451,7 +495,13 @@ void goto_symext::symex_assign_if(
   {
     guard.add(not_exprt(renamed_guard));
     symex_assign_rec(
-      state, lhs.false_case(), full_lhs, rhs, guard, assignment_type);
+      state,
+      lhs.false_case(),
+      full_lhs,
+      rhs,
+      guard,
+      assignment_type,
+      ns);
     guard.swap(old_guard);
   }
 }
@@ -482,7 +532,13 @@ void goto_symext::symex_assign_byte_extract(
   exprt new_full_lhs=add_to_lhs(full_lhs, lhs);
 
   symex_assign_rec(
-    state, lhs.op(), new_full_lhs, new_rhs, guard, assignment_type);
+    state,
+    lhs.op(),
+    new_full_lhs,
+    new_rhs,
+    guard,
+    assignment_type,
+    ns);
 }
 
 exprt goto_symext::do_simplify_copy(exprt e)

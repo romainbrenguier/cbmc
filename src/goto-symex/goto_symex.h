@@ -345,7 +345,8 @@ protected:
     const exprt &full_lhs,
     const exprt &rhs,
     guardt &,
-    assignment_typet);
+    assignment_typet,
+    const namespacet &ns);
   void symex_assign_symbol(
     statet &,
     const ssa_exprt &lhs,
