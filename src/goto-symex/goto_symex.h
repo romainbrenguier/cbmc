@@ -392,8 +392,6 @@ protected:
     guardt &,
     assignment_typet);
 
-  static exprt add_to_lhs(const exprt &lhs, const exprt &what);
-
   virtual void symex_gcc_builtin_va_arg_next(
     statet &, const exprt &lhs, const side_effect_exprt &);
   virtual void symex_allocate(

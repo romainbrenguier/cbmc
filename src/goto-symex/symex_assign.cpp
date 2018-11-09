@@ -99,7 +99,7 @@ void goto_symext::symex_assign(
   }
 }
 
-exprt goto_symext::add_to_lhs(
+static exprt add_to_lhs(
   const exprt &lhs,
   const exprt &what)
 {
