@@ -93,7 +93,9 @@ void goto_symext::symex_start_thread(statet &state)
       guard,
       symex_targett::assignment_typet::HIDDEN,
       ns,
-      info.simplify_opt);
+      info.simplify_opt,
+      info.constant_propagation,
+      info.allow_pointer_unsoundness);
     state.record_events=record_events;
   }
 
@@ -132,6 +134,8 @@ void goto_symext::symex_start_thread(statet &state)
       guard,
       symex_targett::assignment_typet::HIDDEN,
       ns,
-      info.simplify_opt);
+      info.simplify_opt,
+      info.constant_propagation,
+      info.allow_pointer_unsoundness);
   }
 }

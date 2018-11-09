@@ -236,7 +236,9 @@ void goto_symext::symex_assign_symbol(
   guardt &guard,
   assignment_typet assignment_type,
   const namespacet &ns,
-  bool simplify_opt)
+  bool simplify_opt,
+  const bool constant_propagation,
+  const bool allow_pointer_unsoundness)
 {
   // do not assign to L1 objects that have gone out of scope --
   // pointer dereferencing may yield such objects; parameters do not
@@ -272,8 +274,8 @@ void goto_symext::symex_assign_symbol(
     ssa_rhs,
     ns,
     simplify_opt,
-    info.constant_propagation,
-    info.allow_pointer_unsoundness);
+    constant_propagation,
+    allow_pointer_unsoundness);
 
   exprt ssa_full_lhs=full_lhs;
   ssa_full_lhs=add_to_lhs(ssa_full_lhs, ssa_lhs);

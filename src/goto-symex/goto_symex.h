@@ -355,7 +355,9 @@ protected:
     guardt &,
     assignment_typet,
     const namespacet &ns,
-    bool simplify_opt);
+    bool simplify_opt,
+    const bool constant_propagation,
+    const bool allow_pointer_unsoundness);
   void symex_assign_typecast(
     statet &,
     const typecast_exprt &lhs,
