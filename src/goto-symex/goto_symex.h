@@ -353,7 +353,8 @@ protected:
     const exprt &full_lhs,
     const exprt &rhs,
     guardt &,
-    assignment_typet);
+    assignment_typet,
+    const namespacet &ns);
   void symex_assign_typecast(
     statet &,
     const typecast_exprt &lhs,

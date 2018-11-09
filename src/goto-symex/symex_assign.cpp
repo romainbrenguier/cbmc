@@ -132,13 +132,13 @@ exprt goto_symext::add_to_lhs(
   return new_lhs;
 }
 
-void goto_symext::symex_assign_rec(
-  statet &state,
+static void symex_assign_rec(
+  goto_symext::statet &state,
   const exprt &lhs,
   const exprt &full_lhs,
   const exprt &rhs,
   guardt &guard,
-  assignment_typet assignment_type,
+  goto_symext::assignment_typet assignment_type,
   const namespacet &ns)
 {
   if(lhs.id()==ID_symbol &&
@@ -233,7 +233,8 @@ void goto_symext::symex_assign_symbol(
   const exprt &full_lhs,
   const exprt &rhs,
   guardt &guard,
-  assignment_typet assignment_type)
+  assignment_typet assignment_type,
+  const namespacet &ns)
 {
   // do not assign to L1 objects that have gone out of scope --
   // pointer dereferencing may yield such objects; parameters do not
