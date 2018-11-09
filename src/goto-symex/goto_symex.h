@@ -229,15 +229,6 @@ protected:
 
   void dereference_rec(
     exprt &,
-  exprt make_auto_object(
-    const typet &,
-    statet &,
-    guardt &,
-    const bool write,
-    namespacet &ns,
-    const irep_idt &language_mode);
-    unsigned int dynamic_counter);
-
   void dereference_rec_address_of(
     exprt &,
     statet &,

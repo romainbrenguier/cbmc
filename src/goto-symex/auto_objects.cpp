@@ -16,9 +16,9 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/symbol_table.h>
 #include <util/std_expr.h>
 
-exprt goto_symext::make_auto_object(
+static exprt make_auto_object(
   const typet &type,
-  statet &state,
+  goto_symext::statet &state,
   unsigned int dynamic_counter)
 {
   dynamic_counter++;
