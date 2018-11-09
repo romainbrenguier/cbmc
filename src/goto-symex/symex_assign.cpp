@@ -238,7 +238,9 @@ void goto_symext::symex_assign_symbol(
   const namespacet &ns,
   bool simplify_opt,
   const bool constant_propagation,
-  const bool allow_pointer_unsoundness)
+  const bool allow_pointer_unsoundness,
+  const messaget &log,
+  symex_target_equationt &target)
 {
   // do not assign to L1 objects that have gone out of scope --
   // pointer dereferencing may yield such objects; parameters do not

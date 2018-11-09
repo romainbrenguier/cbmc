@@ -357,7 +357,9 @@ protected:
     const namespacet &ns,
     bool simplify_opt,
     const bool constant_propagation,
-    const bool allow_pointer_unsoundness);
+    const bool allow_pointer_unsoundness,
+    const messaget &log,
+    symex_target_equationt &target);
   void symex_assign_typecast(
     statet &,
     const typecast_exprt &lhs,
