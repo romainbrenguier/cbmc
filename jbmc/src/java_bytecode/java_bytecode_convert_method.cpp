@@ -2236,11 +2236,12 @@ void java_bytecode_convert_methodt::convert_invoke(
 
   if(!use_this)
   {
-    std::cout << "java_bytecode_convert_method.cpp:2235 "
-              << arg0.get(ID_C_class) << std::endl;
-    codet clinit_call = code_skipt();
+    codet clinit_call_ignored = get_clinit_call(
+      arg0.get(ID_C_class), symbol_table, needed_lazy_methods);
+#if 0
     if(clinit_call.get_statement() != ID_skip)
       c = code_blockt({clinit_call, c});
+#endif
   }
 }
 
@@ -2518,11 +2519,16 @@ void java_bytecode_convert_methodt::convert_new(
   const exprt tmp = tmp_variable("new", ref_type);
   c = code_assignt(tmp, java_new_expr);
   c.add_source_location() = location;
-  codet clinit_call = code_skipt();
+  codet clinit_call_ignored = get_clinit_call(
+    to_symbol_type(arg0.type()).get_identifier(),
+    symbol_table,
+    needed_lazy_methods);
+#if 0
   if(clinit_call.get_statement() != ID_skip)
   {
     c = code_blockt({clinit_call, c});
   }
+#endif
   results[0] = tmp;
 }
 
@@ -2544,9 +2550,14 @@ code_blockt java_bytecode_convert_methodt::convert_putstatic(
   // Note this initializer call deliberately inits the class used to make
   // the reference, which may be a child of the class that actually defines
   // the field.
-  codet clinit_call = code_skipt();
+  codet clinit_call_ignored = get_clinit_call(
+    arg0.get_string(ID_class),
+    symbol_table,
+    needed_lazy_methods);
+#if 0
   if(clinit_call.get_statement() != ID_skip)
     block.add(clinit_call);
+#endif
 
   save_stack_entries(
     "stack_static_field",
@@ -2604,10 +2615,16 @@ void java_bytecode_convert_methodt::convert_getstatic(
   // Note this initializer call deliberately inits the class used to make
   // the reference, which may be a child of the class that actually defines
   // the field.
-  codet clinit_call = code_skipt();
+  codet clinit_call_ignored = get_clinit_call(
+    arg0.get_string(ID_class),
+    symbol_table,
+    needed_lazy_methods);
+#if 0
   if(clinit_call.get_statement() != ID_skip)
     c = clinit_call;
-  else if(is_assertions_disabled_field)
+  else
+#endif
+  if(is_assertions_disabled_field)
   {
     // set $assertionDisabled to false
     c = code_assignt(symbol_expr, false_exprt());
