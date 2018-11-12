@@ -23,7 +23,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <json/json_parser.h>
 
 #include <goto-programs/class_hierarchy.h>
-#include <iostream>
 
 #include "java_bytecode_concurrency_instrumentation.h"
 #include "java_bytecode_convert_class.h"
@@ -861,8 +860,6 @@ bool java_bytecode_languaget::generate_support_functions(
     get_pointer_type_selector(),
     string_refinement_enabled,
     methods_to_load);
-  for(const auto &i : methods_to_load)
-    std::cout << "to load : " << i << std::endl;
   extra_methods.push_back([methods_to_load](const symbol_tablet &){
     return methods_to_load;});
   return entry_point;

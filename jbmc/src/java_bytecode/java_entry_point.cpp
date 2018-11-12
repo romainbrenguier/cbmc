@@ -25,7 +25,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_bytecode_convert_method_class.h"
 #include <util/fresh_symbol.h>
 #include <util/nondet.h>
-#include <iostream>
 
 #define JAVA_MAIN_METHOD "main:([Ljava/lang/String;)V"
 
