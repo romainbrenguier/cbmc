@@ -968,8 +968,9 @@ static void gather_symbol_live_ranges(
 codet java_bytecode_convert_methodt::get_clinit_call(
   const irep_idt &classname)
 {
-  return code_skipt();
 #if 0
+  return code_skipt();
+#endif
   auto findit = symbol_table.symbols.find(clinit_wrapper_name(classname));
   if(findit == symbol_table.symbols.end())
     return code_skipt();
@@ -980,7 +981,6 @@ codet java_bytecode_convert_methodt::get_clinit_call(
       needed_lazy_methods->add_needed_method(findit->second.name);
     return ret;
   }
-#endif
 }
 
 static std::size_t get_bytecode_type_width(const typet &ty)
@@ -2225,7 +2225,7 @@ void java_bytecode_convert_methodt::convert_invoke(
 
   if(!use_this)
   {
-    codet clinit_call = get_clinit_call(arg0.get(ID_C_class));
+    codet clinit_call = code_skipt();
     if(clinit_call.get_statement() != ID_skip)
       c = code_blockt({clinit_call, c});
   }
@@ -2505,8 +2505,7 @@ void java_bytecode_convert_methodt::convert_new(
   const exprt tmp = tmp_variable("new", ref_type);
   c = code_assignt(tmp, java_new_expr);
   c.add_source_location() = location;
-  codet clinit_call =
-    get_clinit_call(to_symbol_type(arg0.type()).get_identifier());
+  codet clinit_call = code_skipt();
   if(clinit_call.get_statement() != ID_skip)
   {
     c = code_blockt({clinit_call, c});
@@ -2532,7 +2531,7 @@ code_blockt java_bytecode_convert_methodt::convert_putstatic(
   // Note this initializer call deliberately inits the class used to make
   // the reference, which may be a child of the class that actually defines
   // the field.
-  codet clinit_call = get_clinit_call(arg0.get_string(ID_class));
+  codet clinit_call = code_skipt();
   if(clinit_call.get_statement() != ID_skip)
     block.add(clinit_call);
 
@@ -2592,7 +2591,7 @@ void java_bytecode_convert_methodt::convert_getstatic(
   // Note this initializer call deliberately inits the class used to make
   // the reference, which may be a child of the class that actually defines
   // the field.
-  codet clinit_call = get_clinit_call(arg0.get_string(ID_class));
+  codet clinit_call = code_skipt();
   if(clinit_call.get_statement() != ID_skip)
     c = clinit_call;
   else if(is_assertions_disabled_field)
