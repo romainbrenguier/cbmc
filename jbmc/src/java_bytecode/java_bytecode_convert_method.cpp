@@ -47,6 +47,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <functional>
 #include <unordered_set>
 #include <regex>
+#include <iostream>
 
 /// Given a string of the format '?blah?', will return true when compared
 /// against a string that matches appart from any characters that are '?'
@@ -975,9 +976,17 @@ codet get_clinit_call(
 #endif
   auto findit = symbol_table.symbols.find(clinit_wrapper_name(classname));
   if(findit == symbol_table.symbols.end())
+  {
+    std::cout << "java_bytecode_convert_method.cpp:979 not found: "
+              << clinit_wrapper_name(classname)
+              << std::endl;
     return code_skipt();
+  }
   else
   {
+    std::cout << "java_bytecode_convert_method.cpp:979 FOUND: "
+              << clinit_wrapper_name(classname)
+              << std::endl;
     const code_function_callt ret(findit->second.symbol_expr());
     if(lazy_methods)
       lazy_methods->add_needed_method(findit->second.name);
@@ -2227,6 +2236,8 @@ void java_bytecode_convert_methodt::convert_invoke(
 
   if(!use_this)
   {
+    std::cout << "java_bytecode_convert_method.cpp:2235 "
+              << arg0.get(ID_C_class) << std::endl;
     codet clinit_call = code_skipt();
     if(clinit_call.get_statement() != ID_skip)
       c = code_blockt({clinit_call, c});
