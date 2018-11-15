@@ -270,11 +270,10 @@ void goto_symext::symex_assign_symbol(
 
   log.conditional_output(
     log.debug(),
-    [this, &ssa_lhs](messaget::mstreamt &mstream) {
-      mstream << "Assignment to " << ssa_lhs.get_identifier()
-              << " ["
-              << pointer_offset_bits(ssa_lhs.type(), ns).value_or(0)
-              << " bits]"
+    [&](messaget::mstreamt &mstream) {
+      mstream << ",\n  {\n     \"symex_assign.cpp\": 274,\n"
+              << "     lhs: " << ssa_lhs.get_identifier() << ",\n"
+              << "     rhs: \"" << escape_quotes(rhs) << "\"\n  }"
               << messaget::eom;
     });
 
