@@ -19,6 +19,33 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_expr.h>
 
 #include <analyses/dirty.h>
+#include <iostream>
+#include <util/format_expr.h>
+#include <iomanip>
+#include <solvers/prop/bdd_expr.h>
+
+std::string escape_quotes(const std::string &to_escape)
+{
+  std::ostringstream escaped;
+  for(auto &ch : to_escape)
+  {
+    if(ch == '"' || ch == '\\')
+      escaped << "\\" << ch;
+    else
+      escaped << ch;
+  }
+  return escaped.str();
+}
+
+std::string escape_quotes(const exprt &to_format, std::size_t limit)
+{
+  std::ostringstream to_escape;
+  to_escape << format(to_format);
+  const std::string in_quotes = to_escape.str();
+  if(in_quotes.size() < limit)
+    return escape_quotes(to_escape.str());
+  return escape_quotes(in_quotes.substr(0, limit - 3) + "...");
+}
 
 void goto_symext::symex_goto(statet &state)
 {
@@ -255,9 +282,11 @@ void goto_symext::symex_goto(statet &state)
 
       log.conditional_output(
         log.debug(),
-        [this, &new_lhs](messaget::mstreamt &mstream) {
-          mstream << "Assignment to " << new_lhs.get_identifier()
-                  << " [" << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
+        [&](messaget::mstreamt &mstream) {
+          mstream << ",\n  { \"symex_goto.cpp:296\": {"
+                  << "\n    { lhs: " << new_lhs.get_identifier() << "}\n"
+                  << "      rhs:  \"" << escape_quotes(new_rhs)
+                  << "\"}\n  }"
                   << messaget::eom;
         });
 
@@ -489,9 +518,11 @@ void goto_symext::phi_function(
 
     log.conditional_output(
       log.debug(),
-      [this, &new_lhs](messaget::mstreamt &mstream) {
-        mstream << "Assignment to " << new_lhs.get_identifier()
-                << " [" << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
+      [&](messaget::mstreamt &mstream) {
+        mstream << ",\n  {\n    \"symex_goto.cpp\": 520,\n"
+                << "    lhs: \"" << new_lhs.get_identifier()
+                << "\",\n"
+                << "    rhs: \"" << escape_quotes(rhs, 100) << "\"\n  }"
                 << messaget::eom;
       });
 
