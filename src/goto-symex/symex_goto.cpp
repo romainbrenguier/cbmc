@@ -83,6 +83,20 @@ void goto_symext::symex_goto(statet &state)
     instruction.get_target();
 
   bool forward=!instruction.is_backwards_goto();
+  log.conditional_output(
+    log.debug(),
+    [&](messaget::mstreamt &mstream) {
+      std::ostringstream string_stream;
+      string_stream << format(new_guard);
+      mstream << ",\n  {\n    \"symex_goto.cpp\" : 81,\n"
+              << "\n   \"function\": \""
+              << state.source.pc->source_location.get_function()
+              << "\",\n    \"line number\": \""
+              << state.source.pc->source_location.get_line()
+              << "\",\n    \"new_guard\": \""
+              << escape_quotes(string_stream.str()) << "\"\n  }"
+              << messaget::eom;
+    });
 
   if(!forward) // backwards?
   {
@@ -285,7 +299,7 @@ void goto_symext::symex_goto(statet &state)
         [&](messaget::mstreamt &mstream) {
           mstream << ",\n  { \"symex_goto.cpp:296\": {"
                   << "\n    { lhs: " << new_lhs.get_identifier() << "}\n"
-                  << "      rhs:  \"" << escape_quotes(new_rhs)
+                  << "      rhs:  \"" << escape_quotes(new_rhs, 100)
                   << "\"}\n  }"
                   << messaget::eom;
         });
