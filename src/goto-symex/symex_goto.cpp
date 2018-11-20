@@ -19,6 +19,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_expr.h>
 
 #include <analyses/dirty.h>
+#include <util/stream.h>
 
 void goto_symext::symex_goto(statet &state)
 {
@@ -382,15 +383,40 @@ void goto_symext::phi_function(
   const statet::goto_statet &goto_state,
   statet &dest_state)
 {
+  auto ssa_of_current_name =
+    [&](const std::pair<irep_idt, std::pair<ssa_exprt, unsigned> > &pair){
+      return pair.second.first;
+    };
+  /*
+  auto stream_goto_state_names = stream(
+    std::shared_ptr<const goto_symex_statet::renaming_levelt::current_namest>(
+      &goto_state.level2_current_names))*/
+  auto stream_goto_state_names =
+    stream(
+      goto_state.level2_current_names.begin(),
+      goto_state.level2_current_names.end())
+    .map<const ssa_exprt>(ssa_of_current_name);
+
+ /*
+  * auto stream_dest_state_names = stream(
+    std::shared_ptr<const goto_symex_statet::renaming_levelt::current_namest>(
+      &dest_state.level2.current_names))
+  */
+  auto stream_dest_state_names =
+    stream(
+      dest_state.level2.current_names.begin(),
+      dest_state.level2.current_names.end())
+    .filter(
+      [&](const std::pair<irep_idt, std::pair<ssa_exprt, unsigned> > &pair){
+        return goto_state.level2_current_names.count(pair.first) == 0; })
+    .map<const ssa_exprt>(ssa_of_current_name);
+
   // go over all variables to see what changed
-  std::unordered_set<ssa_exprt, irep_hash> variables;
-
-  goto_state.level2_get_variables(variables);
-  dest_state.level2.get_variables(variables);
-
+  auto stream = concat(
+    std::move(stream_goto_state_names), std::move(stream_dest_state_names));
   guardt diff_guard;
 
-  if(!variables.empty())
+  if(stream.peek() != nullptr)
   {
     diff_guard=goto_state.guard;
 
@@ -398,10 +424,7 @@ void goto_symext::phi_function(
     diff_guard-=dest_state.guard;
   }
 
-  for(std::unordered_set<ssa_exprt, irep_hash>::const_iterator
-      it=variables.begin();
-      it!=variables.end();
-      it++)
+  for(auto it = stream.peek(); it != nullptr; it = next(stream))
   {
     const irep_idt l1_identifier=it->get_identifier();
     const irep_idt &obj_identifier=it->get_object_name();
