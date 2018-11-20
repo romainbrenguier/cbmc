@@ -119,15 +119,12 @@ streamt<T> make_stream(ContainerType container)
   return stream(std::make_shared<ContainerType>(std::move(container)));
 }
 
-template<typename ContainerType, typename T = typename ContainerType::value_type>
-class container_reference_stream_infot : public stream_infot<T>
+template<typename IteratorType, typename T = typename IteratorType::value_type>
+class iterator_stream_infot : public stream_infot<T>
 {
 public:
-  explicit container_reference_stream_infot(
-    ContainerType &container)
-    : container(container),
-      it(this->container.begin()),
-      end(this->container.end())
+  explicit iterator_stream_infot(IteratorType _begin, IteratorType _end)
+    : it(_begin), end(_end)
   {
   }
 
@@ -143,20 +140,19 @@ public:
   }
 
 private:
-  const ContainerType &container;
-  decltype(container.begin()) it;
-  decltype(container.end()) end;
+  IteratorType it;
+  IteratorType end;
 };
 
 /// Create a stream using a reference to a container
 /// Warning: this is not safe to use if the container can be destroied while
 /// the stream object still exists
-template<typename ContainerType, typename T = typename ContainerType::value_type>
-streamt<T> stream_reference(ContainerType &container)
+template<typename IteratorType, typename T = typename IteratorType::value_type>
+streamt<T> stream(IteratorType begin, IteratorType end)
 {
   std::shared_ptr<stream_infot<T>> stream_info =
-    std::make_shared<container_reference_stream_infot<ContainerType, T>>(
-      container);
+    std::make_shared<iterator_stream_infot<IteratorType, T>>(
+      begin, end);
   return streamt<T>(stream_info);
 }
 
