@@ -168,7 +168,8 @@ public:
 
   // gotos
   typedef std::list<goto_statet> goto_state_listt;
-  typedef std::map<goto_programt::const_targett, goto_state_listt>
+  typedef std::unordered_map<goto_programt::const_targett, goto_state_listt,
+    const_target_hash>
     goto_state_mapt;
 
   // stack frames -- these are used for function calls and
