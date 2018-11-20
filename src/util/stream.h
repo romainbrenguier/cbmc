@@ -259,35 +259,29 @@ template<typename T>
 struct concat_stream_infot : public stream_infot<T>
 {
 private:
-  std::shared_ptr<streamt<T>> first_stream;
+  std::shared_ptr<streamt<T>> current_stream;
   std::shared_ptr<streamt<T>> second_stream;
-  bool at_first = true;
 
 public:
   concat_stream_infot(
     std::shared_ptr<streamt<T>> first,
     std::shared_ptr<streamt<T>> second)
-    : first_stream(std::move(first)), second_stream(std::move(second))
+    : current_stream(std::move(first)), second_stream(std::move(second))
   {
-    if(is_empty(*first_stream))
-      at_first = false;
+    if(is_empty(*current_stream))
+      current_stream = second_stream;
   }
 
   const T * peek() const override
   {
-    return at_first ? first_stream->peek() : second_stream->peek();
+    return current_stream->peek();
   }
 
   void junk() override
   {
-    if(at_first)
-    {
-      if(next(*first_stream) == nullptr)
-        at_first = false;
-    }
-    else
-      second_stream->junk();
-  };
+    if(next(*current_stream) == nullptr)
+      current_stream = second_stream;
+  }
 };
 
 template <typename T>
