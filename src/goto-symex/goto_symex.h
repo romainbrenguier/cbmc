@@ -16,6 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/message.h>
 
 #include <goto-programs/goto_functions.h>
+#include <chrono>
 
 #include "goto_symex_state.h"
 #include "path_storage.h"
@@ -58,13 +59,16 @@ class goto_symext
 public:
   typedef goto_symex_statet statet;
 
+  std::unordered_map<std::string,
+    std::chrono::time_point<std::chrono::steady_clock>> start_time;
   goto_symext(
     message_handlert &mh,
     const symbol_tablet &outer_symbol_table,
     symex_target_equationt &_target,
     const optionst &options,
     path_storaget &path_storage)
-    : should_pause_symex(false),
+    : start_time(),
+      should_pause_symex(false),
       max_depth(options.get_unsigned_int_option("depth")),
       doing_path_exploration(options.is_set("paths")),
       allow_pointer_unsoundness(
@@ -90,7 +94,20 @@ public:
   {
   }
 
-  virtual ~goto_symext() = default;
+  double reset_start_time(const std::string &chrono_id)
+  {
+    auto now = std::chrono::steady_clock::now();
+    auto insert_result = start_time.emplace(chrono_id, now);
+    auto result =
+      std::chrono::duration<double>(now - insert_result.first->second);
+    auto &t = insert_result.first->second;
+    t = now;
+    return result.count();
+  }
+
+  virtual ~goto_symext() {
+
+  }
 
   typedef
     std::function<const goto_functionst::goto_functiont &(const irep_idt &)>
