@@ -344,6 +344,7 @@ void goto_symext::symex_goto(statet &state)
 
 void goto_symext::merge_gotos(statet &state)
 {
+  std::cout << "symex_goto.cpp:348 " << reset_start_time("merge_gotos") << std::endl;
   statet::framet &frame=state.top();
 
   // first, see if this is a target at all
@@ -351,7 +352,10 @@ void goto_symext::merge_gotos(statet &state)
     frame.goto_state_map.find(state.source.pc);
 
   if(state_map_it==frame.goto_state_map.end())
+  {
+    std::cout << "symex_goto.cpp:357 " << reset_start_time("merge_gotos") << std::endl;
     return; // nothing to do
+  }
 
   // we need to merge
   statet::goto_state_listt &state_list=state_map_it->second;
@@ -364,12 +368,15 @@ void goto_symext::merge_gotos(statet &state)
 
   // clean up to save some memory
   frame.goto_state_map.erase(state_map_it);
+  std::cout << "symex_goto.cpp:372 " << reset_start_time("merge_gotos") << std::endl;
 }
 
 void goto_symext::merge_goto(
   const statet::goto_statet &goto_state,
   statet &state)
 {
+  std::cout << "symex_goto.cpp:376 merge1 " << reset_start_time("merge1") << std::endl;
+
   // check atomic section
   if(state.atomic_section_id != goto_state.atomic_section_id)
     throw incorrect_goto_program_exceptiont(
@@ -378,14 +385,17 @@ void goto_symext::merge_goto(
 
   // do SSA phi functions
   phi_function(goto_state, state);
+  std::cout << "symex_goto.cpp:386 merge1 " << reset_start_time("merge1") << std::endl;
 
   merge_value_sets(goto_state, state);
+//  std::cout << "symex_goto.cpp:389 merge1 " << reset_start_time("merge1") << std::endl;
 
   // adjust guard
   state.guard|=goto_state.guard;
 
   // adjust depth
   state.depth=std::min(state.depth, goto_state.depth);
+//  std::cout << "symex_goto.cpp:396 merge1 " << reset_start_time("merge1") << std::endl;
 }
 
 void goto_symext::merge_value_sets(
@@ -405,6 +415,7 @@ void goto_symext::phi_function(
   const statet::goto_statet &goto_state,
   statet &dest_state)
 {
+  std::cout << "symex_goto.cpp:416 phi_function " << std::fixed << std::setprecision(6) << reset_start_time("phi_function") << std::endl;
   auto ssa_of_current_name =
     [&](const std::pair<irep_idt, std::pair<ssa_exprt, unsigned>> &pair) {
       return pair.second.first;
@@ -535,6 +546,7 @@ void goto_symext::phi_function(
       dest_state.source,
       symex_targett::assignment_typet::PHI);
   }
+  std::cout << "symex_goto.cpp:541 phi_function " << reset_start_time("phi_function") << std::endl;
 }
 
 void goto_symext::loop_bound_exceeded(

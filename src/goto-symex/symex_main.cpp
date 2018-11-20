@@ -21,6 +21,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/symbol_table.h>
 
 #include <analyses/dirty.h>
+#include <iostream>
 
 void symex_transition(
   goto_symext::statet &state,
@@ -232,6 +233,7 @@ void goto_symext::symex_with_state(
   symex_threaded_step(state, get_goto_function);
   if(should_pause_symex)
     return;
+//  std::cout << "symex_main.cpp:218 " << std::endl;
   while(!state.call_stack().empty())
   {
     state.has_saved_jump_target = false;
@@ -240,6 +242,7 @@ void goto_symext::symex_with_state(
     if(should_pause_symex)
       return;
   }
+//  std::cout << "symex_main.cpp:227 " << std::endl;
 
   // Clients may need to construct a namespace with both the names in
   // the original goto-program and the names generated during symbolic
@@ -317,6 +320,7 @@ void goto_symext::symex_step(
 
   const goto_programt::instructiont &instruction=*state.source.pc;
 
+  // std::cout << "symex_main.cpp:311 " << reset_start_time("symex_step") << std::endl;
   if(!doing_path_exploration)
     merge_gotos(state);
 
@@ -329,12 +333,14 @@ void goto_symext::symex_step(
   switch(instruction.type)
   {
   case SKIP:
+    // std::cout << "symex_main.cpp:324 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
       target.location(state.guard.as_expr(), state.source);
     symex_transition(state);
     break;
 
   case END_FUNCTION:
+    // std::cout << "symex_main.cpp:331 " << reset_start_time("symex_step") << std::endl;
     // do even if state.guard.is_false() to clear out frame created
     // in symex_start_thread
     symex_end_of_function(state);
@@ -342,16 +348,19 @@ void goto_symext::symex_step(
     break;
 
   case LOCATION:
+    // std::cout << "symex_main.cpp:338 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
       target.location(state.guard.as_expr(), state.source);
     symex_transition(state);
     break;
 
   case GOTO:
+//    std::cout << "symex_main.cpp:345 " << reset_start_time("symex_step") << std::endl;
     symex_goto(state);
     break;
 
   case ASSUME:
+//    std::cout << "symex_main.cpp:351 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
     {
       exprt tmp=instruction.guard;
@@ -364,6 +373,7 @@ void goto_symext::symex_step(
     break;
 
   case ASSERT:
+//    std::cout << "symex_main.cpp:364 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
     {
       std::string msg=id2string(state.source.pc->source_location.get_comment());
@@ -378,6 +388,7 @@ void goto_symext::symex_step(
     break;
 
   case RETURN:
+//    std::cout << "symex_main.cpp:379 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
       return_assignment(state);
 
@@ -385,6 +396,7 @@ void goto_symext::symex_step(
     break;
 
   case ASSIGN:
+//    std::cout << "symex_main.cpp:387 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
       symex_assign(state, to_code_assign(instruction.code));
 
@@ -392,6 +404,7 @@ void goto_symext::symex_step(
     break;
 
   case FUNCTION_CALL:
+//    std::cout << "symex_main.cpp:395 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
     {
       code_function_callt deref_code=
@@ -412,6 +425,7 @@ void goto_symext::symex_step(
     break;
 
   case OTHER:
+//    std::cout << "symex_main.cpp:415 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
       symex_other(state);
 
@@ -419,6 +433,7 @@ void goto_symext::symex_step(
     break;
 
   case DECL:
+//    std::cout << "symex_main.cpp:424 " << reset_start_time("symex_step") << std::endl;
     if(!state.guard.is_false())
       symex_decl(state);
 
@@ -426,16 +441,19 @@ void goto_symext::symex_step(
     break;
 
   case DEAD:
+//    std::cout << "symex_main.cpp:432 " << reset_start_time("symex_step") << std::endl;
     symex_dead(state);
     symex_transition(state);
     break;
 
   case START_THREAD:
+//    std::cout << "symex_main.cpp:4?? " << reset_start_time("symex_step") << std::endl;
     symex_start_thread(state);
     symex_transition(state);
     break;
 
   case END_THREAD:
+//    std::cout << "symex_main.cpp:4?? " << reset_start_time("symex_step") << std::endl;
     // behaves like assume(0);
     if(!state.guard.is_false())
       state.guard.add(false_exprt());
@@ -443,21 +461,25 @@ void goto_symext::symex_step(
     break;
 
   case ATOMIC_BEGIN:
+//    std::cout << "symex_main.cpp:4?? " << reset_start_time("symex_step") << std::endl;
     symex_atomic_begin(state);
     symex_transition(state);
     break;
 
   case ATOMIC_END:
+//    std::cout << "symex_main.cpp:4?? " << reset_start_time("symex_step") << std::endl;
     symex_atomic_end(state);
     symex_transition(state);
     break;
 
   case CATCH:
+//    std::cout << "symex_main.cpp:4?? " << reset_start_time("symex_step") << std::endl;
     symex_catch(state);
     symex_transition(state);
     break;
 
   case THROW:
+//    std::cout << "symex_main.cpp:4?? " << reset_start_time("symex_step") << std::endl;
     symex_throw(state);
     symex_transition(state);
     break;
