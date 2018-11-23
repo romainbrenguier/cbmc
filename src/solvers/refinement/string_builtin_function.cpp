@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <iostream>
 
 #include "string_constraint_generator.h"
 
@@ -197,7 +198,12 @@ string_constraintst string_concat_char_builtin_functiont::constraints(
   string_constraint_generatort &generator) const
 {
   string_constraintst constraints;
+  PRECONDITION(input.is_not_nil());
+  PRECONDITION(result.is_not_nil());
+  PRECONDITION(character.is_not_nil());
+  std::cout << "string_builtin_function.cpp:204" << std::endl;
   constraints.existential.push_back(length_constraint());
+  std::cout << "exist: " << constraints.existential.back().pretty() << std::endl;
   constraints.universal.push_back([&] {
     const symbol_exprt idx =
       generator.fresh_symbol("QA_index_concat_char", result.length().type());
@@ -207,8 +213,12 @@ string_constraintst string_concat_char_builtin_functiont::constraints(
   }());
   constraints.existential.push_back(
     equal_exprt(result[input.length()], character));
+  std::cout << "exist: " << constraints.existential.back().pretty() << std::endl;
   constraints.existential.push_back(
     equal_exprt(return_code, from_integer(0, return_code.type())));
+  std::cout << "exist: " << constraints.existential.back().pretty() << std::endl;
+
+  std::cout << "univ: " << to_string(constraints.universal.back()) << std::endl;
   return constraints;
 }
 

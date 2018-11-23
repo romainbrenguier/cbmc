@@ -130,6 +130,7 @@ public:
   {
     PRECONDITION(fun_args.size() == 4);
     character = fun_args[3];
+    CHECK_RETURN(result != nil_exprt());
   }
 
   optionalt<exprt>
