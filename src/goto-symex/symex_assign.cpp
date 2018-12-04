@@ -436,7 +436,7 @@ void goto_symext::symex_assign_if(
 {
   // we have (c?a:b)=e;
 
-  guardt old_guard=guard;
+  guardt copy=guard;
 
   exprt renamed_guard=lhs.cond();
   state.rename(renamed_guard, ns);
@@ -444,18 +444,16 @@ void goto_symext::symex_assign_if(
 
   if(!renamed_guard.is_false())
   {
-    guard.add(renamed_guard);
+    copy.add(renamed_guard);
     symex_assign_rec(
-      state, lhs.true_case(), full_lhs, rhs, guard, assignment_type);
-    guard.swap(old_guard);
+      state, lhs.true_case(), full_lhs, rhs, copy, assignment_type);
   }
 
   if(!renamed_guard.is_true())
   {
-    guard.add(not_exprt(renamed_guard));
+    copy.add(not_exprt(renamed_guard));
     symex_assign_rec(
-      state, lhs.false_case(), full_lhs, rhs, guard, assignment_type);
-    guard.swap(old_guard);
+      state, lhs.false_case(), full_lhs, rhs, copy, assignment_type);
   }
 }
 
