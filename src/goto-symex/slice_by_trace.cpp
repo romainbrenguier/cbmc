@@ -504,7 +504,6 @@ void symex_slice_by_tracet::assign_merges(
     merge_sym.set_level_2(merge_count);
     merge_count--;
     guardt t_guard;
-    t_guard.make_true();
     symex_targett::sourcet empty_source;
 
     exprt merge_copy(*i);
