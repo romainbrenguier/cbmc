@@ -401,7 +401,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
       {
         guardt g = guard_in_list;
         g-=guard;
-        if(g.is_true())
+        if(is_true(g))
           // there has already been a write to l1_identifier within
           // this atomic section under the same guard, or a guard
           // that implies the current one
@@ -426,7 +426,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
     {
       guardt g=*it;
       g-=guard;
-      if(g.is_true())
+      if(is_true(g))
         // there has already been a read l1_identifier within
         // this atomic section under the same guard, or a guard
         // that implies the current one

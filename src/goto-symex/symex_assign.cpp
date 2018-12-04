@@ -232,7 +232,7 @@ void goto_symext::symex_assign_symbol(
   exprt ssa_rhs=rhs;
 
   // put assignment guard into the rhs
-  if(!guard.is_true())
+  if(!is_true(guard))
   {
     if_exprt tmp_ssa_rhs;
     tmp_ssa_rhs.type()=ssa_rhs.type();

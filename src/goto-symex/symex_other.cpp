@@ -26,7 +26,7 @@ void goto_symext::havoc_rec(
   {
     exprt lhs;
 
-    if(guard.is_true())
+    if(is_true(guard))
       lhs=dest;
     else
       lhs=if_exprt(

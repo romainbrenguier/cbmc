@@ -49,4 +49,9 @@ public:
   friend guardt &operator |= (guardt &g1, const guardt &g2);
 };
 
+inline bool is_true(const guardt &g)
+{
+  return g.as_expr().is_true();
+}
+
 #endif // CPROVER_UTIL_GUARD_H
