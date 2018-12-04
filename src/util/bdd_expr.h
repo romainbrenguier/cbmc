@@ -20,8 +20,7 @@ Author: Michael Tautschnig, michael.tautschnig@qmul.ac.uk
 */
 
 #include <util/expr.h>
-
-#include <solvers/miniBDD/miniBDD.h>
+#include <util/miniBDD/miniBDD.h>
 
 #include <unordered_map>
 

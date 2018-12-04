@@ -13,6 +13,8 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <ostream>
 
+#include <util/bdd_expr.h>
+
 #include "expr_util.h"
 #include "invariant.h"
 #include "simplify_utils.h"
