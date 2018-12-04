@@ -122,8 +122,7 @@ void goto_symext::symex_assume(statet &state, const exprt &cond)
   else
     state.guard.add(simplified_cond);
 
-  if(state.atomic_section_id!=0 &&
-     state.guard.is_false())
+  if(state.atomic_section_id!=0 && is_false(state.guard))
     symex_atomic_end(state);
 }
 
@@ -350,7 +349,7 @@ void goto_symext::symex_step(
   switch(instruction.type)
   {
   case SKIP:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       target.location(state.guard.as_expr(), state.source);
     symex_transition(state);
     break;
@@ -363,7 +362,7 @@ void goto_symext::symex_step(
     break;
 
   case LOCATION:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       target.location(state.guard.as_expr(), state.source);
     symex_transition(state);
     break;
@@ -373,7 +372,7 @@ void goto_symext::symex_step(
     break;
 
   case ASSUME:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
     {
       exprt tmp=instruction.guard;
       clean_expr(tmp, state, false);
@@ -385,7 +384,7 @@ void goto_symext::symex_step(
     break;
 
   case ASSERT:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
     {
       std::string msg=id2string(state.source.pc->source_location.get_comment());
       if(msg=="")
@@ -399,21 +398,21 @@ void goto_symext::symex_step(
     break;
 
   case RETURN:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       return_assignment(state);
 
     symex_transition(state);
     break;
 
   case ASSIGN:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       symex_assign(state, to_code_assign(instruction.code));
 
     symex_transition(state);
     break;
 
   case FUNCTION_CALL:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
     {
       code_function_callt deref_code=
         to_code_function_call(instruction.code);
@@ -433,14 +432,14 @@ void goto_symext::symex_step(
     break;
 
   case OTHER:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       symex_other(state);
 
     symex_transition(state);
     break;
 
   case DECL:
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       symex_decl(state);
 
     symex_transition(state);
@@ -458,7 +457,7 @@ void goto_symext::symex_step(
 
   case END_THREAD:
     // behaves like assume(0);
-    if(!state.guard.is_false())
+    if(!is_false(state.guard))
       state.guard.add(false_exprt());
     symex_transition(state);
     break;

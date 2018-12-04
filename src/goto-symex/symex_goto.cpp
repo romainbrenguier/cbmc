@@ -27,7 +27,7 @@ void goto_symext::symex_goto(statet &state)
   const goto_programt::instructiont &instruction=*state.source.pc;
   statet::framet &frame=state.top();
 
-  if(state.guard.is_false())
+  if(is_false(state.guard))
   {
     // next instruction
     symex_transition(state);
@@ -344,7 +344,7 @@ void goto_symext::merge_value_sets(
   const statet::goto_statet &src,
   statet &dest)
 {
-  if(dest.guard.is_false())
+  if(is_false(dest.guard))
   {
     dest.value_set=src.value_set;
     return;

@@ -48,7 +48,7 @@ void symex_bmct::symex_step(
   const goto_programt::const_targett cur_pc=state.source.pc;
   const guardt cur_guard=state.guard;
 
-  if(!state.guard.is_false() &&
+  if(!is_false(state.guard) &&
      state.source.pc->is_assume() &&
      simplify_expr(state.source.pc->guard, ns).is_false())
   {
@@ -81,7 +81,7 @@ void symex_bmct::symex_step(
        cur_pc->get_target()!=state.source.pc &&
        cur_pc->guard.is_true())
       symex_coverage.covered(cur_pc, cur_pc->get_target());
-    else if(!state.guard.is_false())
+    else if(!is_false(state.guard))
       symex_coverage.covered(cur_pc, state.source.pc);
   }
 }
@@ -98,8 +98,8 @@ void symex_bmct::merge_goto(
   PRECONDITION(prev_pc->is_goto());
   if(record_coverage &&
      // could the branch possibly be taken?
-     !prev_guard.is_false() &&
-     !state.guard.is_false() &&
+     !is_false(prev_guard) &&
+     !is_false(state.guard) &&
      // branches only, no single-successor goto
      !prev_pc->guard.is_true())
     symex_coverage.covered(prev_pc, state.source.pc);
