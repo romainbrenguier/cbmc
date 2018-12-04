@@ -27,7 +27,7 @@ void goto_symext::symex_goto(statet &state)
   const goto_programt::instructiont &instruction=*state.source.pc;
   statet::framet &frame=state.top();
 
-  if(state.guard.is_false())
+  if(is_false(state.guard))
   {
     // next instruction
     symex_transition(state);
@@ -344,7 +344,7 @@ void goto_symext::merge_value_sets(
   const statet::goto_statet &src,
   statet &dest)
 {
-  if(dest.guard.is_false())
+  if(is_false(dest.guard))
   {
     dest.value_set=src.value_set;
     return;
@@ -446,9 +446,9 @@ void goto_symext::phi_function(
     //  1. Either guard is false, so we can't follow that branch.
     //  2. Either identifier is of generation zero, and so hasn't been
     //     initialized and therefor an invalid target.
-    if(dest_state.guard.is_false())
+    if(is_false(dest_state.guard))
       rhs=goto_state_rhs;
-    else if(goto_state.guard.is_false())
+    else if(is_false(goto_state.guard))
       rhs=dest_state_rhs;
     else if(goto_state.level2_current_count(l1_identifier) == 0)
     {
