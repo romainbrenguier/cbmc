@@ -154,18 +154,16 @@ void goto_program_dereferencet::dereference_rec(
 
     if(o1)
     {
-      guardt old_guard=guard;
-      guard.add(expr.op0());
-      dereference_rec(expr.op1(), guard, mode);
-      guard.swap(old_guard);
+      guardt copy=guard;
+      copy.add(expr.op0());
+      dereference_rec(expr.op1(), copy, mode);
     }
 
     if(o2)
     {
-      guardt old_guard=guard;
-      guard.add(boolean_negate(expr.op0()));
-      dereference_rec(expr.op2(), guard, mode);
-      guard.swap(old_guard);
+      guardt copy=guard;
+      copy.add(boolean_negate(expr.op0()));
+      dereference_rec(expr.op2(), copy, mode);
     }
 
     return;
