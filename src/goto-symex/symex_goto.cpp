@@ -360,7 +360,8 @@ void goto_symext::merge_value_sets(
 static void for_each2(
   const std::map<irep_idt, std::pair<ssa_exprt, unsigned>> &first_map,
   const std::map<irep_idt, std::pair<ssa_exprt, unsigned>> &second_map,
-  std::function<void(const irep_idt &, const ssa_exprt &, unsigned, unsigned)> f)
+  std::function<void(const irep_idt &, const ssa_exprt &, unsigned, unsigned)>
+    f)
 {
   auto second_it = second_map.begin();
   for(const auto &first_pair : first_map)
@@ -400,7 +401,8 @@ static void for_each2(
 /// \param[out] target: equation that will receive the resulting assignment
 /// \param l1_identifier: name of the variable to merge
 /// \param ssa_expr: SSA expression corresponding to \p l1_identifier
-/// \param goto_count: current level 2 count in \p goto_state of \p l1_identifier
+/// \param goto_count: current level 2 count in \p goto_state of
+///   \p l1_identifier
 /// \param dest_count: level 2 count in \p dest_state of \p l1_identifier
 static void merge_names(
   const goto_symext::statet::goto_statet &goto_state,
@@ -418,7 +420,7 @@ static void merge_names(
 {
   const irep_idt &obj_identifier = ssa.get_object_name();
 
-  if(obj_identifier==guard_identifier)
+  if(obj_identifier == guard_identifier)
     return; // just a guard, don't bother
 
   if(goto_count == dest_count)
@@ -428,12 +430,12 @@ static void merge_names(
 
   // shared variables are renamed on every access anyway, we don't need to
   // merge anything
-  const symbolt &symbol=ns.lookup(obj_identifier);
+  const symbolt &symbol = ns.lookup(obj_identifier);
 
   // shared?
   if(
     dest_state.atomic_section_id == 0 && dest_state.threads.size() >= 2 &&
-      (symbol.is_shared() || (dest_state.dirty)(symbol.name)))
+    (symbol.is_shared() || (dest_state.dirty)(symbol.name)))
     return; // no phi nodes for shared stuff
 
   // don't merge (thread-)locals across different threads, which
@@ -442,7 +444,7 @@ static void merge_names(
   // once the thread is executed)
   if(
     !ssa.get_level_0().empty() &&
-      ssa.get_level_0() != std::to_string(dest_state.source.thread_nr))
+    ssa.get_level_0() != std::to_string(dest_state.source.thread_nr))
     return;
 
   exprt goto_state_rhs = ssa, dest_state_rhs = ssa;
@@ -451,7 +453,7 @@ static void merge_names(
     const auto p_it = goto_state.propagation.find(l1_identifier);
 
     if(p_it != goto_state.propagation.end())
-      goto_state_rhs=p_it->second;
+      goto_state_rhs = p_it->second;
     else
       to_ssa_expr(goto_state_rhs).set_level_2(goto_count);
   }
@@ -460,7 +462,7 @@ static void merge_names(
     const auto p_it = dest_state.propagation.find(l1_identifier);
 
     if(p_it != dest_state.propagation.end())
-      dest_state_rhs=p_it->second;
+      dest_state_rhs = p_it->second;
     else
       to_ssa_expr(dest_state_rhs).set_level_2(dest_count);
   }
@@ -472,9 +474,9 @@ static void merge_names(
   //  2. Either identifier is of generation zero, and so hasn't been
   //     initialized and therefor an invalid target.
   if(dest_state.guard.is_false())
-    rhs=goto_state_rhs;
+    rhs = goto_state_rhs;
   else if(goto_state.guard.is_false())
-    rhs=dest_state_rhs;
+    rhs = dest_state_rhs;
   else if(goto_count == 0)
   {
     rhs = dest_state_rhs;
@@ -485,28 +487,29 @@ static void merge_names(
   }
   else
   {
-    rhs=if_exprt(diff_guard.as_expr(), goto_state_rhs, dest_state_rhs);
+    rhs = if_exprt(diff_guard.as_expr(), goto_state_rhs, dest_state_rhs);
     if(do_simplify)
       simplify_expr(rhs, ns);
   }
 
   ssa_exprt new_lhs = ssa;
-  const bool record_events=dest_state.record_events;
-  dest_state.record_events=false;
+  const bool record_events = dest_state.record_events;
+  dest_state.record_events = false;
   dest_state.assignment(new_lhs, rhs, ns, true, true);
-  dest_state.record_events=record_events;
+  dest_state.record_events = record_events;
 
   log.conditional_output(
-    log.debug(),
-    [ns, &new_lhs](messaget::mstreamt &mstream) {
-      mstream << "Assignment to " << new_lhs.get_identifier()
-              << " [" << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
+    log.debug(), [ns, &new_lhs](messaget::mstreamt &mstream) {
+      mstream << "Assignment to " << new_lhs.get_identifier() << " ["
+              << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
               << messaget::eom;
     });
 
   target.assignment(
     true_exprt(),
-    new_lhs, new_lhs, new_lhs.get_original_expr(),
+    new_lhs,
+    new_lhs,
+    new_lhs.get_original_expr(),
     rhs,
     dest_state.source,
     symex_targett::assignment_typet::PHI);
@@ -517,22 +520,23 @@ void goto_symext::phi_function(
   statet &dest_state)
 {
   guardt diff_guard;
-  if(goto_state.level2_current_names.empty() &&
-     dest_state.level2.current_names.empty())
+  if(
+    goto_state.level2_current_names.empty() &&
+    dest_state.level2.current_names.empty())
     return;
 
-  diff_guard=goto_state.guard;
+  diff_guard = goto_state.guard;
   // this gets the diff between the guards
-  diff_guard-=dest_state.guard;
+  diff_guard -= dest_state.guard;
 
   for_each2(
     goto_state.level2_current_names,
     dest_state.level2.current_names,
-    [&](const irep_idt &l1_identifier,
-        const ssa_exprt &ssa,
-        unsigned goto_count,
-        unsigned dest_count)
-    {
+    [&](
+      const irep_idt &l1_identifier,
+      const ssa_exprt &ssa,
+      unsigned goto_count,
+      unsigned dest_count) {
       merge_names(
         goto_state,
         dest_state,
