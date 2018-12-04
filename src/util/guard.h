@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "std_expr.h"
 
-class guardt:public exprt
+class guardt : private exprt
 {
 public:
   guardt()
