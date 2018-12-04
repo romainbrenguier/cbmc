@@ -15,7 +15,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 void goto_symext::symex_atomic_begin(statet &state)
 {
-  if(state.guard.is_false())
+  if(is_false(state.guard))
     return;
 
   if(state.atomic_section_id != 0)
