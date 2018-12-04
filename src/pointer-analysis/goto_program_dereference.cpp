@@ -115,7 +115,7 @@ void goto_program_dereferencet::dereference_rec(
       throw expr.id_string()+" must be Boolean, but got "+
             expr.pretty();
 
-    guardt old_guard=guard;
+    guardt copy = guard;
 
     for(auto &op : expr.operands())
     {
@@ -124,15 +124,13 @@ void goto_program_dereferencet::dereference_rec(
               op.pretty();
 
       if(has_subexpr(op, ID_dereference))
-        dereference_rec(op, guard, value_set_dereferencet::modet::READ);
+        dereference_rec(op, copy, value_set_dereferencet::modet::READ);
 
       if(expr.id()==ID_or)
-        guard.add(boolean_negate(op));
+        copy.add(boolean_negate(op));
       else
-        guard.add(op);
+        copy.add(op);
     }
-
-    guard.swap(old_guard);
 
     return;
   }
