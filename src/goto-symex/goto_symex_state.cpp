@@ -392,7 +392,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
   if(atomic_section_id!=0)
   {
     guardt write_guard;
-    write_guard.add(false_exprt());
+    write_guard.add(false_exprt(), ns);
 
     const auto a_s_writes = written_in_atomic_section.find(ssa_l1);
     if(a_s_writes!=written_in_atomic_section.end())
@@ -417,7 +417,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
     // so generate a read even if l1_identifier has been written on
     // all branches flowing into this read
     guardt read_guard;
-    read_guard.add(false_exprt());
+    read_guard.add(false_exprt(), ns);
 
     a_s_r_entryt &a_s_read=read_in_atomic_section[ssa_l1];
     for(std::list<guardt>::const_iterator it=a_s_read.second.begin();
@@ -478,7 +478,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
 
     a_s_read.second.push_back(guard);
     if(!no_write.op().is_false())
-      a_s_read.second.back().add(no_write);
+      a_s_read.second.back().add(no_write, ns);
 
     return true;
   }

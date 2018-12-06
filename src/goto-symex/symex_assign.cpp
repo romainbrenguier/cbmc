@@ -262,7 +262,7 @@ void goto_symext::symex_assign_symbol(
   state.record_events=record_events;
 
   guardt tmp_guard(state.guard);
-  tmp_guard.append(guard);
+  tmp_guard.append(guard, ns);
 
   // do the assignment
   const symbolt &symbol =
@@ -444,7 +444,7 @@ void goto_symext::symex_assign_if(
 
   if(!renamed_guard.is_false())
   {
-    guard.add(renamed_guard);
+    guard.add(renamed_guard, ns);
     symex_assign_rec(
       state, lhs.true_case(), full_lhs, rhs, guard, assignment_type);
     guard = std::move(old_guard);
@@ -452,7 +452,7 @@ void goto_symext::symex_assign_if(
 
   if(!renamed_guard.is_true())
   {
-    guard.add(not_exprt(renamed_guard));
+    guard.add(not_exprt(renamed_guard), ns);
     symex_assign_rec(
       state, lhs.false_case(), full_lhs, rhs, guard, assignment_type);
     guard = std::move(old_guard);

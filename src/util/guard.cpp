@@ -19,6 +19,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "simplify_utils.h"
 #include "std_expr.h"
 #include "symbol_table.h"
+#include "make_unique.h"
 
 void guardt::guard_expr(exprt &dest) const
 {
@@ -42,38 +43,25 @@ void guardt::guard_expr(exprt &dest) const
   }
 }
 
-void guardt::add(const exprt &expr)
+void guardt::add(const exprt &expr, const namespacet &ns)
 {
   PRECONDITION(expr.type().id() == ID_bool);
-
-  if(is_false(*this) || expr.is_true())
-    return;
-  else if(is_true(*this) || expr.is_false())
+// TODO do these directly on BDDs instead of converting to expr
+  if(bdd == nullptr)
   {
-    this->expr=expr;
-
-    return;
+    bdd = util_make_unique<bdd_exprt>(ns);
+    bdd->from_expr(expr);
   }
-  else if(this->expr.id()!=ID_and)
-  {
-    and_exprt a;
-    a.add_to_operands(as_expr());
-    this->expr=a;
-  }
-
-  exprt::operandst &op=this->expr.operands();
-
-  if(expr.id()==ID_and)
-    op.insert(op.end(),
-              expr.operands().begin(),
-              expr.operands().end());
   else
-    op.push_back(expr);
+    bdd->from_expr(and_exprt(bdd->as_expr(), expr));
 }
 
 guardt &operator -= (guardt &g1, const guardt &g2)
 {
-  if(g1.expr.id()!=ID_and || g2.expr.id()!=ID_and)
+  return g1;
+  // TODO there should be an operation on BDDs corresponding to that
+#if 0
+  if(g1.as_expr().id()!=ID_and || g2.as_expr().id()!=ID_and)
     return g1;
 
   sort_and_join(g1.expr);
@@ -98,10 +86,16 @@ guardt &operator -= (guardt &g1, const guardt &g2)
   g1.expr=conjunction(op1);
 
   return g1;
+#endif
 }
 
 guardt &operator |= (guardt &g1, const guardt &g2)
 {
+  // TODO do this directly on BDDs
+  if(g1.bdd != nullptr)
+    g1.bdd->from_expr(or_exprt(g1.as_expr(), g2.as_expr()));
+  return g1;
+#if 0
   if(is_false(g2) || is_true(g1))
     return g1;
   if(is_false(g1) || is_true(g2))
@@ -191,4 +185,5 @@ guardt &operator |= (guardt &g1, const guardt &g2)
   }
 
   return g1;
+#endif
 }

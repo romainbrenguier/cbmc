@@ -34,7 +34,7 @@ Author: Daniel Kroening, kroening@kroening.com
 class goto_symex_statet final
 {
 public:
-  goto_symex_statet();
+  explicit goto_symex_statet();
   ~goto_symex_statet();
 
   /// \brief Fake "copy constructor" that initializes the `symex_target` member

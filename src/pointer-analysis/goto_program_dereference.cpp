@@ -127,9 +127,9 @@ void goto_program_dereferencet::dereference_rec(
         dereference_rec(op, guard, value_set_dereferencet::modet::READ);
 
       if(expr.id()==ID_or)
-        guard.add(boolean_negate(op));
+        guard.add(boolean_negate(op), ns);
       else
-        guard.add(op);
+        guard.add(op, ns);
     }
 
     guard = std::move(old_guard);
@@ -156,7 +156,7 @@ void goto_program_dereferencet::dereference_rec(
     if(o1)
     {
       guardt old_guard=guard;
-      guard.add(expr.op0());
+      guard.add(expr.op0(), ns);
       dereference_rec(expr.op1(), guard, mode);
       guard=std::move(old_guard);
     }
@@ -164,7 +164,7 @@ void goto_program_dereferencet::dereference_rec(
     if(o2)
     {
       guardt old_guard=guard;
-      guard.add(boolean_negate(expr.op0()));
+      guard.add(boolean_negate(expr.op0()), ns);
       dereference_rec(expr.op2(), guard, mode);
       guard=std::move(old_guard);
     }

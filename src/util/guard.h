@@ -13,26 +13,51 @@ Author: Daniel Kroening, kroening@kroening.com
 #define CPROVER_UTIL_GUARD_H
 
 #include <iosfwd>
+#include <memory>
 
 #include "std_expr.h"
+#include "bdd_expr.h"
+#include "make_unique.h"
 
 class guardt
 {
 public:
-  guardt() : expr(true_exprt())
+  explicit guardt() {};
+  guardt(const guardt &other)
   {
+    if(other.bdd != nullptr)
+    {
+      bdd = util_make_unique<bdd_exprt>(*other.bdd);
+    }
   }
 
-  void add(const exprt &expr);
-
-  void append(const guardt &guard)
+  guardt& operator=(guardt &&other)
   {
-    add(guard.as_expr());
+    bdd = std::move(other.bdd);
+    return *this;
+  }
+
+  guardt& operator=(const guardt &other)
+  {
+    if(other.bdd != nullptr)
+      bdd = util_make_unique<bdd_exprt>(*other.bdd);
+    else
+      bdd = nullptr;
+    return *this;
+  }
+
+  void add(const exprt &expr, const namespacet &ns);
+
+  void append(const guardt &guard, const namespacet &ns)
+  {
+    add(guard.as_expr(), ns);
   }
 
   exprt as_expr() const
   {
-    return expr;
+    if(bdd)
+      return bdd->as_expr();
+    return true_exprt();
   }
 
   void guard_expr(exprt &dest) const;
@@ -41,7 +66,7 @@ public:
   friend guardt &operator |= (guardt &g1, const guardt &g2);
 
 private:
-  exprt expr;
+  std::unique_ptr<bdd_exprt> bdd = nullptr;
 };
 
 inline bool is_true(const guardt &g)

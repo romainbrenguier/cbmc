@@ -689,11 +689,11 @@ void rw_guarded_range_set_value_sett::get_objects_if(
 
     guardt copy = guard;
 
-    copy.add(not_exprt(if_expr.cond()));
+    copy.add(not_exprt(if_expr.cond()), ns);
     get_objects_rec(mode, if_expr.false_case(), range_start, size);
     guard = copy;
 
-    guard.add(if_expr.cond());
+    guard.add(if_expr.cond(), ns);
     get_objects_rec(mode, if_expr.true_case(), range_start, size);
     guard = std::move(copy);
   }

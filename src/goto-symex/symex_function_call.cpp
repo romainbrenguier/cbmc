@@ -260,7 +260,7 @@ void goto_symext::symex_function_call_code(
         vcc(false_exprt(), "recursion unwinding assertion", state);
 
       // add to state guard to prevent further assignments
-      state.guard.add(false_exprt());
+      state.guard.add(false_exprt(), ns);
     }
 
     symex_transition(state);

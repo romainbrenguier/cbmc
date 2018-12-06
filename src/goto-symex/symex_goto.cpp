@@ -225,7 +225,7 @@ void goto_symext::symex_goto(statet &state)
   // adjust guards
   if(new_guard.is_true())
   {
-    state.guard.add(false_exprt());
+    state.guard.add(false_exprt(), ns);
   }
   else
   {
@@ -273,22 +273,22 @@ void goto_symext::symex_goto(statet &state)
     if(state.has_saved_jump_target)
     {
       if(!backward)
-        state.guard.add(guard_expr);
+        state.guard.add(guard_expr, ns);
       else
-        state.guard.add(boolean_negate(guard_expr));
+        state.guard.add(boolean_negate(guard_expr), ns);
     }
     else
     {
       statet::goto_statet &new_state = goto_state_list.back();
       if(!backward)
       {
-        new_state.guard.add(guard_expr);
-        state.guard.add(boolean_negate(guard_expr));
+        new_state.guard.add(guard_expr, ns);
+        state.guard.add(boolean_negate(guard_expr), ns);
       }
       else
       {
-        state.guard.add(guard_expr);
-        new_state.guard.add(boolean_negate(guard_expr));
+        state.guard.add(guard_expr, ns);
+        new_state.guard.add(boolean_negate(guard_expr), ns);
       }
     }
   }
@@ -566,7 +566,7 @@ void goto_symext::loop_bound_exceeded(
           state);
 
       // add to state guard to prevent further assignments
-      state.guard.add(negated_cond);
+      state.guard.add(negated_cond, ns);
     }
     else
     {
