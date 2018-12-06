@@ -48,18 +48,18 @@ void guardt::add(const exprt &expr)
     return;
   else if(is_true(*this) || expr.is_false())
   {
-    *this=expr;
+    this->expr=expr;
 
     return;
   }
-  else if(id()!=ID_and)
+  else if(this->expr.id()!=ID_and)
   {
     and_exprt a;
-    a.add_to_operands(*this);
-    *this=a;
+    a.add_to_operands(as_expr());
+    this->expr=a;
   }
 
-  operandst &op=operands();
+  exprt::operandst &op=this->expr.operands();
 
   if(expr.id()==ID_and)
     op.insert(op.end(),
@@ -71,14 +71,14 @@ void guardt::add(const exprt &expr)
 
 guardt &operator -= (guardt &g1, const guardt &g2)
 {
-  if(g1.id()!=ID_and || g2.id()!=ID_and)
+  if(g1.expr.id()!=ID_and || g2.expr.id()!=ID_and)
     return g1;
 
-  sort_and_join(g1);
-  guardt g2_sorted=g2;
+  sort_and_join(g1.expr);
+  exprt g2_sorted = g2.as_expr();
   sort_and_join(g2_sorted);
 
-  exprt::operandst &op1=g1.operands();
+  exprt::operandst &op1=g1.expr.operands();
   const exprt::operandst &op2=g2_sorted.operands();
 
   exprt::operandst::iterator it1=op1.begin();
@@ -93,7 +93,7 @@ guardt &operator -= (guardt &g1, const guardt &g2)
       it1=op1.erase(it1);
   }
 
-  g1=conjunction(op1);
+  g1.expr=conjunction(op1);
 
   return g1;
 }
@@ -108,14 +108,14 @@ guardt &operator |= (guardt &g1, const guardt &g2)
     return g1;
   }
 
-  if(g1.id()!=ID_and || g2.id()!=ID_and)
+  if(g1.expr.id()!=ID_and || g2.expr.id()!=ID_and)
   {
-    exprt tmp(boolean_negate(g2));
+    exprt tmp(boolean_negate(g2.as_expr()));
 
-    if(tmp==g1)
-      g1 = true_exprt();
+    if(tmp==g1.as_expr())
+      g1.expr = true_exprt();
     else
-      g1=or_exprt(g1, g2);
+      g1.expr = or_exprt(g1.as_expr(), g2.as_expr());
 
     // TODO: make simplify more capable and apply here
 
@@ -123,11 +123,11 @@ guardt &operator |= (guardt &g1, const guardt &g2)
   }
 
   // find common prefix
-  sort_and_join(g1);
-  guardt g2_sorted=g2;
+  sort_and_join(g1.expr);
+  exprt g2_sorted=g2.as_expr();
   sort_and_join(g2_sorted);
 
-  exprt::operandst &op1=g1.operands();
+  exprt::operandst &op1=g1.expr.operands();
   const exprt::operandst &op2=g2_sorted.operands();
 
   exprt::operandst n_op1, n_op2;
@@ -163,7 +163,7 @@ guardt &operator |= (guardt &g1, const guardt &g2)
   exprt and_expr1=conjunction(n_op1);
   exprt and_expr2=conjunction(n_op2);
 
-  g1=conjunction(op1);
+  g1.expr=conjunction(op1);
 
   exprt tmp(boolean_negate(and_expr2));
 

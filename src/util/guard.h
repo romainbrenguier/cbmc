@@ -16,37 +16,32 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "std_expr.h"
 
-class guardt : private exprt
+class guardt
 {
 public:
-  guardt()
+  guardt() : expr(true_exprt())
   {
-    *this = true_exprt();
-  }
-
-  guardt &operator=(const exprt &e)
-  {
-    *this=static_cast<const guardt&>(e);
-
-    return *this;
   }
 
   void add(const exprt &expr);
 
   void append(const guardt &guard)
   {
-    add(guard);
+    add(guard.as_expr());
   }
 
   exprt as_expr() const
   {
-    return *this;
+    return expr;
   }
 
   void guard_expr(exprt &dest) const;
 
   friend guardt &operator -= (guardt &g1, const guardt &g2);
   friend guardt &operator |= (guardt &g1, const guardt &g2);
+
+private:
+  exprt expr;
 };
 
 inline bool is_true(const guardt &g)
