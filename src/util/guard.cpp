@@ -20,7 +20,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 void guardt::guard_expr(exprt &dest) const
 {
-  if(is_true())
+  if(is_true(*this))
   {
     // do nothing
   }
@@ -44,9 +44,9 @@ void guardt::add(const exprt &expr)
 {
   PRECONDITION(expr.type().id() == ID_bool);
 
-  if(is_false() || expr.is_true())
+  if(is_false(*this) || expr.is_true())
     return;
-  else if(is_true() || expr.is_false())
+  else if(is_true(*this) || expr.is_false())
   {
     *this=expr;
 
@@ -100,9 +100,9 @@ guardt &operator -= (guardt &g1, const guardt &g2)
 
 guardt &operator |= (guardt &g1, const guardt &g2)
 {
-  if(g2.is_false() || g1.is_true())
+  if(is_false(g2) || is_true(g1))
     return g1;
-  if(g1.is_false() || g2.is_true())
+  if(is_false(g1) || is_true(g2))
   {
     g1=g2;
     return g1;
