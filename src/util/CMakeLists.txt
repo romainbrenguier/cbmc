@@ -1,5 +1,7 @@
 file(GLOB_RECURSE sources "*.cpp" "*.h")
 
+include_directories(${CBMC_SOURCE_DIR}/../cudd-3.0.0/)
+
 # based on https://cmake.org/pipermail/cmake/2010-July/038015.html
 find_package(Git)
 if(GIT_FOUND)
@@ -47,4 +49,8 @@ add_dependencies(util generate_version_cpp)
 
 generic_includes(util)
 
-target_link_libraries(util big-int langapi)
+target_link_libraries(util big-int langapi
+  ${CBMC_SOURCE_DIR}/../cudd-3.0.0/dddmp/.libs/libdddmp.a
+  ${CBMC_SOURCE_DIR}/../cudd-3.0.0/cplusplus/.libs/libobj.a
+  ${CBMC_SOURCE_DIR}/../cudd-3.0.0/cudd/.libs/libcudd.a
+)
