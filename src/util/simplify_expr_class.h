@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #endif
 
 #include <set>
-#include <util/bdd_expr.h>
+#include <util/bdd_simplify_expr.h>
 
 #include "type.h"
 #include "mp_arith.h"
@@ -46,8 +46,7 @@ class simplify_exprt
 public:
   explicit simplify_exprt(const namespacet &_ns):
     do_simplify_if(true),
-    ns(_ns),
-    bdd(_ns)
+    ns(_ns)
 #ifdef DEBUG_ON_DEMAND
     , debug_on(false)
 #endif
@@ -158,7 +157,7 @@ public:
 
 protected:
   const namespacet &ns;
-  bdd_exprt bdd;
+  bdd_expr_convertert bdd;
 #ifdef DEBUG_ON_DEMAND
   bool debug_on;
 #endif
