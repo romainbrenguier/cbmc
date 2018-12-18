@@ -13,37 +13,27 @@ Author: Daniel Kroening, kroening@kroening.com
 #define CPROVER_UTIL_GUARD_H
 
 #include <iosfwd>
+
 #include <memory>
 
 #include "std_expr.h"
-#include "bdd_expr.h"
+#include "cudd/cudd.h"
+#include "cplusplus/cuddObj.hh"
 #include "make_unique.h"
+
+struct guard_managert
+{
+  Cudd bdd_manager;
+  std::unordered_map<exprt, std::size_t, irep_hash> expr_to_var;
+  std::vector<exprt> var_to_expr;
+};
 
 class guardt
 {
 public:
-  explicit guardt() {};
-  guardt(const guardt &other)
+  explicit guardt(guard_managert &manager);
+  guardt(const guardt &other) : bdd(other.bdd), manager(other.manager)
   {
-    if(other.bdd != nullptr)
-    {
-      bdd = util_make_unique<bdd_exprt>(*other.bdd);
-    }
-  }
-
-  guardt& operator=(guardt &&other)
-  {
-    bdd = std::move(other.bdd);
-    return *this;
-  }
-
-  guardt& operator=(const guardt &other)
-  {
-    if(other.bdd != nullptr)
-      bdd = util_make_unique<bdd_exprt>(*other.bdd);
-    else
-      bdd = nullptr;
-    return *this;
   }
 
   void add(const exprt &expr, const namespacet &ns);
@@ -53,12 +43,8 @@ public:
     add(guard.as_expr(), ns);
   }
 
-  exprt as_expr() const
-  {
-    if(bdd)
-      return bdd->as_expr();
-    return true_exprt();
-  }
+  exprt as_expr() const;
+  static BDD from_expr(const exprt &);
 
   void guard_expr(exprt &dest) const;
 
@@ -66,7 +52,8 @@ public:
   friend guardt &operator |= (guardt &g1, const guardt &g2);
 
 private:
-  std::unique_ptr<bdd_exprt> bdd = nullptr;
+  BDD bdd;
+  guard_managert &manager;
 };
 
 inline bool is_true(const guardt &g)
