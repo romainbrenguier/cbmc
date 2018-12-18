@@ -17,6 +17,7 @@ Author: Michael Tautschnig
 #include "symex_target.h"
 
 #define ENABLE_FIELD_SENSITIVITY
+// #define ENABLE_ARRAY_FIELD_SENSITIVITY
 
 static bool do_apply = true;
 
@@ -40,12 +41,14 @@ void field_sensitivityt::apply(const namespacet &ns, exprt &expr, bool write)
   {
     simplify(expr, ns);
   }
+#ifdef ENABLE_ARRAY_FIELD_SENSITIVITY
   else if(
     !write && expr.id() == ID_index &&
     to_index_expr(expr).array().id() == ID_array)
   {
     simplify(expr, ns);
   }
+#endif // ENABLE_ARRAY_FIELD_SENSITIVITY
   else if(expr.id() == ID_member)
   {
     member_exprt &member = to_member_expr(expr);
@@ -64,6 +67,7 @@ void field_sensitivityt::apply(const namespacet &ns, exprt &expr, bool write)
       expr.swap(tmp);
     }
   }
+#ifdef ENABLE_ARRAY_FIELD_SENSITIVITY
   else if(expr.id() == ID_index)
   {
     index_exprt &index = to_index_expr(expr);
@@ -84,6 +88,7 @@ void field_sensitivityt::apply(const namespacet &ns, exprt &expr, bool write)
       expr.swap(tmp);
     }
   }
+#endif // ENABLE_ARRAY_FIELD_SENSITIVITY
 #endif
 }
 
@@ -115,6 +120,7 @@ exprt field_sensitivityt::get_fields(
 
     return result;
   }
+#ifdef ENABLE_ARRAY_FIELD_SENSITIVITY
   else if(
     followed_type.id() == ID_array &&
     to_array_type(followed_type).size().id() == ID_constant)
@@ -138,6 +144,7 @@ exprt field_sensitivityt::get_fields(
 
     return result;
   }
+#endif // ENABLE_ARRAY_FIELD_SENSITIVITY
   else
 #endif
     return ssa_expr;
@@ -209,6 +216,7 @@ void field_sensitivityt::field_assignments_rec(
       ++number;
     }
   }
+#ifdef ENABLE_ARRAY_FIELD_SENSITIVITY
   else if(followed_type.id() == ID_array)
   {
     const array_typet &type = to_array_type(followed_type);
@@ -225,6 +233,7 @@ void field_sensitivityt::field_assignments_rec(
       field_assignments_rec(ns, state, target, index_lhs, index_rhs);
     }
   }
+#endif // ENABLE_ARRAY_FIELD_SENSITIVITY
   else if(lhs_fs.has_operands())
   {
     PRECONDITION(
