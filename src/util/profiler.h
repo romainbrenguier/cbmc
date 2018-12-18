@@ -8,7 +8,13 @@
 #include <chrono>
 #include <iostream>
 
+#define NO_PROFILING
+
+#ifdef NO_PROFILING
+#define PROFILER_BREAKPOINT
+#else
 #define PROFILER_BREAKPOINT profiler_breakpoint(__FILE__, __LINE__)
+#endif
 
 static std::chrono::time_point<std::chrono::steady_clock>
   profiler_last_time_point = std::chrono::steady_clock::now();
