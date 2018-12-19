@@ -56,11 +56,6 @@ private:
   guard_managert &manager;
 };
 
-inline bool is_true(const guardt &g)
-{
-  return g.as_expr().is_true();
-}
-
 inline bool is_false(const guardt &g)
 {
   return g.as_expr().is_false();
