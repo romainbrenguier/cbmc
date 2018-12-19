@@ -17,9 +17,10 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <memory>
 
 #include "std_expr.h"
-#include "cudd/cudd.h"
-#include "cplusplus/cuddObj.hh"
+//#include <cudd/cudd.h>
+//#include <cplusplus/cuddObj.hh>
 #include "make_unique.h"
+#include "../../cudd-3.0.0/cplusplus/cuddObj.hh"
 
 struct guard_managert
 {
@@ -36,29 +37,58 @@ public:
   {
   }
 
-  void add(const exprt &expr, const namespacet &ns);
-
-  void append(const guardt &guard, const namespacet &ns)
+  guardt& operator=(const guardt &other)
   {
-    add(guard.as_expr(), ns);
+    bdd = other.bdd;
+    manager = other.manager;
+    return *this;
   }
 
+  guardt& operator=(guardt &&other)
+  {
+    std::swap(bdd, other.bdd);
+    manager = other.manager;
+    return *this;
+  }
+
+  guardt &add(const exprt &expr);
+
+  guardt &append(const guardt &guard);
+
+  guardt &from_expr(const exprt &expr);
+  guardt &set_to_true();
+
   exprt as_expr() const;
-  static BDD from_expr(const exprt &);
+
+  /// Return a expression equivalent to the guard with no boolean operators if
+  /// possible.
+  optionalt<exprt> as_simple_expr() const;
 
   void guard_expr(exprt &dest) const;
 
   friend guardt &operator -= (guardt &g1, const guardt &g2);
   friend guardt &operator |= (guardt &g1, const guardt &g2);
 
-private:
+  bool is_true() const;
+  bool is_false() const;
+  guardt &negate(){ bdd = !bdd; return *this; }
+  guardt operator!() const
+  { guardt result(*this); result.negate(); return result;};
+  bool operator==(const guardt &other) const { return bdd == other.bdd; }
+  guardt &operator |=(const exprt &e);
+
+  bool any_expr(std::function<bool(const exprt &)> pred) const;
+  void replace_expr(std::function<exprt(const exprt &)> f);
+  void replace_expr(std::function<void(exprt &)> f);
+
   BDD bdd;
   guard_managert &manager;
+private:
 };
 
 inline bool is_false(const guardt &g)
 {
-  return g.as_expr().is_false();
+  return g.is_false();
 }
 
 #endif // CPROVER_UTIL_GUARD_H
