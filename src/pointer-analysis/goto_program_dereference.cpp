@@ -26,7 +26,8 @@ Author: Daniel Kroening, kroening@kroening.com
 ///   comment which exists in the namespace.
 bool goto_program_dereferencet::has_failed_symbol(
   const exprt &expr,
-  const symbolt *&symbol)
+  const symbolt *&symbol,
+  guard_managert &guard_manager)
 {
   if(expr.id()==ID_symbol)
   {
@@ -104,7 +105,8 @@ void goto_program_dereferencet::dereference_failure(
 void goto_program_dereferencet::dereference_rec(
   exprt &expr,
   guardt &guard,
-  const value_set_dereferencet::modet mode)
+  const value_set_dereferencet::modet mode,
+  guard_managert &guard_manager)
 {
   if(!has_subexpr(expr, ID_dereference))
     return;
@@ -124,7 +126,11 @@ void goto_program_dereferencet::dereference_rec(
               op.pretty();
 
       if(has_subexpr(op, ID_dereference))
-        dereference_rec(op, guard, value_set_dereferencet::modet::READ);
+        dereference_rec(
+          op,
+          guard,
+          value_set_dereferencet::modet::READ,
+          guard_manager);
 
       if(expr.id()==ID_or)
         guard.add(boolean_negate(op), ns);
@@ -132,7 +138,7 @@ void goto_program_dereferencet::dereference_rec(
         guard.add(op, ns);
     }
 
-    guard = std::move(old_guard);
+    guard = old_guard;
     return;
   }
   else if(expr.id()==ID_if)
@@ -148,7 +154,11 @@ void goto_program_dereferencet::dereference_rec(
       throw msg;
     }
 
-    dereference_rec(expr.op0(), guard, value_set_dereferencet::modet::READ);
+    dereference_rec(
+      expr.op0(),
+      guard,
+      value_set_dereferencet::modet::READ,
+      guard_manager);
 
     bool o1 = has_subexpr(expr.op1(), ID_dereference);
     bool o2 = has_subexpr(expr.op2(), ID_dereference);
@@ -157,16 +167,16 @@ void goto_program_dereferencet::dereference_rec(
     {
       guardt old_guard=guard;
       guard.add(expr.op0(), ns);
-      dereference_rec(expr.op1(), guard, mode);
-      guard=std::move(old_guard);
+      dereference_rec(expr.op1(), guard, mode, guard_manager);
+      guard=old_guard;
     }
 
     if(o2)
     {
       guardt old_guard=guard;
       guard.add(boolean_negate(expr.op0()), ns);
-      dereference_rec(expr.op2(), guard, mode);
-      guard=std::move(old_guard);
+      dereference_rec(expr.op2(), guard, mode, guard_manager);
+      guard=old_guard;
     }
 
     return;
@@ -194,8 +204,7 @@ void goto_program_dereferencet::dereference_rec(
     }
   }
 
-  Forall_operands(it, expr)
-    dereference_rec(*it, guard, mode);
+  Forall_operands(it, expr)dereference_rec(*it, guard, mode, guard_manager);
 
   if(expr.id()==ID_dereference)
   {
@@ -204,8 +213,7 @@ void goto_program_dereferencet::dereference_rec(
 
     dereference_location=expr.find_source_location();
 
-    exprt tmp=dereference.dereference(
-      expr.op0(), guard, mode);
+    exprt tmp= dereference.dereference(expr.op0(), guard, mode, guard_manager);
 
     expr.swap(tmp);
   }
@@ -223,7 +231,7 @@ void goto_program_dereferencet::dereference_rec(
       exprt tmp1(ID_plus, expr.op0().type());
       tmp1.operands().swap(expr.operands());
 
-      exprt tmp2=dereference.dereference(tmp1, guard, mode);
+      exprt tmp2= dereference.dereference(tmp1, guard, mode, guard_manager);
       tmp2.swap(expr);
     }
   }
@@ -249,22 +257,24 @@ void goto_program_dereferencet::get_value_set(
 void goto_program_dereferencet::dereference_expr(
   exprt &expr,
   const bool checks_only,
-  const value_set_dereferencet::modet mode)
+  const value_set_dereferencet::modet mode,
+  guard_managert &guard_manager)
 {
-  guardt guard;
+  guardt guard(guard_manager);
 
   if(checks_only)
   {
     exprt tmp(expr);
-    dereference_rec(tmp, guard, mode);
+    dereference_rec(tmp, guard, mode, guard_manager);
   }
   else
-    dereference_rec(expr, guard, mode);
+    dereference_rec(expr, guard, mode, guard_manager);
 }
 
 void goto_program_dereferencet::dereference_program(
   goto_programt &goto_program,
-  bool checks_only)
+  bool checks_only,
+  guard_managert &manager)
 {
   for(goto_programt::instructionst::iterator
       it=goto_program.instructions.begin();
@@ -274,7 +284,7 @@ void goto_program_dereferencet::dereference_program(
     new_code.clear();
     assertions.clear();
 
-    dereference_instruction(it, checks_only);
+    dereference_instruction(it, checks_only, manager);
 
     // insert new instructions
     while(!new_code.instructions.empty())
@@ -288,13 +298,14 @@ void goto_program_dereferencet::dereference_program(
 
 void goto_program_dereferencet::dereference_program(
   goto_functionst &goto_functions,
-  bool checks_only)
+  bool checks_only,
+  guard_managert &manager)
 {
   for(goto_functionst::function_mapt::iterator
       it=goto_functions.function_map.begin();
       it!=goto_functions.function_map.end();
       it++)
-    dereference_program(it->second.body, checks_only);
+    dereference_program(it->second.body, checks_only, manager);
 }
 
 /// Remove dereference from expressions contained in the instruction at
@@ -303,7 +314,8 @@ void goto_program_dereferencet::dereference_program(
 /// exception would be thrown.
 void goto_program_dereferencet::dereference_instruction(
   goto_programt::targett target,
-  bool checks_only)
+  bool checks_only,
+  guard_managert &manager)
 {
   current_target=target;
   #if 0
@@ -311,7 +323,7 @@ void goto_program_dereferencet::dereference_instruction(
   #endif
   goto_programt::instructiont &i=*target;
 
-  dereference_expr(i.guard, checks_only, value_set_dereferencet::modet::READ);
+  dereference_expr(i.guard, checks_only, value_set_dereferencet::modet::READ, manager);
 
   if(i.is_assign())
   {
@@ -319,9 +331,9 @@ void goto_program_dereferencet::dereference_instruction(
       throw "assignment expects two operands";
 
     dereference_expr(
-      i.code.op0(), checks_only, value_set_dereferencet::modet::WRITE);
+      i.code.op0(), checks_only, value_set_dereferencet::modet::WRITE, manager);
     dereference_expr(
-      i.code.op1(), checks_only, value_set_dereferencet::modet::READ);
+      i.code.op1(), checks_only, value_set_dereferencet::modet::READ, manager);
   }
   else if(i.is_function_call())
   {
@@ -331,19 +343,19 @@ void goto_program_dereferencet::dereference_instruction(
       dereference_expr(
         function_call.lhs(),
         checks_only,
-        value_set_dereferencet::modet::WRITE);
+        value_set_dereferencet::modet::WRITE, manager);
 
     dereference_expr(
       function_call.function(),
       checks_only,
-      value_set_dereferencet::modet::READ);
+      value_set_dereferencet::modet::READ, manager);
     dereference_expr(
-      function_call.op2(), checks_only, value_set_dereferencet::modet::READ);
+      function_call.op2(), checks_only, value_set_dereferencet::modet::READ, manager);
   }
   else if(i.is_return())
   {
     Forall_operands(it, i.code)
-      dereference_expr(*it, checks_only, value_set_dereferencet::modet::READ);
+      dereference_expr(*it, checks_only, value_set_dereferencet::modet::READ, manager);
   }
   else if(i.is_other())
   {
@@ -355,13 +367,13 @@ void goto_program_dereferencet::dereference_instruction(
         throw "expression expects one operand";
 
       dereference_expr(
-        i.code.op0(), checks_only, value_set_dereferencet::modet::READ);
+        i.code.op0(), checks_only, value_set_dereferencet::modet::READ, manager);
     }
     else if(statement==ID_printf)
     {
       Forall_operands(it, i.code)
         dereference_expr(
-          *it, checks_only, value_set_dereferencet::modet::READ);
+          *it, checks_only, value_set_dereferencet::modet::READ, manager);
     }
   }
 }
@@ -369,37 +381,41 @@ void goto_program_dereferencet::dereference_instruction(
 /// Set the current target to `target` and remove derefence from expr.
 void goto_program_dereferencet::dereference_expression(
   goto_programt::const_targett target,
-  exprt &expr)
+  exprt &expr,
+  guard_managert &manager)
 {
   current_target=target;
   #if 0
   valid_local_variables=&target->local_variables;
   #endif
 
-  dereference_expr(expr, false, value_set_dereferencet::modet::READ);
+  dereference_expr(expr, false, value_set_dereferencet::modet::READ, manager);
 }
 
 /// Throw an exception in case removing dereferences from the program would
 /// throw an exception.
 void goto_program_dereferencet::pointer_checks(
-  goto_programt &goto_program)
+  goto_programt &goto_program,
+  guard_managert &manager)
 {
-  dereference_program(goto_program, true);
+  dereference_program(goto_program, true, manager);
 }
 
 /// Throw an exception in case removing dereferences from the program would
 /// throw an exception.
 void goto_program_dereferencet::pointer_checks(
-  goto_functionst &goto_functions)
+  goto_functionst &goto_functions,
+  guard_managert &manager)
 {
-  dereference_program(goto_functions, true);
+  dereference_program(goto_functions, true, manager);
 }
 
 /// \deprecated
 void remove_pointers(
   goto_programt &goto_program,
   symbol_tablet &symbol_table,
-  value_setst &value_sets)
+  value_setst &value_sets,
+  guard_managert &manager)
 {
   namespacet ns(symbol_table);
 
@@ -408,7 +424,10 @@ void remove_pointers(
   goto_program_dereferencet
     goto_program_dereference(ns, symbol_table, options, value_sets);
 
-  goto_program_dereference.dereference_program(goto_program);
+  goto_program_dereference.dereference_program(
+    goto_program,
+    false,
+    manager);
 }
 
 /// Remove dereferences in all expressions contained in the program
@@ -416,7 +435,8 @@ void remove_pointers(
 /// may be pointing to.
 void remove_pointers(
   goto_modelt &goto_model,
-  value_setst &value_sets)
+  value_setst &value_sets,
+  guard_managert &manager)
 {
   namespacet ns(goto_model.symbol_table);
 
@@ -427,7 +447,10 @@ void remove_pointers(
       ns, goto_model.symbol_table, options, value_sets);
 
   Forall_goto_functions(it, goto_model.goto_functions)
-    goto_program_dereference.dereference_program(it->second.body);
+    goto_program_dereference.dereference_program(
+      it->second.body,
+      false,
+      manager);
 }
 
 /// \deprecated
@@ -435,12 +458,13 @@ void pointer_checks(
   goto_programt &goto_program,
   symbol_tablet &symbol_table,
   const optionst &options,
-  value_setst &value_sets)
+  value_setst &value_sets,
+  guard_managert &manager)
 {
   namespacet ns(symbol_table);
   goto_program_dereferencet
     goto_program_dereference(ns, symbol_table, options, value_sets);
-  goto_program_dereference.pointer_checks(goto_program);
+  goto_program_dereference.pointer_checks(goto_program, manager);
 }
 
 /// \deprecated
@@ -448,12 +472,13 @@ void pointer_checks(
   goto_functionst &goto_functions,
   symbol_tablet &symbol_table,
   const optionst &options,
-  value_setst &value_sets)
+  value_setst &value_sets,
+  guard_managert &manager)
 {
   namespacet ns(symbol_table);
   goto_program_dereferencet
     goto_program_dereference(ns, symbol_table, options, value_sets);
-  goto_program_dereference.pointer_checks(goto_functions);
+  goto_program_dereference.pointer_checks(goto_functions, manager);
 }
 
 /// Remove dereferences in `expr` using `value_sets` to determine to what
@@ -462,11 +487,12 @@ void dereference(
   goto_programt::const_targett target,
   exprt &expr,
   const namespacet &ns,
-  value_setst &value_sets)
+  value_setst &value_sets,
+  guard_managert &manager)
 {
   optionst options;
   symbol_tablet new_symbol_table;
   goto_program_dereferencet
     goto_program_dereference(ns, new_symbol_table, options, value_sets);
-  goto_program_dereference.dereference_expression(target, expr);
+  goto_program_dereference.dereference_expression(target, expr, manager);
 }

@@ -38,7 +38,7 @@ void goto_symext::symex_goto(statet &state)
   clean_expr(old_guard, state, false);
 
   exprt new_guard=old_guard;
-  state.rename(new_guard, ns);
+  state.rename(new_guard, ns, guard_manager);
   do_simplify(new_guard);
 
   if(new_guard.is_false())
@@ -188,11 +188,11 @@ void goto_symext::symex_goto(statet &state)
     // We should save both the instruction after this goto, and the target of
     // the goto.
 
-    path_storaget::patht next_instruction(target, state);
+    path_storaget::patht next_instruction(target, state, guard_manager);
     next_instruction.state.saved_target = state_pc;
     next_instruction.state.has_saved_next_instruction = true;
 
-    path_storaget::patht jump_target(target, state);
+    path_storaget::patht jump_target(target, state, guard_manager);
     jump_target.state.saved_target = new_state_pc;
     jump_target.state.has_saved_jump_target = true;
     // `forward` tells us where the branch we're _currently_ executing is
@@ -246,10 +246,17 @@ void goto_symext::symex_goto(statet &state)
       exprt new_rhs = boolean_negate(new_guard);
 
       ssa_exprt new_lhs(guard_symbol_expr);
-      state.rename(new_lhs, ns, goto_symex_statet::L1);
-      state.assignment(new_lhs, new_rhs, ns, true, false);
+      state.rename(new_lhs, ns, guard_manager, goto_symex_statet::L1);
+      state.assignment(
+        new_lhs,
+        new_rhs,
+        ns,
+        true,
+        false,
+        false,
+        guard_manager);
 
-      guardt guard;
+      guardt guard(guard_manager);
 
       log.conditional_output(
         log.debug(),
@@ -267,7 +274,7 @@ void goto_symext::symex_goto(statet &state)
         symex_targett::assignment_typet::GUARD);
 
       guard_expr = boolean_negate(guard_symbol_expr);
-      state.rename(guard_expr, ns);
+      state.rename(guard_expr, ns, guard_manager);
     }
 
     if(state.has_saved_jump_target)
@@ -491,7 +498,14 @@ static void merge_names(
   ssa_exprt new_lhs = ssa;
   const bool record_events = dest_state.record_events;
   dest_state.record_events = false;
-  dest_state.assignment(new_lhs, rhs, ns, true, true);
+  dest_state.assignment(
+    new_lhs,
+    rhs,
+    ns,
+    true,
+    true,
+    false,
+    dest_state.guard_manager);
   dest_state.record_events = record_events;
 
   log.conditional_output(

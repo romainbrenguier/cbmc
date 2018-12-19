@@ -35,7 +35,10 @@ protected:
   void
   get_value_set(const exprt &expr, value_setst::valuest &value_set) override;
 
-  bool has_failed_symbol(const exprt &expr, const symbolt *&symbol) override;
+  bool has_failed_symbol(
+    const exprt &expr,
+    const symbolt *&symbol,
+    guard_managert &guard_manager) override;
 };
 
 #endif // CPROVER_GOTO_SYMEX_SYMEX_DEREFERENCE_STATE_H

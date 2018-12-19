@@ -30,13 +30,14 @@ class enumerating_loop_accelerationt
 {
 public:
   enumerating_loop_accelerationt(
-    message_handlert &message_handler,
-    symbol_tablet &_symbol_table,
-    goto_functionst &_goto_functions,
-    goto_programt &_goto_program,
-    natural_loops_mutablet::natural_loopt &_loop,
-    goto_programt::targett _loop_header,
-    int _path_limit)
+      message_handlert &message_handler,
+      symbol_tablet &_symbol_table,
+      goto_functionst &_goto_functions,
+      goto_programt &_goto_program,
+      natural_loops_mutablet::natural_loopt &_loop,
+      goto_programt::targett _loop_header,
+      int _path_limit,
+      guard_managert &guard_manager)
     : symbol_table(_symbol_table),
       goto_functions(_goto_functions),
       goto_program(_goto_program),
@@ -51,11 +52,14 @@ public:
           goto_functions,
           goto_program,
           loop,
-          loop_header))
+          loop_header,
+          guard_manager))
   {
   }
 
-  bool accelerate(path_acceleratort &accelerator);
+  bool accelerate(
+    path_acceleratort &accelerator,
+    guard_managert &guard_manager);
 
 protected:
   symbol_tablet &symbol_table;

@@ -21,6 +21,7 @@ class goto_modelt;
 void interrupt(
   value_setst &,
   goto_modelt &,
-  const irep_idt &interrupt_handler);
+  const irep_idt &interrupt_handler,
+  guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_INSTRUMENT_INTERRUPT_H

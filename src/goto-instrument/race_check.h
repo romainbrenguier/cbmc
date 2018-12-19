@@ -16,6 +16,7 @@ Date: February 2006
 
 #include <pointer-analysis/value_sets.h>
 #include <goto-programs/goto_model.h>
+#include <util/guard.h>
 
 void race_check(
   value_setst &,
@@ -23,9 +24,10 @@ void race_check(
 #ifdef LOCAL_MAY
   const goto_functionst::goto_functiont &goto_function,
 #endif
-  goto_programt &goto_program
+  goto_programt &goto_program,
+  guard_managert &guard_manager
 );
 
-void race_check(value_setst &, goto_modelt &);
+void race_check(value_setst &, goto_modelt &, guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_INSTRUMENT_RACE_CHECK_H

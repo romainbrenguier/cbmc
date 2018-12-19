@@ -35,7 +35,8 @@ Author: Daniel Kroening, kroening@kroening.com
 exprt value_set_dereferencet::dereference(
   const exprt &pointer,
   const guardt &guard,
-  const modet mode)
+  const modet mode,
+  guard_managert &guard_manager)
 {
   if(pointer.type().id()!=ID_pointer)
     throw "dereference expected pointer type, but got "+
@@ -52,8 +53,16 @@ exprt value_set_dereferencet::dereference(
     true_guard.add(if_expr.cond(), ns);
     false_guard.add(not_exprt(if_expr.cond()), ns);
 
-    exprt true_case=dereference(if_expr.true_case(), true_guard, mode);
-    exprt false_case=dereference(if_expr.false_case(), false_guard, mode);
+    exprt true_case= dereference(
+      if_expr.true_case(),
+      true_guard,
+      mode,
+      guard_manager);
+    exprt false_case= dereference(
+      if_expr.false_case(),
+      false_guard,
+      mode,
+      guard_manager);
 
     return if_exprt(if_expr.cond(), true_case, false_case);
   }
@@ -127,7 +136,9 @@ exprt value_set_dereferencet::dereference(
     exprt failure_value;
 
     if(dereference_callback.has_failed_symbol(
-         pointer, failed_symbol))
+      pointer,
+      failed_symbol,
+      guard_manager))
     {
       // yes!
       failure_value=failed_symbol->symbol_expr();

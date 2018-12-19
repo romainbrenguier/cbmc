@@ -213,6 +213,8 @@ protected:
   /// used during symbolic execution to look up names from the original
   /// goto-program, and the names of dynamically-created objects.
   namespacet ns;
+
+  guard_managert guard_manager;
   symex_target_equationt &target;
   unsigned atomic_section_counter;
 

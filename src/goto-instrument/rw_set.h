@@ -147,30 +147,53 @@ protected:
   local_may_aliast &local_may;
 #endif
 
-  void read(const exprt &expr)
+  void read(const exprt &expr, guard_managert &guard_manager)
   {
-    read_write_rec(expr, true, false, "", guardt());
+    read_write_rec(
+      expr,
+      true,
+      false,
+      "",
+      guardt(guard_manager),
+      guard_manager);
   }
 
-  void read(const exprt &expr, const guardt &guard)
+  void read(const exprt &expr, const guardt &guard, guard_managert &guard_manager)
   {
-    read_write_rec(expr, true, false, "", guard);
+    read_write_rec(
+      expr,
+      true,
+      false,
+      "",
+      guard,
+      guard_manager);
   }
 
-  void write(const exprt &expr)
+  void write(const exprt &expr, guard_managert &guard_manager)
   {
-    read_write_rec(expr, false, true, "", guardt());
+    read_write_rec(
+      expr,
+      false,
+      true,
+      "",
+      guardt(guard_manager),
+      guard_manager);
   }
 
-  void compute();
+  void compute(guard_managert &guard_manager);
 
-  void assign(const exprt &lhs, const exprt &rhs);
+  void assign(
+    const exprt &lhs,
+    const exprt &rhs,
+    guard_managert &guard_manager);
 
   void read_write_rec(
     const exprt &expr,
-    bool r, bool w,
+    bool r,
+    bool w,
     const std::string &suffix,
-    const guardt &guard);
+    const guardt &guard,
+    guard_managert &guard_manager);
 };
 
 class rw_set_loct:public _rw_set_loct
@@ -185,13 +208,14 @@ public:
     _rw_set_loct(_ns, _value_sets, _target, may)
 #else
   rw_set_loct(
-    const namespacet &_ns,
-    value_setst &_value_sets,
-    goto_programt::const_targett _target):
+      const namespacet &_ns,
+      value_setst &_value_sets,
+      goto_programt::const_targett _target,
+      guard_managert &guard_manager) :
     _rw_set_loct(_ns, _value_sets, _target)
 #endif
   {
-    compute();
+    compute(guard_manager);
   }
 };
 
@@ -245,14 +269,15 @@ public:
     dereferencing(false)
 #else
   rw_set_with_trackt(
-    const namespacet &_ns,
-    value_setst &_value_sets,
-    goto_programt::const_targett _target):
+      const namespacet &_ns,
+      value_setst &_value_sets,
+      goto_programt::const_targett _target,
+      guard_managert &guard_manager) :
     _rw_set_loct(_ns, _value_sets, _target),
     dereferencing(false)
 #endif
   {
-    compute();
+    compute(guard_manager);
   }
 
 protected:

@@ -1034,11 +1034,11 @@ void shared_bufferst::affected_by_delay(
 
     Forall_goto_program_instructions(i_it, f_it->second.body)
     {
-        rw_set_loct rw_set(ns, value_sets, i_it
-#ifdef LOCAL_MAY
-        , local_may
-#endif
-        ); // NOLINT(whitespace/parens)
+        rw_set_loct rw_set(
+          ns,
+          value_sets,
+          i_it,
+          guard_manager); // NOLINT(whitespace/parens)
         forall_rw_set_w_entries(w_it, rw_set)
           forall_rw_set_r_entries(r_it, rw_set)
           {
@@ -1092,11 +1092,11 @@ void shared_bufferst::cfg_visitort::weak_memory(
     {
       try
       {
-        rw_set_loct rw_set(ns, value_sets, i_it
-#ifdef LOCAL_MAY
-        , local_may
-#endif
-        ); // NOLINT(whitespace/parens)
+        rw_set_loct rw_set(
+          ns,
+          value_sets,
+          i_it,
+          guard_manager); // NOLINT(whitespace/parens)
 
         if(rw_set.empty())
           continue;

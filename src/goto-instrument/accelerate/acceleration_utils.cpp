@@ -113,7 +113,8 @@ void acceleration_utilst::find_modified(
 
 bool acceleration_utilst::check_inductive(
   std::map<exprt, polynomialt> polynomials,
-  patht &path)
+  patht &path,
+  guard_managert &guard_manager)
 {
   // Checking that our polynomial is inductive with respect to the loop body is
   // equivalent to checking safety of the following program:
@@ -126,7 +127,7 @@ bool acceleration_utilst::check_inductive(
   // assert (target1==polynomial1);
   // assert (target2==polynomial2);
   // ...
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
   std::vector<exprt> polynomials_hold;
   substitutiont substitution;
 
@@ -357,7 +358,8 @@ void acceleration_utilst::push_nondet(exprt &expr)
 bool acceleration_utilst::do_assumptions(
   std::map<exprt, polynomialt> polynomials,
   patht &path,
-  exprt &guard)
+  exprt &guard,
+  guard_managert &guard_manager)
 {
   // We want to check that if an assumption fails, the next iteration can't be
   // feasible again.  To do this we check the following program for safety:
@@ -384,7 +386,7 @@ bool acceleration_utilst::do_assumptions(
   // assert(!precondition);
 
   exprt condition=precondition(path);
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
 
   substitutiont substitution;
   stash_polynomials(program, polynomials, substitution, path);
@@ -1222,7 +1224,8 @@ void acceleration_utilst::gather_array_accesses(
 void acceleration_utilst::extract_polynomial(
   scratch_programt &program,
   std::set<std::pair<expr_listt, exprt> > &coefficients,
-  polynomialt &polynomial)
+  polynomialt &polynomial,
+  guard_managert &guard_manager)
 {
   for(std::set<std::pair<expr_listt, exprt> >::iterator it=coefficients.begin();
       it!=coefficients.end();
@@ -1231,7 +1234,10 @@ void acceleration_utilst::extract_polynomial(
     monomialt monomial;
     expr_listt terms=it->first;
     exprt coefficient=it->second;
-    constant_exprt concrete_term=to_constant_expr(program.eval(coefficient));
+    constant_exprt concrete_term=to_constant_expr(
+      program.eval(
+        coefficient,
+        guard_manager));
     std::map<exprt, int> degrees;
 
     mp_integer mp=binary2integer(concrete_term.get_value().c_str(), true);

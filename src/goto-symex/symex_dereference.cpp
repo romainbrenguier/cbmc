@@ -288,11 +288,9 @@ void goto_symext::dereference_rec(
     // std::cout << "**** " << format(tmp1) << '\n';
     exprt tmp2=
       dereference.dereference(
-        tmp1,
-        guard,
-        write?
-          value_set_dereferencet::modet::WRITE:
-          value_set_dereferencet::modet::READ);
+        tmp1, guard, write?
+                     value_set_dereferencet::modet::WRITE:
+                     value_set_dereferencet::modet::READ, guard_manager);
     // std::cout << "**** " << format(tmp2) << '\n';
 
     expr.swap(tmp2);
@@ -385,12 +383,12 @@ void goto_symext::dereference(
   // from different frames. Would be enough to rename
   // symbols whose address is taken.
   PRECONDITION(!state.call_stack().empty());
-  state.rename(expr, ns, goto_symex_statet::L1);
+  state.rename(expr, ns, guard_manager, goto_symex_statet::L1);
 
   // start the recursion!
-  guardt guard;
+  guardt guard(guard_manager);
   dereference_rec(expr, state, guard, write);
   // dereferencing may introduce new symbol_exprt
   // (like __CPROVER_memory)
-  state.rename(expr, ns, goto_symex_statet::L1);
+  state.rename(expr, ns, guard_manager, goto_symex_statet::L1);
 }

@@ -34,12 +34,13 @@ class sat_path_enumeratort:public path_enumeratort
 {
 public:
   sat_path_enumeratort(
-    message_handlert &message_handler,
-    symbol_tablet &_symbol_table,
-    goto_functionst &_goto_functions,
-    goto_programt &_goto_program,
-    natural_loops_mutablet::natural_loopt &_loop,
-    goto_programt::targett _loop_header)
+      message_handlert &message_handler,
+      symbol_tablet &_symbol_table,
+      goto_functionst &_goto_functions,
+      goto_programt &_goto_program,
+      natural_loops_mutablet::natural_loopt &_loop,
+      goto_programt::targett _loop_header,
+      guard_managert &guard_manager)
     : message_handler(message_handler),
       symbol_table(_symbol_table),
       ns(symbol_table),
@@ -50,19 +51,24 @@ public:
       utils(symbol_table, message_handler, goto_functions, loop_counter)
   {
     find_distinguishing_points();
-    build_fixed();
+    build_fixed(guard_manager);
   }
 
-  bool next(patht &path);
+  bool next(patht &path, guard_managert &guard_manager);
 
 protected:
   message_handlert &message_handler;
   void find_distinguishing_points();
 
-  void build_path(scratch_programt &scratch_program, patht &path);
-  void build_fixed();
+  void build_path(
+    scratch_programt &scratch_program,
+    patht &path,
+    guard_managert &guard_manager);
+  void build_fixed(guard_managert &guard_manager);
 
-  void record_path(scratch_programt &scratch_program);
+  void record_path(
+    scratch_programt &scratch_program,
+    guard_managert &guard_manager);
 
   symbol_tablet &symbol_table;
   namespacet ns;

@@ -14,6 +14,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <goto-programs/goto_functions.h>
 #include <goto-programs/goto_model.h>
+#include <util/guard.h>
 
 class namespacet;
 class optionst;
@@ -21,17 +22,20 @@ class optionst;
 void goto_check(
   const namespacet &ns,
   const optionst &options,
-  goto_functionst &goto_functions);
+  goto_functionst &goto_functions,
+  guard_managert &guard_manager);
 
 void goto_check(
   const namespacet &ns,
   const optionst &options,
   const irep_idt &mode,
-  goto_functionst::goto_functiont &goto_function);
+  goto_functionst::goto_functiont &goto_function,
+  guard_managert &guard_manager);
 
 void goto_check(
   const optionst &options,
-  goto_modelt &goto_model);
+  goto_modelt &goto_model,
+  guard_managert &guard_manager);
 
 #define OPT_GOTO_CHECK \
   "(bounds-check)(pointer-check)(memory-leak-check)" \

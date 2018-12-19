@@ -73,7 +73,10 @@ public:
 
   typedef goto_functionst::goto_functiont goto_functiont;
 
-  void goto_check(goto_functiont &goto_function, const irep_idt &mode);
+  void goto_check(
+    goto_functiont &goto_function,
+    const irep_idt &mode,
+    guard_managert &guard_manager);
 
   void collect_allocations(const goto_functionst &goto_functions);
 
@@ -86,7 +89,7 @@ protected:
     const exprt &expr,
     guardt &guard,
     bool address);
-  void check(const exprt &expr);
+  void check(const exprt &expr, guard_managert &guard_manager);
 
   struct conditiont
   {
@@ -1485,9 +1488,9 @@ void goto_checkt::check_rec(const exprt &expr, guardt &guard, bool address)
   }
 }
 
-void goto_checkt::check(const exprt &expr)
+void goto_checkt::check(const exprt &expr, guard_managert &guard_manager)
 {
-  guardt guard;
+  guardt guard(guard_manager);
   check_rec(expr, guard, false);
 }
 
@@ -1514,7 +1517,8 @@ void goto_checkt::rw_ok_check(exprt &expr)
 
 void goto_checkt::goto_check(
   goto_functiont &goto_function,
-  const irep_idt &_mode)
+  const irep_idt &_mode,
+  guard_managert &guard_manager)
 {
   assertions.clear();
   mode = _mode;
@@ -1541,7 +1545,7 @@ void goto_checkt::goto_check(
        i.is_target())
       assertions.clear();
 
-    check(i.guard);
+    check(i.guard, guard_manager);
 
     // magic ERROR label?
     for(const auto &label : error_labels)
@@ -1567,20 +1571,20 @@ void goto_checkt::goto_check(
 
       if(statement==ID_expression)
       {
-        check(i.code);
+        check(i.code, guard_manager);
       }
       else if(statement==ID_printf)
       {
         for(const auto &op : i.code.operands())
-          check(op);
+          check(op, guard_manager);
       }
     }
     else if(i.is_assign())
     {
       const code_assignt &code_assign=to_code_assign(i.code);
 
-      check(code_assign.lhs());
-      check(code_assign.rhs());
+      check(code_assign.lhs(), guard_manager);
+      check(code_assign.rhs(), guard_manager);
 
       // the LHS might invalidate any assertion
       invalidate(code_assign.lhs());
@@ -1615,12 +1619,12 @@ void goto_checkt::goto_check(
             "pointer dereference",
             i.source_location,
             pointer,
-            guardt());
+            guardt(guard_manager));
         }
       }
 
       for(const auto &op : code_function_call.operands())
-        check(op);
+        check(op, guard_manager);
 
       // the call might invalidate any assertion
       assertions.clear();
@@ -1629,7 +1633,7 @@ void goto_checkt::goto_check(
     {
       if(i.code.operands().size()==1)
       {
-        check(i.code.op0());
+        check(i.code.op0(), guard_manager);
         // the return value invalidate any assertion
         invalidate(i.code.op0());
       }
@@ -1653,7 +1657,7 @@ void goto_checkt::goto_check(
           "pointer dereference",
           i.source_location,
           pointer,
-          guardt());
+          guardt(guard_manager));
       }
 
       // this has no successor
@@ -1733,7 +1737,7 @@ void goto_checkt::goto_check(
           "memory-leak",
           source_location,
           eq,
-          guardt());
+          guardt(guard_manager));
       }
     }
 
@@ -1784,16 +1788,18 @@ void goto_check(
   const namespacet &ns,
   const optionst &options,
   const irep_idt &mode,
-  goto_functionst::goto_functiont &goto_function)
+  goto_functionst::goto_functiont &goto_function,
+  guard_managert &guard_manager)
 {
   goto_checkt goto_check(ns, options);
-  goto_check.goto_check(goto_function, mode);
+  goto_check.goto_check(goto_function, mode, guard_manager);
 }
 
 void goto_check(
   const namespacet &ns,
   const optionst &options,
-  goto_functionst &goto_functions)
+  goto_functionst &goto_functions,
+  guard_managert &guard_manager)
 {
   goto_checkt goto_check(ns, options);
 
@@ -1802,14 +1808,15 @@ void goto_check(
   Forall_goto_functions(it, goto_functions)
   {
     irep_idt mode=ns.lookup(it->first).mode;
-    goto_check.goto_check(it->second, mode);
+    goto_check.goto_check(it->second, mode, guard_manager);
   }
 }
 
 void goto_check(
   const optionst &options,
-  goto_modelt &goto_model)
+  goto_modelt &goto_model,
+  guard_managert &guard_manager)
 {
   const namespacet ns(goto_model.symbol_table);
-  goto_check(ns, options, goto_model.goto_functions);
+  goto_check(ns, options, goto_model.goto_functions, guard_manager);
 }

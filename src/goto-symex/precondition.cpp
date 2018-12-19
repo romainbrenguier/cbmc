@@ -41,13 +41,13 @@ protected:
   const goto_programt::const_targett target;
   const symex_target_equationt::SSA_stept &SSA_step;
   const goto_symex_statet &s;
-  void compute_rec(exprt &dest);
+  void compute_rec(exprt &dest, guard_managert &guard_manager);
 
 public:
-  void compute(exprt &dest);
+  void compute(exprt &dest, guard_managert &guard_manager);
 
 protected:
-  void compute_address_of(exprt &dest);
+  void compute_address_of(exprt &dest, guard_managert &guard_manager);
 };
 
 void precondition(
@@ -56,7 +56,8 @@ void precondition(
   const goto_programt::const_targett target,
   const symex_target_equationt &equation,
   const goto_symex_statet &s,
-  exprt &dest)
+  exprt &dest,
+  guard_managert &guard_manager)
 {
   for(symex_target_equationt::SSA_stepst::const_reverse_iterator
       it=equation.SSA_steps.rbegin();
@@ -64,13 +65,13 @@ void precondition(
       it++)
   {
     preconditiont precondition(ns, value_sets, target, *it, s);
-    precondition.compute(dest);
+    precondition.compute(dest, guard_manager);
     if(dest.is_false())
       return;
   }
 }
 
-void preconditiont::compute_address_of(exprt &dest)
+void preconditiont::compute_address_of(exprt &dest, guard_managert &guard_manager)
 {
   if(dest.id()==ID_symbol)
   {
@@ -79,30 +80,30 @@ void preconditiont::compute_address_of(exprt &dest)
   else if(dest.id()==ID_index)
   {
     auto &index_expr = to_index_expr(dest);
-    compute_address_of(index_expr.array());
-    compute(index_expr.index());
+    compute_address_of(index_expr.array(), guard_manager);
+    compute(index_expr.index(), guard_manager);
   }
   else if(dest.id()==ID_member)
   {
-    compute_address_of(to_member_expr(dest).compound());
+    compute_address_of(to_member_expr(dest).compound(), guard_manager);
   }
   else if(dest.id()==ID_dereference)
   {
-    compute(to_dereference_expr(dest).pointer());
+    compute(to_dereference_expr(dest).pointer(), guard_manager);
   }
 }
 
-void preconditiont::compute(exprt &dest)
+void preconditiont::compute(exprt &dest, guard_managert &guard_manager)
 {
-  compute_rec(dest);
+  compute_rec(dest, guard_manager);
 }
 
-void preconditiont::compute_rec(exprt &dest)
+void preconditiont::compute_rec(exprt &dest, guard_managert &guard_manager)
 {
   if(dest.id()==ID_address_of)
   {
     // only do index!
-    compute_address_of(to_address_of_expr(dest).object());
+    compute_address_of(to_address_of_expr(dest).object(), guard_manager);
   }
   else if(dest.id()==ID_dereference)
   {
@@ -127,14 +128,19 @@ void preconditiont::compute_rec(exprt &dest)
       // may alias!
       exprt tmp;
       tmp.swap(deref_expr.pointer());
-      dereference(target, tmp, ns, value_sets);
+      dereference(
+        target,
+        tmp,
+        ns,
+        value_sets,
+        guard_manager);
       deref_expr.swap(tmp);
-      compute_rec(deref_expr);
+      compute_rec(deref_expr, guard_manager);
     }
     else
     {
       // nah, ok
-      compute_rec(deref_expr.pointer());
+      compute_rec(deref_expr.pointer(), guard_manager);
     }
   }
   else if(dest==SSA_step.ssa_lhs.get_original_expr())
@@ -143,6 +149,5 @@ void preconditiont::compute_rec(exprt &dest)
     s.get_original_name(dest);
   }
   else
-    Forall_operands(it, dest)
-      compute_rec(*it);
+    Forall_operands(it, dest)compute_rec(*it, guard_manager);
 }

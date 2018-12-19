@@ -694,7 +694,7 @@ bool janalyzer_parse_optionst::process_goto_program(const optionst &options)
 
     // add generic checks
     status() << "Generic Property Instrumentation" << eom;
-    goto_check(options, goto_model);
+    goto_check(options, goto_model, guard_manager);
 
     // recalculate numbers, etc.
     goto_model.goto_functions.update();

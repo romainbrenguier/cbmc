@@ -12,8 +12,9 @@ Author: Matt Lewis
 #include "all_paths_enumerator.h"
 
 #include <iostream>
+#include <util/guard.h>
 
-bool all_paths_enumeratort::next(patht &path)
+bool all_paths_enumeratort::next(patht &path, guard_managert &guard_manager)
 {
   if(last_path.empty())
   {

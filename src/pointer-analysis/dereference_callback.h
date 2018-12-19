@@ -35,7 +35,8 @@ public:
 
   virtual bool has_failed_symbol(
     const exprt &expr,
-    const symbolt *&symbol)=0;
+    const symbolt *&symbol,
+    class guard_managert &guard_manager)=0;
 };
 
 #endif // CPROVER_POINTER_ANALYSIS_DEREFERENCE_CALLBACK_H

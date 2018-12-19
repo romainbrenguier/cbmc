@@ -417,7 +417,7 @@ bool goto_diff_parse_optionst::process_goto_program(
 
     // add generic checks
     status() << "Generic Property Instrumentation" << eom;
-    goto_check(options, goto_model);
+    goto_check(options, goto_model, guard_manager);
 
     // checks don't know about adjusted float expressions
     adjust_float_expressions(goto_model);

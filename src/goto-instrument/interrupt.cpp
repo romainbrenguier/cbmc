@@ -58,7 +58,8 @@ void interrupt(
 #endif
   goto_programt &goto_program,
   const symbol_exprt &interrupt_handler,
-  const rw_set_baset &isr_rw_set)
+  const rw_set_baset &isr_rw_set,
+  guard_managert &guard_manager)
 {
   namespacet ns(symbol_table);
 
@@ -73,7 +74,7 @@ void interrupt(
 #ifdef LOCAL_MAY
       , local_may
 #endif
-    ); // NOLINT(whitespace/parens)
+      , guard_manager); // NOLINT(whitespace/parens)
 
     // potential race?
     bool race_on_read=potential_race_on_read(rw_set, isr_rw_set);
@@ -180,7 +181,8 @@ symbol_exprt get_isr(
 void interrupt(
   value_setst &value_sets,
   goto_modelt &goto_model,
-  const irep_idt &interrupt_handler)
+  const irep_idt &interrupt_handler,
+  guard_managert &guard_manager)
 {
   // look up the ISR
   symbol_exprt isr=
@@ -201,7 +203,8 @@ void interrupt(
 #ifdef LOCAL_MAY
         f_it->second,
 #endif
-        f_it->second.body, isr, isr_rw_set);
+        f_it->second.body, isr, isr_rw_set,
+        guard_manager);
 
   goto_model.goto_functions.update();
 }

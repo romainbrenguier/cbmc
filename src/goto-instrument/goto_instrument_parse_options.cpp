@@ -101,7 +101,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "unwind.h"
 #include "wmm/weak_memory.h"
 
-/// invoke main modules
 int goto_instrument_parse_optionst::doit()
 {
   if(cmdline.isset("version"))
@@ -759,8 +758,12 @@ int goto_instrument_parse_optionst::doit()
       remove_calls_no_body(goto_model.goto_functions);
 
       status() << "Accelerating" << eom;
+      guard_managert guard_manager;
       accelerate_functions(
-        goto_model, get_message_handler(), cmdline.isset("z3"));
+        goto_model,
+        get_message_handler(),
+        cmdline.isset("z3"),
+        guard_manager);
       remove_skip(goto_model);
     }
 
@@ -1186,7 +1189,8 @@ void goto_instrument_parse_optionst::instrument_goto_program()
   }
 
   // add generic checks, if needed
-  goto_check(options, goto_model);
+  guard_managert guard_manager;
+  goto_check(options, goto_model, guard_manager);
 
   // check for uninitalized local variables
   if(cmdline.isset("uninitialized-check"))
@@ -1255,7 +1259,7 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     if(cmdline.isset("race-check"))
     {
       status() << "Adding Race Checks" << eom;
-      race_check(value_set_analysis, goto_model);
+      race_check(value_set_analysis, goto_model, guard_manager);
     }
 
     if(cmdline.isset("mm"))
@@ -1347,7 +1351,8 @@ void goto_instrument_parse_optionst::instrument_goto_program()
       interrupt(
         value_set_analysis,
         goto_model,
-        cmdline.get_value("isr"));
+        cmdline.get_value("isr"),
+        guard_manager);
     }
 
     // Memory-mapped I/O

@@ -411,11 +411,11 @@ bool instrumentert::cfg_visitort::contains_shared_array(
   {
     instrumenter.message.debug() << "Do we have an array at line "
       <<cur->source_location.get_line()<<"?" << messaget::eom;
-    rw_set_loct rw_set(ns, value_sets, cur
-      #ifdef LOCAL_MAY
-      , local_may
-      #endif
-    ); // NOLINT(whitespace/parens)
+    rw_set_loct rw_set(
+      ns,
+      value_sets,
+      cur,
+      guard_manager); // NOLINT(whitespace/parens)
     instrumenter.message.debug() << "Writes: "<<rw_set.w_entries.size()
       <<"; Reads:"<<rw_set.r_entries.size() << messaget::eom;
 
@@ -794,11 +794,11 @@ void instrumentert::cfg_visitort::visit_cfg_assign(
   goto_programt::instructiont &instruction=*i_it;
 
   /* Read (Rb) */
-  rw_set_loct rw_set(ns, value_sets, i_it
-#ifdef LOCAL_MAY
-    , local_may
-#endif
-  ); // NOLINT(whitespace/parens)
+  rw_set_loct rw_set(
+    ns,
+    value_sets,
+    i_it,
+    guard_manager); // NOLINT(whitespace/parens)
 
   event_idt previous=std::numeric_limits<event_idt>::max();
   event_idt previous_gnode=std::numeric_limits<event_idt>::max();

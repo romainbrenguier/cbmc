@@ -36,8 +36,12 @@ Author: Matt Lewis
 class scratch_programt:public goto_programt
 {
 public:
-  scratch_programt(symbol_tablet &_symbol_table, message_handlert &mh)
+  scratch_programt(
+      symbol_tablet &_symbol_table,
+      message_handlert &mh,
+      guard_managert &guard_manager)
     : constant_propagation(true),
+      symex_state(guard_manager),
       symbol_table(_symbol_table),
       symex_symbol_table(),
       ns(symbol_table, symex_symbol_table),
@@ -67,7 +71,7 @@ public:
     return check_sat(true);
   }
 
-  exprt eval(const exprt &e);
+  exprt eval(const exprt &e, guard_managert &guard_manager);
 
   void fix_types();
 
