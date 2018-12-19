@@ -168,14 +168,16 @@ void field_sensitivityt::field_assignments(
   const namespacet &ns,
   goto_symex_statet &state,
   symex_targett &target,
-  const exprt &lhs)
+  const exprt &lhs,
+  bool allow_pointer_unsoundness)
 {
   exprt lhs_fs = lhs;
   apply(ns, lhs_fs, false, state);
 
   bool do_apply_bak = do_apply;
   do_apply = false;
-  field_assignments_rec(ns, state, target, lhs_fs, lhs);
+  field_assignments_rec(
+    ns, state, target, lhs_fs, lhs, allow_pointer_unsoundness);
   do_apply = do_apply_bak;
 }
 
@@ -184,7 +186,8 @@ void field_sensitivityt::field_assignments_rec(
   goto_symex_statet &state,
   symex_targett &target,
   const exprt &lhs_fs,
-  const exprt &lhs)
+  const exprt &lhs,
+  bool allow_pointer_unsoundness)
 {
   const typet &followed_type = ns.follow(lhs.type());
 
@@ -198,7 +201,8 @@ void field_sensitivityt::field_assignments_rec(
     simplify(ssa_rhs, ns);
 
     ssa_exprt ssa_lhs = to_ssa_expr(lhs_fs);
-    state.assignment(ssa_lhs, ssa_rhs, ns, true, true);
+    state.assignment(
+      ssa_lhs, ssa_rhs, ns, true, true, allow_pointer_unsoundness);
 
     // do the assignment
     target.assignment(
@@ -226,7 +230,8 @@ void field_sensitivityt::field_assignments_rec(
       const member_exprt member_rhs(lhs, comp.get_name(), comp.type());
       const exprt &member_lhs = lhs_fs.operands()[number];
 
-      field_assignments_rec(ns, state, target, member_lhs, member_rhs);
+      field_assignments_rec(
+        ns, state, target, member_lhs, member_rhs, allow_pointer_unsoundness);
       ++number;
     }
   }
@@ -244,7 +249,8 @@ void field_sensitivityt::field_assignments_rec(
       const index_exprt index_rhs(lhs, from_integer(i, index_type()));
       const exprt &index_lhs = lhs_fs.operands()[i];
 
-      field_assignments_rec(ns, state, target, index_lhs, index_rhs);
+      field_assignments_rec(
+        ns, state, target, index_lhs, index_rhs, allow_pointer_unsoundness);
     }
   }
 #endif // ENABLE_ARRAY_FIELD_SENSITIVITY
@@ -256,7 +262,8 @@ void field_sensitivityt::field_assignments_rec(
     exprt::operandst::const_iterator fs_it = lhs_fs.operands().begin();
     for(const exprt &op : lhs.operands())
     {
-      field_assignments_rec(ns, state, target, *fs_it, op);
+      field_assignments_rec(
+        ns, state, target, *fs_it, op, allow_pointer_unsoundness);
       ++fs_it;
     }
   }
