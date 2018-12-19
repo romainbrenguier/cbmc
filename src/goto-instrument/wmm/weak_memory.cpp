@@ -38,6 +38,7 @@ void introduce_temporaries(
   symbol_tablet &symbol_table,
   const irep_idt &function,
   goto_programt &goto_program,
+  guard_managert &guard_manager,
 #ifdef LOCAL_MAY
   const goto_functionst::goto_functiont &goto_function,
 #endif
@@ -118,7 +119,8 @@ void weak_memory(
   bool cav11_option,
   bool hide_internals,
   message_handlert &message_handler,
-  bool ignore_arrays)
+  bool ignore_arrays,
+  guard_managert &guard_manager)
 {
   messaget message(message_handler);
 
@@ -135,7 +137,7 @@ void weak_memory(
     if(f_it->first != INITIALIZE_FUNCTION &&
       f_it->first!=goto_functionst::entry_point())
       introduce_temporaries(value_sets, goto_model.symbol_table, f_it->first,
-        f_it->second.body,
+        f_it->second.body, guard_manager,
 #ifdef LOCAL_MAY
         f_it->second,
 #endif
@@ -145,8 +147,12 @@ void weak_memory(
 
   unsigned max_thds = 0;
   instrumentert instrumenter(goto_model, message);
-  max_thds=instrumenter.goto2graph_cfg(value_sets, model, no_dependencies,
-    duplicate_body);
+  max_thds= instrumenter.goto2graph_cfg(
+    value_sets,
+    model,
+    no_dependencies,
+    duplicate_body,
+    guard_manager);
   message.status()<<"abstraction completed"<<messaget::eom;
 
   // collects cycles, directly or by SCCs
@@ -222,7 +228,7 @@ void weak_memory(
   shared_buffers.cycles_r_loc = instrumenter.id2cycloc; // places in the cycles
 
   // for reads delays
-  shared_buffers.affected_by_delay(value_sets, goto_model.goto_functions);
+  shared_buffers.affected_by_delay(value_sets, goto_model.goto_functions, guard_manager);
 
   for(std::set<irep_idt>::iterator it=
     shared_buffers.affected_by_delay_set.begin();
@@ -245,7 +251,7 @@ void weak_memory(
   shared_bufferst::cfg_visitort visitor(
     shared_buffers, goto_model.symbol_table, goto_model.goto_functions);
   visitor.weak_memory(
-    value_sets, goto_model.goto_functions.entry_point(), model);
+    value_sets, goto_model.goto_functions.entry_point(), model, guard_manager);
 
   /* removes potential skips */
   remove_skip(goto_model);

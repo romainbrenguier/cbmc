@@ -768,6 +768,7 @@ bool cbmc_parse_optionst::process_goto_program(
     rewrite_union(goto_model);
 
     // add generic checks
+    guard_managert guard_manager;
     log.status() << "Generic Property Instrumentation" << eom;
     goto_check(options, goto_model, guard_manager);
 

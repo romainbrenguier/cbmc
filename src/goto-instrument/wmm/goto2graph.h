@@ -26,6 +26,7 @@ Date: 2012
 #include "wmm.h"
 
 class goto_modelt;
+class guard_managert;
 class value_setst;
 class local_may_aliast;
 
@@ -104,7 +105,8 @@ protected:
     bool contains_shared_array(
       goto_programt::const_targett targ,
       goto_programt::const_targett i_it,
-      value_setst &value_sets
+      value_setst &value_sets,
+      guard_managert &guard_manager
       #ifdef LOCAL_MAY
       , local_may_aliast local_may
       #endif
@@ -116,7 +118,8 @@ protected:
     void visit_cfg_body(
       goto_programt::const_targett i_it,
       loop_strategyt replicate_body,
-      value_setst &value_sets
+      value_setst &value_sets,
+      guard_managert &guard_manager
       #ifdef LOCAL_MAY
       , local_may_aliast &local_may
       #endif
@@ -128,7 +131,8 @@ protected:
     void visit_cfg_assign(
       value_setst &value_sets,
       goto_programt::instructionst::iterator &i_it,
-      bool no_dependencies
+      bool no_dependencies,
+      guard_managert &guard_manager
 #ifdef LOCAL_MAY
       ,
       local_may_aliast &local_may
@@ -138,17 +142,20 @@ protected:
     void visit_cfg_skip(goto_programt::instructionst::iterator i_it);
     void visit_cfg_lwfence(goto_programt::instructionst::iterator i_it);
     void visit_cfg_asm_fence(goto_programt::instructionst::iterator i_it);
-    void visit_cfg_function_call(value_setst &value_sets,
+    void visit_cfg_function_call(
+      value_setst &value_sets,
       goto_programt::instructionst::iterator i_it,
       memory_modelt model,
       bool no_dependenciess,
-      loop_strategyt duplicate_body);
+      loop_strategyt duplicate_body,
+      guard_managert &guard_manager);
     void visit_cfg_goto(
       goto_programt::instructionst::iterator i_it,
       /* forces the duplication of all the loops, with array or not
          otherwise, duplication of loops with array accesses only */
       loop_strategyt replicate_body,
-      value_setst &value_sets
+      value_setst &value_sets,
+      guard_managert &guard_manager
       #ifdef LOCAL_MAY
       , local_may_aliast &local_may
       #endif
@@ -241,7 +248,8 @@ protected:
       memory_modelt model,
       bool no_dependencies,
       loop_strategyt duplicate_body,
-      const irep_idt &function)
+      const irep_idt &function,
+      guard_managert &guard_manager)
     {
       /* ignore recursive calls -- underapproximation */
       try
@@ -249,8 +257,14 @@ protected:
         /* forbids recursive function */
         enter_function(function);
         std::set<nodet> end_out;
-        visit_cfg_function(value_sets, model, no_dependencies, duplicate_body,
-          function, end_out);
+        visit_cfg_function(
+          value_sets,
+          model,
+          no_dependencies,
+          duplicate_body,
+          function,
+          end_out,
+          guard_manager);
         leave_function(function);
       }
       catch(const std::string &s)
@@ -268,12 +282,13 @@ protected:
     /// \param function: Function to analyse
     /// \param ending_vertex: Outcoming edges
     virtual void visit_cfg_function(
-      value_setst &value_sets,
-      memory_modelt model,
-      bool no_dependencies,
-      loop_strategyt duplicate_body,
-      const irep_idt &function,
-      std::set<nodet> &ending_vertex);
+  value_setst &value_sets,
+  memory_modelt model,
+  bool no_dependencies,
+  loop_strategyt duplicate_body,
+  const irep_idt &function,
+  std::set<instrumentert::cfg_visitort::nodet> &ending_vertex,
+  guard_managert &guard_manager);
 
     bool inline local(const irep_idt &i);
   };
@@ -348,11 +363,11 @@ public:
   /* abstracts goto-programs in abstract event graph, and computes
      the thread numbering and returns the max number */
   unsigned goto2graph_cfg(
-    value_setst &value_sets,
-    memory_modelt model,
-    bool no_dependencies,
-    /* forces the duplication, with arrays or not; otherwise, arrays only */
-    loop_strategyt duplicate_body);
+  value_setst &value_sets,
+  memory_modelt model,
+  bool no_dependencies,
+  loop_strategyt duplicate_body,
+  guard_managert &guard_manager);
 
   /* collects directly all the cycles in the graph */
   void collect_cycles(memory_modelt model)

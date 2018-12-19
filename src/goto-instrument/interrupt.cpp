@@ -190,7 +190,7 @@ void interrupt(
 
   // we first figure out which objects are read/written by the ISR
   rw_set_functiont isr_rw_set(
-    value_sets, goto_model, isr);
+    value_sets, goto_model, isr, guard_manager);
 
   // now instrument
 

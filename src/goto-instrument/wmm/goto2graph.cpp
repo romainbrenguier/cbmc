@@ -88,7 +88,8 @@ unsigned instrumentert::goto2graph_cfg(
   value_setst &value_sets,
   memory_modelt model,
   bool no_dependencies,
-  loop_strategyt duplicate_body)
+  loop_strategyt duplicate_body,
+  guard_managert &guard_manager)
 {
   if(!no_dependencies)
     message.status() << "Dependencies analysis enabled" << messaget::eom;
@@ -96,7 +97,7 @@ unsigned instrumentert::goto2graph_cfg(
   /* builds the graph following the CFG */
   cfg_visitort visitor(ns, *this);
   visitor.visit_cfg(value_sets, model, no_dependencies, duplicate_body,
-    goto_functions.entry_point());
+                    goto_functions.entry_point(), guard_manager);
 
   std::vector<std::size_t> subgraph_index;
   num_sccs=egraph_alt.SCCs(subgraph_index);
@@ -145,12 +146,13 @@ unsigned instrumentert::goto2graph_cfg(
 }
 
 void instrumentert::cfg_visitort::visit_cfg_function(
-    value_setst &value_sets,
-    memory_modelt model,
-    bool no_dependencies,
-    loop_strategyt replicate_body,
-    const irep_idt &function,
-    std::set<instrumentert::cfg_visitort::nodet> &ending_vertex)
+  value_setst &value_sets,
+  memory_modelt model,
+  bool no_dependencies,
+  loop_strategyt replicate_body,
+  const irep_idt &function,
+  std::set<instrumentert::cfg_visitort::nodet> &ending_vertex,
+  guard_managert &guard_manager)
 {
   /* flow: egraph */
 
@@ -210,7 +212,8 @@ void instrumentert::cfg_visitort::visit_cfg_function(
       visit_cfg_assign(
         value_sets,
         i_it,
-        no_dependencies
+        no_dependencies,
+        guard_manager
 #ifdef LOCAL_MAY
         ,
         local_may
@@ -238,12 +241,17 @@ void instrumentert::cfg_visitort::visit_cfg_function(
     }
     else if(instruction.is_function_call())
     {
-      visit_cfg_function_call(value_sets, i_it, model,
-        no_dependencies, replicate_body);
+      visit_cfg_function_call(
+        value_sets,
+        i_it,
+        model,
+        no_dependencies,
+        replicate_body,
+        guard_manager);
     }
     else if(instruction.is_goto())
     {
-      visit_cfg_goto(i_it, replicate_body, value_sets
+      visit_cfg_goto(i_it, replicate_body, value_sets, guard_manager
 #ifdef LOCAL_MAY
         , local_may
 #endif
@@ -398,7 +406,8 @@ event_idt alt_copy_segment(wmm_grapht &alt_egraph,
 bool instrumentert::cfg_visitort::contains_shared_array(
   goto_programt::const_targett targ,
   goto_programt::const_targett i_it,
-  value_setst &value_sets
+  value_setst &value_sets,
+  guard_managert &guard_manager
   #ifdef LOCAL_MAY
   , local_may_aliast local_may
   #endif
@@ -447,7 +456,8 @@ bool instrumentert::cfg_visitort::contains_shared_array(
 void inline instrumentert::cfg_visitort::visit_cfg_body(
   goto_programt::const_targett i_it,
   loop_strategyt replicate_body,
-  value_setst &value_sets
+  value_setst &value_sets,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   , local_may_aliast &local_may
 #endif
@@ -467,7 +477,7 @@ void inline instrumentert::cfg_visitort::visit_cfg_body(
       switch(replicate_body)
       {
         case arrays_only:
-          duplicate_this=contains_shared_array(target, i_it, value_sets
+          duplicate_this=contains_shared_array(target, i_it, value_sets, guard_manager
             #ifdef LOCAL_MAY
             , local_may
             #endif
@@ -622,7 +632,8 @@ void inline instrumentert::cfg_visitort::visit_cfg_backedge(
 void instrumentert::cfg_visitort::visit_cfg_goto(
   goto_programt::instructionst::iterator i_it,
   loop_strategyt replicate_body,
-  value_setst &value_sets
+  value_setst &value_sets,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   , local_may_aliast &local_may
 #endif
@@ -640,7 +651,7 @@ void instrumentert::cfg_visitort::visit_cfg_goto(
   if(instruction.is_backwards_goto())
   {
     instrumenter.message.debug() << "backward goto" << messaget::eom;
-    visit_cfg_body(i_it, replicate_body, value_sets
+    visit_cfg_body(i_it, replicate_body, value_sets, guard_manager
 #ifdef LOCAL_MAY
     , local_may
 #endif
@@ -653,7 +664,8 @@ void instrumentert::cfg_visitort::visit_cfg_function_call(
   goto_programt::instructionst::iterator i_it,
   memory_modelt model,
   bool no_dependencies,
-  loop_strategyt replicate_body)
+  loop_strategyt replicate_body,
+  guard_managert &guard_manager)
 {
   const goto_programt::instructiont &instruction=*i_it;
 
@@ -692,8 +704,14 @@ void instrumentert::cfg_visitort::visit_cfg_function_call(
     #endif
     {
       /* normal inlining strategy */
-      visit_cfg_function(value_sets, model, no_dependencies, replicate_body,
-        fun_id, in_pos[i_it]);
+      visit_cfg_function(
+        value_sets,
+        model,
+        no_dependencies,
+        replicate_body,
+        fun_id,
+        in_pos[i_it],
+        guard_manager);
       updated.insert(i_it);
     }
 
@@ -785,7 +803,8 @@ void instrumentert::cfg_visitort::visit_cfg_asm_fence(
 void instrumentert::cfg_visitort::visit_cfg_assign(
   value_setst &value_sets,
   goto_programt::instructionst::iterator &i_it,
-  bool no_dependencies
+  bool no_dependencies,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   , local_may_aliast &local_may
 #endif

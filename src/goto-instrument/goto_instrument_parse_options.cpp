@@ -474,9 +474,9 @@ int goto_instrument_parse_optionst::doit()
 
       const symbolt &symbol=ns.lookup(ID_main);
       symbol_exprt main(symbol.name, symbol.type);
-
+      guard_managert guard_manager;
       std::cout <<
-        rw_set_functiont(value_set_analysis, goto_model, main);
+        rw_set_functiont(value_set_analysis, goto_model, main, guard_manager);
       return CPROVER_EXIT_SUCCESS;
     }
 
@@ -1341,7 +1341,8 @@ void goto_instrument_parse_optionst::instrument_goto_program()
           cmdline.isset("cav11"),
           cmdline.isset("hide-internals"),
           get_message_handler(),
-          cmdline.isset("ignore-arrays"));
+          cmdline.isset("ignore-arrays"),
+          guard_manager);
     }
 
     // Interrupt handler

@@ -252,7 +252,7 @@ void _rw_set_loct::read_write_rec(
   }
 }
 
-void rw_set_functiont::compute_rec(const exprt &function)
+void rw_set_functiont::compute_rec(const exprt &function, guard_managert &guard_manager)
 {
   if(function.id()==ID_symbol)
   {
@@ -287,7 +287,7 @@ void rw_set_functiont::compute_rec(const exprt &function)
   }
   else if(function.id()==ID_if)
   {
-    compute_rec(to_if_expr(function).true_case());
-    compute_rec(to_if_expr(function).false_case());
+    compute_rec(to_if_expr(function).true_case(), guard_manager);
+    compute_rec(to_if_expr(function).false_case(), guard_manager);
   }
 }

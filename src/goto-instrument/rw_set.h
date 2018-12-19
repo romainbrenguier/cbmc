@@ -227,13 +227,14 @@ public:
   rw_set_functiont(
     value_setst &_value_sets,
     const goto_modelt &_goto_model,
-    const exprt &function):
+    const exprt &function,
+    guard_managert &guard_manager):
     rw_set_baset(ns),
     ns(_goto_model.symbol_table),
     value_sets(_value_sets),
     goto_functions(_goto_model.goto_functions)
   {
-    compute_rec(function);
+    compute_rec(function, guard_manager);
   }
 
 protected:
@@ -241,7 +242,7 @@ protected:
   value_setst &value_sets;
   const goto_functionst &goto_functions;
 
-  void compute_rec(const exprt &function);
+  void compute_rec(const exprt &function, guard_managert &guard_manager);
 };
 
 /* rw_set_loc keeping track of the dereference path */

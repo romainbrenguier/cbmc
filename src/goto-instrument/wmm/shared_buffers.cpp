@@ -1022,7 +1022,8 @@ bool shared_bufferst::is_buffered_in_general(
 /// as effect of a read delay
 void shared_bufferst::affected_by_delay(
   value_setst &value_sets,
-  goto_functionst &goto_functions)
+  goto_functionst &goto_functions,
+  guard_managert &guard_manager)
 {
   namespacet ns(symbol_table);
 
@@ -1057,7 +1058,8 @@ void shared_bufferst::affected_by_delay(
 void shared_bufferst::cfg_visitort::weak_memory(
   value_setst &value_sets,
   const irep_idt &function,
-  memory_modelt model)
+  memory_modelt model,
+  guard_managert &guard_manager)
 {
   shared_buffers.message.debug() << "visit function "<< function
                                  << messaget::eom;
@@ -1301,7 +1303,7 @@ void shared_bufferst::cfg_visitort::weak_memory(
     else if(instruction.is_function_call())
     {
       const exprt &fun=to_code_function_call(instruction.code).function();
-      weak_memory(value_sets, to_symbol_expr(fun).get_identifier(), model);
+      weak_memory(value_sets, to_symbol_expr(fun).get_identifier(), model, guard_manager);
     }
   }
 }
