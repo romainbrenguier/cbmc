@@ -221,7 +221,7 @@ void _rw_set_loct::read_write_rec(
     read(expr.op0(), guard, guard_manager);
 
     guardt true_guard(guard);
-    true_guard.add(expr.op0(), guard_manager);
+    true_guard.add(expr.op0());
     read_write_rec(
       expr.op1(),
       r,
@@ -231,7 +231,7 @@ void _rw_set_loct::read_write_rec(
       guard_manager);
 
     guardt false_guard(guard);
-    false_guard.add(not_exprt(expr.op0()), guard_manager);
+    false_guard.add(not_exprt(expr.op0()));
     read_write_rec(
       expr.op2(),
       r,

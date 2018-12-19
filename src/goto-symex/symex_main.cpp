@@ -120,7 +120,7 @@ void goto_symext::symex_assume(statet &state, const exprt &cond)
   // x=0;                   assume(x==1);
   // assert(x!=42);         x=42;
   else
-    state.guard.add(simplified_cond, ns);
+    state.guard.add(simplified_cond);
 
   if(state.atomic_section_id!=0 && is_false(state.guard))
     symex_atomic_end(state);
@@ -342,7 +342,7 @@ void goto_symext::symex_step(
 
   // depth exceeded?
   if(symex_config.max_depth != 0 && state.depth > symex_config.max_depth)
-    state.guard.add(false_exprt(), ns);
+    state.guard.add(false_exprt());
   state.depth++;
 
   // actually do instruction
@@ -458,7 +458,7 @@ void goto_symext::symex_step(
   case END_THREAD:
     // behaves like assume(0);
     if(!is_false(state.guard))
-      state.guard.add(false_exprt(), ns);
+      state.guard.add(false_exprt());
     symex_transition(state);
     break;
 

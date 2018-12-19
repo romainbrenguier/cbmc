@@ -829,7 +829,7 @@ void rw_guarded_range_set_value_sett::get_objects_if(
 
     guardt copy = guard;
 
-    copy.add(not_exprt(if_expr.cond()), ns);
+    copy.add(not_exprt(if_expr.cond()));
     get_objects_rec(
       mode,
       if_expr.false_case(),
@@ -838,7 +838,7 @@ void rw_guarded_range_set_value_sett::get_objects_if(
       guard_manager);
     guard = copy;
 
-    guard.add(if_expr.cond(), ns);
+    guard.add(if_expr.cond());
     get_objects_rec(
       mode,
       if_expr.true_case(),

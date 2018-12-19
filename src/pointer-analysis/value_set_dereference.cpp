@@ -50,8 +50,8 @@ exprt value_set_dereferencet::dereference(
     guardt true_guard=guard;
     guardt false_guard=guard;
 
-    true_guard.add(if_expr.cond(), ns);
-    false_guard.add(not_exprt(if_expr.cond()), ns);
+    true_guard.add(if_expr.cond());
+    false_guard.add(not_exprt(if_expr.cond()));
 
     exprt true_case= dereference(
       if_expr.true_case(),
