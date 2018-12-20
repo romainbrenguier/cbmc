@@ -67,36 +67,6 @@ bool goto_program_dereferencet::is_valid_object(
   #endif
 }
 
-/// \deprecated
-void goto_program_dereferencet::dereference_failure(
-  const std::string &property,
-  const std::string &msg,
-  const guardt &guard)
-{
-  exprt guard_expr=guard.as_expr();
-
-  if(assertions.insert(guard_expr).second)
-  {
-    guard_expr = boolean_negate(guard_expr);
-
-    // first try simplifier on it
-    if(options.get_bool_option("simplify"))
-      simplify(guard_expr, ns);
-
-    if(!guard_expr.is_true())
-    {
-      goto_program_instruction_typet type=
-        options.get_bool_option("assert-to-assume")?ASSUME:ASSERT;
-
-      goto_programt::targett t=new_code.add_instruction(type);
-      t->guard.swap(guard_expr);
-      t->source_location=dereference_location;
-      t->source_location.set_property_class(property);
-      t->source_location.set_comment("dereference failure: "+msg);
-    }
-  }
-}
-
 /// Turn subexpression of `expr` of the form `&*p` or `reference_to(*p)` to p
 /// and use `dereference` on subexpressions of the form `*p`
 /// \param expr: expression in which to remove dereferences
