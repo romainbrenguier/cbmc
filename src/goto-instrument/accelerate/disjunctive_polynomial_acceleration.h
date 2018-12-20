@@ -48,7 +48,8 @@ public:
       goto_program(_goto_program),
       loop(_loop),
       loop_header(_loop_header),
-      utils(symbol_table, message_handler, goto_functions, loop_counter)
+      utils(symbol_table, message_handler, goto_functions, loop_counter),
+      fixed(goto_program.guard_manager)
   {
     loop_counter = nil_exprt();
     find_distinguishing_points();

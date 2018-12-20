@@ -40,7 +40,8 @@ public:
       symbol_tablet &_symbol_table,
       message_handlert &mh,
       guard_managert &guard_manager)
-    : constant_propagation(true),
+    : goto_programt(guard_manager),
+      constant_propagation(true),
       symex_state(guard_manager),
       symbol_table(_symbol_table),
       symex_symbol_table(),

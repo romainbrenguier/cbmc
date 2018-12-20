@@ -210,7 +210,12 @@ SCENARIO(
 
     // Convert bytecode into goto.
     goto_functionst functions;
-    goto_convert(symbol_table, functions, null_message_handler);
+    goto_convert(
+      symbol_table,
+      functions,
+      <#initializer#>,
+      <#initializer#>,
+      <#initializer#>);
 
     WHEN("A method assigns a local Object variable with nondetWithoutNull.")
     {

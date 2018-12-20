@@ -104,7 +104,9 @@ void rewrite_union(goto_functionst::goto_functiont &goto_function)
   Forall_goto_program_instructions(it, goto_function.body)
   {
     rewrite_union(it->code);
-    rewrite_union(it->guard);
+    exprt guard_expr = it->guard.as_expr();
+    rewrite_union(guard_expr);
+    it->guard.from_expr(guard_expr);
   }
 }
 

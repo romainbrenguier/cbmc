@@ -283,7 +283,7 @@ void string_instrumentationt::do_sprintf(
       target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   goto_programt::targett assertion=tmp.add_instruction();
   assertion->source_location=target->source_location;
@@ -325,7 +325,7 @@ void string_instrumentationt::do_snprintf(
       target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   goto_programt::targett assertion=tmp.add_instruction();
   assertion->source_location=target->source_location;
@@ -366,7 +366,7 @@ void string_instrumentationt::do_fscanf(
       "fscanf expected to have two or more arguments", target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   do_format_string_write(tmp, target, arguments, 1, 2, "fscanf");
 
@@ -651,7 +651,7 @@ void string_instrumentationt::do_strchr(
       "strchr expected to have two arguments", target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   goto_programt::targett assertion=tmp.add_instruction();
   assertion->make_assertion(is_zero_string(arguments[0]));
@@ -677,7 +677,7 @@ void string_instrumentationt::do_strrchr(
       "strrchr expected to have two arguments", target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   goto_programt::targett assertion=tmp.add_instruction();
   assertion->make_assertion(is_zero_string(arguments[0]));
@@ -703,7 +703,7 @@ void string_instrumentationt::do_strstr(
       "strstr expected to have two arguments", target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   goto_programt::targett assertion0=tmp.add_instruction();
   assertion0->make_assertion(is_zero_string(arguments[0]));
@@ -736,7 +736,7 @@ void string_instrumentationt::do_strtok(
       "strtok expected to have two arguments", target->source_location);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   goto_programt::targett assertion0=tmp.add_instruction();
   assertion0->make_assertion(is_zero_string(arguments[0]));
@@ -800,7 +800,7 @@ void string_instrumentationt::do_strerror(
   const symbolt &symbol_size=ns.lookup(identifier_size);
   const symbolt &symbol_buf=ns.lookup(identifier_buf);
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
 
   {
     goto_programt::targett assignment1=tmp.add_instruction(ASSIGN);
@@ -900,7 +900,7 @@ void string_instrumentationt::invalidate_buffer(
   goto_programt::targett back=dest.add_instruction();
   back->source_location=target->source_location;
   back->make_goto(check);
-  back->guard=true_exprt();
+  back->guard.from_expr(true_exprt());
 
   goto_programt::targett exit=dest.add_instruction();
   exit->source_location=target->source_location;
@@ -925,17 +925,17 @@ void string_instrumentationt::invalidate_buffer(
   check->make_goto(exit);
 
   if(limit==0)
-    check->guard=
+    check->guard.from_expr(
       binary_relation_exprt(
         cntr_sym.symbol_expr(),
         ID_ge,
-        buffer_size(bufp));
+        buffer_size(bufp)));
   else
-    check->guard=
+    check->guard.from_expr(
       binary_relation_exprt(
         cntr_sym.symbol_expr(),
         ID_gt,
-        from_integer(limit, unsigned_int_type()));
+        from_integer(limit, unsigned_int_type())));
 
   const side_effect_expr_nondett nondet(
     buf_type.subtype(), target->source_location);

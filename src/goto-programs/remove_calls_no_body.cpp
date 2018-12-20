@@ -29,7 +29,7 @@ void remove_calls_no_bodyt::remove_call_no_body(
   PRECONDITION(target->is_function_call());
   PRECONDITION(!goto_program.empty());
 
-  goto_programt tmp;
+  goto_programt tmp(goto_program.guard_manager);
 
   // evaluate function arguments -- they might have
   // pointer dereferencing or the like

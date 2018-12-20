@@ -23,7 +23,7 @@ void goto_convertt::convert_msc_try_finally(
     "msc_try_finally expects two arguments",
     code.find_source_location());
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
   tmp.add_instruction(SKIP)->source_location=code.source_location();
 
   {
@@ -111,7 +111,7 @@ void goto_convertt::convert_try_catch(
     push_catch_code.exception_list();
 
   // add a SKIP target for the end of everything
-  goto_programt end;
+  goto_programt end(dest.guard_manager);
   goto_programt::targett end_target=end.add_instruction();
   end_target->make_skip();
 
@@ -134,7 +134,7 @@ void goto_convertt::convert_try_catch(
     exception_list.push_back(
       code_push_catcht::exception_list_entryt(block.get(ID_exception_id)));
 
-    goto_programt tmp;
+    goto_programt tmp(dest.guard_manager);
     convert(block, tmp, mode);
     catch_push_instruction->targets.push_back(tmp.instructions.begin());
     dest.destructive_append(tmp);
@@ -160,7 +160,7 @@ void goto_convertt::convert_CPROVER_try_catch(
     code.find_source_location());
 
   // this is where we go after 'throw'
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
   tmp.add_instruction(SKIP)->source_location=code.source_location();
 
   // set 'throw' target

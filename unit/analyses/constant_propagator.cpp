@@ -62,7 +62,12 @@ SCENARIO("constant_propagator", "[core][analyses][constant_propagator]")
     goto_model.symbol_table.add(local_y);
     goto_model.symbol_table.add(main_function_symbol);
 
-    goto_convert(goto_model, null_message_handler);
+    goto_convert(
+      goto_model,
+      null_message_handler,
+      <#initializer#>,
+      <#initializer#>,
+      <#initializer#>);
 
     const goto_functiont &main_function = goto_model.get_goto_function("main");
 

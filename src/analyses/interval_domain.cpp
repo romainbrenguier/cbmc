@@ -88,15 +88,15 @@ void interval_domaint::transform(
       if(from->get_target() != next) // If equal then a skip
       {
         if(next == to)
-          assume(not_exprt(instruction.guard), ns);
+          assume((!instruction.guard).as_expr(), ns);
         else
-          assume(instruction.guard, ns);
+          assume(instruction.guard.as_expr(), ns);
       }
     }
     break;
 
   case ASSUME:
-    assume(instruction.guard, ns);
+    assume(instruction.guard.as_expr(), ns);
     break;
 
   case FUNCTION_CALL:

@@ -227,7 +227,8 @@ protected:
   void convert_loop_invariant(
     const codet &code,
     goto_programt::targett loop,
-    const irep_idt &mode);
+    const irep_idt &mode,
+    guard_managert &guard_manager);
   void
   convert_for(const code_fort &code, goto_programt &dest, const irep_idt &mode);
   void convert_while(

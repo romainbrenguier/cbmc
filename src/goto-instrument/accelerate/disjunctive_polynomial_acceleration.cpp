@@ -313,7 +313,7 @@ bool disjunctive_polynomial_accelerationt::accelerate(
   // assume(guard);
   // assume(no overflows in previous code);
 
-  program.add_instruction(ASSUME)->guard=pre_guard;
+  program.add_instruction(ASSUME)->guard.from_expr(pre_guard);
   program.assign(
     loop_counter,
     side_effect_expr_nondett(loop_counter.type(), source_locationt()));
@@ -334,7 +334,7 @@ bool disjunctive_polynomial_accelerationt::accelerate(
     return false;
   }
 
-  program.add_instruction(ASSUME)->guard=guard;
+  program.add_instruction(ASSUME)->guard.from_expr(guard);
   program.fix_types();
 
   if(path_is_monotone)
@@ -383,7 +383,7 @@ bool disjunctive_polynomial_accelerationt::find_path(
     program.assume(new_path);
   }
 
-  program.add_instruction(ASSERT)->guard=false_exprt();
+  program.add_instruction(ASSERT)->guard.from_expr(false_exprt());
 
   try
   {
@@ -628,7 +628,7 @@ bool disjunctive_polynomial_accelerationt::fit_polynomial(
   utils.ensure_no_overflows(program);
 
   // Now do an ASSERT(false) to grab a counterexample
-  program.add_instruction(ASSERT)->guard=false_exprt();
+  program.add_instruction(ASSERT)->guard.from_expr(false_exprt());
 
   // If the path is satisfiable, we've fitted a polynomial.  Extract the
   // relevant coefficients and return the expression.
@@ -758,7 +758,7 @@ void disjunctive_polynomial_accelerationt::assert_for_values(
 
   // Finally, assert that the polynomial equals the variable we're fitting.
   goto_programt::targett assumption=program.add_instruction(ASSUME);
-  assumption->guard=polynomial_holds;
+  assumption->guard.from_expr(polynomial_holds);
 }
 
 void disjunctive_polynomial_accelerationt::cone_of_influence(
@@ -849,7 +849,7 @@ void disjunctive_polynomial_accelerationt::build_path(
       // If this was a conditional branch (it probably was), figure out
       // if we hit the "taken" or "not taken" branch & accumulate the
       // appropriate guard.
-      cond=not_exprt(t->guard);
+      cond=(!t->guard).as_expr();
 
       for(goto_programt::targetst::iterator it=t->targets.begin();
           it!=t->targets.end();
@@ -857,7 +857,7 @@ void disjunctive_polynomial_accelerationt::build_path(
       {
         if(next==*it)
         {
-          cond=t->guard;
+          cond=t->guard.as_expr();
           break;
         }
       }
@@ -895,7 +895,7 @@ void disjunctive_polynomial_accelerationt::build_fixed(guard_managert &guard_man
   // to a location other than the loop header (i.e. a nested loop) is not
   // one we're interested in, and we'll redirect it to this assume(false).
   goto_programt::targett kill=fixed.add_instruction(ASSUME);
-  kill->guard=false_exprt();
+  kill->guard.from_expr(false_exprt());
 
   // Make a sentinel instruction to mark the end of the loop body.
   // We'll use this as the new target for any back-jumps to the loop

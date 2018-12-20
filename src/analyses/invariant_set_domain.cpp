@@ -28,14 +28,10 @@ void invariant_set_domaint::transform(
     {
       // Comparing iterators is safe as the target must be within the same list
       // of instructions because this is a GOTO.
-      exprt tmp(from_l->guard);
 
       goto_programt::const_targett next=from_l;
       next++;
-      if(next==to_l)
-        tmp = boolean_negate(from_l->guard);
-
-      simplify(tmp, ns);
+      exprt tmp = (next==to_l ? !from_l->guard : from_l->guard).as_expr();
       invariant_set.strengthen(tmp);
     }
     break;
@@ -43,8 +39,7 @@ void invariant_set_domaint::transform(
   case ASSERT:
   case ASSUME:
     {
-      exprt tmp(from_l->guard);
-      simplify(tmp, ns);
+      exprt tmp = from_l->guard.as_expr();
       invariant_set.strengthen(tmp);
     }
     break;

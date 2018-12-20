@@ -1588,6 +1588,7 @@ void value_sett::apply_code_rec(
   }
 }
 
+/// TODO make this take a guard as argument
 void value_sett::guard(
   const exprt &expr,
   const namespacet &ns)

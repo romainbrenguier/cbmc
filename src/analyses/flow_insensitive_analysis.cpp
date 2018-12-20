@@ -29,9 +29,9 @@ exprt flow_insensitive_abstract_domain_baset::get_guard(
   next++;
 
   if(next==to)
-    return boolean_negate(from->guard);
+    return (!from->guard).as_expr();
 
-  return from->guard;
+  return from->guard.as_expr();
 }
 
 exprt flow_insensitive_abstract_domain_baset::get_return_lhs(locationt to) const
@@ -205,7 +205,7 @@ bool flow_insensitive_analysis_baset::do_function_call(
   {
     const code_function_callt &code = to_code_function_call(l_call->code);
 
-    goto_programt temp;
+    goto_programt temp(goto_function.body.guard_manager);
 
     exprt rhs =
       side_effect_expr_nondett(code.lhs().type(), l_call->source_location);

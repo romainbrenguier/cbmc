@@ -491,7 +491,8 @@ int goto_instrument_parse_optionst::doit()
       do_indirect_call_and_rtti_removal();
 
       const namespacet ns(goto_model.symbol_table);
-      reaching_definitions_analysist rd_analysis(ns);
+      guard_managert guard_manager;
+      reaching_definitions_analysist rd_analysis(ns, guard_manager);
       rd_analysis(goto_model);
       rd_analysis.output(goto_model, std::cout);
 
@@ -503,7 +504,7 @@ int goto_instrument_parse_optionst::doit()
       do_indirect_call_and_rtti_removal();
 
       const namespacet ns(goto_model.symbol_table);
-      dependence_grapht dependence_graph(ns);
+      dependence_grapht dependence_graph(ns, <#initializer#>);
       dependence_graph(goto_model);
       dependence_graph.output(goto_model, std::cout);
       dependence_graph.output_dot(std::cout);
@@ -595,8 +596,7 @@ int goto_instrument_parse_optionst::doit()
         {
           if(ins.code.is_not_nil())
             status() << ins.code.pretty() << eom;
-          if(ins.guard.is_not_nil())
-            status() << "[guard] " << ins.guard.pretty() << eom;
+          status() << "[guard] " << ins.guard.as_expr().pretty() << eom;
         }
       return CPROVER_EXIT_SUCCESS;
     }
@@ -656,22 +656,24 @@ int goto_instrument_parse_optionst::doit()
           error() << "failed to write to `" << cmdline.args[1] << "'";
           return CPROVER_EXIT_CONVERSION_FAILED;
         }
-        (is_cpp ? dump_cpp : dump_c)(
+        (is_cpp?dump_cpp:dump_c)(
           goto_model.goto_functions,
           h_libc,
           h_all,
           harness,
           ns,
-          out);
+          out,
+          <#initializer#>);
       }
       else
-        (is_cpp ? dump_cpp : dump_c)(
+        (is_cpp?dump_cpp:dump_c)(
           goto_model.goto_functions,
           h_libc,
           h_all,
           harness,
           ns,
-          std::cout);
+          std::cout,
+          <#initializer#>);
 
       return CPROVER_EXIT_SUCCESS;
     }
@@ -921,7 +923,10 @@ void goto_instrument_parse_optionst::get_goto_program()
 
   config.set(cmdline);
 
-  auto result = read_goto_binary(cmdline.args[0], get_message_handler());
+  auto result = read_goto_binary(
+    cmdline.args[0],
+    <#initializer#>,
+    get_message_handler());
 
   if(!result.has_value())
     throw 0;
@@ -1024,9 +1029,15 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     // add the library
     status() << "Adding CPROVER library (" << config.ansi_c.arch << ")" << eom;
     link_to_library(
-      goto_model, get_message_handler(), cprover_cpp_library_factory);
+      goto_model,
+      <#initializer#>,
+      get_message_handler(),
+      cprover_cpp_library_factory);
     link_to_library(
-      goto_model, get_message_handler(), cprover_c_library_factory);
+      goto_model,
+      <#initializer#>,
+      get_message_handler(),
+      cprover_c_library_factory);
   }
 
   // now do full inlining, if requested
@@ -1230,9 +1241,7 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     do_remove_returns();
 
     status() << "String Abstraction" << eom;
-    string_abstraction(
-      goto_model,
-      get_message_handler());
+    string_abstraction(goto_model, <#initializer#>, get_message_handler());
   }
 
   // some analyses require function pointer removal and partial inlining
@@ -1416,7 +1425,8 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     status() << "Function exit instrumentation" << eom;
     function_exit(
       goto_model,
-      cmdline.get_value("function-exit"));
+      cmdline.get_value("function-exit"),
+      <#initializer#>);
   }
 
   if(cmdline.isset("branch"))

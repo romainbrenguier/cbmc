@@ -352,7 +352,12 @@ bool compilet::link()
   // parse object files
   for(const auto &file_name : object_files)
   {
-    if(read_object_and_link(file_name, goto_model, get_message_handler()))
+    if(read_object_and_link(
+      file_name,
+      goto_model,
+      <#initializer#>,
+      <#initializer#>,
+      get_message_handler()))
       return true;
   }
 

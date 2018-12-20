@@ -33,7 +33,9 @@ static void rename_symbols_in_function(
   Forall_goto_program_instructions(iit, program)
   {
     rename_symbol(iit->code);
-    rename_symbol(iit->guard);
+    exprt guard_expr = iit->guard.as_expr();
+    rename_symbol(guard_expr);
+    iit->guard.from_expr(guard_expr);
     // we need to update the instruction's function field as
     // well, with the new symbol for the function
     iit->function=new_function_name;
@@ -147,7 +149,9 @@ static bool link_functions(
       Forall_goto_program_instructions(iit, dest_it->second.body)
       {
         object_type_updates(iit->code);
-        object_type_updates(iit->guard);
+        exprt guard_expr = iit->guard.as_expr();
+        object_type_updates(guard_expr);
+        iit->guard.from_expr(guard_expr);
       }
   }
 

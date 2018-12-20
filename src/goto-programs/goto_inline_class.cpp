@@ -271,7 +271,7 @@ void goto_inlinet::insert_function_body(
 
   const irep_idt identifier=function.get_identifier();
 
-  goto_programt body;
+  goto_programt body(dest.guard_manager);
   body.copy_from(goto_function.body);
   inline_log.copy_from(goto_function.body, body);
 
@@ -294,7 +294,7 @@ void goto_inlinet::insert_function_body(
 
   replace_return(body, lhs);
 
-  goto_programt tmp1;
+  goto_programt tmp1(dest.guard_manager);
   parameter_assignments(
     target,
     identifier,
@@ -302,10 +302,10 @@ void goto_inlinet::insert_function_body(
     arguments,
     tmp1);
 
-  goto_programt tmp2;
+  goto_programt tmp2(dest.guard_manager);
   parameter_destruction(target, identifier, goto_function.type, tmp2);
 
-  goto_programt tmp;
+  goto_programt tmp(dest.guard_manager);
   tmp.destructive_append(tmp1); // par assignment
   tmp.destructive_append(body); // body
   tmp.destructive_append(tmp2); // par destruction
@@ -602,18 +602,17 @@ const goto_inlinet::goto_functiont &goto_inlinet::goto_inline_transitive(
 {
   PRECONDITION(goto_function.body_available());
 
-  cachet::const_iterator c_it=cache.find(identifier);
-
-  if(c_it!=cache.end())
+  // Look-up the cache for identifier
+  auto emplace_result = cache.emplace(identifier, goto_function.body.guard_manager);
+  goto_functiont &cached = emplace_result.first->second;
+  if(!emplace_result.second)
   {
-    const goto_functiont &cached=c_it->second;
     DATA_INVARIANT(
       cached.body_available(),
       "body of cached functions must be available");
     return cached;
   }
 
-  goto_functiont &cached=cache[identifier];
   DATA_INVARIANT(
     cached.body.empty(), "body of new function in cache must be empty");
 

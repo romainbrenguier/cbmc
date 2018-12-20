@@ -352,7 +352,7 @@ void remove_exceptionst::add_exception_dispatch_sequence(
         type_exprt expr(type);
 
         binary_predicate_exprt check(exc_thrown, ID_java_instanceof, expr);
-        t_exc->guard=check;
+        t_exc->guard.from_expr(check);
 
         if(remove_added_instanceof)
         {
@@ -457,7 +457,7 @@ bool remove_exceptionst::instrument_function_call(
       t_null->make_goto(next_it);
       t_null->source_location=instr_it->source_location;
       t_null->function=instr_it->function;
-      t_null->guard=no_exception_currently_in_flight;
+      t_null->guard.from_expr(no_exception_currently_in_flight);
     }
 
     return true;

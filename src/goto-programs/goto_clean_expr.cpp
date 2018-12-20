@@ -224,10 +224,10 @@ void goto_convertt::clean_expr(
     }
     #endif
 
-    goto_programt tmp_true;
+    goto_programt tmp_true(dest.guard_manager);
     clean_expr(if_expr.true_case(), tmp_true, mode, result_is_used);
 
-    goto_programt tmp_false;
+    goto_programt tmp_false(dest.guard_manager);
     clean_expr(if_expr.false_case(), tmp_false, mode, result_is_used);
 
     if(result_is_used)

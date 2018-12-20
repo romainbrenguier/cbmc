@@ -111,20 +111,20 @@ void goto_convertt::do_function_call_if(
   // z: ;
 
   // do the v label
-  goto_programt tmp_v;
+  goto_programt tmp_v(dest.guard_manager);
   goto_programt::targett v=tmp_v.add_instruction();
 
   // do the x label
-  goto_programt tmp_x;
+  goto_programt tmp_x(dest.guard_manager);
   goto_programt::targett x=tmp_x.add_instruction();
 
   // do the z label
-  goto_programt tmp_z;
+  goto_programt tmp_z(dest.guard_manager);
   goto_programt::targett z=tmp_z.add_instruction();
   z->make_skip();
 
   // y: g();
-  goto_programt tmp_y;
+  goto_programt tmp_y(dest.guard_manager);
   goto_programt::targett y;
 
   do_function_call(lhs, function.false_case(), arguments, tmp_y, mode);
@@ -136,11 +136,11 @@ void goto_convertt::do_function_call_if(
 
   // v: if(!c) goto y;
   v->make_goto(y);
-  v->guard = boolean_negate(function.cond());
+  v->guard.from_expr(function.cond()).negate();
   v->source_location=function.cond().source_location();
 
   // w: f();
-  goto_programt tmp_w;
+  goto_programt tmp_w(dest.guard_manager);
 
   do_function_call(lhs, function.true_case(), arguments, tmp_w, mode);
 

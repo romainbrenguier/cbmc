@@ -73,7 +73,7 @@ std::ostream &goto_programt::output_instruction(
     if(!instruction.guard.is_true())
     {
       out << "IF "
-          << from_expr(ns, identifier, instruction.guard)
+          << from_expr(ns, identifier, instruction.guard.as_expr())
           << " THEN ";
     }
 
@@ -109,7 +109,7 @@ std::ostream &goto_programt::output_instruction(
       out << "ASSERT ";
 
     {
-      out << from_expr(ns, identifier, instruction.guard);
+      out << from_expr(ns, identifier, instruction.guard.as_expr());
 
       const irep_idt &comment=instruction.source_location.get_comment();
       if(comment!="")
@@ -273,7 +273,7 @@ std::list<exprt> expressions_read(
   case ASSUME:
   case ASSERT:
   case GOTO:
-    dest.push_back(instruction.guard);
+    dest.push_back(instruction.guard.as_expr());
     break;
 
   case RETURN:
@@ -415,7 +415,7 @@ std::string as_string(
     if(!i.guard.is_true())
     {
       result+="IF "
-            +from_expr(ns, i.function, i.guard)
+            +from_expr(ns, i.function, i.guard.as_expr())
             +" THEN ";
     }
 
@@ -447,7 +447,7 @@ std::string as_string(
     else
       result+="ASSERT ";
 
-    result+=from_expr(ns, i.function, i.guard);
+    result+=from_expr(ns, i.function, i.guard.as_expr());
 
     {
       const irep_idt &comment=i.source_location.get_comment();
@@ -676,7 +676,7 @@ void goto_programt::instructiont::validate(
   const validation_modet vm) const
 {
   validate_full_code(code, ns, vm);
-  validate_full_expr(guard, ns, vm);
+  validate_full_expr(guard.as_expr(), ns, vm);
 
   const symbolt *table_symbol;
   DATA_CHECK_WITH_DIAGNOSTICS(
@@ -744,15 +744,17 @@ void goto_programt::instructiont::validate(
       source_location);
     break;
   case ASSERT:
+  {
     DATA_CHECK_WITH_DIAGNOSTICS(
       vm,
       targets.empty(),
       "assert instruction should not have a target",
       source_location);
-
-    std::for_each(guard.depth_begin(), guard.depth_end(), expr_symbol_finder);
-    std::for_each(guard.depth_begin(), guard.depth_end(), type_finder);
-    break;
+    const exprt guard_expr = guard.as_expr();
+    std::for_each(guard_expr.depth_begin(), guard_expr.depth_end(), expr_symbol_finder);
+    std::for_each(guard_expr.depth_begin(), guard_expr.depth_end(), type_finder);
+  }
+      break;
   case OTHER:
     break;
   case SKIP:

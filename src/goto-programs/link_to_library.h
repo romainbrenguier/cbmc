@@ -19,18 +19,21 @@ Author: Daniel Kroening, kroening@kroening.com
 
 class goto_functionst;
 class goto_modelt;
+class guard_managert;
 class message_handlert;
 class symbol_tablet;
 
 void link_to_library(
   symbol_tablet &,
   goto_functionst &,
+  guard_managert &guard_manager,
   message_handlert &,
   const std::function<
     void(const std::set<irep_idt> &, symbol_tablet &, message_handlert &)> &);
 
 void link_to_library(
   goto_modelt &,
+  guard_managert &guard_manager,
   message_handlert &,
   const std::function<
     void(const std::set<irep_idt> &, symbol_tablet &, message_handlert &)> &);

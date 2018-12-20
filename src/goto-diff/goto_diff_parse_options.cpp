@@ -333,10 +333,9 @@ int goto_diff_parse_optionst::get_goto_program(
   if(is_goto_binary(cmdline.args[0]))
   {
     if(read_goto_binary(
-        cmdline.args[0],
-        goto_model.symbol_table,
-        goto_model.goto_functions,
-        languages.get_message_handler()))
+      cmdline.args[0],
+      <#initializer#>,
+      goto_model.symbol_table))
       return CPROVER_EXIT_INCORRECT_TASK;
 
     config.set(cmdline);
@@ -369,7 +368,9 @@ int goto_diff_parse_optionst::get_goto_program(
     goto_convert(
       goto_model.symbol_table,
       goto_model.goto_functions,
-      ui_message_handler);
+      <#initializer#>,
+      <#initializer#>,
+      <#initializer#>);
 
     if(process_goto_program(options, goto_model))
       return CPROVER_EXIT_INTERNAL_ERROR;
@@ -395,9 +396,15 @@ bool goto_diff_parse_optionst::process_goto_program(
     // add the library
     status() << "Adding CPROVER library (" << config.ansi_c.arch << ")" << eom;
     link_to_library(
-      goto_model, get_message_handler(), cprover_cpp_library_factory);
+      goto_model,
+      <#initializer#>,
+      get_message_handler(),
+      cprover_cpp_library_factory);
     link_to_library(
-      goto_model, get_message_handler(), cprover_c_library_factory);
+      goto_model,
+      <#initializer#>,
+      get_message_handler(),
+      cprover_c_library_factory);
 
     // remove function pointers
     status() << "Removal of function pointers and virtual functions" << eom;

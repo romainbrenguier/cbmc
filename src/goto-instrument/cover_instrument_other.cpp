@@ -34,7 +34,7 @@ void cover_assertion_instrumentert::instrument(
   // turn into 'assert(false)' to avoid simplification
   if(is_non_cover_assertion(i_it))
   {
-    i_it->guard = false_exprt();
+    i_it->guard.from_expr(false_exprt());
     initialize_source_location(
       i_it, id2string(i_it->source_location.get_comment()), i_it->function);
   }
@@ -59,7 +59,7 @@ void cover_cover_instrumentert::instrument(
       const exprt c = code_function_call.arguments()[0];
       std::string comment =
         "condition `" + from_expr(ns, i_it->function, c) + "'";
-      i_it->guard = not_exprt(c);
+      i_it->guard.from_expr(c).negate();
       i_it->type = ASSERT;
       i_it->code.clear();
       initialize_source_location(i_it, comment, i_it->function);

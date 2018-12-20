@@ -283,7 +283,7 @@ ai_baset *janalyzer_parse_optionst::build_analyzer(
     }
     else if(options.get_bool_option("dependence-graph"))
     {
-      domain = new dependence_grapht(ns);
+      domain = new dependence_grapht(ns, <#initializer#>);
     }
     else if(options.get_bool_option("intervals"))
     {

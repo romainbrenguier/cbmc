@@ -52,7 +52,12 @@ SCENARIO(
     {
       namespacet ns(symbol_table);
       goto_functionst goto_functions;
-      goto_convert(symbol_table, goto_functions, null_message_handler);
+      goto_convert(
+        symbol_table,
+        goto_functions,
+        <#initializer#>,
+        <#initializer#>,
+        <#initializer#>);
 
       const auto &main_function =
         goto_functions.function_map.at("java::VirtualCallNullChecks.main:()V");

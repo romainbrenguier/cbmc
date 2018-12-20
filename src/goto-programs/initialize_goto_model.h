@@ -20,6 +20,7 @@ class optionst;
 goto_modelt initialize_goto_model(
   const std::vector<std::string> &files,
   message_handlert &message_handler,
-  const optionst &options);
+  const optionst &options,
+  guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_PROGRAMS_INITIALIZE_GOTO_MODEL_H

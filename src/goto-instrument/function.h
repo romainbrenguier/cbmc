@@ -23,8 +23,7 @@ void function_enter(
   goto_modelt &,
   const irep_idt &id);
 
-void function_exit(
-  goto_modelt &,
-  const irep_idt &id);
+void
+function_exit(goto_modelt &, const irep_idt &id, guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_INSTRUMENT_FUNCTION_H

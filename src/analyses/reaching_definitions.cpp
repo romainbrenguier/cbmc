@@ -27,8 +27,9 @@ Date: February 2013
 #include "dirty.h"
 
 reaching_definitions_analysist::reaching_definitions_analysist(
-  const namespacet &_ns):
-    concurrency_aware_ait<rd_range_domaint>(),
+    const namespacet &_ns,
+    guard_managert &guard_manager) :
+    concurrency_aware_ait<rd_range_domaint>(guard_manager),
     ns(_ns)
 {
 }

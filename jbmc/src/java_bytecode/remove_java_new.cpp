@@ -250,7 +250,7 @@ goto_programt::targett remove_java_newt::lower_java_new_array(
     // for(int i=0; i<size; i++) tmp[i]=java_new(dim-1);
     // This will be converted recursively.
 
-    goto_programt tmp;
+    goto_programt tmp(dest.guard_manager);
 
     symbol_exprt tmp_i = get_fresh_aux_symbol(
                            length.type(),

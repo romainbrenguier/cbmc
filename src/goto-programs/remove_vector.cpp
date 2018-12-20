@@ -223,7 +223,9 @@ void remove_vector(goto_functionst::goto_functiont &goto_function)
   Forall_goto_program_instructions(it, goto_function.body)
   {
     remove_vector(it->code);
-    remove_vector(it->guard);
+    exprt guard_expr = it->guard.as_expr();
+    remove_vector(guard_expr);
+    it->guard.from_expr(guard_expr);
   }
 }
 

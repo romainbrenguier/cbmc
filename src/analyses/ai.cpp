@@ -455,7 +455,8 @@ void ai_baset::sequential_fixedpoint(
 
 void ai_baset::concurrent_fixedpoint(
   const goto_functionst &goto_functions,
-  const namespacet &ns)
+  const namespacet &ns,
+  guard_managert &guard_manager)
 {
   sequential_fixedpoint(goto_functions, ns);
 
@@ -463,7 +464,7 @@ void ai_baset::concurrent_fixedpoint(
 
   // construct an initial shared state collecting the results of all
   // functions
-  goto_programt tmp;
+  goto_programt tmp(guard_manager);
   tmp.add_instruction();
   goto_programt::const_targett sh_target=tmp.instructions.begin();
   statet &shared_state=get_state(sh_target);

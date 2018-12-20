@@ -117,12 +117,15 @@ public:
   ///   generated from source code), so this hook can be used to provide
   ///   fallbacks for missing functions or to override available functions as
   ///   you like.
+  /// \param guard_manager: reference to a \c guard_managert used to create
+  ///   new \c goto_functiont on demand.
   /// \param message_handler: used for logging.
   explicit lazy_goto_modelt(
     post_process_functiont post_process_function,
     post_process_functionst post_process_functions,
     can_generate_function_bodyt driver_program_can_generate_function_body,
     generate_function_bodyt driver_program_generate_function_body,
+    guard_managert &guard_manager,
     message_handlert &message_handler);
 
   lazy_goto_modelt(lazy_goto_modelt &&other);
@@ -152,6 +155,7 @@ public:
   static lazy_goto_modelt from_handler_object(
     THandler &handler,
     const optionst &options,
+    guard_managert guard_manager,
     message_handlert &message_handler)
   {
     return lazy_goto_modelt(
@@ -175,6 +179,7 @@ public:
           handler.generate_function_body(
             function_name, symbol_table, function, is_first_chance);
       },
+      guard_manager,
       message_handler);
   }
 
@@ -240,7 +245,7 @@ public:
   const goto_functionst::goto_functiont &get_goto_function(const irep_idt &id)
     override
   {
-    return goto_functions.at(id);
+    return goto_functions.at(id, guard_manager);
   }
 
 private:
@@ -259,6 +264,10 @@ private:
   const post_process_functionst post_process_functions;
   const can_generate_function_bodyt driver_program_can_generate_function_body;
   const generate_function_bodyt driver_program_generate_function_body;
+
+  /// Reference to a \c guard_managert used to create new \c goto_functiont
+  /// on demand.
+  guard_managert &guard_manager;
 
   /// Logging helper field
   message_handlert &message_handler;

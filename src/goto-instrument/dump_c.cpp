@@ -192,7 +192,8 @@ void dump_ct::operator()(std::ostream &os)
       convert_global_variable(
           symbol,
           global_var_stream,
-          local_static_decls);
+          local_static_decls,
+          guard_manager);
     else if(symbol.type.id()==ID_code)
     {
       goto_functionst::function_mapt::const_iterator func_entry=
@@ -583,7 +584,8 @@ void dump_ct::convert_compound_enum(
 void dump_ct::cleanup_decl(
   code_declt &decl,
   std::list<irep_idt> &local_static,
-  std::list<irep_idt> &local_type_decls)
+  std::list<irep_idt> &local_type_decls,
+  guard_managert &guard_manager)
 {
   exprt value=nil_exprt();
 
@@ -593,7 +595,7 @@ void dump_ct::cleanup_decl(
     decl.operands().resize(1);
   }
 
-  goto_programt tmp;
+  goto_programt tmp(guard_manager);
   goto_programt::targett t=tmp.add_instruction(DECL);
   t->code=decl;
 
@@ -845,7 +847,8 @@ void dump_ct::dump_typedefs(std::ostream &os) const
 void dump_ct::convert_global_variable(
     const symbolt &symbol,
     std::ostream &os,
-    local_static_declst &local_static_decls)
+    local_static_declst &local_static_decls,
+    guard_managert &guard_manager)
 {
   const irep_idt &func=symbol.location.get_function();
   if((func.empty() || symbol.is_extern || symbol.value.is_not_nil()) &&
@@ -887,7 +890,7 @@ void dump_ct::convert_global_variable(
     {
       const symbolt &sym=ns.lookup(*it);
       if(!sym.is_type && sym.is_static_lifetime && sym.type.id()!=ID_code)
-        convert_global_variable(sym, os, local_static_decls);
+        convert_global_variable(sym, os, local_static_decls, guard_manager);
     }
 
     d.copy_to_operands(symbol.value);
@@ -903,7 +906,7 @@ void dump_ct::convert_global_variable(
     os << "// " << symbol.location << '\n';
 
     std::list<irep_idt> empty_static, empty_types;
-    cleanup_decl(d, empty_static, empty_types);
+    cleanup_decl(d, empty_static, empty_types, guard_manager);
     CHECK_RETURN(empty_static.empty());
     os << expr_to_string(d) << '\n';
   }
@@ -1007,7 +1010,8 @@ void dump_ct::convert_function_declaration(
       b,
       local_static,
       local_static_decls,
-      type_decls);
+      type_decls,
+      func_entry->second.body.guard_manager);
 
     convertedt converted_c_bak(converted_compound);
     convertedt converted_e_bak(converted_enum);
@@ -1145,7 +1149,8 @@ void dump_ct::insert_local_static_decls(
   code_blockt &b,
   const std::list<irep_idt> &local_static,
   local_static_declst &local_static_decls,
-  std::list<irep_idt> &type_decls)
+  std::list<irep_idt> &type_decls,
+  guard_managert &guard_manager)
 {
   // look up last identifier first as its value may introduce the
   // other ones
@@ -1160,7 +1165,7 @@ void dump_ct::insert_local_static_decls(
 
     code_declt d=d_it->second;
     std::list<irep_idt> redundant;
-    cleanup_decl(d, redundant, type_decls);
+    cleanup_decl(d, redundant, type_decls, guard_manager);
 
     code_blockt *dest_ptr=nullptr;
     exprt::operandst::iterator before=b.operands().end();
@@ -1406,7 +1411,8 @@ void dump_c(
   const bool use_all_headers,
   const bool include_harness,
   const namespacet &ns,
-  std::ostream &out)
+  std::ostream &out,
+  guard_managert &guard_manager)
 {
   dump_ct goto2c(
     src,
@@ -1414,7 +1420,8 @@ void dump_c(
     use_all_headers,
     include_harness,
     ns,
-    new_ansi_c_language);
+    new_ansi_c_language,
+    guard_manager);
   out << goto2c;
 }
 
@@ -1424,7 +1431,8 @@ void dump_cpp(
   const bool use_all_headers,
   const bool include_harness,
   const namespacet &ns,
-  std::ostream &out)
+  std::ostream &out,
+  guard_managert &guard_manager)
 {
   dump_ct goto2cpp(
     src,
@@ -1432,6 +1440,7 @@ void dump_cpp(
     use_all_headers,
     include_harness,
     ns,
-    new_cpp_language);
+    new_cpp_language,
+    guard_manager);
   out << goto2cpp;
 }

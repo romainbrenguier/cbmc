@@ -248,7 +248,7 @@ bool polynomial_acceleratort::accelerate(
   // assume(guard);
   // assume(no overflows in previous code);
 
-  program.add_instruction(ASSUME)->guard=guard;
+  program.add_instruction(ASSUME)->guard.from_expr(guard);
 
   program.assign(
     loop_counter,
@@ -274,7 +274,7 @@ bool polynomial_acceleratort::accelerate(
     return false;
   }
 
-  program.add_instruction(ASSUME)->guard=guard_last;
+  program.add_instruction(ASSUME)->guard.from_expr(guard_last);
   program.fix_types();
 
   if(path_is_monotone)
@@ -421,7 +421,7 @@ bool polynomial_acceleratort::fit_polynomial_sliced(
 
   // Now do an ASSERT(false) to grab a counterexample
   goto_programt::targett assertion=program.add_instruction(ASSERT);
-  assertion->guard=false_exprt();
+  assertion->guard.from_expr(false_exprt());
 
 
   // If the path is satisfiable, we've fitted a polynomial.  Extract the
@@ -623,7 +623,7 @@ void polynomial_acceleratort::assert_for_values(
   exprt overflow_expr;
   overflow.overflow_expr(rhs, overflow_expr);
 
-  program.add_instruction(ASSUME)->guard=not_exprt(overflow_expr);
+  program.add_instruction(ASSUME)->guard.from_expr(not_exprt(overflow_expr));
 
   rhs=typecast_exprt(rhs, target.type());
 
@@ -633,7 +633,7 @@ void polynomial_acceleratort::assert_for_values(
 
   // Finally, assert that the polynomial equals the variable we're fitting.
   goto_programt::targett assumption=program.add_instruction(ASSUME);
-  assumption->guard=polynomial_holds;
+  assumption->guard.from_expr(polynomial_holds);
 }
 
 void polynomial_acceleratort::cone_of_influence(
@@ -704,7 +704,7 @@ bool polynomial_acceleratort::check_inductive(
       ++it)
   {
     const equal_exprt holds(it->first, it->second.to_expr());
-    program.add_instruction(ASSUME)->guard=holds;
+    program.add_instruction(ASSUME)->guard.from_expr(holds);
 
     polynomials_hold.push_back(holds);
   }
@@ -721,7 +721,7 @@ bool polynomial_acceleratort::check_inductive(
       it!=polynomials_hold.end();
       ++it)
   {
-    program.add_instruction(ASSERT)->guard=*it;
+    program.add_instruction(ASSERT)->guard.from_expr(*it);
   }
 
 #ifdef DEBUG
@@ -843,7 +843,7 @@ exprt polynomial_acceleratort::precondition(patht &path)
     }
     else if(t->is_assume() || t->is_assert())
     {
-      ret=implies_exprt(t->guard, ret);
+      ret=implies_exprt(t->guard.as_expr(), ret);
     }
     else
     {

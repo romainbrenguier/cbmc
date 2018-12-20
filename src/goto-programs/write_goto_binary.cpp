@@ -100,7 +100,8 @@ bool write_goto_binary_v4(
         irepconverter.write_string_ref(out, instruction.function);
         irepconverter.reference_convert(instruction.source_location, out);
         write_gb_word(out, (long)instruction.type);
-        irepconverter.reference_convert(instruction.guard, out);
+        const exprt guard_expr = instruction.guard.as_expr();
+        irepconverter.reference_convert(guard_expr, out);
         irepconverter.write_string_ref(out, irep_idt()); // former event
         write_gb_word(out, instruction.target_number);
 
