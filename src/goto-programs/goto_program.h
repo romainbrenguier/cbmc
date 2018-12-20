@@ -633,9 +633,7 @@ public:
   {
   }
 
-  ~goto_programt()
-  {
-  }
+  ~goto_programt() = default;
 
   /// Swap the goto program
   void swap(goto_programt &program)
