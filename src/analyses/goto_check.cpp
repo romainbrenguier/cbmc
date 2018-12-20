@@ -1261,15 +1261,15 @@ void goto_checkt::add_guarded_claim(
     return;
 
   // add the guard
-  exprt guard_expr=guard.as_expr();
 
   exprt new_expr;
 
-  if(guard_expr.is_true())
+  if(guard.is_true())
     new_expr.swap(expr);
   else
   {
     new_expr=exprt(ID_implies, bool_typet());
+    exprt guard_expr=guard.as_expr();
     new_expr.move_to_operands(guard_expr, expr);
   }
 

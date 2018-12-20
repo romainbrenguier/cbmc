@@ -392,6 +392,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
   ssa_exprt ssa_l1=expr;
   ssa_l1.remove_level_2();
   const irep_idt &l1_identifier=ssa_l1.get_identifier();
+  const exprt guard_as_expr = guard.as_expr();
 
   // see whether we are within an atomic section
   if(atomic_section_id!=0)
@@ -440,11 +441,15 @@ bool goto_symex_statet::l2_thread_read_encoding(
       read_guard|=*it;
     }
 
-    exprt cond=read_guard.as_expr();
+    guardt cond = read_guard;
     if(!no_write.op().is_false())
-      cond=or_exprt(no_write.op(), cond);
+    {
+      guardt no_write_guard(guard_manager);
+      no_write_guard.add(no_write.op());
+      cond |= no_write_guard;
+    }
 
-    if_exprt tmp(cond, ssa_l1, ssa_l1);
+    if_exprt tmp(cond.as_expr(), ssa_l1, ssa_l1);
     set_l2_indices(to_ssa_expr(tmp.true_case()), ns);
 
     if(a_s_read.second.empty())
@@ -477,7 +482,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
     record_events=record_events_bak;
 
     symex_target->assignment(
-      guard.as_expr(),
+      guard_as_expr,
       ssa_l1,
       ssa_l1,
       ssa_l1.get_original_expr(),
@@ -516,7 +521,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
   INVARIANT_STRUCTURED(
     symex_target!=nullptr, nullptr_exceptiont, "symex_target is null");
   symex_target->shared_read(
-    guard.as_expr(),
+    guard_as_expr,
     expr,
     atomic_section_id,
     source);
