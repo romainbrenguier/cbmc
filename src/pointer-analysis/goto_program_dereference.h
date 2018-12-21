@@ -116,6 +116,9 @@ protected:
 
   /// Unused
   std::set<exprt> assertions;
+
+  /// Unused
+  goto_programt new_code;
 };
 
 void dereference(

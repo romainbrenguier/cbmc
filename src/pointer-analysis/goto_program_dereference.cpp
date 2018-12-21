@@ -281,8 +281,18 @@ void goto_program_dereferencet::dereference_program(
       it!=goto_program.instructions.end();
       it++)
   {
+    new_code.clear();
     assertions.clear();
+
     dereference_instruction(it, checks_only, manager);
+
+    // insert new instructions
+    while(!new_code.instructions.empty())
+    {
+      goto_program.insert_before_swap(it, new_code.instructions.front());
+      new_code.instructions.pop_front();
+      it++;
+    }
   }
 }
 
