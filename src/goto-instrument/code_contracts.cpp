@@ -86,7 +86,7 @@ static void check_apply_invariants(
   // see whether we have an invariant
   exprt invariant=
     static_cast<const exprt&>(
-      loop_end->guard.as_expr().find(ID_C_spec_loop_invariant));
+      loop_end->guard.find(ID_C_spec_loop_invariant));
   if(invariant.is_nil())
     return;
 
@@ -106,12 +106,12 @@ static void check_apply_invariants(
   get_modifies(local_may_alias, loop, modifies);
 
   // build the havocking code
-  goto_programt havoc_code(goto_function.body.guard_manager);
+  goto_programt havoc_code;
 
   // assert the invariant
   {
     goto_programt::targett a=havoc_code.add_instruction(ASSERT);
-    a->guard.from_expr(invariant);
+    a->guard=invariant;
     a->function=loop_head->function;
     a->source_location=loop_head->source_location;
     a->source_location.set_comment("Loop invariant violated before entry");
@@ -123,7 +123,7 @@ static void check_apply_invariants(
   // assume the invariant
   {
     goto_programt::targett assume=havoc_code.add_instruction(ASSUME);
-    assume->guard.from_expr(invariant);
+    assume->guard=invariant;
     assume->function=loop_head->function;
     assume->source_location=loop_head->source_location;
   }
@@ -132,8 +132,8 @@ static void check_apply_invariants(
   if(!loop_head->is_goto())
   {
     goto_programt::targett jump=havoc_code.add_instruction(GOTO);
-    jump->guard.from_expr(
-      side_effect_expr_nondett(bool_typet(), loop_head->source_location));
+    jump->guard =
+      side_effect_expr_nondett(bool_typet(), loop_head->source_location);
     jump->targets.push_back(loop_end);
     jump->function=loop_head->function;
   }
@@ -144,8 +144,8 @@ static void check_apply_invariants(
 
   // assert the invariant at the end of the loop body
   {
-    goto_programt::instructiont a(ASSERT, goto_function.body.guard_manager);
-    a.guard.from_expr(invariant);
+    goto_programt::instructiont a(ASSERT);
+    a.guard=invariant;
     a.function=loop_end->function;
     a.source_location=loop_end->source_location;
     a.source_location.set_comment("Loop invariant not preserved");
@@ -157,9 +157,9 @@ static void check_apply_invariants(
   loop_end->targets.clear();
   loop_end->type=ASSUME;
   if(loop_head->is_goto())
-    loop_end->guard.from_expr(false_exprt());
+    loop_end->guard = false_exprt();
   else
-    loop_end->guard.negate();
+    loop_end->guard = boolean_negate(loop_end->guard);
 }
 
 void code_contractst::apply_contract(
@@ -214,8 +214,8 @@ void code_contractst::apply_contract(
 
   if(requires.is_not_nil())
   {
-    goto_programt::instructiont a(ASSERT, goto_program.guard_manager);
-    a.guard.from_expr(requires);
+    goto_programt::instructiont a(ASSERT);
+    a.guard=requires;
     a.function=target->function;
     a.source_location=target->source_location;
 
@@ -293,12 +293,12 @@ void code_contractst::add_contract_check(
   // skip: ...
 
   // build skip so that if(nondet) can refer to it
-  goto_programt tmp_skip(dest.guard_manager);
+  goto_programt tmp_skip;
   goto_programt::targett skip=tmp_skip.add_instruction(SKIP);
   skip->function=dest.instructions.front().function;
   skip->source_location=ensures.source_location();
 
-  goto_programt check(dest.guard_manager);
+  goto_programt check;
 
   // if(nondet)
   goto_programt::targett g=check.add_instruction();
@@ -362,7 +362,7 @@ void code_contractst::add_contract_check(
     a->source_location=requires.source_location();
 
     // rewrite any use of parameters
-    a->guard.replace_expr([&](exprt &e) { replace(e);});
+    replace(a->guard);
   }
 
   // ret=function(parameter1, ...)
@@ -378,7 +378,7 @@ void code_contractst::add_contract_check(
   a->source_location=ensures.source_location();
 
   // rewrite any use of __CPROVER_return_value
-  a->guard.replace_expr([&](exprt &e) { replace(e);});
+  replace(a->guard);
 
   // assume(false)
   goto_programt::targett af=check.add_instruction();

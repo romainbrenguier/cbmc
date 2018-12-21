@@ -249,12 +249,12 @@ void invariant_propagationt::simplify(goto_programt &goto_program)
 
     const invariant_sett &invariant_set = d.invariant_set;
 
-    exprt simplified_guard = i_it->guard.as_expr();
+    exprt simplified_guard(i_it->guard);
 
     invariant_set.simplify(simplified_guard);
     ::simplify(simplified_guard, ns);
 
     if(invariant_set.implies(simplified_guard).is_true())
-      i_it->guard.from_expr(true_exprt());
+      i_it->guard=true_exprt();
   }
 }

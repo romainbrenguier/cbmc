@@ -67,7 +67,7 @@ void full_slicert::add_decl_dead(
 
   find_symbols_sett syms;
   find_symbols(node.PC->code, syms);
-  find_symbols(node.PC->guard.as_expr(), syms);
+  find_symbols(node.PC->guard, syms);
 
   for(find_symbols_sett::const_iterator
       it=syms.begin();
@@ -284,8 +284,7 @@ static bool implicit(goto_programt::const_targett target)
 void full_slicert::operator()(
   goto_functionst &goto_functions,
   const namespacet &ns,
-  const slicing_criteriont &criterion,
-  guard_managert &guard_manager)
+  const slicing_criteriont &criterion)
 {
   // build the CFG data structure
   cfg(goto_functions);
@@ -322,7 +321,7 @@ void full_slicert::operator()(
   }
 
   // compute program dependence graph (and post-dominators)
-  dependence_grapht dep_graph(ns, guard_manager);
+  dependence_grapht dep_graph(ns);
   dep_graph(goto_functions, ns);
 
   // compute the fixedpoint
@@ -365,7 +364,6 @@ void full_slicert::operator()(
   remove_skip(goto_functions);
 }
 
-#if 0
 void full_slicer(
   goto_functionst &goto_functions,
   const namespacet &ns,
@@ -381,32 +379,29 @@ void full_slicer(
   assert_criteriont a;
   full_slicert()(goto_functions, ns, a);
 }
-#endif
 
-void full_slicer(goto_modelt &goto_model, guard_managert &guard_manager)
+void full_slicer(goto_modelt &goto_model)
 {
   assert_criteriont a;
   const namespacet ns(goto_model.symbol_table);
-  full_slicert()(goto_model.goto_functions, ns, a, guard_manager);
+  full_slicert()(goto_model.goto_functions, ns, a);
 }
 
 void property_slicer(
   goto_functionst &goto_functions,
   const namespacet &ns,
-  const std::list<std::string> &properties,
-  guard_managert &guard_manager)
+  const std::list<std::string> &properties)
 {
   properties_criteriont p(properties);
-  full_slicert()(goto_functions, ns, p, guard_manager);
+  full_slicert()(goto_functions, ns, p);
 }
 
 void property_slicer(
   goto_modelt &goto_model,
-  const std::list<std::string> &properties,
-  guard_managert &guard_manager)
+  const std::list<std::string> &properties)
 {
   const namespacet ns(goto_model.symbol_table);
-  property_slicer(goto_model.goto_functions, ns, properties, guard_manager);
+  property_slicer(goto_model.goto_functions, ns, properties);
 }
 
 slicing_criteriont::~slicing_criteriont()

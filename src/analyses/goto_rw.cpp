@@ -912,7 +912,7 @@ void goto_rw(goto_programt::const_targett target,
     rw_set.get_objects_rec(
       target,
       rw_range_sett::get_modet::READ,
-      target->guard.as_expr());
+      target->guard);
     break;
 
   case RETURN:

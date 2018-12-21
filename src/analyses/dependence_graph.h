@@ -224,10 +224,9 @@ public:
 
   typedef std::map<irep_idt, cfg_post_dominatorst> post_dominators_mapt;
 
-  explicit dependence_grapht(const namespacet &_ns, guard_managert &guard_manager)
-    :
+  explicit dependence_grapht(const namespacet &_ns):
     ns(_ns),
-    rd(ns, guard_manager)
+    rd(ns)
   {
   }
 

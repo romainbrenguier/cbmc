@@ -44,7 +44,7 @@ void value_set_domain_templatet<VST>::transform(
     break;
 
   case ASSUME:
-    value_set.guard(from_l->guard.as_expr(), ns);
+    value_set.guard(from_l->guard, ns);
     break;
 
   case FUNCTION_CALL:

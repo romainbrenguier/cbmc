@@ -52,7 +52,7 @@ std::set<exprt> collect_conditions(const goto_programt::const_targett t)
   {
   case GOTO:
   case ASSERT:
-    return collect_conditions(t->guard.as_expr());
+    return collect_conditions(t->guard);
 
   case ASSIGN:
   case FUNCTION_CALL:
@@ -119,7 +119,7 @@ std::set<exprt> collect_decisions(const goto_programt::const_targett t)
   {
   case GOTO:
   case ASSERT:
-    return collect_decisions(t->guard.as_expr());
+    return collect_decisions(t->guard);
 
   case ASSIGN:
   case FUNCTION_CALL:

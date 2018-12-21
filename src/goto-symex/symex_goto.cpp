@@ -34,10 +34,9 @@ void goto_symext::symex_goto(statet &state)
     return; // nothing to do
   }
 
-  exprt old_guard=instruction.guard.as_expr();
+  exprt old_guard=instruction.guard;
   clean_expr(old_guard, state, false);
 
-  // TODO: replace that with proper guardt
   exprt new_guard=old_guard;
   state.rename(new_guard, ns, guard_manager);
   do_simplify(new_guard);

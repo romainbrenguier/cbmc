@@ -22,27 +22,24 @@ Date: June 2003
 void goto_convert(
   symbol_table_baset &symbol_table,
   goto_functionst &functions,
-  message_handlert &,
-  guard_managert &guard_manager);
+  message_handlert &);
 
 // convert it all!
-void
-goto_convert(goto_modelt &, message_handlert &, guard_managert &guard_manager);
+void goto_convert(
+  goto_modelt &,
+  message_handlert &);
 
 // just convert a specific function
 void goto_convert(
   const irep_idt &identifier,
   symbol_table_baset &symbol_table,
   goto_functionst &functions,
-  message_handlert &,
-  guard_managert &guard_manager);
+  message_handlert &);
 
 class goto_convert_functionst:public goto_convertt
 {
 public:
-  void goto_convert(
-    goto_functionst &functions,
-    guard_managert &guard_manager);
+  void goto_convert(goto_functionst &functions);
   void convert_function(
     const irep_idt &identifier,
     goto_functionst::goto_functiont &result);

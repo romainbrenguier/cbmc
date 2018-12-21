@@ -295,8 +295,9 @@ protected:
     const goto_functionst &goto_functions,
     const namespacet &ns);
 
-  virtual void
-  fixedpoint(const goto_functionst &goto_functions, const namespacet &ns)=0;
+  virtual void fixedpoint(
+    const goto_functionst &goto_functions,
+    const namespacet &ns)=0;
 
   void sequential_fixedpoint(
     const goto_functionst &goto_functions,
@@ -304,8 +305,7 @@ protected:
 
   void concurrent_fixedpoint(
     const goto_functionst &goto_functions,
-    const namespacet &ns,
-    guard_managert &guard_manager);
+    const namespacet &ns);
 
   /// Perform one step of abstract interpretation from location l
   /// Depending on the instruction type it may compute a number of "edges"
@@ -471,9 +471,7 @@ public:
   using locationt = typename statet::locationt;
 
   // constructor
-  concurrency_aware_ait(guard_managert & guard_manager)
-    : ait<domainT>(),
-      guard_manager(guard_manager)
+  concurrency_aware_ait():ait<domainT>()
   {
   }
 
@@ -493,9 +491,8 @@ protected:
     const goto_functionst &goto_functions,
     const namespacet &ns) override
   {
-    this->concurrent_fixedpoint(goto_functions, ns, guard_manager);
+    this->concurrent_fixedpoint(goto_functions, ns);
   }
-  guard_managert &guard_manager;
 };
 
 #endif // CPROVER_ANALYSES_AI_H

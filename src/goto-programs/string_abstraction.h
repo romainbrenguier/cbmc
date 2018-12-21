@@ -24,7 +24,6 @@ class string_abstractiont:public messaget
 public:
   string_abstractiont(
     symbol_tablet &_symbol_table,
-    guard_managert &guard_manager,
     message_handlert &_message_handler);
 
   void operator()(goto_programt &dest);
@@ -173,12 +172,10 @@ protected:
 
 void string_abstraction(
   goto_modelt &,
-  guard_managert &guard_manager,
   message_handlert &);
 
 void string_abstraction(
   symbol_tablet &,
-  guard_managert &guard_manager,
   message_handlert &,
   goto_functionst &);
 

@@ -35,7 +35,7 @@ void instrument_intervals(
   forall_goto_program_instructions(i_it, goto_function.body)
   {
     find_symbols(i_it->code, symbols);
-    find_symbols(i_it->guard.as_expr(), symbols);
+    find_symbols(i_it->guard, symbols);
   }
 
   Forall_goto_program_instructions(i_it, goto_function.body)

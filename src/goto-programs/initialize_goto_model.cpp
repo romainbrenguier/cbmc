@@ -32,8 +32,7 @@ Author: Daniel Kroening, kroening@kroening.com
 goto_modelt initialize_goto_model(
   const std::vector<std::string> &files,
   message_handlert &message_handler,
-  const optionst &options,
-  guard_managert &guard_manager)
+  const optionst &options)
 {
   messaget msg(message_handler);
   if(files.empty())
@@ -112,11 +111,7 @@ goto_modelt initialize_goto_model(
   {
     msg.status() << "Reading GOTO program from file" << messaget::eom;
 
-    if(read_object_and_link(
-      file,
-      goto_model,
-      guard_manager,
-      message_handler))
+    if(read_object_and_link(file, goto_model, message_handler))
     {
       throw invalid_source_file_exceptiont(
         "failed to read object or link in file `" + file + '\'');
@@ -159,8 +154,7 @@ goto_modelt initialize_goto_model(
   goto_convert(
     goto_model.symbol_table,
     goto_model.goto_functions,
-    message_handler,
-    guard_manager);
+    message_handler);
 
   if(options.is_set("validate-goto-model"))
   {

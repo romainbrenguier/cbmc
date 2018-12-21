@@ -123,11 +123,7 @@ void concurrency_instrumentationt::instrument(
       instrument(code.rhs());
     }
     else if(it->is_assume() || it->is_assert() || it->is_goto())
-    {
-      exprt guard_expr = it->guard.as_expr();
-      instrument(guard_expr);
-      it->guard.from_expr(guard_expr);
-    }
+      instrument(it->guard);
     else if(it->is_function_call())
     {
       code_function_callt &code=to_code_function_call(it->code);
@@ -193,7 +189,7 @@ void concurrency_instrumentationt::collect(
       if(i_it->is_assign())
         collect(i_it->code);
       else if(i_it->is_assume() || i_it->is_assert() || i_it->is_goto())
-        collect(i_it->guard.as_expr());
+        collect(i_it->guard);
       else if(i_it->is_function_call())
         collect(i_it->code);
     }

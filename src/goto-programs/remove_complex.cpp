@@ -301,9 +301,7 @@ static void remove_complex(
   Forall_goto_program_instructions(it, goto_function.body)
   {
     remove_complex(it->code);
-    exprt tmp_guard = it->guard.as_expr();
-    remove_complex(tmp_guard);
-    it->guard.from_expr(tmp_guard);
+    remove_complex(it->guard);
   }
 }
 

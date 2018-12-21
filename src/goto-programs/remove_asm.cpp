@@ -131,9 +131,7 @@ void remove_asmt::gcc_asm_function_call(
     goto_functions.function_map.find(function_identifier) ==
     goto_functions.function_map.end())
   {
-    auto emplace_result = goto_functions.function_map.emplace(
-      function_identifier, goto_functiont(dest.guard_manager));
-    auto &f = emplace_result.first->second;
+    auto &f = goto_functions.function_map[function_identifier];
     f.type = fkt_type;
   }
 }
@@ -183,9 +181,7 @@ void remove_asmt::msc_asm_function_call(
     goto_functions.function_map.find(function_identifier) ==
     goto_functions.function_map.end())
   {
-    auto emplace_result = goto_functions.function_map.emplace(function_identifier,
-      goto_functiont(dest.guard_manager));
-    auto &f = emplace_result.first->second;
+    auto &f = goto_functions.function_map[function_identifier];
     f.type = fkt_type;
   }
 }
@@ -228,7 +224,7 @@ void remove_asmt::process_instruction_gcc(
   assembler_parser.in = &str;
   assembler_parser.parse();
 
-  goto_programt tmp_dest(dest.guard_manager);
+  goto_programt tmp_dest;
   bool unknown = false;
   bool x86_32_locked_atomic = false;
 
@@ -393,7 +389,7 @@ void remove_asmt::process_instruction_msc(
   assembler_parser.in = &str;
   assembler_parser.parse();
 
-  goto_programt tmp_dest(dest.guard_manager);
+  goto_programt tmp_dest;
   bool unknown = false;
   bool x86_32_locked_atomic = false;
 
@@ -494,7 +490,7 @@ void remove_asmt::process_function(
   {
     if(it->is_other() && it->code.get_statement()==ID_asm)
     {
-      goto_programt tmp_dest(goto_function.body.guard_manager);
+      goto_programt tmp_dest;
       process_instruction(*it, tmp_dest);
       it->make_skip();
       did_something = true;

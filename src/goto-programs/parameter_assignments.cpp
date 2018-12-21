@@ -56,7 +56,7 @@ void parameter_assignmentst::do_function_calls(
       const symbolt &function_symbol=ns.lookup(identifier);
       const code_typet &code_type=to_code_type(function_symbol.type);
 
-      goto_programt tmp(goto_program.guard_manager);
+      goto_programt tmp;
 
       for(std::size_t nr=0; nr<code_type.parameters().size(); nr++)
       {

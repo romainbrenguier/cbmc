@@ -20,8 +20,7 @@ void dump_c(
   const bool use_all_headers,
   const bool include_harness,
   const namespacet &ns,
-  std::ostream &out,
-  guard_managert &guard_manager);
+  std::ostream &out);
 
 void dump_cpp(
   const goto_functionst &src,
@@ -29,7 +28,6 @@ void dump_cpp(
   const bool use_all_headers,
   const bool include_harness,
   const namespacet &ns,
-  std::ostream &out,
-  guard_managert &guard_manager);
+  std::ostream &out);
 
 #endif // CPROVER_GOTO_INSTRUMENT_DUMP_C_H

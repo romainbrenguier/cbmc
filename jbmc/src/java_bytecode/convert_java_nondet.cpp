@@ -45,8 +45,7 @@ static goto_programt get_gen_nondet_init_instructions(
   symbol_table_baset &symbol_table,
   message_handlert &message_handler,
   const java_object_factory_parameterst &object_factory_parameters,
-  const irep_idt &mode,
-  guard_managert &guard_manager)
+  const irep_idt &mode)
 {
   code_blockt gen_nondet_init_code;
   const bool skip_classid = true;
@@ -60,7 +59,7 @@ static goto_programt get_gen_nondet_init_instructions(
     object_factory_parameters,
     update_in_placet::NO_UPDATE_IN_PLACE);
 
-  goto_programt instructions(guard_manager);
+  goto_programt instructions;
   goto_convert(
     gen_nondet_init_code, symbol_table, instructions, message_handler, mode);
   return instructions;
@@ -128,7 +127,7 @@ static std::pair<goto_programt::targett, bool> insert_nondet_init_code(
 
     // Insert an instruction declaring `aux_symbol` before `target`, being
     // careful to preserve jumps to `target`
-    goto_programt::instructiont decl_aux_symbol(goto_program.guard_manager);
+    goto_programt::instructiont decl_aux_symbol;
     decl_aux_symbol.make_decl(code_declt(aux_symbol_expr));
     decl_aux_symbol.source_location = source_loc;
     goto_program.insert_before_swap(target, decl_aux_symbol);
@@ -143,8 +142,7 @@ static std::pair<goto_programt::targett, bool> insert_nondet_init_code(
         symbol_table,
         message_handler,
         object_factory_parameters,
-        mode,
-        goto_program.guard_manager);
+        mode);
     goto_program.destructive_insert(target2, gen_nondet_init_instructions);
 
     goto_programt::targett dead_aux_symbol = goto_program.insert_after(target2);

@@ -30,9 +30,7 @@ goto_convert_functionst::~goto_convert_functionst()
 {
 }
 
-void goto_convert_functionst::goto_convert(
-  goto_functionst &functions,
-  guard_managert &guard_manager)
+void goto_convert_functionst::goto_convert(goto_functionst &functions)
 {
   // warning! hash-table iterators are not stable
 
@@ -53,8 +51,7 @@ void goto_convert_functionst::goto_convert(
 
   for(const auto &id : symbol_list)
   {
-    auto emplace_result = functions.function_map.emplace(id, goto_functiont(guard_manager));
-    convert_function(id, emplace_result.first->second);
+    convert_function(id, functions.function_map[id]);
   }
 
   functions.compute_location_numbers();
@@ -166,7 +163,7 @@ void goto_convert_functionst::convert_function(
   else
     end_location.make_nil();
 
-  goto_programt tmp_end_function(f.body.guard_manager);
+  goto_programt tmp_end_function;
   goto_programt::targett end_function=tmp_end_function.add_instruction();
   end_function->type=END_FUNCTION;
   end_function->source_location=end_location;
@@ -189,7 +186,7 @@ void goto_convert_functionst::convert_function(
   if(!f.body.instructions.empty() &&
       has_prefix(id2string(identifier), "__VERIFIER_atomic_"))
   {
-    goto_programt::instructiont a_begin(f.body.guard_manager);
+    goto_programt::instructiont a_begin;
     a_begin.make_atomic_begin();
     a_begin.source_location=f.body.instructions.front().source_location;
     f.body.insert_before_swap(f.body.instructions.begin(), a_begin);
@@ -219,20 +216,19 @@ void goto_convert_functionst::convert_function(
 
 void goto_convert(
   goto_modelt &goto_model,
-  message_handlert &message_handler,
-  guard_managert &guard_manager)
+  message_handlert &message_handler)
 {
   symbol_table_buildert symbol_table_builder =
     symbol_table_buildert::wrap(goto_model.symbol_table);
 
-  goto_convert(symbol_table_builder, goto_model.goto_functions, message_handler, guard_manager);
+  goto_convert(
+    symbol_table_builder, goto_model.goto_functions, message_handler);
 }
 
 void goto_convert(
   symbol_table_baset &symbol_table,
   goto_functionst &functions,
-  message_handlert &message_handler,
-  guard_managert &guard_manager)
+  message_handlert &message_handler)
 {
   symbol_table_buildert symbol_table_builder =
     symbol_table_buildert::wrap(symbol_table);
@@ -240,15 +236,14 @@ void goto_convert(
   goto_convert_functionst goto_convert_functions(
     symbol_table_builder, message_handler);
 
-  goto_convert_functions.goto_convert(functions, guard_manager);
+  goto_convert_functions.goto_convert(functions);
 }
 
 void goto_convert(
   const irep_idt &identifier,
   symbol_table_baset &symbol_table,
   goto_functionst &functions,
-  message_handlert &message_handler,
-  guard_managert &guard_manager)
+  message_handlert &message_handler)
 {
   symbol_table_buildert symbol_table_builder =
     symbol_table_buildert::wrap(symbol_table);
@@ -256,8 +251,6 @@ void goto_convert(
   goto_convert_functionst goto_convert_functions(
     symbol_table_builder, message_handler);
 
-  auto emplace_result =
-    functions.function_map.emplace(identifier, guard_manager);
   goto_convert_functions.convert_function(
-    identifier, emplace_result.first->second);
+    identifier, functions.function_map[identifier]);
 }

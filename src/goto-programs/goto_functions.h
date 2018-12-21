@@ -109,14 +109,10 @@ public:
     function_map.swap(other.function_map);
   }
 
-  void copy_from(const goto_functionst &other, guard_managert &guard_manager)
+  void copy_from(const goto_functionst &other)
   {
     for(const auto &fun : other.function_map)
-    {
-      auto emplace_result =
-        function_map.emplace(fun.first, goto_functiont(guard_manager));
-      emplace_result.first->second.copy_from(fun.second);
-    }
+      function_map[fun.first].copy_from(fun.second);
   }
 
   std::vector<function_mapt::const_iterator> sorted() const;

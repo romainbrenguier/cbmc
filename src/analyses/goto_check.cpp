@@ -44,9 +44,7 @@ public:
     const namespacet &_ns,
     const optionst &_options):
     ns(_ns),
-    local_bitvector_analysis(nullptr),
-    guard_manager(),
-    new_code(guard_manager)
+    local_bitvector_analysis(nullptr)
   {
     enable_bounds_check=_options.get_bool_option("bounds-check");
     enable_pointer_check=_options.get_bool_option("pointer-check");
@@ -77,8 +75,8 @@ public:
 
   void goto_check(
     goto_functiont &goto_function,
-    const irep_idt &mode);
-  //  guard_managert &guard_manager);
+    const irep_idt &mode,
+    guard_managert &guard_manager);
 
   void collect_allocations(const goto_functionst &goto_functions);
 
@@ -130,7 +128,6 @@ protected:
     const exprt &src_expr,
     const guardt &guard);
 
-  guard_managert guard_manager;
   goto_programt new_code;
   typedef std::set<exprt> assertionst;
   assertionst assertions;
@@ -1286,7 +1283,7 @@ void goto_checkt::add_guarded_claim(
     std::string source_expr_string;
     get_language_from_mode(mode)->from_expr(src_expr, source_expr_string, ns);
 
-    t->guard.from_expr(new_expr);
+    t->guard.swap(new_expr);
     t->source_location=source_location;
     t->source_location.set_comment(comment+" in "+source_expr_string);
     t->source_location.set_property_class(property_class);
@@ -1520,7 +1517,8 @@ void goto_checkt::rw_ok_check(exprt &expr)
 
 void goto_checkt::goto_check(
   goto_functiont &goto_function,
-  const irep_idt &_mode)
+  const irep_idt &_mode,
+  guard_managert &guard_manager)
 {
   assertions.clear();
   mode = _mode;
@@ -1547,7 +1545,7 @@ void goto_checkt::goto_check(
        i.is_target())
       assertions.clear();
 
-    check(i.guard.as_expr(), guard_manager);
+    check(i.guard, guard_manager);
 
     // magic ERROR label?
     for(const auto &label : error_labels)
@@ -1559,7 +1557,7 @@ void goto_checkt::goto_check(
 
         goto_programt::targett t=new_code.add_instruction(type);
 
-        t->guard.from_expr(false_exprt());
+        t->guard=false_exprt();
         t->source_location=i.source_location;
         t->source_location.set_property_class("error label");
         t->source_location.set_comment("error label "+label);
@@ -1669,9 +1667,7 @@ void goto_checkt::goto_check(
     {
       bool is_user_provided=i.source_location.get_bool("user-provided");
 
-      exprt guard_expr = i.guard.as_expr();
-      rw_ok_check(guard_expr);
-      i.guard.from_expr(guard_expr);
+      rw_ok_check(i.guard);
 
       if((is_user_provided && !enable_assertions &&
           i.source_location.get_property_class()!="error label") ||
@@ -1793,18 +1789,16 @@ void goto_check(
   const optionst &options,
   const irep_idt &mode,
   goto_functionst::goto_functiont &goto_function,
-  // Unused:
   guard_managert &guard_manager)
 {
   goto_checkt goto_check(ns, options);
-  goto_check.goto_check(goto_function, mode);
+  goto_check.goto_check(goto_function, mode, guard_manager);
 }
 
 void goto_check(
   const namespacet &ns,
   const optionst &options,
   goto_functionst &goto_functions,
-  // TODO: unused
   guard_managert &guard_manager)
 {
   goto_checkt goto_check(ns, options);
@@ -1814,7 +1808,7 @@ void goto_check(
   Forall_goto_functions(it, goto_functions)
   {
     irep_idt mode=ns.lookup(it->first).mode;
-    goto_check.goto_check(it->second, mode);
+    goto_check.goto_check(it->second, mode, guard_manager);
   }
 }
 

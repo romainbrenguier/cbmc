@@ -516,7 +516,7 @@ void goto_convertt::do_cpp_new(
   t_n->source_location=rhs.find_source_location();
 
   // grab initializer
-  goto_programt tmp_initializer(dest.guard_manager);
+  goto_programt tmp_initializer;
   cpp_new_initializer(lhs, rhs, tmp_initializer);
 
   dest.destructive_append(tmp_initializer);
@@ -669,9 +669,13 @@ void goto_convertt::do_function_call_symbol(
     }
 
     goto_programt::targett t=dest.add_instruction(ASSUME);
-    t->guard.from_expr(typecast_exprt(arguments.front(), bool_typet()));
+    t->guard=arguments.front();
     t->source_location=function.source_location();
     t->source_location.set("user-provided", true);
+
+    // let's double-check the type of the argument
+    if(t->guard.type().id()!=ID_bool)
+      t->guard.make_typecast(bool_typet());
 
     if(lhs.is_not_nil())
     {
@@ -691,7 +695,7 @@ void goto_convertt::do_function_call_symbol(
     }
 
     goto_programt::targett t=dest.add_instruction(ASSERT);
-    t->guard.from_expr(false_exprt());
+    t->guard=false_exprt();
     t->source_location=function.source_location();
     t->source_location.set("user-provided", true);
     t->source_location.set_property_class(ID_assertion);
@@ -706,7 +710,7 @@ void goto_convertt::do_function_call_symbol(
     // __VERIFIER_error has abort() semantics, even if no assertions
     // are being checked
     goto_programt::targett a=dest.add_instruction(ASSUME);
-    a->guard.from_expr(false_exprt());
+    a->guard=false_exprt();
     a->source_location=function.source_location();
     a->source_location.set("user-provided", true);
   }
@@ -722,12 +726,16 @@ void goto_convertt::do_function_call_symbol(
     }
 
     goto_programt::targett t=dest.add_instruction(ASSERT);
-    t->guard.from_expr(typecast_exprt(arguments.front(), bool_typet()));
+    t->guard=arguments.front();
     t->source_location=function.source_location();
     t->source_location.set("user-provided", true);
     t->source_location.set_property_class(ID_assertion);
     t->source_location.set_comment(
-      "assertion " + id2string(from_expr(ns, identifier, t->guard.as_expr())));
+      "assertion " + id2string(from_expr(ns, identifier, t->guard)));
+
+    // let's double-check the type of the argument
+    if(t->guard.type().id()!=ID_bool)
+      t->guard.make_typecast(bool_typet());
 
     if(lhs.is_not_nil())
     {
@@ -754,7 +762,7 @@ void goto_convertt::do_function_call_symbol(
       get_string_constant(arguments[1]);
 
     goto_programt::targett t=dest.add_instruction(ASSERT);
-    t->guard.from_expr(typecast_exprt(arguments[0], bool_typet()));
+    t->guard=arguments[0];
     t->source_location=function.source_location();
 
     if(is_precondition)
@@ -770,6 +778,10 @@ void goto_convertt::do_function_call_symbol(
     }
 
     t->source_location.set_comment(description);
+
+    // let's double-check the type of the argument
+    if(t->guard.type().id()!=ID_bool)
+      t->guard.make_typecast(bool_typet());
 
     if(lhs.is_not_nil())
     {
@@ -956,7 +968,7 @@ void goto_convertt::do_function_call_symbol(
       "assertion "+id2string(get_string_constant(arguments[0]));
 
     goto_programt::targett t=dest.add_instruction(ASSERT);
-    t->guard.from_expr(false_exprt());
+    t->guard=false_exprt();
     t->source_location=function.source_location();
     t->source_location.set("user-provided", true);
     t->source_location.set_property_class(ID_assertion);
@@ -994,7 +1006,7 @@ void goto_convertt::do_function_call_symbol(
     }
 
     goto_programt::targett t=dest.add_instruction(ASSERT);
-    t->guard.from_expr(false_exprt());
+    t->guard=false_exprt();
     t->source_location=function.source_location();
     t->source_location.set("user-provided", true);
     t->source_location.set_property_class(ID_assertion);
@@ -1028,7 +1040,7 @@ void goto_convertt::do_function_call_symbol(
     }
 
     goto_programt::targett t=dest.add_instruction(ASSERT);
-    t->guard.from_expr(false_exprt());
+    t->guard=false_exprt();
     t->source_location=function.source_location();
     t->source_location.set("user-provided", true);
     t->source_location.set_property_class(ID_assertion);

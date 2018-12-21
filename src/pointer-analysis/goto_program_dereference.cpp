@@ -283,10 +283,7 @@ void goto_program_dereferencet::dereference_instruction(
   #endif
   goto_programt::instructiont &i=*target;
 
-  // TODO have a version of derefence_expr for guards
-  exprt i_guard = i.guard.as_expr();
-  dereference_expr(i_guard, checks_only, value_set_dereferencet::modet::READ, manager);
-  i.guard.from_expr(i_guard);
+  dereference_expr(i.guard, checks_only, value_set_dereferencet::modet::READ, manager);
 
   if(i.is_assign())
   {

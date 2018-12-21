@@ -116,7 +116,7 @@ void goto_trace_stept::output(
       if(!comment.empty())
         out << "  " << comment << '\n';
 
-      out << "  " << format(pc->guard.as_expr()) << '\n';
+      out << "  " << format(pc->guard) << '\n';
       out << '\n';
     }
   }
@@ -387,7 +387,7 @@ void show_compact_goto_trace(
         out << "  " << messaget::red << step.comment << messaget::reset << '\n';
 
         if(step.pc->is_assert())
-          out << "  " << from_expr(ns, step.function, step.pc->guard.as_expr()) << '\n';
+          out << "  " << from_expr(ns, step.function, step.pc->guard) << '\n';
 
         out << '\n';
       }
@@ -507,7 +507,7 @@ void show_full_goto_trace(
         out << "  " << messaget::red << step.comment << messaget::reset << '\n';
 
         if(step.pc->is_assert())
-          out << "  " << from_expr(ns, step.function, step.pc->guard.as_expr()) << '\n';
+          out << "  " << from_expr(ns, step.function, step.pc->guard) << '\n';
 
         out << '\n';
       }
@@ -522,7 +522,7 @@ void show_full_goto_trace(
           out << "  " << step.pc->source_location << '\n';
 
         if(step.pc->is_assume())
-          out << "  " << from_expr(ns, step.function, step.pc->guard.as_expr()) << '\n';
+          out << "  " << from_expr(ns, step.function, step.pc->guard) << '\n';
 
         out << '\n';
       }

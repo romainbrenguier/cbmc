@@ -104,22 +104,18 @@ public:
 
   /// Gets the body for a given function.
   /// \param name: The name of the function to search for.
-  /// \param guard_manager: used to create the \c functiont corresponding to
-  ///   \p name in case it does not already exist.
   /// \return The function body corresponding to the given function.
-  const_mapped_type at(const key_type &name, guard_managert &guard_manager) const
+  const_mapped_type at(const key_type &name) const
   {
-    return ensure_function_loaded_internal(name, guard_manager).second;
+    return ensure_function_loaded_internal(name).second;
   }
 
   /// Gets the body for a given function.
   /// \param name: The name of the function to search for.
-  /// \param guard_manager: used to create the \c functiont corresponding to
-  ///   \p name in case it does not already exist.
   /// \return The function body corresponding to the given function.
-  mapped_type at(const key_type &name, guard_managert &guard_manager)
+  mapped_type at(const key_type &name)
   {
-    return ensure_function_loaded_internal(name, guard_manager).second;
+    return ensure_function_loaded_internal(name).second;
   }
 
   /// Determines if this lazy GOTO functions map can produce a body for the
@@ -136,23 +132,23 @@ public:
 
   void unload(const key_type &name) const { goto_functions.erase(name); }
 
-  void ensure_function_loaded(const key_type &name, guard_managert &guard_manager) const
+  void ensure_function_loaded(const key_type &name) const
   {
-    ensure_function_loaded_internal(name, guard_manager);
+    ensure_function_loaded_internal(name);
   }
 
 private:
   // This returns a non-const reference, but if you use this method from a
   // const method then you should not return such a reference without making it
   // const first
-  reference ensure_function_loaded_internal(const key_type &name, guard_managert &guard_manager) const
+  reference ensure_function_loaded_internal(const key_type &name) const
   {
     symbol_table_buildert symbol_table_builder =
       symbol_table_buildert::wrap(symbol_table);
 
     journalling_symbol_tablet journalling_table =
       journalling_symbol_tablet::wrap(symbol_table_builder);
-    reference named_function=ensure_entry_converted(name, journalling_table, guard_manager);
+    reference named_function=ensure_entry_converted(name, journalling_table);
     mapped_type function=named_function.second;
     if(processed_functions.count(name)==0)
     {
@@ -175,14 +171,13 @@ private:
   /// \return reference to the new or existing goto_functions map entry.
   reference ensure_entry_converted(
     const key_type &name,
-    symbol_table_baset &function_symbol_table,
-    guard_managert &guard_manager) const
+    symbol_table_baset &function_symbol_table) const
   {
     underlying_mapt::iterator it=goto_functions.find(name);
     if(it!=goto_functions.end())
       return *it;
 
-    goto_functiont function(guard_manager);
+    goto_functiont function;
 
     // First chance: see if the driver program wants to provide a replacement:
     bool body_provided =

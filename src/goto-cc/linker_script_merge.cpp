@@ -60,7 +60,7 @@ int linker_script_merget::add_linker_script_definitions()
   goto_modelt original_goto_model;
 
   fail =
-    read_goto_binary(goto_binary, <#initializer#>, original_goto_model);
+    read_goto_binary(goto_binary, original_goto_model, get_message_handler());
 
   if(fail!=0)
   {

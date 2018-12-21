@@ -521,16 +521,16 @@ void custom_bitvector_domaint::transform(
     break;
 
   case GOTO:
-    if(instruction.guard.any_expr(has_get_must_or_may))
+    if(has_get_must_or_may(instruction.guard))
     {
-      guardt guard=instruction.guard;
+      exprt guard=instruction.guard;
 
       // Comparing iterators is safe as the target must be within the same list
       // of instructions because this is a GOTO.
       if(to!=from->get_target())
-        guard.negate();
+        guard = boolean_negate(guard);
 
-      exprt result=eval(guard.as_expr(), cba);
+      exprt result=eval(guard, cba);
       exprt result2=simplify_expr(result, ns);
 
       if(result2.is_false())
@@ -777,13 +777,13 @@ void custom_bitvector_analysist::check(
 
       if(i_it->is_assert())
       {
-        if(!i_it->guard.any_expr(custom_bitvector_domaint::has_get_must_or_may))
+        if(!custom_bitvector_domaint::has_get_must_or_may(i_it->guard))
           continue;
 
         if(operator[](i_it).has_values.is_false())
           continue;
 
-        exprt tmp=eval(i_it->guard.as_expr(), i_it);
+        exprt tmp=eval(i_it->guard, i_it);
         const namespacet ns(goto_model.symbol_table);
         result=simplify_expr(tmp, ns);
 

@@ -197,13 +197,13 @@ goto_programt::const_targett goto_program2codet::convert_instruction(
 
     case ASSERT:
       system_headers.insert("assert.h");
-      dest.copy_to_operands(code_assertt(target->guard.as_expr()));
+      dest.copy_to_operands(code_assertt(target->guard));
       dest.operands().back().add_source_location().set_comment(
           target->source_location.get_comment());
       return target;
 
     case ASSUME:
-      dest.copy_to_operands(code_assumet(target->guard.as_expr()));
+      dest.copy_to_operands(code_assumet(target->guard));
       return target;
 
     case GOTO:
@@ -522,7 +522,7 @@ goto_programt::const_targett goto_program2codet::convert_do_while(
   assert(loop_end->is_goto() && loop_end->is_backwards_goto());
 
   code_dowhilet d;
-  d.cond()=loop_end->guard.as_expr();
+  d.cond()=loop_end->guard;
   simplify(d.cond(), ns);
   d.body()=code_blockt();
 

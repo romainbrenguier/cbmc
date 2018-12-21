@@ -61,8 +61,7 @@ public:
     type.set(ID_C_hide, true);
   }
 
-  goto_functiont(guard_managert &guard_manager)
-    : body(guard_manager), type({}, empty_typet())
+  goto_functiont() : body(), type({}, empty_typet())
   {
   }
 

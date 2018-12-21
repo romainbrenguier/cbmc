@@ -92,16 +92,11 @@ SCENARIO("dependence_graph", "[core][analyses][dependence_graph]")
       create_void_function_symbol("b", code_skipt()));
 
     stream_message_handlert msg(std::cerr);
-    goto_convert(
-      goto_model,
-      msg,
-      <#initializer#>,
-      <#initializer#>,
-      <#initializer#>);
+    goto_convert(goto_model, msg);
 
     WHEN("Constructing a dependence graph")
     {
-      dependence_grapht dep_graph(ns, <#initializer#>);
+      dependence_grapht dep_graph(ns);
       dep_graph(goto_model.goto_functions, ns);
 
       THEN("The function call and assignment instructions "

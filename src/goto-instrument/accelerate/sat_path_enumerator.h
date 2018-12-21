@@ -48,8 +48,7 @@ public:
       goto_program(_goto_program),
       loop(_loop),
       loop_header(_loop_header),
-      utils(symbol_table, message_handler, goto_functions, loop_counter),
-      fixed(goto_program.guard_manager)
+      utils(symbol_table, message_handler, goto_functions, loop_counter)
   {
     find_distinguishing_points();
     build_fixed(guard_manager);

@@ -374,7 +374,7 @@ void goto_symext::symex_step(
   case ASSUME:
     if(!is_false(state.guard))
     {
-      exprt tmp=instruction.guard.as_expr();
+      exprt tmp=instruction.guard;
       clean_expr(tmp, state, false);
       state.rename(tmp, ns, guard_manager);
       symex_assume(state, tmp);
@@ -389,7 +389,7 @@ void goto_symext::symex_step(
       std::string msg=id2string(state.source.pc->source_location.get_comment());
       if(msg=="")
         msg="assertion";
-      exprt tmp(instruction.guard.as_expr());
+      exprt tmp(instruction.guard);
       clean_expr(tmp, state, false);
       vcc(tmp, msg, state);
     }

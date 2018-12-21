@@ -106,7 +106,7 @@ json_objectt show_goto_functions_jsont::convert(
         {
           json_objectt guard_object=
             no_comments_irep_converter.convert_from_irep(
-              instruction.guard.as_expr());
+              instruction.guard);
 
           instruction_entry["guard"]=guard_object;
         }

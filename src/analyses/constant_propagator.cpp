@@ -105,7 +105,7 @@ void constant_propagator_domaint::transform(
   }
   else if(from->is_assume())
   {
-    two_way_propagate_rec(from->guard.as_expr(), ns, cp);
+    two_way_propagate_rec(from->guard, ns, cp);
   }
   else if(from->is_goto())
   {
@@ -114,9 +114,9 @@ void constant_propagator_domaint::transform(
     // Comparing iterators is safe as the target must be within the same list
     // of instructions because this is a GOTO.
     if(from->get_target()==to)
-      g = from->guard.as_expr();
+      g = from->guard;
     else
-      g = (!from->guard).as_expr();
+      g = not_exprt(from->guard);
     partial_evaluate(g, ns);
     if(g.is_false())
      values.set_to_bottom();
@@ -619,12 +619,11 @@ void constant_propagator_ait::replace(
       continue;
 
     replace_types_rec(d.values.replace_const, it->code);
-    exprt guard_expr = it->guard.as_expr();
-    replace_types_rec(d.values.replace_const, guard_expr);
+    replace_types_rec(d.values.replace_const, it->guard);
 
     if(it->is_goto() || it->is_assume() || it->is_assert())
     {
-      d.partial_evaluate(guard_expr, ns);
+      d.partial_evaluate(it->guard, ns);
     }
     else if(it->is_assign())
     {
@@ -655,7 +654,6 @@ void constant_propagator_ait::replace(
         d.partial_evaluate(it->code, ns);
       }
     }
-    it->guard.from_expr(guard_expr);
   }
 }
 

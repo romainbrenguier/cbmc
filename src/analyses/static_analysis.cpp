@@ -32,9 +32,9 @@ exprt static_analysis_baset::get_guard(
   next++;
 
   if(next==to)
-    return (!from->guard).as_expr();
+    return boolean_negate(from->guard);
 
-  return from->guard.as_expr();
+  return from->guard;
 }
 
 exprt static_analysis_baset::get_return_lhs(locationt to)
@@ -456,8 +456,7 @@ void static_analysis_baset::concurrent_fixedpoint(
 
   // construct an initial shared state collecting the results of all
   // functions
-  guard_managert guard_manager;
-  goto_programt tmp(guard_manager);
+  goto_programt tmp;
   tmp.add_instruction();
   goto_programt::const_targett sh_target=tmp.instructions.begin();
   generate_state(sh_target);

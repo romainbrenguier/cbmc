@@ -55,12 +55,7 @@ SCENARIO(
     {
       symbol_tablet new_table(symbol_table);
       goto_functionst new_goto_functions;
-      goto_convert(
-        new_table,
-        new_goto_functions,
-        <#initializer#>,
-        <#initializer#>,
-        <#initializer#>);
+      goto_convert(new_table, new_goto_functions, null_message_handler);
       remove_virtual_functions(new_table, new_goto_functions);
 
       bool found_function = false;

@@ -138,7 +138,7 @@ bool acceleration_utilst::check_inductive(
       ++it)
   {
     const equal_exprt holds(it->first, it->second.to_expr());
-    program.add_instruction(ASSUME)->guard.from_expr(holds);
+    program.add_instruction(ASSUME)->guard=holds;
 
     polynomials_hold.push_back(holds);
   }
@@ -157,7 +157,7 @@ bool acceleration_utilst::check_inductive(
       it!=polynomials_hold.end();
       ++it)
   {
-    program.add_instruction(ASSERT)->guard.from_expr(*it);
+    program.add_instruction(ASSERT)->guard=*it;
   }
 
 #ifdef DEBUG
@@ -277,7 +277,7 @@ exprt acceleration_utilst::precondition(patht &path)
     }
     else if(t->is_assume() || t->is_assert())
     {
-      ret=implies_exprt(t->guard.as_expr(), ret);
+      ret=implies_exprt(t->guard, ret);
     }
     else
     {
@@ -439,7 +439,7 @@ bool acceleration_utilst::do_assumptions(
 
   ensure_no_overflows(program);
 
-  program.add_instruction(ASSERT)->guard.from_expr(condition);
+  program.add_instruction(ASSERT)->guard=condition;
 
   guard=not_exprt(condition);
   simplify(guard, ns);
@@ -499,7 +499,7 @@ void acceleration_utilst::ensure_no_overflows(scratch_programt &program)
 #endif
 
   instrumenter.add_overflow_checks();
-  program.add_instruction(ASSUME)->guard.from_expr(not_exprt(overflow_var));
+  program.add_instruction(ASSUME)->guard=not_exprt(overflow_var);
 
   // goto_functionst::goto_functiont fn;
   // fn.body.instructions.swap(program.instructions);

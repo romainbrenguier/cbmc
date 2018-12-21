@@ -168,7 +168,7 @@ void goto_convertt::finish_gotos(goto_programt &dest, const irep_idt &mode)
           debug().source_location=i.code.find_source_location();
           debug() << "adding goto-destructor code on jump to `"
                   << goto_label << "'" << eom;
-          goto_programt destructor_code(dest.guard_manager);
+          goto_programt destructor_code;
           unwind_destructor_stack(
             i.code.add_source_location(),
             unwind_to_size,
@@ -215,7 +215,7 @@ void goto_convertt::finish_computed_gotos(goto_programt &goto_program)
 
       t->make_goto(label.second.first);
       t->source_location=i.source_location;
-      t->guard.from_expr(guard);
+      t->guard=guard;
     }
   }
 
@@ -261,7 +261,7 @@ void goto_convertt::optimize_guarded_gotos(goto_programt &dest)
     if(it->get_target()->target_number == it_z->target_number)
     {
       it->set_target(it_goto_y->get_target());
-      it->guard.negate();
+      it->guard = boolean_negate(it->guard);
       it_goto_y->make_skip();
     }
   }
@@ -306,7 +306,7 @@ void goto_convertt::convert_label(
   // grab the label
   const irep_idt &label=code.get_label();
 
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
 
   // magic thread creation label.
   // The "__CPROVER_ASYNC_" signals the start of a sequence of instructions
@@ -349,7 +349,7 @@ void goto_convertt::convert_switch_case(
   goto_programt &dest,
   const irep_idt &mode)
 {
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
   convert(code.code(), tmp, mode);
 
   goto_programt::targett target=tmp.instructions.begin();
@@ -401,7 +401,7 @@ void goto_convertt::convert_gcc_switch_case_range(
               << eom;
   }
 
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
   convert(to_code(code.op2()), tmp, mode);
 
   goto_programt::targett target = tmp.instructions.begin();
@@ -857,7 +857,7 @@ void goto_convertt::convert_assert(
   clean_expr(cond, dest, mode);
 
   goto_programt::targett t=dest.add_instruction(ASSERT);
-  t->guard.from_expr(cond);
+  t->guard.swap(cond);
   t->source_location=code.source_location();
   t->source_location.set(ID_property, ID_assertion);
   t->source_location.set("user-provided", true);
@@ -882,15 +882,14 @@ void goto_convertt::convert_assume(
   clean_expr(op, dest, mode);
 
   goto_programt::targett t=dest.add_instruction(ASSUME);
-  t->guard.from_expr(op);
+  t->guard.swap(op);
   t->source_location=code.source_location();
 }
 
 void goto_convertt::convert_loop_invariant(
   const codet &code,
   goto_programt::targett loop,
-  const irep_idt &mode,
-  guard_managert &guard_manager)
+  const irep_idt &mode)
 {
   exprt invariant=
     static_cast<const exprt&>(code.find(ID_C_spec_loop_invariant));
@@ -898,7 +897,7 @@ void goto_convertt::convert_loop_invariant(
   if(invariant.is_nil())
     return;
 
-  goto_programt no_sideeffects(guard_manager);
+  goto_programt no_sideeffects;
   clean_expr(invariant, no_sideeffects, mode);
 
   INVARIANT_WITH_DIAGNOSTICS(
@@ -907,7 +906,7 @@ void goto_convertt::convert_loop_invariant(
     code.find_source_location());
 
   PRECONDITION(loop->is_goto());
-  loop->guard.from_expr(invariant);
+  loop->guard.add(ID_C_spec_loop_invariant).swap(invariant);
 }
 
 void goto_convertt::convert_for(
@@ -932,7 +931,7 @@ void goto_convertt::convert_for(
 
   exprt cond=code.cond();
 
-  goto_programt sideeffects(dest.guard_manager);
+  goto_programt sideeffects;
   clean_expr(cond, sideeffects, mode);
 
   // save break/continue targets
@@ -942,16 +941,16 @@ void goto_convertt::convert_for(
   goto_programt::targett u=sideeffects.instructions.begin();
 
   // do the v label
-  goto_programt tmp_v(dest.guard_manager);
+  goto_programt tmp_v;
   goto_programt::targett v=tmp_v.add_instruction();
 
   // do the z label
-  goto_programt tmp_z(dest.guard_manager);
+  goto_programt tmp_z;
   goto_programt::targett z=tmp_z.add_instruction(SKIP);
   z->source_location=code.source_location();
 
   // do the x label
-  goto_programt tmp_x(dest.guard_manager);
+  goto_programt tmp_x;
 
   if(code.iter().is_nil())
   {
@@ -981,22 +980,22 @@ void goto_convertt::convert_for(
 
   // v: if(!c) goto z;
   v->make_goto(z);
-  v->guard.from_expr(cond).negate();
+  v->guard = boolean_negate(cond);
   v->source_location=cond.source_location();
 
   // do the w label
-  goto_programt tmp_w(dest.guard_manager);
+  goto_programt tmp_w;
   convert(code.body(), tmp_w, mode);
 
   // y: goto u;
-  goto_programt tmp_y(dest.guard_manager);
+  goto_programt tmp_y;
   goto_programt::targett y=tmp_y.add_instruction();
   y->make_goto(u);
-  y->guard.set_to_true();
+  y->guard=true_exprt();
   y->source_location=code.source_location();
 
   // loop invariant
-  convert_loop_invariant(code, y, mode, dest.guard_manager);
+  convert_loop_invariant(code, y, mode);
 
   dest.destructive_append(sideeffects);
   dest.destructive_append(tmp_v);
@@ -1029,12 +1028,12 @@ void goto_convertt::convert_while(
   break_continue_targetst old_targets(targets);
 
   // do the z label
-  goto_programt tmp_z(dest.guard_manager);
+  goto_programt tmp_z;
   goto_programt::targett z=tmp_z.add_instruction();
   z->make_skip();
   z->source_location=source_location;
 
-  goto_programt tmp_branch(dest.guard_manager);
+  goto_programt tmp_branch;
   generate_conditional_branch(
     boolean_negate(cond), z, source_location, tmp_branch, mode);
 
@@ -1042,7 +1041,7 @@ void goto_convertt::convert_while(
   goto_programt::targett v=tmp_branch.instructions.begin();
 
   // do the y label
-  goto_programt tmp_y(dest.guard_manager);
+  goto_programt tmp_y;
   goto_programt::targett y=tmp_y.add_instruction();
 
   // set the targets
@@ -1050,16 +1049,16 @@ void goto_convertt::convert_while(
   targets.set_continue(y);
 
   // do the x label
-  goto_programt tmp_x(dest.guard_manager);
+  goto_programt tmp_x;
   convert(code.body(), tmp_x, mode);
 
   // y: if(c) goto v;
   y->make_goto(v);
-  y->guard.set_to_true();
+  y->guard=true_exprt();
   y->source_location=code.source_location();
 
   // loop invariant
-  convert_loop_invariant(code, y, mode, dest.guard_manager);
+  convert_loop_invariant(code, y, mode);
 
   dest.destructive_append(tmp_branch);
   dest.destructive_append(tmp_x);
@@ -1085,7 +1084,7 @@ void goto_convertt::convert_dowhile(
 
   exprt cond=code.cond();
 
-  goto_programt sideeffects(dest.guard_manager);
+  goto_programt sideeffects;
   clean_expr(cond, sideeffects, mode);
 
   //    do P while(c);
@@ -1099,11 +1098,11 @@ void goto_convertt::convert_dowhile(
   break_continue_targetst old_targets(targets);
 
   // do the y label
-  goto_programt tmp_y(dest.guard_manager);
+  goto_programt tmp_y;
   goto_programt::targett y=tmp_y.add_instruction();
 
   // do the z label
-  goto_programt tmp_z(dest.guard_manager);
+  goto_programt tmp_z;
   goto_programt::targett z=tmp_z.add_instruction();
   z->make_skip();
   z->source_location=code.source_location();
@@ -1120,21 +1119,17 @@ void goto_convertt::convert_dowhile(
   targets.set_continue(x);
 
   // do the w label
-  goto_programt tmp_w(dest.guard_manager);
+  goto_programt tmp_w;
   convert(code.body(), tmp_w, mode);
   goto_programt::targett w=tmp_w.instructions.begin();
 
   // y: if(c) goto w;
   y->make_goto(w);
-  y->guard.from_expr(cond);
+  y->guard=cond;
   y->source_location=condition_location;
 
   // loop invariant
-  convert_loop_invariant(
-    code,
-    y,
-    mode,
-    dest.guard_manager);
+  convert_loop_invariant(code, y, mode);
 
   dest.destructive_append(tmp_w);
   dest.destructive_append(sideeffects);
@@ -1209,14 +1204,14 @@ void goto_convertt::convert_switch(
   // do the value we switch over
   exprt argument=code.value();
 
-  goto_programt sideeffects(dest.guard_manager);
+  goto_programt sideeffects;
   clean_expr(argument, sideeffects, mode);
 
   // save break/default/cases targets
   break_switch_targetst old_targets(targets);
 
   // do the z label
-  goto_programt tmp_z(dest.guard_manager);
+  goto_programt tmp_z;
   goto_programt::targett z=tmp_z.add_instruction();
   z->make_skip();
   z->source_location=body_end_location;
@@ -1227,10 +1222,10 @@ void goto_convertt::convert_switch(
   targets.cases.clear();
   targets.cases_map.clear();
 
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
   convert(code.body(), tmp, mode);
 
-  goto_programt tmp_cases(dest.guard_manager);
+  goto_programt tmp_cases;
 
   // The case number represents which case this corresponds to in the sequence
   // of case statements.
@@ -1261,7 +1256,7 @@ void goto_convertt::convert_switch(
 
     goto_programt::targett x=tmp_cases.add_instruction();
     x->make_goto(case_pair.first);
-    x->guard.from_expr(guard_expr);
+    x->guard.swap(guard_expr);
     x->source_location=source_location;
   }
 
@@ -1321,7 +1316,7 @@ void goto_convertt::convert_return(
     bool result_is_used=
       new_code.return_value().type().id()!=ID_empty;
 
-    goto_programt sideeffects(dest.guard_manager);
+    goto_programt sideeffects;
     clean_expr(new_code.return_value(), sideeffects, mode, result_is_used);
     dest.destructive_append(sideeffects);
 
@@ -1486,10 +1481,10 @@ void goto_convertt::convert_ifthenelse(
   }
 
   // convert 'then'-branch
-  goto_programt tmp_then(dest.guard_manager);
+  goto_programt tmp_then;
   convert(code.then_case(), tmp_then, mode);
 
-  goto_programt tmp_else(dest.guard_manager);
+  goto_programt tmp_else;
 
   if(has_else)
     convert(code.else_case(), tmp_else, mode);
@@ -1540,7 +1535,7 @@ void goto_convertt::generate_ifthenelse(
      is_empty(false_case))
   {
     // hmpf. Useless branch.
-    goto_programt tmp_z(dest.guard_manager);
+    goto_programt tmp_z;
     goto_programt::targett z=tmp_z.add_instruction();
     z->make_skip();
     goto_programt::targett v=dest.add_instruction();
@@ -1558,7 +1553,7 @@ void goto_convertt::generate_ifthenelse(
   {
     // The above conjunction deliberately excludes the instance
     // if(some) { label: assert(false); }
-    true_case.instructions.back().guard.from_expr(guard).negate();
+    true_case.instructions.back().guard=boolean_negate(guard);
     dest.destructive_append(true_case);
     true_case.instructions.clear();
     if(
@@ -1576,7 +1571,7 @@ void goto_convertt::generate_ifthenelse(
   {
     // The above conjunction deliberately excludes the instance
     // if(some) ... else { label: assert(false); }
-    false_case.instructions.back().guard.from_expr(guard);
+    false_case.instructions.back().guard=guard;
     dest.destructive_append(false_case);
     false_case.instructions.clear();
     if(
@@ -1595,7 +1590,7 @@ void goto_convertt::generate_ifthenelse(
     true_case.instructions.front().labels.empty() &&
     true_case.instructions.back().labels.empty())
   {
-    true_case.instructions.front().guard.from_expr(guard).negate();
+    true_case.instructions.front().guard = boolean_negate(guard);
     true_case.instructions.erase(--true_case.instructions.end());
     dest.destructive_append(true_case);
     true_case.instructions.clear();
@@ -1630,18 +1625,18 @@ void goto_convertt::generate_ifthenelse(
   // z: ;
 
   // do the x label
-  goto_programt tmp_x(dest.guard_manager);
+  goto_programt tmp_x;
   goto_programt::targett x=tmp_x.add_instruction();
 
   // do the z label
-  goto_programt tmp_z(dest.guard_manager);
+  goto_programt tmp_z;
   goto_programt::targett z=tmp_z.add_instruction();
   z->make_skip();
   // We deliberately don't set a location for 'z', it's a dummy
   // target.
 
   // y: Q;
-  goto_programt tmp_y(dest.guard_manager);
+  goto_programt tmp_y;
   goto_programt::targett y;
   if(has_else)
   {
@@ -1650,12 +1645,12 @@ void goto_convertt::generate_ifthenelse(
   }
 
   // v: if(!c) goto z/y;
-  goto_programt tmp_v(dest.guard_manager);
+  goto_programt tmp_v;
   generate_conditional_branch(
     boolean_negate(guard), has_else ? y : z, source_location, tmp_v, mode);
 
   // w: P;
-  goto_programt tmp_w(dest.guard_manager);
+  goto_programt tmp_w;
   tmp_w.swap(true_case);
 
   // x: goto z;
@@ -1702,7 +1697,7 @@ void goto_convertt::generate_conditional_branch(
     // if(guard) goto target; else goto next;
     // next: skip;
 
-    goto_programt tmp(dest.guard_manager);
+    goto_programt tmp;
     goto_programt::targett target_false=tmp.add_instruction();
     target_false->make_skip();
     target_false->source_location=source_location;
@@ -1718,10 +1713,10 @@ void goto_convertt::generate_conditional_branch(
     exprt cond=guard;
     clean_expr(cond, dest, mode);
 
-    goto_programt tmp(dest.guard_manager);
+    goto_programt tmp;
     goto_programt::targett g=tmp.add_instruction();
     g->make_goto(target_true);
-    g->guard.from_expr(cond);
+    g->guard=cond;
     g->source_location=source_location;
     dest.destructive_append(tmp);
   }
@@ -1767,7 +1762,7 @@ void goto_convertt::generate_conditional_branch(
 
     goto_programt::targett t_true=dest.add_instruction();
     t_true->make_goto(target_true);
-    t_true->guard.set_to_true();
+    t_true->guard=true_exprt();
     t_true->source_location=source_location;
 
     return;
@@ -1790,7 +1785,7 @@ void goto_convertt::generate_conditional_branch(
 
     goto_programt::targett t_false=dest.add_instruction();
     t_false->make_goto(target_false);
-    t_false->guard.set_to_true();
+    t_false->guard=true_exprt();
     t_false->source_location=guard.source_location();
 
     return;
@@ -1801,12 +1796,12 @@ void goto_convertt::generate_conditional_branch(
 
   goto_programt::targett t_true=dest.add_instruction();
   t_true->make_goto(target_true);
-  t_true->guard.from_expr(cond);
+  t_true->guard=cond;
   t_true->source_location=source_location;
 
   goto_programt::targett t_false=dest.add_instruction();
   t_false->make_goto(target_false);
-  t_false->guard.set_to_true();
+  t_false->guard=true_exprt();
   t_false->source_location=source_location;
 }
 
@@ -1986,9 +1981,7 @@ void goto_convertt::generate_thread_block(
   goto_programt &dest,
   const irep_idt &mode)
 {
-  goto_programt preamble(dest.guard_manager);
-  goto_programt body(dest.guard_manager);
-  goto_programt postamble(dest.guard_manager);
+  goto_programt preamble, body, postamble;
 
   goto_programt::targett c=body.add_instruction();
   c->make_skip();

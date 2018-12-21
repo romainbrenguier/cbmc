@@ -111,7 +111,7 @@ void dott::write_dot_subgraph(
           tmp.str("Goto");
         else
         {
-          std::string t = from_expr(ns, it->function, it->guard.as_expr());
+          std::string t = from_expr(ns, it->function, it->guard);
           while(t[ t.size()-1 ]=='\n')
             t = t.substr(0, t.size()-1);
           tmp << escape(t) << "?";
@@ -119,14 +119,14 @@ void dott::write_dot_subgraph(
       }
       else if(it->is_assume())
       {
-        std::string t = from_expr(ns, it->function, it->guard.as_expr());
+        std::string t = from_expr(ns, it->function, it->guard);
         while(t[ t.size()-1 ]=='\n')
           t = t.substr(0, t.size()-1);
         tmp << "Assume\\n(" << escape(t) << ")";
       }
       else if(it->is_assert())
       {
-        std::string t = from_expr(ns, it->function, it->guard.as_expr());
+        std::string t = from_expr(ns, it->function, it->guard);
         while(t[ t.size()-1 ]=='\n')
           t = t.substr(0, t.size()-1);
         tmp << "Assert\\n(" << escape(t) << ")";

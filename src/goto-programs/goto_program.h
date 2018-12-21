@@ -24,7 +24,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/std_code.h>
 #include <util/std_expr.h>
 #include <util/symbol_table.h>
-#include <util/guard.h>
 
 enum class validation_modet;
 
@@ -84,15 +83,13 @@ public:
   //  under "Defaulted and Deleted Functions")
 
   goto_programt(goto_programt &&other):
-    instructions(std::move(other.instructions)),
-    guard_manager(guard_manager)
+    instructions(std::move(other.instructions))
   {
   }
 
   goto_programt &operator=(goto_programt &&other)
   {
     instructions=std::move(other.instructions);
-    guard_manager = other.guard_manager;
     return *this;
   }
 
@@ -193,7 +190,7 @@ public:
     goto_program_instruction_typet type;
 
     /// Guard for gotos, assume, assert
-    guardt guard;
+    exprt guard;
 
     // The below will eventually become a single target only.
     /// The target for gotos and for start_thread nodes
@@ -242,7 +239,7 @@ public:
     {
       type=_type;
       targets.clear();
-      guard.set_to_true();
+      guard=true_exprt();
       code.make_nil();
     }
 
@@ -252,8 +249,8 @@ public:
     { clear(LOCATION); source_location=l; }
     void make_throw() { clear(THROW); }
     void make_catch() { clear(CATCH); }
-    void make_assertion(const exprt &g) { clear(ASSERT); guard.from_expr(g); }
-    void make_assumption(const exprt &g) { clear(ASSUME); guard.from_expr(g); }
+    void make_assertion(const exprt &g) { clear(ASSERT); guard=g; }
+    void make_assumption(const exprt &g) { clear(ASSUME); guard=g; }
     void make_assignment() { clear(ASSIGN); }
     void make_other(const codet &_code) { clear(OTHER); code=_code; }
     void make_decl() { clear(DECL); }
@@ -277,7 +274,7 @@ public:
     void make_goto(targett _target, const exprt &g)
     {
       make_goto(_target);
-      guard.from_expr(g);
+      guard=g;
     }
 
     void complete_goto(targett _target)
@@ -328,31 +325,19 @@ public:
       return type == INCOMPLETE_GOTO;
     }
 
-    instructiont(guard_managert &guard_manager):
-      instructiont(NO_INSTRUCTION_TYPE, guard_manager) // NOLINT(runtime/explicit)
+    instructiont():
+      instructiont(NO_INSTRUCTION_TYPE) // NOLINT(runtime/explicit)
     {
     }
 
-    explicit instructiont(
-      goto_program_instruction_typet _type, guard_managert &guard_manager):
+    explicit instructiont(goto_program_instruction_typet _type):
       source_location(static_cast<const source_locationt &>(get_nil_irep())),
       type(_type),
-      guard(guard_manager),
+      guard(true_exprt()),
       location_number(0),
       loop_number(0),
       target_number(nil_target)
     {
-    }
-
-    instructiont &operator=(const instructiont &other)
-    {
-      code = other.code;
-      source_location = other.source_location;
-      type = other.type;
-      guard = other.guard;
-      targets = other.targets;
-      function = other.function;
-      return *this;
     }
 
     /// Swap two instructions
@@ -434,9 +419,6 @@ public:
   /// The list of instructions in the goto program
   instructionst instructions;
 
-/// Manager for guards used in instructions
-  guard_managert &guard_manager;
-
   /// Convert a const_targett to a targett - use with care and avoid
   /// whenever possible
   targett const_cast_target(const_targett t)
@@ -496,7 +478,7 @@ public:
   {
     PRECONDITION(target!=instructions.end());
     const auto next=std::next(target);
-    instructions.insert(next, instructiont(guard_manager))->swap(*target);
+    instructions.insert(next, instructiont())->swap(*target);
   }
 
   /// Insertion that preserves jumps to "target".
@@ -527,7 +509,7 @@ public:
   /// \return newly inserted location
   targett insert_before(const_targett target)
   {
-    return instructions.insert(target, instructiont(guard_manager));
+    return instructions.insert(target, instructiont());
   }
 
   /// Insertion after the instruction pointed-to by the given instruction
@@ -535,7 +517,7 @@ public:
   /// \return newly inserted location
   targett insert_after(const_targett target)
   {
-    return instructions.insert(std::next(target), instructiont(guard_manager));
+    return instructions.insert(std::next(target), instructiont());
   }
 
   /// Appends the given program `p` to `*this`. `p` is destroyed.
@@ -558,7 +540,7 @@ public:
   /// \return The newly added instruction.
   targett add_instruction()
   {
-    instructions.push_back(instructiont(guard_manager));
+    instructions.push_back(instructiont());
     return --instructions.end();
   }
 
@@ -566,7 +548,7 @@ public:
   /// \return The newly added instruction.
   targett add_instruction(goto_program_instruction_typet type)
   {
-    instructions.push_back(instructiont(type, guard_manager));
+    instructions.push_back(instructiont(type));
     return --instructions.end();
   }
 
@@ -647,8 +629,7 @@ public:
   }
 
   /// Constructor
-  goto_programt(guard_managert &guard_manager)
-    :guard_manager(guard_manager)
+  goto_programt()
   {
   }
 

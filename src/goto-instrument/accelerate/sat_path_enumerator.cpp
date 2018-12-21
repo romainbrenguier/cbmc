@@ -79,7 +79,7 @@ bool sat_path_enumeratort::next(patht &path, guard_managert &guard_manager)
     program.assume(new_path);
   }
 
-  program.add_instruction(ASSERT)->guard.from_expr(false_exprt());
+  program.add_instruction(ASSERT)->guard=false_exprt();
 
   try
   {
@@ -185,7 +185,7 @@ void sat_path_enumeratort::build_path(
       // If this was a conditional branch (it probably was), figure out
       // if we hit the "taken" or "not taken" branch & accumulate the
       // appropriate guard.
-      cond=(!t->guard).as_expr();
+      cond=not_exprt(t->guard);
 
       for(goto_programt::targetst::iterator it=t->targets.begin();
           it!=t->targets.end();
@@ -193,7 +193,7 @@ void sat_path_enumeratort::build_path(
       {
         if(next==*it)
         {
-          cond=t->guard.as_expr();
+          cond=t->guard;
           break;
         }
       }
@@ -229,7 +229,7 @@ void sat_path_enumeratort::build_fixed(guard_managert &guard_manager)
   // to a location other than the loop header (i.e. a nested loop) is not
   // one we're interested in, and we'll redirect it to this assume(false).
   goto_programt::targett kill=fixed.add_instruction(ASSUME);
-  kill->guard.from_expr(false_exprt());
+  kill->guard=false_exprt();
 
   // Make a sentinel instruction to mark the end of the loop body.
   // We'll use this as the new target for any back-jumps to the loop

@@ -343,9 +343,7 @@ class reaching_definitions_analysist:
 {
 public:
   // constructor
-  explicit reaching_definitions_analysist(
-    const namespacet &_ns,
-    guard_managert &guard_manager);
+  explicit reaching_definitions_analysist(const namespacet &_ns);
 
   virtual ~reaching_definitions_analysist();
 

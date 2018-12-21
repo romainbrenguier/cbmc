@@ -36,10 +36,10 @@ Author:
 bool read_goto_binary(
   const std::string &filename,
   goto_modelt &dest,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
 {
-  return read_goto_binary(filename, dest.symbol_table, dest.goto_functions, guard_manager, message_handler);
+  return read_goto_binary(
+    filename, dest.symbol_table, dest.goto_functions, message_handler);
 }
 
 /// \brief Read a goto binary from a file, but do not update \ref config
@@ -47,14 +47,12 @@ bool read_goto_binary(
 /// \param message_handler for diagnostics
 /// \return goto model on success, {} on failure
 optionalt<goto_modelt>
-read_goto_binary(
-  const std::string &filename,
-  guard_managert &guard_manager,
-  message_handlert &message_handler)
+read_goto_binary(const std::string &filename, message_handlert &message_handler)
 {
   goto_modelt dest;
 
-  if(read_goto_binary(filename, dest.symbol_table, dest.goto_functions, guard_manager, message_handler))
+  if(read_goto_binary(
+       filename, dest.symbol_table, dest.goto_functions, message_handler))
   {
     return {};
   }
@@ -72,7 +70,6 @@ bool read_goto_binary(
   const std::string &filename,
   symbol_tablet &symbol_table,
   goto_functionst &goto_functions,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
 {
   #ifdef _MSC_VER
@@ -99,12 +96,7 @@ bool read_goto_binary(
   if(hdr[0]==0x7f && hdr[1]=='G' && hdr[2]=='B' && hdr[3]=='F')
   {
     return read_bin_goto_object(
-      in,
-      filename,
-      symbol_table,
-      goto_functions,
-      guard_manager,
-      message_handler);
+      in, filename, symbol_table, goto_functions, message_handler);
   }
   else if(hdr[0]==0x7f && hdr[1]=='E' && hdr[2]=='L' && hdr[3]=='F')
   {
@@ -119,12 +111,7 @@ bool read_goto_binary(
         {
           in.seekg(elf_reader.section_offset(i));
           return read_bin_goto_object(
-            in,
-            filename,
-            symbol_table,
-            goto_functions,
-            guard_manager,
-            message_handler);
+            in, filename, symbol_table, goto_functions, message_handler);
         }
 
       // section not found
@@ -159,12 +146,7 @@ bool read_goto_binary(
         message.error() << "failed to read temp binary" << messaget::eom;
 
       const bool read_err = read_bin_goto_object(
-        temp_in,
-        filename,
-        symbol_table,
-        goto_functions,
-        guard_manager,
-        message_handler);
+        temp_in, filename, symbol_table, goto_functions, message_handler);
       temp_in.close();
 
       return read_err;
@@ -252,7 +234,6 @@ bool is_goto_binary(const std::string &filename)
 bool read_object_and_link(
   const std::string &file_name,
   goto_modelt &dest,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
 {
   messaget(message_handler).statistics() << "Reading: "
@@ -261,7 +242,10 @@ bool read_object_and_link(
   // we read into a temporary model
   goto_modelt temp_model;
 
-  if(read_goto_binary(file_name, temp_model, guard_manager, message_handler))
+  if(read_goto_binary(
+      file_name,
+      temp_model,
+      message_handler))
     return true;
 
   try
@@ -289,7 +273,6 @@ bool read_object_and_link(
   const std::string &file_name,
   symbol_tablet &dest_symbol_table,
   goto_functionst &dest_functions,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
 {
   goto_modelt goto_model;
@@ -297,10 +280,9 @@ bool read_object_and_link(
   goto_model.symbol_table.swap(dest_symbol_table);
   goto_model.goto_functions.swap(dest_functions);
 
-  bool result= read_object_and_link(
+  bool result=read_object_and_link(
     file_name,
     goto_model,
-    guard_manager,
     message_handler);
 
   goto_model.symbol_table.swap(dest_symbol_table);

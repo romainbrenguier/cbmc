@@ -82,7 +82,7 @@ void show_properties(
 
         xml_property.new_element("description").data=id2string(description);
         xml_property.new_element("expression").data=
-          from_expr(ns, identifier, ins.guard.as_expr());
+          from_expr(ns, identifier, ins.guard);
 
         msg.result() << xml_property;
       }
@@ -97,7 +97,7 @@ void show_properties(
 
       msg.result() << "  " << ins.source_location << '\n'
                    << "  " << description << '\n'
-                   << "  " << from_expr(ns, identifier, ins.guard.as_expr()) << '\n';
+                   << "  " << from_expr(ns, identifier, ins.guard) << '\n';
 
       msg.result() << messaget::eom;
       break;
@@ -139,7 +139,7 @@ void convert_properties_json(
     json_property["sourceLocation"]=json(source_location);
     json_property["description"] = json_stringt(description);
     json_property["expression"]=
-      json_stringt(from_expr(ns, identifier, ins.guard.as_expr()));
+      json_stringt(from_expr(ns, identifier, ins.guard));
   }
 }
 

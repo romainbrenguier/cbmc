@@ -234,7 +234,7 @@ void goto_convertt::remove_post(
   const irep_idt &mode,
   bool result_is_used)
 {
-  goto_programt tmp1(dest.guard_manager), tmp2(dest.guard_manager);
+  goto_programt tmp1, tmp2;
 
   // we have ...(op++)...
 
@@ -386,7 +386,7 @@ void goto_convertt::remove_function_call(
   }
 
   {
-    goto_programt tmp_program2(dest.guard_manager);
+    goto_programt tmp_program2;
     code_function_callt call(
       new_symbol.symbol_expr(), expr.op0(), expr.op1().operands());
     call.add_source_location()=new_symbol.location;
@@ -592,7 +592,7 @@ void goto_convertt::remove_statement_expression(
   }
 
   {
-    goto_programt tmp(dest.guard_manager);
+    goto_programt tmp;
     convert(code, tmp, mode);
     dest.destructive_append(tmp);
   }

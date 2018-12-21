@@ -82,12 +82,7 @@ SCENARIO("graph", "[core][util][graph]")
     goto_model.symbol_table.add(create_void_function_symbol("G", code_skipt()));
 
     stream_message_handlert msg(std::cout);
-    goto_convert(
-      goto_model,
-      msg,
-      <#initializer#>,
-      <#initializer#>,
-      <#initializer#>);
+    goto_convert(goto_model, msg);
 
     call_grapht call_graph_from_goto_functions(goto_model);
 

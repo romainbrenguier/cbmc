@@ -326,7 +326,7 @@ ai_baset *goto_analyzer_parse_optionst::build_analyzer(
     }
     else if(options.get_bool_option("dependence-graph"))
     {
-      domain= new dependence_grapht(ns, <#initializer#>);
+      domain=new dependence_grapht(ns);
     }
     else if(options.get_bool_option("intervals"))
     {

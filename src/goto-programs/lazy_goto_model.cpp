@@ -25,7 +25,6 @@ lazy_goto_modelt::lazy_goto_modelt(
   post_process_functionst post_process_functions,
   can_generate_function_bodyt driver_program_can_generate_function_body,
   generate_function_bodyt driver_program_generate_function_body,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
   : goto_model(new goto_modelt()),
     symbol_table(goto_model->symbol_table),
@@ -54,7 +53,6 @@ lazy_goto_modelt::lazy_goto_modelt(
       driver_program_can_generate_function_body),
     driver_program_generate_function_body(
       driver_program_generate_function_body),
-    guard_manager(guard_manager),
     message_handler(message_handler)
 {
   language_files.set_message_handler(message_handler);
@@ -85,7 +83,6 @@ lazy_goto_modelt::lazy_goto_modelt(lazy_goto_modelt &&other)
     language_files(std::move(other.language_files)),
     post_process_function(other.post_process_function),
     post_process_functions(other.post_process_functions),
-    guard_manager(other.guard_manager),
     message_handler(other.message_handler)
 {
 }
@@ -188,11 +185,7 @@ void lazy_goto_modelt::initialize(
   {
     msg.status() << "Reading GOTO program from file" << messaget::eom;
 
-    if(read_object_and_link(
-      file,
-      *goto_model,
-      guard_manager,
-      message_handler))
+    if(read_object_and_link(file, *goto_model, message_handler))
     {
       source_locationt source_location;
       source_location.set_file(file);
@@ -249,7 +242,7 @@ void lazy_goto_modelt::load_all_functions() const
     }
 
     for(const irep_idt &symbol_name : fn_ids_to_convert)
-      goto_functions.ensure_function_loaded(symbol_name, guard_manager);
+      goto_functions.ensure_function_loaded(symbol_name);
 
     // Repeat while new symbols are being added in case any of those are
     // stubbed functions. Even stubs can create new stubs while being
@@ -276,7 +269,7 @@ bool lazy_goto_modelt::finalize()
     {
       // Re-convert any that already exist
       goto_functions.unload(updated_symbol_id);
-      goto_functions.ensure_function_loaded(updated_symbol_id, guard_manager);
+      goto_functions.ensure_function_loaded(updated_symbol_id);
     }
   }
 

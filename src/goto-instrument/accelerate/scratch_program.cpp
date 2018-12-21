@@ -91,7 +91,7 @@ goto_programt::targett scratch_programt::assign(
 goto_programt::targett scratch_programt::assume(const exprt &guard)
 {
   targett instruction=add_instruction(ASSUME);
-  instruction->guard.from_expr(guard);
+  instruction->guard=guard;
 
   return instruction;
 }
@@ -139,9 +139,7 @@ void scratch_programt::fix_types()
     }
     else if(it->is_assume() || it->is_assert())
     {
-      exprt guard_expr = it->guard.as_expr();
-      ::fix_types(guard_expr);
-      it->guard.from_expr(guard_expr);
+      ::fix_types(it->guard);
     }
   }
 }
@@ -160,7 +158,7 @@ void scratch_programt::append_path(patht &path)
     {
       if(it->guard.id()!=ID_nil)
       {
-        add_instruction(ASSUME)->guard.from_expr(it->guard);
+        add_instruction(ASSUME)->guard=it->guard;
       }
     }
     else if(it->loc->is_assert())
@@ -172,7 +170,7 @@ void scratch_programt::append_path(patht &path)
 
 void scratch_programt::append(goto_programt &program)
 {
-  goto_programt scratch(program.guard_manager);
+  goto_programt scratch;
 
   scratch.copy_from(program);
   destructive_append(scratch);

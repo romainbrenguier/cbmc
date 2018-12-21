@@ -120,7 +120,7 @@ void instrument_preconditions(
         for(const auto &p : preconditions)
         {
           goto_program.insert_before_swap(it);
-          exprt instance=p->guard.as_expr();
+          exprt instance=p->guard;
           r(instance);
           it->make_assertion(instance);
           it->function=function;

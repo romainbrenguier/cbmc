@@ -246,12 +246,7 @@ SCENARIO(
 
   goto_model.symbol_table.add(start);
 
-  goto_convert(
-    goto_model,
-    null_message_handler,
-    <#initializer#>,
-    <#initializer#>,
-    <#initializer#>);
+  goto_convert(goto_model, null_message_handler);
 
   WHEN("The target program is analysed")
   {

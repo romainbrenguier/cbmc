@@ -16,7 +16,6 @@ Date: May 2007
 
 #include <iosfwd>
 #include <string>
-#include <util/guard.h>
 
 class symbol_tablet;
 class goto_functionst;
@@ -27,7 +26,6 @@ bool read_bin_goto_object(
   const std::string &filename,
   symbol_tablet &symbol_table,
   goto_functionst &goto_functions,
-  guard_managert &guard_manager,
   message_handlert &message_handler);
 
 #endif // CPROVER_GOTO_PROGRAMS_READ_BIN_GOTO_OBJECT_H

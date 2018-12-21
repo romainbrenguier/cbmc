@@ -97,8 +97,7 @@ void function_enter(
 
 void function_exit(
   goto_modelt &goto_model,
-  const irep_idt &id,
-  guard_managert &guard_manager)
+  const irep_idt &id)
 {
   Forall_goto_functions(f_it, goto_model.goto_functions)
   {
@@ -123,7 +122,7 @@ void function_exit(
     {
       if(i_it->is_return())
       {
-        goto_programt::instructiont call(guard_manager);
+        goto_programt::instructiont call;
         call.function=f_it->first;
         call.make_function_call(
           function_to_call(goto_model.symbol_table, id, f_it->first));
@@ -152,7 +151,7 @@ void function_exit(
 
     if(!has_return)
     {
-      goto_programt::instructiont call(guard_manager);
+      goto_programt::instructiont call;
       call.make_function_call(
         function_to_call(goto_model.symbol_table, id, f_it->first));
       call.function=f_it->first;

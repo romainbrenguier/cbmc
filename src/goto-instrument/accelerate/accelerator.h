@@ -32,8 +32,6 @@ class path_acceleratort
                std::set<exprt> &changed,
                std::set<exprt> &dirty) :
     path(_path),
-    pure_accelerator(pure.guard_manager),
-    overflow_path(pure.guard_manager),
     changed_vars(changed),
     dirty_vars(dirty)
   {
@@ -41,16 +39,10 @@ class path_acceleratort
     overflow_path.copy_from(overflow);
   }
 
-  path_acceleratort(guard_managert &guard_manager)
-    : pure_accelerator(guard_manager),
-      overflow_path(guard_manager)
-  {
-  }
+  path_acceleratort() { }
 
   path_acceleratort(const path_acceleratort &that) :
     path(that.path),
-    pure_accelerator(that.pure_accelerator.guard_manager),
-    overflow_path(that.overflow_path.guard_manager),
     changed_vars(that.changed_vars),
     dirty_vars(that.dirty_vars)
   {

@@ -182,7 +182,7 @@ goto_programt::targett remove_virtual_functionst::remove_virtual_function(
   const auto &vcall_source_loc=target->source_location;
 
   // the final target is a skip
-  goto_programt final_skip(goto_program.guard_manager);
+  goto_programt final_skip;
 
   goto_programt::targett t_final=final_skip.add_instruction();
   t_final->source_location=vcall_source_loc;
@@ -191,8 +191,8 @@ goto_programt::targett remove_virtual_functionst::remove_virtual_function(
 
   // build the calls and gotos
 
-  goto_programt new_code_calls(goto_program.guard_manager);
-  goto_programt new_code_gotos(goto_program.guard_manager);
+  goto_programt new_code_calls;
+  goto_programt new_code_gotos;
 
   exprt this_expr=code.arguments()[0];
   const auto &last_function_symbol=functions.back().symbol_expr;
@@ -213,7 +213,7 @@ goto_programt::targett remove_virtual_functionst::remove_virtual_function(
   if(fallback_action==virtual_dispatch_fallback_actiont::ASSUME_FALSE)
   {
     auto newinst=new_code_calls.add_instruction(ASSUME);
-    newinst->guard.from_expr(false_exprt());
+    newinst->guard=false_exprt();
     newinst->source_location=vcall_source_loc;
   }
 
@@ -278,7 +278,8 @@ goto_programt::targett remove_virtual_functionst::remove_virtual_function(
           !new_code_gotos.empty(),
           "a dispatch table entry has been processed already, "
           "which should have created a GOTO");
-        new_code_gotos.instructions.back().guard |= class_id_test;
+        new_code_gotos.instructions.back().guard =
+          or_exprt(new_code_gotos.instructions.back().guard, class_id_test);
       }
       else
       {
@@ -289,7 +290,7 @@ goto_programt::targett remove_virtual_functionst::remove_virtual_function(
     }
   }
 
-  goto_programt new_code(goto_program.guard_manager);
+  goto_programt new_code;
 
   // patch them all together
   new_code.destructive_append(new_code_gotos);

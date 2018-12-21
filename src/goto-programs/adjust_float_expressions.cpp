@@ -193,9 +193,7 @@ void adjust_float_expressions(
   Forall_goto_program_instructions(it, goto_function.body)
   {
     adjust_float_expressions(it->code, ns);
-    exprt tmp = it->guard.as_expr();
-    adjust_float_expressions(tmp, ns);
-    it->guard.from_expr(tmp);
+    adjust_float_expressions(it->guard, ns);
   }
 }
 

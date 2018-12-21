@@ -374,15 +374,15 @@ void remove_function_pointerst::remove_function_pointer(
   const exprt &pointer = to_dereference_expr(function).pointer();
 
   // the final target is a skip
-  goto_programt final_skip(goto_program.guard_manager);
+  goto_programt final_skip;
 
   goto_programt::targett t_final=final_skip.add_instruction();
   t_final->make_skip();
 
   // build the calls and gotos
 
-  goto_programt new_code_calls(goto_program.guard_manager);
-  goto_programt new_code_gotos(goto_program.guard_manager);
+  goto_programt new_code_calls;
+  goto_programt new_code_gotos;
 
   for(const auto &fun : functions)
   {
@@ -418,7 +418,7 @@ void remove_function_pointerst::remove_function_pointer(
     t->source_location.set_comment("invalid function pointer");
   }
 
-  goto_programt new_code(goto_program.guard_manager);
+  goto_programt new_code;
 
   // patch them all together
   new_code.destructive_append(new_code_gotos);

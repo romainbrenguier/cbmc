@@ -30,10 +30,8 @@ public:
     const bool use_all_headers,
     const bool include_harness,
     const namespacet &_ns,
-    language_factoryt factory,
-    guard_managert &guard_manager):
+    language_factoryt factory):
     goto_functions(_goto_functions),
-    guard_manager(guard_manager),
     copied_symbol_table(_ns.get_symbol_table()),
     ns(copied_symbol_table),
     language(factory()),
@@ -49,7 +47,6 @@ public:
 
 protected:
   const goto_functionst &goto_functions;
-  guard_managert &guard_manager;
   symbol_tablet copied_symbol_table;
   const namespacet ns;
   std::unique_ptr<languaget> language;
@@ -136,8 +133,7 @@ protected:
   void convert_global_variable(
       const symbolt &symbol,
       std::ostream &os,
-      local_static_declst &local_static_decls,
-      guard_managert &guard_manager);
+      local_static_declst &local_static_decls);
 
   void convert_function_declaration(
       const symbolt &symbol,
@@ -150,8 +146,7 @@ protected:
     code_blockt &b,
     const std::list<irep_idt> &local_static,
     local_static_declst &local_static_decls,
-    std::list<irep_idt> &type_decls,
-    guard_managert &guard_manager);
+    std::list<irep_idt> &type_decls);
 
   void insert_local_type_decls(
     code_blockt &b,
@@ -162,8 +157,7 @@ protected:
   void cleanup_decl(
     code_declt &decl,
     std::list<irep_idt> &local_static,
-    std::list<irep_idt> &local_type_decls,
-    guard_managert &guard_manager);
+    std::list<irep_idt> &local_type_decls);
   void cleanup_harness(code_blockt &b);
 };
 

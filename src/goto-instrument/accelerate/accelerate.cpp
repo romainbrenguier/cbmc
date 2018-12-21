@@ -125,7 +125,7 @@ int acceleratet::accelerate_loop(
     acceleration(symbol_table, goto_functions, program, loop, loop_header);
 #endif
 
-  path_acceleratort accelerator(guard_manager);
+  path_acceleratort accelerator;
 
   while(acceleration.accelerate(accelerator, guard_manager) &&
         (accelerate_limit < 0 ||
@@ -156,7 +156,7 @@ int acceleratet::accelerate_loop(
 #endif
   }
 
-  goto_programt::instructiont skip(SKIP, guard_manager);
+  goto_programt::instructiont skip(SKIP);
   program.insert_before_swap(loop_header, skip);
 
   goto_programt::targett new_inst=loop_header;
@@ -266,14 +266,14 @@ void acceleratet::make_overflow_loc(
   loop.insert(t);
   overflow_locs[loop_header].push_back(t);
 
-  goto_programt::instructiont s(SKIP, program.guard_manager);
+  goto_programt::instructiont s(SKIP);
   overflow_loc=program.insert_after(loop_end);
   *overflow_loc=s;
   overflow_loc->swap(*loop_end);
   loop.insert(overflow_loc);
 
-  goto_programt::instructiont g(GOTO, program.guard_manager);
-  g.guard.from_expr(not_exprt(overflow_var));
+  goto_programt::instructiont g(GOTO);
+  g.guard=not_exprt(overflow_var);
   g.targets.push_back(overflow_loc);
   goto_programt::targett t2=program.insert_after(loop_end);
   *t2=g;
@@ -365,7 +365,7 @@ void acceleratet::add_dirty_checks()
       it!=dirty_vars_map.end();
       ++it)
   {
-    goto_programt::instructiont assign(ASSIGN, program.guard_manager);
+    goto_programt::instructiont assign(ASSIGN);
     assign.code=code_assignt(it->second, false_exprt());
     program.insert_before_swap(program.instructions.begin(), assign);
   }
@@ -389,7 +389,7 @@ void acceleratet::add_dirty_checks()
 
       if(dirty_var!=dirty_vars_map.end())
       {
-        goto_programt::instructiont clear_flag(ASSIGN, program.guard_manager);
+        goto_programt::instructiont clear_flag(ASSIGN);
         clear_flag.code=code_assignt(dirty_var->second, false_exprt());
         program.insert_before_swap(it, clear_flag);
       }
@@ -399,7 +399,7 @@ void acceleratet::add_dirty_checks()
     // the right hand side of an assignment.  Assume each is not dirty.
     find_symbols_sett read;
 
-    find_symbols(it->guard.as_expr(), read);
+    find_symbols(it->guard, read);
 
     if(it->is_assign())
     {
@@ -418,8 +418,8 @@ void acceleratet::add_dirty_checks()
         continue;
       }
 
-      goto_programt::instructiont not_dirty(ASSUME, program.guard_manager);
-      not_dirty.guard.from_expr(not_exprt(dirty_var->second));
+      goto_programt::instructiont not_dirty(ASSUME);
+      not_dirty.guard=not_exprt(dirty_var->second);
       program.insert_before_swap(it, not_dirty);
     }
   }

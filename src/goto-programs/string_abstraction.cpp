@@ -67,39 +67,38 @@ void string_abstraction(
   message_handlert &message_handler,
   goto_programt &dest)
 {
-  string_abstractiont string_abstraction(symbol_table, dest.guard_manager, message_handler);
+  string_abstractiont string_abstraction(symbol_table, message_handler);
   string_abstraction(dest);
 }
 
 void string_abstraction(
   symbol_tablet &symbol_table,
-  guard_managert &guard_manager,
   message_handlert &message_handler,
   goto_functionst &dest)
 {
-  string_abstractiont string_abstraction(symbol_table, guard_manager, message_handler);
+  string_abstractiont string_abstraction(symbol_table, message_handler);
   string_abstraction(dest);
 }
 
 void string_abstraction(
   goto_modelt &goto_model,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
 {
-  string_abstraction(goto_model.symbol_table, guard_manager, message_handler, goto_model.goto_functions);
+  string_abstraction(
+    goto_model.symbol_table,
+    message_handler,
+    goto_model.goto_functions);
 }
 
 string_abstractiont::string_abstractiont(
   symbol_tablet &_symbol_table,
-  guard_managert &guard_manager,
   message_handlert &_message_handler):
   messaget(_message_handler),
   arg_suffix("#strarg"),
   sym_suffix("#str$fcn"),
   symbol_table(_symbol_table),
   ns(_symbol_table),
-  temporary_counter(0),
-  initialization(guard_manager)
+  temporary_counter(0)
 {
   struct_typet s;
 
@@ -275,7 +274,7 @@ void string_abstractiont::declare_define_locals(goto_programt &dest)
       has_decl=true;
     }
 
-    goto_programt tmp(dest.guard_manager);
+    goto_programt tmp;
     make_decl_and_def(tmp, ref_instr, l.second, l.first);
 
     if(has_decl)
@@ -469,12 +468,8 @@ goto_programt::targett string_abstractiont::abstract(
   case GOTO:
   case ASSERT:
   case ASSUME:
-    if(it->guard.any_expr([&](const exprt &e) { return has_string_macros(e);}))
-    {
-      exprt guard_expr = it->guard.as_expr();
-      replace_string_macros(guard_expr, false, it->source_location);
-      it->guard.from_expr(guard_expr);
-    }
+    if(has_string_macros(it->guard))
+      replace_string_macros(it->guard, false, it->source_location);
     break;
 
   case FUNCTION_CALL:
@@ -1096,7 +1091,7 @@ goto_programt::targett string_abstractiont::abstract_pointer_assign(
 
   if(lhs.type().id()==ID_pointer && !unknown)
   {
-    goto_programt::instructiont assignment(dest.guard_manager);
+    goto_programt::instructiont assignment;
     assignment.make_assignment();
     assignment.source_location=target->source_location;
     assignment.function=target->function;
@@ -1185,7 +1180,7 @@ goto_programt::targett string_abstractiont::char_assign(
   const exprt &lhs,
   const exprt &rhs)
 {
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
 
   const exprt i1=member(new_lhs, whatt::IS_ZERO);
   INVARIANT(
@@ -1270,7 +1265,7 @@ goto_programt::targett string_abstractiont::value_assignments_if(
   goto_programt::targett target,
   const exprt &lhs, const if_exprt &rhs)
 {
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
 
   goto_programt::targett goto_else=tmp.add_instruction(GOTO);
   goto_programt::targett goto_out=tmp.add_instruction(GOTO);
@@ -1308,7 +1303,7 @@ goto_programt::targett string_abstractiont::value_assignments_string_struct(
     const exprt &lhs, const exprt &rhs)
 {
   // copy all the values
-  goto_programt tmp(dest.guard_manager);
+  goto_programt tmp;
 
   {
     goto_programt::targett assignment=tmp.add_instruction(ASSIGN);

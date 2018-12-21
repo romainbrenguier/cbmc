@@ -23,18 +23,14 @@ Author: Daniel Kroening, kroening@kroening.com
 ///   given set of symbol names that have no body.
 void link_to_library(
   goto_modelt &goto_model,
-  guard_managert &guard_manager,
   message_handlert &message_handler,
   const std::function<
-    void(
-      const std::set<irep_idt> &,
-      symbol_tablet &,
-      message_handlert &)> &library)
+    void(const std::set<irep_idt> &, symbol_tablet &, message_handlert &)>
+    &library)
 {
   link_to_library(
     goto_model.symbol_table,
     goto_model.goto_functions,
-    guard_manager,
     message_handler,
     library);
 }
@@ -51,13 +47,10 @@ void link_to_library(
 void link_to_library(
   symbol_tablet &symbol_table,
   goto_functionst &goto_functions,
-  guard_managert &guard_manager,
   message_handlert &message_handler,
   const std::function<
-    void(
-      const std::set<irep_idt> &,
-      symbol_tablet &,
-      message_handlert &)> &library)
+    void(const std::set<irep_idt> &, symbol_tablet &, message_handlert &)>
+    &library)
 {
   // this needs a fixedpoint, as library functions
   // may depend on other library functions
@@ -101,12 +94,7 @@ void link_to_library(
     for(const auto &id : missing_functions)
     {
       if(symbol_table.symbols.find(id)!=symbol_table.symbols.end())
-        goto_convert(
-          id,
-          symbol_table,
-          goto_functions,
-          message_handler,
-          guard_manager);
+        goto_convert(id, symbol_table, goto_functions, message_handler);
 
       added_functions.insert(id);
     }

@@ -161,7 +161,7 @@ bool remove_instanceoft::lower_instanceof(
   expr = instanceof_result_sym.symbol_expr();
 
   // Insert the new test block before it:
-  goto_programt new_check_program(goto_program.guard_manager);
+  goto_programt new_check_program;
   goto_convert(
     is_null_branch,
     symbol_table,
@@ -199,7 +199,7 @@ bool remove_instanceoft::lower_instanceof(
   goto_programt::targett target)
 {
   if(target->is_target() &&
-     (contains_instanceof(target->code) || target->guard.any_expr(contains_instanceof)))
+     (contains_instanceof(target->code) || contains_instanceof(target->guard)))
   {
     // If this is a branch target, add a skip beforehand so we can splice new
     // GOTO programs before the target instruction without inserting into the
@@ -210,10 +210,8 @@ bool remove_instanceoft::lower_instanceof(
     ++target;
   }
 
-  exprt guard_expr = target->guard.as_expr();
-  bool guard_result = lower_instanceof(guard_expr, goto_program, target);
-  target->guard.from_expr(guard_expr);
-  return lower_instanceof(target->code, goto_program, target) | guard_result;
+  return lower_instanceof(target->code, goto_program, target) |
+    lower_instanceof(target->guard, goto_program, target);
 }
 
 /// Replace every instanceof in the passed function body with an explicit

@@ -43,7 +43,7 @@ void cover_branch_instrumentert::instrument(
     std::string true_comment = "block " + b + " branch true";
     std::string false_comment = "block " + b + " branch false";
 
-    exprt guard = i_it->guard.as_expr();
+    exprt guard = i_it->guard;
     const irep_idt function = i_it->function;
     source_locationt source_location = i_it->source_location;
 

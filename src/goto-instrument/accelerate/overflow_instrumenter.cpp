@@ -65,7 +65,7 @@ void overflow_instrumentert::add_overflow_checks(
     add_overflow_checks(t, assignment.rhs(), added);
   }
 
-  add_overflow_checks(t, t->guard.as_expr(), added);
+  add_overflow_checks(t, t->guard, added);
 
   checked.insert(t->location_number);
 }
@@ -287,7 +287,7 @@ void overflow_instrumentert::accumulate_overflow(
   const exprt &expr,
   goto_programt::targetst &added)
 {
-  goto_programt::instructiont a(ASSIGN, program.guard_manager);
+  goto_programt::instructiont a(ASSIGN);
   a.code=code_assignt(overflow_var, or_exprt(overflow_var, expr));
   goto_programt::targett assignment=program.insert_after(t);
   *assignment=a;

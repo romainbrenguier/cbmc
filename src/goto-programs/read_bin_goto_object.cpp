@@ -27,8 +27,7 @@ static bool read_bin_goto_object_v4(
   std::istream &in,
   symbol_tablet &symbol_table,
   goto_functionst &functions,
-  irep_serializationt &irepconverter,
-  guard_managert &guard_manager)
+  irep_serializationt &irepconverter)
 {
   std::size_t count = irepconverter.read_gb_word(in); // # of symbols
 
@@ -74,9 +73,7 @@ static bool read_bin_goto_object_v4(
       // makes sure there is an empty function
       // for every function symbol and fixes
       // the function types.
-      auto emplace_result =
-        functions.function_map.emplace(sym.name, goto_functiont(guard_manager));
-      emplace_result.first->second.type=to_code_type(sym.type);
+      functions.function_map[sym.name].type=to_code_type(sym.type);
     }
 
     symbol_table.add(sym);
@@ -87,9 +84,7 @@ static bool read_bin_goto_object_v4(
   for(std::size_t fct_index = 0; fct_index < count; ++fct_index)
   {
     irep_idt fname=irepconverter.read_gb_string(in);
-    auto emplace_result =
-      functions.function_map.emplace(fname, goto_functiont(guard_manager));
-    goto_functionst::goto_functiont &f = emplace_result.first->second;
+    goto_functionst::goto_functiont &f = functions.function_map[fname];
 
     typedef std::map<goto_programt::targett, std::list<unsigned> > target_mapt;
     target_mapt target_map;
@@ -109,9 +104,8 @@ static bool read_bin_goto_object_v4(
       irepconverter.reference_convert(in, instruction.source_location);
       instruction.type = (goto_program_instruction_typet)
                               irepconverter.read_gb_word(in);
-      exprt tmp_guard = nil_exprt();
-      irepconverter.reference_convert(in, tmp_guard);
-      instruction.guard.from_expr(tmp_guard);
+      instruction.guard.make_nil();
+      irepconverter.reference_convert(in, instruction.guard);
       irepconverter.read_string_ref(in); // former event
       instruction.target_number = irepconverter.read_gb_word(in);
       if(instruction.is_target() &&
@@ -178,7 +172,6 @@ bool read_bin_goto_object(
   const std::string &filename,
   symbol_tablet &symbol_table,
   goto_functionst &functions,
-  guard_managert &guard_manager,
   message_handlert &message_handler)
 {
   messaget message(message_handler);
@@ -239,11 +232,7 @@ bool read_bin_goto_object(
 
     case 4:
       return read_bin_goto_object_v4(
-        in,
-        symbol_table,
-        functions,
-        irepconverter,
-        guard_manager);
+        in, symbol_table, functions, irepconverter);
       break;
 
     default:
