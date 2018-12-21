@@ -438,22 +438,21 @@ void goto_symext::symex_assign_if(
   // we have (c?a:b)=e;
 
   guardt old_guard=guard;
-
   exprt renamed_guard=lhs.cond();
   state.rename(renamed_guard, ns, guard_manager);
-  do_simplify(renamed_guard);
+  guardt renamed(guard_manager);
+  renamed.from_expr(renamed_guard);
 
-  if(!renamed_guard.is_false())
+  if(!renamed.is_false())
   {
-    guard.add(renamed_guard);
+    guard.append(renamed);
     symex_assign_rec(
       state, lhs.true_case(), full_lhs, rhs, guard, assignment_type);
     guard = std::move(old_guard);
   }
-
-  if(!renamed_guard.is_true())
+  else if(!renamed.is_true())
   {
-    guard.add(not_exprt(renamed_guard));
+    guard.append(!renamed);
     symex_assign_rec(
       state, lhs.false_case(), full_lhs, rhs, guard, assignment_type);
     guard = std::move(old_guard);
