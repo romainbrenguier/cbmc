@@ -489,9 +489,12 @@ static void merge_names(
   }
   else
   {
-    rhs = if_exprt(diff_guard.as_expr(), goto_state_rhs, dest_state_rhs);
     if(do_simplify)
-      simplify(rhs, ns);
+    {
+      simplify(goto_state_rhs, ns);
+      simplify(dest_state_rhs, ns);
+    }
+    rhs = if_exprt(diff_guard.as_expr(), goto_state_rhs, dest_state_rhs);
   }
 
   ssa_exprt new_lhs = ssa;
