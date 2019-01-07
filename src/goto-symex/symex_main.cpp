@@ -100,17 +100,15 @@ void goto_symext::vcc(
 
 void goto_symext::symex_assume(statet &state, const exprt &cond)
 {
-  exprt simplified_cond=cond;
+  guardt cond_guard(guard_manager);
+  cond_guard.from_expr(cond);
 
-  do_simplify(simplified_cond);
-
-  if(simplified_cond.is_true())
+  if(cond_guard.is_true())
     return;
 
   if(state.threads.size()==1)
   {
-    exprt tmp=simplified_cond;
-    state.guard.guard_expr(tmp);
+    const exprt tmp = state.guard.implies(cond_guard).as_expr();
     target.assumption(state.guard.as_expr(), tmp, state.source);
   }
   // symex_target_equationt::convert_assertions would fail to
@@ -120,7 +118,7 @@ void goto_symext::symex_assume(statet &state, const exprt &cond)
   // x=0;                   assume(x==1);
   // assert(x!=42);         x=42;
   else
-    state.guard.add(simplified_cond);
+    state.guard.append(cond_guard);
 
   if(state.atomic_section_id!=0 && is_false(state.guard))
     symex_atomic_end(state);
