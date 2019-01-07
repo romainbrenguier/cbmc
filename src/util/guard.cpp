@@ -45,27 +45,21 @@ guardt::guardt(guard_managert &manager)
 }
 
 
-/// Assign dest to an expression equivalent to `bdd => dest`
+/// Assign dest to `bdd => dest` unless bdd or dest are trivial.
+/// Warning: Assigning dest to `!bdd || dest` breaks correctness of CBMC
 void guardt::guard_expr(exprt &dest) const
 {
   if(is_true())
+    return;
+  if(dest.is_false())
   {
-    // do nothing
+    dest = (!*this).as_expr();
+    return;
   }
-  else
-  {
-    if(dest.is_false())
-    {
-      dest = boolean_negate(as_expr());
-    }
-    else
-    {
-      implies_exprt tmp;
-      tmp.op0()=as_expr();
-      tmp.op1().swap(dest);
-      dest.swap(tmp);
-    }
-  }
+  implies_exprt tmp;
+  tmp.op0()=as_expr();
+  tmp.op1().swap(dest);
+  dest.swap(tmp);
 }
 
 guardt &guardt::append(const guardt &guard)
