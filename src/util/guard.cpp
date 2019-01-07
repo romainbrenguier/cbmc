@@ -53,7 +53,7 @@ void guardt::guard_expr(exprt &dest) const
     return;
   if(dest.is_false())
   {
-    dest = (!*this).as_expr();
+    dest = boolean_negate(as_expr());
     return;
   }
   implies_exprt tmp;
