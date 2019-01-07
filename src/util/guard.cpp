@@ -44,6 +44,8 @@ guardt::guardt(guard_managert &manager)
 {
 }
 
+
+/// Assign dest to an expression equivalent to `bdd => dest`
 void guardt::guard_expr(exprt &dest) const
 {
   if(is_true())
@@ -70,6 +72,13 @@ guardt &guardt::append(const guardt &guard)
 {
   bdd = bdd.And(guard.bdd);
   return *this;
+}
+
+guardt guardt::implies(const guardt &guard)
+{
+  auto implies_guard = guardt(manager);
+  implies_guard.bdd = guard.bdd.Or(!bdd);
+  return implies_guard;
 }
 
 guardt &guardt::set_to_true()

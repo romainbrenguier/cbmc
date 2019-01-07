@@ -55,6 +55,8 @@ public:
 
   guardt &append(const guardt &guard);
 
+  guardt implies(const guardt &);
+
   guardt &from_expr(const exprt &expr);
   guardt &set_to_true();
 
