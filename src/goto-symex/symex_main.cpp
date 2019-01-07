@@ -108,7 +108,10 @@ void goto_symext::symex_assume(statet &state, const exprt &cond)
 
   if(state.threads.size()==1)
   {
-    const exprt tmp = state.guard.implies(cond_guard).as_expr();
+    exprt tmp=cond_guard.as_expr();
+    // Using state.guard.implies(cond_guard) is not correct here for some hidden
+    // reasons
+    state.guard.guard_expr(tmp);
     target.assumption(state.guard.as_expr(), tmp, state.source);
   }
   // symex_target_equationt::convert_assertions would fail to
