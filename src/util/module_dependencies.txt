@@ -1,4 +1,6 @@
 big-int
+cplusplus # cudd
+cudd
 mach # system
 malloc # system
 nonstd
