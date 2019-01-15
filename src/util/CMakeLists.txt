@@ -1,5 +1,6 @@
 file(GLOB_RECURSE sources "*.cpp" "*.h")
 
+
 # based on https://cmake.org/pipermail/cmake/2010-July/038015.html
 find_package(Git)
 if(GIT_FOUND)
@@ -47,4 +48,4 @@ add_dependencies(util generate_version_cpp)
 
 generic_includes(util)
 
-target_link_libraries(util big-int langapi)
+target_link_libraries(util big-int langapi cudd-cplusplus cudd)
