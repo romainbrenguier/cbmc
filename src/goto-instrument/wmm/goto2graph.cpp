@@ -225,7 +225,7 @@ void instrumentert::cfg_visitort::visit_cfg_function(
         ,
         local_may
 #endif
-        ); // NOLINT(whitespace/parens)
+      ); // NOLINT(whitespace/parens)
     }
     else if(is_fence(instruction, instrumenter.ns))
     {
@@ -269,7 +269,7 @@ void instrumentert::cfg_visitort::visit_cfg_function(
         ,
         local_may
 #endif
-        ); // NOLINT(whitespace/parens)
+      ); // NOLINT(whitespace/parens)
     }
 #ifdef CONTEXT_INSENSITIVE
     else if(instruction.is_return())
@@ -487,7 +487,7 @@ void inline instrumentert::cfg_visitort::visit_cfg_body(
   ,
   local_may_aliast &local_may
 #endif
-  )
+)
 {
   /* for each target of the goto */
   for(const auto &target : i_it->targets)
@@ -670,7 +670,7 @@ void instrumentert::cfg_visitort::visit_cfg_goto(
   ,
   local_may_aliast &local_may
 #endif
-  )
+)
 {
   const goto_programt::instructiont &instruction=*i_it;
 
@@ -695,7 +695,7 @@ void instrumentert::cfg_visitort::visit_cfg_goto(
       ,
       local_may
 #endif
-      ); // NOLINT(whitespace/parens)
+    ); // NOLINT(whitespace/parens)
   }
 }
 

@@ -128,7 +128,7 @@ protected:
       ,
       local_may_aliast &local_may
 #endif
-      ); // deprecated  NOLINT(whitespace/parens)
+    ); // deprecated  NOLINT(whitespace/parens)
     void inline visit_cfg_backedge(goto_programt::const_targett targ,
       goto_programt::const_targett i_it);
     void inline visit_cfg_duplicate(
@@ -145,7 +145,7 @@ protected:
       ,
       local_may_aliast &local_may
 #endif
-      ); // NOLINT(whitespace/parens)
+    ); // NOLINT(whitespace/parens)
     void visit_cfg_fence(goto_programt::instructionst::iterator i_it);
     void visit_cfg_skip(goto_programt::instructionst::iterator i_it);
     void visit_cfg_lwfence(goto_programt::instructionst::iterator i_it);
@@ -170,7 +170,7 @@ protected:
       ,
       local_may_aliast &local_may
 #endif
-      ); // NOLINT(whitespace/parens)
+    ); // NOLINT(whitespace/parens)
     void visit_cfg_reference_function(irep_idt id_function);
 
  public:

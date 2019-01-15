@@ -137,9 +137,8 @@ bool polynomial_acceleratort::accelerate(
       continue;
     }
 
-    if(
-      fit_polynomial_sliced(
-        sliced_assigns, target, influence, poly, guard_manager))
+    if(fit_polynomial_sliced(
+         sliced_assigns, target, influence, poly, guard_manager))
     {
       std::map<exprt, polynomialt> this_poly;
       this_poly[target]=poly;

@@ -129,9 +129,8 @@ exprt value_set_dereferencet::dereference(
     const symbolt *failed_symbol;
     exprt failure_value;
 
-    if(
-      dereference_callback.has_failed_symbol(
-        pointer, failed_symbol, guard_manager))
+    if(dereference_callback.has_failed_symbol(
+         pointer, failed_symbol, guard_manager))
     {
       // yes!
       failure_value=failed_symbol->symbol_expr();
