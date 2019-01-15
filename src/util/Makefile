@@ -26,7 +26,7 @@ SRC = allocate_objects.cpp \
       fresh_symbol.cpp \
       get_base_name.cpp \
       get_module.cpp \
-      guard.cpp \
+      guard_expr.cpp \
       identifier.cpp \
       ieee_float.cpp \
       invariant.cpp \
