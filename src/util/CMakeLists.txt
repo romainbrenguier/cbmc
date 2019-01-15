@@ -1,6 +1,11 @@
 file(GLOB_RECURSE sources "*.cpp" "*.h")
 
 
+if(NOT DEFINED CMAKE_USE_CUDD)
+    list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/guard_bdd.cpp")
+    list(REMOVE_ITEM sources "${CMAKE_CURRENT_SOURCE_DIR}/guard_bdd.h")
+endif()
+
 # based on https://cmake.org/pipermail/cmake/2010-July/038015.html
 find_package(Git)
 if(GIT_FOUND)

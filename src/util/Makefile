@@ -106,6 +106,11 @@ SRC = allocate_objects.cpp \
       xml_irep.cpp \
       # Empty last line
 
+# Only compile if Cudd is present
+ifneq ("$(wildcard ../../cudd-3.0.0)","")
+	SRC += guard_bdd.cpp
+endif
+
 INCLUDES= -I ..
 
 include ../config.inc

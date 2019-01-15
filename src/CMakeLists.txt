@@ -87,8 +87,6 @@ if(DEFINED CMAKE_USE_CUDD)
             URL https://sourceforge.net/projects/cudd-mirror/files/cudd-3.0.0.tar.gz/download
             URL_MD5 4fdafe4924b81648b908881c81fe6c30
             PATCH_COMMAND patch -p1 -i ${CBMC_SOURCE_DIR}/../scripts/cudd-3.0.0-patch
-            CONFIGURE_COMMAND ./configure
-            BUILD_COMMAND make
             )
 
     if(EXISTS ${cudd_SOURCE_DIR}/Makefile)
@@ -114,7 +112,6 @@ if(DEFINED CMAKE_USE_CUDD)
     include_directories(${cudd_SOURCE_DIR})
     add_compile_options(-DHAS_CUDD)
     set(CUDD_INCLUDE ${cudd_SOURCE_DIR} CACHE STRING "Record Cudd directory for includes")
-
 endif()
 
 add_subdirectory(analyses)
