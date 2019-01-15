@@ -20,7 +20,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "dereference_callback.h"
 
 class symbol_tablet;
-class guardt;
 class optionst;
 class symbolt;
 

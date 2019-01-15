@@ -14,4 +14,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "guard_expr.h"
 
+using guard_managert = guard_expr_managert;
+using guardt = guard_exprt;
+
 #endif // CPROVER_UTIL_GUARD_H

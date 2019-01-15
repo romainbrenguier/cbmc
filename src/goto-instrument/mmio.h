@@ -14,9 +14,10 @@ Date: September 2011
 #ifndef CPROVER_GOTO_INSTRUMENT_MMIO_H
 #define CPROVER_GOTO_INSTRUMENT_MMIO_H
 
+#include <util/guard.h>
+
 class value_setst;
 class goto_modelt;
-class guard_managert;
 
 void mmio(value_setst &, goto_modelt &, guard_managert &guard_manager);
 

@@ -15,6 +15,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <string>
 
 #include "value_sets.h"
+#include <util/guard.h>
 
 class exprt;
 class symbolt;
@@ -36,7 +37,7 @@ public:
   virtual bool has_failed_symbol(
     const exprt &expr,
     const symbolt *&symbol,
-    class guard_managert &guard_manager) = 0;
+    guard_managert &guard_manager) = 0;
 };
 
 #endif // CPROVER_POINTER_ANALYSIS_DEREFERENCE_CALLBACK_H

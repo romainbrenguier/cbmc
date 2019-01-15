@@ -18,19 +18,19 @@ Author: Daniel Kroening, kroening@kroening.com
 
 /// This is unused by this implementation of guards, but can be used by other
 /// implementations of the same interface.
-struct guard_managert
+struct guard_expr_managert
 {
 };
 
-class guardt
+class guard_exprt
 {
 public:
-  explicit guardt(const exprt &e, guard_managert &manager)
+  explicit guard_exprt(const exprt &e, guard_expr_managert &manager)
     : manager(manager), expr(e)
   {
   }
 
-  guardt &operator=(const guardt &other)
+  guard_exprt &operator=(const guard_exprt &other)
   {
     expr = other.expr;
     manager = other.manager;
@@ -39,7 +39,7 @@ public:
 
   void add(const exprt &expr);
 
-  void append(const guardt &guard)
+  void append(const guard_exprt &guard)
   {
     add(guard.as_expr());
   }
@@ -61,12 +61,12 @@ public:
     return expr.is_false();
   }
 
-  friend guardt &operator-=(guardt &g1, const guardt &g2);
-  friend guardt &operator|=(guardt &g1, const guardt &g2);
+  friend guard_exprt &operator-=(guard_exprt &g1, const guard_exprt &g2);
+  friend guard_exprt &operator|=(guard_exprt &g1, const guard_exprt &g2);
 
-  guardt operator!() const;
+  guard_exprt operator!() const;
 
-  guard_managert &manager;
+  guard_expr_managert &manager;
 
 private:
   exprt expr;

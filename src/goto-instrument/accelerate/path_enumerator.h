@@ -15,6 +15,7 @@ Author: Matt Lewis
 #include <goto-programs/goto_program.h>
 
 #include <analyses/natural_loops.h>
+#include <util/guard.h>
 
 #include "path.h"
 
@@ -25,7 +26,7 @@ class path_enumeratort
   {
   }
 
-  virtual bool next(patht &path, class guard_managert &guard_manager) = 0;
+  virtual bool next(patht &path, guard_managert &guard_manager) = 0;
 };
 
 #endif // CPROVER_GOTO_INSTRUMENT_ACCELERATE_PATH_ENUMERATOR_H

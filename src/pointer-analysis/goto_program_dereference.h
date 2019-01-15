@@ -100,7 +100,7 @@ protected:
     exprt &expr,
     const bool checks_only,
     const value_set_dereferencet::modet mode,
-    class guard_managert &guard_manager);
+    guard_managert &guard_manager);
 
 #if 0
   const std::set<irep_idt> *valid_local_variables;

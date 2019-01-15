@@ -21,12 +21,12 @@ Date: 2012
 #include <util/message.h>
 
 #include <goto-programs/goto_model.h>
+#include <util/guard.h>
 
 #include "event_graph.h"
 #include "wmm.h"
 
 class goto_modelt;
-class guard_managert;
 class value_setst;
 class local_may_aliast;
 
