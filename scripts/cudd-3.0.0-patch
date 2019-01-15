@@ -1,0 +1,12 @@
+diff --git a/cplusplus/cuddObj.hh b/cplusplus/cuddObj.hh
+--- a/cplusplus/cuddObj.hh	2019-01-10 07:59:54.172070490 +0000
++++ b/cplusplus/cuddObj.hh	2019-01-10 07:56:57.240643832 +0000
+@@ -54,7 +54,7 @@
+ #include <cstdio>
+ #include <string>
+ #include <vector>
+-#include "cudd.h"
++#include "../cudd/cudd.h"
+ 
+ /*---------------------------------------------------------------------------*/
+ /* Type definitions                                                          */

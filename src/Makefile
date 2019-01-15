@@ -105,6 +105,17 @@ minisat2-download:
 	@(cd ../minisat-2.2.1; patch -p1 < ../scripts/minisat-2.2.1-patch)
 	@rm minisat2_2.2.1.orig.tar.gz
 
+cudd-download:
+	@echo "Downloading Cudd 3.0.0"
+	@$(DOWNLOADER) https://sourceforge.net/projects/cudd-mirror/files/cudd-3.0.0.tar.gz/download cudd-3.0.0.tar.gz
+	@$(TAR) xfz cudd-3.0.0.tar.gz
+	@rm -Rf ../cudd-3.0.0
+	@mv cudd-3.0.0 ../
+	@rm cudd-3.0.0.tar.gz
+	@(cd ../cudd-3.0.0; patch -p1 < ../scripts/cudd-3.0.0-patch)
+	@echo "Compiling Cudd 3.0.0"
+	@(cd ../cudd-3.0.0; ./configure; make)
+
 glucose-download:
 	@echo "Downloading glucose-syrup"
 	@$(DOWNLOADER) http://www.labri.fr/perso/lsimon/downloads/softwares/glucose-syrup.tgz
