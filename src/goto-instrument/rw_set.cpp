@@ -44,49 +44,55 @@ void rw_set_baset::output(std::ostream &out) const
   }
 }
 
-void _rw_set_loct::compute()
+void _rw_set_loct::compute(guard_managert &guard_manager)
 {
   if(target->is_assign())
   {
     assert(target->code.operands().size()==2);
-    assign(target->code.op0(), target->code.op1());
+    assign(target->code.op0(), target->code.op1(), guard_manager);
   }
   else if(target->is_goto() ||
           target->is_assume() ||
           target->is_assert())
   {
-    read(target->guard);
+    read(target->guard, guard_manager);
   }
   else if(target->is_function_call())
   {
     const code_function_callt &code_function_call=
       to_code_function_call(target->code);
 
-    read(code_function_call.function());
+    read(code_function_call.function(), guard_manager);
 
     // do operands
     for(code_function_callt::argumentst::const_iterator
         it=code_function_call.arguments().begin();
         it!=code_function_call.arguments().end();
         it++)
-      read(*it);
+      read(*it, guard_manager);
 
     if(code_function_call.lhs().is_not_nil())
-      write(code_function_call.lhs());
+      write(code_function_call.lhs(), guard_manager);
   }
 }
 
-void _rw_set_loct::assign(const exprt &lhs, const exprt &rhs)
+void _rw_set_loct::assign(
+  const exprt &lhs,
+  const exprt &rhs,
+  guard_managert &guard_manager)
 {
-  read(rhs);
-  read_write_rec(lhs, false, true, "", guardt(true_exprt()));
+  read(rhs, guard_manager);
+  read_write_rec(
+    lhs, false, true, "", guardt(true_exprt(), guard_manager), guard_manager);
 }
 
 void _rw_set_loct::read_write_rec(
   const exprt &expr,
-  bool r, bool w,
+  bool r,
+  bool w,
   const std::string &suffix,
-  const guardt &guard)
+  const guardt &guard,
+  guard_managert &guard_manager)
 {
   if(expr.id()==ID_symbol)
   {
@@ -118,20 +124,21 @@ void _rw_set_loct::read_write_rec(
   {
     assert(expr.operands().size()==1);
     const std::string &component_name=expr.get_string(ID_component_name);
-    read_write_rec(expr.op0(), r, w, "."+component_name+suffix, guard);
+    read_write_rec(
+      expr.op0(), r, w, "." + component_name + suffix, guard, guard_manager);
   }
   else if(expr.id()==ID_index)
   {
     // we don't distinguish the array elements for now
     assert(expr.operands().size()==2);
-    read_write_rec(expr.op0(), r, w, "[]"+suffix, guard);
-    read(expr.op1(), guard);
+    read_write_rec(expr.op0(), r, w, "[]" + suffix, guard, guard_manager);
+    read(expr.op1(), guard, guard_manager);
   }
   else if(expr.id()==ID_dereference)
   {
     assert(expr.operands().size()==1);
     set_track_deref();
-    read(expr.op0(), guard);
+    read(expr.op0(), guard, guard_manager);
 
     exprt tmp=expr;
     #ifdef LOCAL_MAY
@@ -159,17 +166,17 @@ void _rw_set_loct::read_write_rec(
       read_write_rec(*it, r, w, suffix, guard);
     }
     #else
-    dereference(target, tmp, ns, value_sets);
+    dereference(target, tmp, ns, value_sets, guard_manager);
 
-    read_write_rec(tmp, r, w, suffix, guard);
-    #endif
+    read_write_rec(tmp, r, w, suffix, guard, guard_manager);
+#endif
 
     reset_track_deref();
   }
   else if(expr.id()==ID_typecast)
   {
     assert(expr.operands().size()==1);
-    read_write_rec(expr.op0(), r, w, suffix, guard);
+    read_write_rec(expr.op0(), r, w, suffix, guard, guard_manager);
   }
   else if(expr.id()==ID_address_of)
   {
@@ -178,24 +185,26 @@ void _rw_set_loct::read_write_rec(
   else if(expr.id()==ID_if)
   {
     assert(expr.operands().size()==3);
-    read(expr.op0(), guard);
+    read(expr.op0(), guard, guard_manager);
 
     guardt true_guard(guard);
     true_guard.add(expr.op0());
-    read_write_rec(expr.op1(), r, w, suffix, true_guard);
+    read_write_rec(expr.op1(), r, w, suffix, true_guard, guard_manager);
 
     guardt false_guard(guard);
     false_guard.add(not_exprt(expr.op0()));
-    read_write_rec(expr.op2(), r, w, suffix, false_guard);
+    read_write_rec(expr.op2(), r, w, suffix, false_guard, guard_manager);
   }
   else
   {
     forall_operands(it, expr)
-      read_write_rec(*it, r, w, suffix, guard);
+      read_write_rec(*it, r, w, suffix, guard, guard_manager);
   }
 }
 
-void rw_set_functiont::compute_rec(const exprt &function)
+void rw_set_functiont::compute_rec(
+  const exprt &function,
+  guard_managert &guard_manager)
 {
   if(function.id()==ID_symbol)
   {
@@ -229,13 +238,14 @@ void rw_set_functiont::compute_rec(const exprt &function)
           ,
           local_may
 #endif
-        ); // NOLINT(whitespace/parens)
+          ,
+          guard_manager); // NOLINT(whitespace/parens)
       }
     }
   }
   else if(function.id()==ID_if)
   {
-    compute_rec(to_if_expr(function).true_case());
-    compute_rec(to_if_expr(function).false_case());
+    compute_rec(to_if_expr(function).true_case(), guard_manager);
+    compute_rec(to_if_expr(function).false_case(), guard_manager);
   }
 }

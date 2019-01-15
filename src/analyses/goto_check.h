@@ -14,6 +14,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <goto-programs/goto_functions.h>
 #include <goto-programs/goto_model.h>
+#include <util/guard.h>
 
 class namespacet;
 class optionst;
@@ -29,9 +30,7 @@ void goto_check(
   const namespacet &ns,
   const optionst &options);
 
-void goto_check(
-  const optionst &options,
-  goto_modelt &goto_model);
+void goto_check(const optionst &options, goto_modelt &goto_model);
 
 #define OPT_GOTO_CHECK \
   "(bounds-check)(pointer-check)(memory-leak-check)" \

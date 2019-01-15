@@ -14,7 +14,8 @@ Author: Matt Lewis
 #include <iostream>
 
 bool enumerating_loop_accelerationt::accelerate(
-  path_acceleratort &accelerator)
+  path_acceleratort &accelerator,
+  guard_managert &guard_manager)
 {
   patht path;
   int enumerated = 0;
@@ -22,7 +23,8 @@ bool enumerating_loop_accelerationt::accelerate(
   // Note: we use enumerated!=path_limit rather than
   // enumerated < path_limit so that passing in path_limit=-1 causes
   // us to enumerate all the paths (or at least 2^31 of them...)
-  while(path_enumerator->next(path) && enumerated++!=path_limit)
+  while(path_enumerator->next(path, guard_manager) &&
+        enumerated++ != path_limit)
   {
 #ifdef DEBUG
     std::cout << "Found a path...\n";
@@ -36,7 +38,7 @@ bool enumerating_loop_accelerationt::accelerate(
     }
 #endif
 
-    if(polynomial_accelerator.accelerate(path, accelerator))
+    if(polynomial_accelerator.accelerate(path, accelerator, guard_manager))
     {
       // We accelerated this path successfully -- return it.
 #ifdef DEBUG

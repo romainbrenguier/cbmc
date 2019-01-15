@@ -152,30 +152,46 @@ protected:
   local_may_aliast &local_may;
 #endif
 
-  void read(const exprt &expr)
+  void read(const exprt &expr, guard_managert &guard_manager)
   {
-    read_write_rec(expr, true, false, "", guardt(true_exprt()));
+    read_write_rec(
+      expr,
+      true,
+      false,
+      "",
+      guardt(true_exprt(), guard_manager),
+      guard_manager);
   }
 
-  void read(const exprt &expr, const guardt &guard)
+  void
+  read(const exprt &expr, const guardt &guard, guard_managert &guard_manager)
   {
-    read_write_rec(expr, true, false, "", guard);
+    read_write_rec(expr, true, false, "", guard, guard_manager);
   }
 
-  void write(const exprt &expr)
+  void write(const exprt &expr, guard_managert &guard_manager)
   {
-    read_write_rec(expr, false, true, "", guardt(true_exprt()));
+    read_write_rec(
+      expr,
+      false,
+      true,
+      "",
+      guardt(true_exprt(), guard_manager),
+      guard_manager);
   }
 
-  void compute();
+  void compute(guard_managert &guard_manager);
 
-  void assign(const exprt &lhs, const exprt &rhs);
+  void
+  assign(const exprt &lhs, const exprt &rhs, guard_managert &guard_manager);
 
   void read_write_rec(
     const exprt &expr,
-    bool r, bool w,
+    bool r,
+    bool w,
     const std::string &suffix,
-    const guardt &guard);
+    const guardt &guard,
+    guard_managert &guard_manager);
 };
 
 class rw_set_loct:public _rw_set_loct
@@ -194,11 +210,12 @@ public:
     const namespacet &_ns,
     value_setst &_value_sets,
     const irep_idt &_function_id,
-    goto_programt::const_targett _target)
+    goto_programt::const_targett _target,
+    guard_managert &guard_manager)
     : _rw_set_loct(_ns, _value_sets, _function_id, _target)
 #endif
   {
-    compute();
+    compute(guard_manager);
   }
 };
 
@@ -210,13 +227,14 @@ public:
   rw_set_functiont(
     value_setst &_value_sets,
     const goto_modelt &_goto_model,
-    const exprt &function):
-    rw_set_baset(ns),
-    ns(_goto_model.symbol_table),
-    value_sets(_value_sets),
-    goto_functions(_goto_model.goto_functions)
+    const exprt &function,
+    guard_managert &guard_manager)
+    : rw_set_baset(ns),
+      ns(_goto_model.symbol_table),
+      value_sets(_value_sets),
+      goto_functions(_goto_model.goto_functions)
   {
-    compute_rec(function);
+    compute_rec(function, guard_manager);
   }
 
 protected:
@@ -224,7 +242,7 @@ protected:
   value_setst &value_sets;
   const goto_functionst &goto_functions;
 
-  void compute_rec(const exprt &function);
+  void compute_rec(const exprt &function, guard_managert &guard_manager);
 };
 
 /* rw_set_loc keeping track of the dereference path */
@@ -256,12 +274,12 @@ public:
     const namespacet &_ns,
     value_setst &_value_sets,
     const irep_idt &_function_id,
-    goto_programt::const_targett _target)
-    : _rw_set_loct(_ns, _value_sets, _function_id, _target),
-      dereferencing(false)
+    goto_programt::const_targett _target,
+    guard_managert &guard_manager)
+    : _rw_set_loct(_ns, _value_sets, _function_id, _target), dereferencing(false)
 #endif
   {
-    compute();
+    compute(guard_manager);
   }
 
 protected:

@@ -14,6 +14,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <unordered_set>
 
+#include <util/guard.h>
 #include <util/std_expr.h>
 
 #include "dereference_callback.h"
@@ -58,11 +59,13 @@ public:
   ///        be dereferenced.
   /// \param guard: A guard, which is assumed to hold when dereferencing.
   /// \param mode: Indicates whether the dereferencing is a load or store
-  //    (unused).
+  ///    (unused)
+  /// \param guard_manager: manager for guard creation
   virtual exprt dereference(
     const exprt &pointer,
     const guardt &guard,
-    const modet mode);
+    const modet mode,
+    guard_managert &guard_manager);
 
 private:
   const namespacet &ns;

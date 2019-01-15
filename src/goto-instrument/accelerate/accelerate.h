@@ -46,12 +46,14 @@ public:
     natural_loops(program);
   }
 
-  int accelerate_loop(goto_programt::targett &loop_header);
-  int accelerate_loops();
+  int accelerate_loop(
+    goto_programt::targett &loop_header,
+    guard_managert &guard_manager);
+  int accelerate_loops(guard_managert &guard_manager);
 
   bool accelerate_path(patht &path, path_acceleratort &accelerator);
 
-  void restrict_traces();
+  void restrict_traces(guard_managert &guard_manager);
 
   static const int accelerate_limit = -1;
 
@@ -86,7 +88,8 @@ protected:
     path_acceleratort &accelerator,
     subsumed_patht &subsumed_path);
 
-  void set_dirty_vars(path_acceleratort &accelerator);
+  void
+  set_dirty_vars(path_acceleratort &accelerator, guard_managert &guard_manager);
   void add_dirty_checks();
   bool is_underapproximate(path_acceleratort &accelerator);
 
@@ -95,7 +98,8 @@ protected:
     goto_programt::targett &loop_end,
     goto_programt::targett &overflow_loc);
 
-  void insert_automaton(trace_automatont &automaton);
+  void
+  insert_automaton(trace_automatont &automaton, guard_managert &guard_manager);
   void build_state_machine(
     trace_automatont::sym_mapt::iterator p,
     trace_automatont::sym_mapt::iterator end,
@@ -130,6 +134,7 @@ protected:
 void accelerate_functions(
   goto_modelt &,
   message_handlert &message_handler,
-  bool use_z3);
+  bool use_z3,
+  guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_INSTRUMENT_ACCELERATE_ACCELERATE_H

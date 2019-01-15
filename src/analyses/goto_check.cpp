@@ -85,12 +85,13 @@ protected:
   const namespacet &ns;
   std::unique_ptr<local_bitvector_analysist> local_bitvector_analysis;
   goto_programt::const_targett current_target;
+  guard_managert guard_manager;
 
   void check_rec(
     const exprt &expr,
     guardt &guard,
     bool address);
-  void check(const exprt &expr);
+  void check(const exprt &expr, guard_managert &guard_manager);
 
   struct conditiont
   {
@@ -1624,9 +1625,9 @@ void goto_checkt::check_rec(const exprt &expr, guardt &guard, bool address)
   }
 }
 
-void goto_checkt::check(const exprt &expr)
+void goto_checkt::check(const exprt &expr, guard_managert &guard_manager)
 {
-  guardt guard{true_exprt{}};
+  guardt guard{true_exprt{}, guard_manager};
   check_rec(expr, guard, false);
 }
 
@@ -1682,7 +1683,7 @@ void goto_checkt::goto_check(
        i.is_target())
       assertions.clear();
 
-    check(i.guard);
+    check(i.guard, guard_manager);
 
     // magic ERROR label?
     for(const auto &label : error_labels)
@@ -1708,20 +1709,20 @@ void goto_checkt::goto_check(
 
       if(statement==ID_expression)
       {
-        check(i.code);
+        check(i.code, guard_manager);
       }
       else if(statement==ID_printf)
       {
         for(const auto &op : i.code.operands())
-          check(op);
+          check(op, guard_manager);
       }
     }
     else if(i.is_assign())
     {
       const code_assignt &code_assign=to_code_assign(i.code);
 
-      check(code_assign.lhs());
-      check(code_assign.rhs());
+      check(code_assign.lhs(), guard_manager);
+      check(code_assign.rhs(), guard_manager);
 
       // the LHS might invalidate any assertion
       invalidate(code_assign.lhs());
@@ -1756,12 +1757,12 @@ void goto_checkt::goto_check(
             "pointer dereference",
             i.source_location,
             pointer,
-            guardt(true_exprt()));
+            guardt(true_exprt(), guard_manager));
         }
       }
 
       for(const auto &op : code_function_call.operands())
-        check(op);
+        check(op, guard_manager);
 
       // the call might invalidate any assertion
       assertions.clear();
@@ -1770,7 +1771,7 @@ void goto_checkt::goto_check(
     {
       if(i.code.operands().size()==1)
       {
-        check(i.code.op0());
+        check(i.code.op0(), guard_manager);
         // the return value invalidate any assertion
         invalidate(i.code.op0());
       }
@@ -1794,7 +1795,7 @@ void goto_checkt::goto_check(
           "pointer dereference",
           i.source_location,
           pointer,
-          guardt(true_exprt()));
+          guardt(true_exprt(), guard_manager));
       }
 
       // this has no successor
@@ -1875,7 +1876,7 @@ void goto_checkt::goto_check(
           "memory-leak",
           source_location,
           eq,
-          guardt(true_exprt()));
+          guardt(true_exprt(), guard_manager));
       }
     }
 
@@ -1947,9 +1948,7 @@ void goto_check(
   }
 }
 
-void goto_check(
-  const optionst &options,
-  goto_modelt &goto_model)
+void goto_check(const optionst &options, goto_modelt &goto_model)
 {
   const namespacet ns(goto_model.symbol_table);
   goto_check(ns, options, goto_model.goto_functions);

@@ -155,7 +155,8 @@ void dep_graph_domaint::data_dependencies(
   const irep_idt &function_to,
   goto_programt::const_targett to,
   dependence_grapht &dep_graph,
-  const namespacet &ns)
+  const namespacet &ns,
+  guard_managert &guard_manager)
 {
   // data dependencies using def-use pairs
   data_deps.clear();
@@ -163,7 +164,7 @@ void dep_graph_domaint::data_dependencies(
   // TODO use (future) reaching-definitions-dereferencing rw_set
   value_setst &value_sets=
     dep_graph.reaching_definitions().get_value_sets();
-  rw_range_set_value_sett rw_set(ns, value_sets);
+  rw_range_set_value_sett rw_set(ns, value_sets, guard_manager);
   goto_rw(function_to, to, rw_set);
 
   forall_rw_range_set_r_objects(it, rw_set)
@@ -235,7 +236,7 @@ void dep_graph_domaint::transform(
   else
     control_dependencies(function_from, from, to, *dep_graph);
 
-  data_dependencies(from, function_to, to, *dep_graph, ns);
+  data_dependencies(from, function_to, to, *dep_graph, ns, guard_manager);
 }
 
 void dep_graph_domaint::output(

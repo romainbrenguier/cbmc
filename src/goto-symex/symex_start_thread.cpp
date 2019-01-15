@@ -37,7 +37,7 @@ void goto_symext::symex_start_thread(statet &state)
 
   // put into thread vector
   std::size_t t=state.threads.size();
-  state.threads.push_back(statet::threadt());
+  state.threads.push_back(statet::threadt(guard_manager));
   // statet::threadt &cur_thread=state.threads[state.source.thread_nr];
   statet::threadt &new_thread=state.threads.back();
   new_thread.pc=thread_target;
@@ -72,7 +72,7 @@ void goto_symext::symex_start_thread(statet &state)
         std::make_pair(lhs.get_l1_object_identifier(),
                        std::make_pair(lhs, 0))).second)
       UNREACHABLE;
-    state.rename(lhs, ns, goto_symex_statet::L1);
+    state.rename(lhs, ns, guard_manager, goto_symex_statet::L1);
     const irep_idt l1_name=lhs.get_l1_object_identifier();
     // store it
     state.l1_history.insert(l1_name);
@@ -81,7 +81,7 @@ void goto_symext::symex_start_thread(statet &state)
     // make copy
     ssa_exprt rhs=c_it->second.first;
 
-    guardt guard{true_exprt{}};
+    guardt guard{true_exprt{}, guard_manager};
     const bool record_events=state.record_events;
     state.record_events=false;
     symex_assign_symbol(
@@ -120,7 +120,7 @@ void goto_symext::symex_start_thread(statet &state)
       rhs = *zero;
     }
 
-    guardt guard{true_exprt{}};
+    guardt guard{true_exprt{}, guard_manager};
     symex_assign_symbol(
       state,
       lhs,

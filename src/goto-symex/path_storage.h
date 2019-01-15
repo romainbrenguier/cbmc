@@ -30,13 +30,17 @@ public:
     symex_target_equationt equation;
     goto_symex_statet state;
 
-    explicit patht(const symex_target_equationt &e, const goto_symex_statet &s)
-      : equation(e), state(s, &equation)
+    explicit patht(
+      const symex_target_equationt &e,
+      const goto_symex_statet &s,
+      guard_managert &manager)
+      : equation(e), state(s, &equation, manager)
     {
     }
 
     explicit patht(const patht &other)
-      : equation(other.equation), state(other.state, &equation)
+      : equation(other.equation),
+        state(other.state, &equation, other.state.guard.manager)
     {
     }
   };

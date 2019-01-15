@@ -16,6 +16,7 @@ Date: September 2011
 
 #include "wmm.h"
 
+#include <util/guard.h>
 #include <util/irep.h>
 
 class symbol_tablet;
@@ -42,13 +43,15 @@ void weak_memory(
   bool cav11_option,
   bool hide_internals,
   message_handlert &,
-  bool ignore_arrays);
+  bool ignore_arrays,
+  guard_managert &guard_manager);
 
 void introduce_temporaries(
   value_setst &,
   symbol_tablet &,
   const irep_idt &function,
   goto_programt &,
+  guard_managert &guard_manager,
 #ifdef LOCAL_MAY
   const goto_functionst::goto_functiont &goto_function,
 #endif

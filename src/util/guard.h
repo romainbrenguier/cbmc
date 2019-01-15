@@ -16,11 +16,25 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "std_expr.h"
 
+/// This is unused by this implementation of guards, but can be used by other
+/// implementations of the same interface.
+struct guard_managert
+{
+};
+
 class guardt
 {
 public:
-  explicit guardt(const exprt &e) : expr(e)
+  explicit guardt(const exprt &e, guard_managert &manager)
+    : manager(manager), expr(e)
   {
+  }
+
+  guardt &operator=(const guardt &other)
+  {
+    expr = other.expr;
+    manager = other.manager;
+    return *this;
   }
 
   void add(const exprt &expr);
@@ -49,6 +63,8 @@ public:
 
   friend guardt &operator -= (guardt &g1, const guardt &g2);
   friend guardt &operator |= (guardt &g1, const guardt &g2);
+
+  guard_managert &manager;
 
 private:
   exprt expr;

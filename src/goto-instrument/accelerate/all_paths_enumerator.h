@@ -15,6 +15,7 @@ Author: Matt Lewis
 #include <goto-programs/goto_program.h>
 
 #include <analyses/natural_loops.h>
+#include <util/guard.h>
 
 #include "path.h"
 #include "path_enumerator.h"
@@ -32,7 +33,7 @@ public:
   {
   }
 
-  virtual bool next(patht &path);
+  virtual bool next(patht &path, guard_managert &guard_manager);
 
 protected:
   int backtrack(patht &path);

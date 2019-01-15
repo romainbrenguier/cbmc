@@ -14,10 +14,11 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <set>
 
 #include <goto-programs/goto_program.h>
-#include <util/namespace.h>
 #include <util/cprover_prefix.h>
-#include <util/prefix.h>
+#include <util/guard.h>
 #include <util/message.h>
+#include <util/namespace.h>
+#include <util/prefix.h>
 
 #include "wmm.h"
 
@@ -186,7 +187,8 @@ public:
 
   void affected_by_delay(
     value_setst &value_sets,
-    goto_functionst &goto_functions);
+    goto_functionst &goto_functions,
+    guard_managert &guard_manager);
 
   class cfg_visitort
   {
@@ -217,7 +219,8 @@ public:
     void weak_memory(
       value_setst &value_sets,
       const irep_idt &function_id,
-      memory_modelt model);
+      memory_modelt model,
+      guard_managert &guard_manager);
   };
 
 protected:

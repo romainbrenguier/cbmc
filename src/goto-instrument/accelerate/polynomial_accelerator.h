@@ -58,12 +58,16 @@ public:
   {
   }
 
-  bool accelerate(patht &loop, path_acceleratort &accelerator);
+  bool accelerate(
+    patht &loop,
+    path_acceleratort &accelerator,
+    guard_managert &guard_manager);
 
   bool fit_polynomial(
     goto_programt::instructionst &loop_body,
     exprt &target,
-    polynomialt &polynomial);
+    polynomialt &polynomial,
+    guard_managert &guard_manager);
 
 protected:
   message_handlert &message_handler;
@@ -72,7 +76,8 @@ protected:
     goto_programt::instructionst &sliced_body,
     exprt &target,
     expr_sett &influence,
-    polynomialt &polynomial);
+    polynomialt &polynomial,
+    guard_managert &guard_manager);
 
   void assert_for_values(
     scratch_programt &program,
@@ -99,7 +104,8 @@ protected:
 
   bool check_inductive(
     std::map<exprt, polynomialt> polynomials,
-    goto_programt::instructionst &body);
+    goto_programt::instructionst &body,
+    guard_managert &guard_manager);
   void stash_variables(
     scratch_programt &program,
     expr_sett modified,

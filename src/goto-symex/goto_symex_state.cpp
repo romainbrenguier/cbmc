@@ -27,8 +27,10 @@ Author: Daniel Kroening, kroening@kroening.com
 
 static void get_l1_name(exprt &expr);
 
-goto_symex_statet::goto_symex_statet()
+goto_symex_statet::goto_symex_statet(guard_managert &manager)
   : depth(0),
+    guard_manager(manager),
+    guard(true_exprt(), manager),
     symex_target(nullptr),
     atomic_section_id(0),
     total_vccs(0),
@@ -36,7 +38,7 @@ goto_symex_statet::goto_symex_statet()
     record_events(true),
     dirty()
 {
-  threads.resize(1);
+  threads.emplace_back(guard_manager);
   new_frame();
 }
 
@@ -159,19 +161,20 @@ protected:
 };
 
 void goto_symex_statet::assignment(
-  ssa_exprt &lhs, // L0/L1
-  const exprt &rhs,  // L2
+  ssa_exprt &lhs,
+  const exprt &rhs,
   const namespacet &ns,
   bool rhs_is_simplified,
   bool record_value,
-  bool allow_pointer_unsoundness)
+  bool allow_pointer_unsoundness,
+  guard_managert &guard_manager)
 {
   // identifier should be l0 or l1, make sure it's l1
-  rename(lhs, ns, L1);
+  rename(lhs, ns, guard_manager, L1);
   irep_idt l1_identifier=lhs.get_identifier();
 
   // the type might need renaming
-  rename(lhs.type(), l1_identifier, ns);
+  rename(lhs.type(), l1_identifier, ns, guard_manager, L2);
   lhs.update_type();
   if(run_validation_checks)
   {
@@ -270,6 +273,7 @@ void goto_symex_statet::set_l2_indices(
 void goto_symex_statet::rename(
   exprt &expr,
   const namespacet &ns,
+  guard_managert &manager,
   levelt level)
 {
   // rename all the symbols with their last known value
@@ -282,22 +286,22 @@ void goto_symex_statet::rename(
     if(level == L0)
     {
       set_l0_indices(ssa, ns);
-      rename(expr.type(), ssa.get_identifier(), ns, level);
+      rename(expr.type(), ssa.get_identifier(), ns, manager, level);
       ssa.update_type();
     }
     else if(level == L1)
     {
       set_l1_indices(ssa, ns);
-      rename(expr.type(), ssa.get_identifier(), ns, level);
+      rename(expr.type(), ssa.get_identifier(), ns, manager, level);
       ssa.update_type();
     }
     else if(level==L2)
     {
       set_l1_indices(ssa, ns);
-      rename(expr.type(), ssa.get_identifier(), ns, level);
+      rename(expr.type(), ssa.get_identifier(), ns, manager, level);
       ssa.update_type();
 
-      if(l2_thread_read_encoding(ssa, ns))
+      if(l2_thread_read_encoding(ssa, ns, manager))
       {
         // renaming taken care of by l2_thread_encoding
       }
@@ -324,31 +328,28 @@ void goto_symex_statet::rename(
     if(expr.type().id() == ID_code)
     {
       rename(
-        expr.type(),
-        to_symbol_expr(expr).get_identifier(),
-        ns,
-        level);
+        expr.type(), to_symbol_expr(expr).get_identifier(), ns, manager, level);
 
       return;
     }
 
     expr=ssa_exprt(expr);
-    rename(expr, ns, level);
+    rename(expr, ns, manager, level);
   }
   else if(expr.id()==ID_address_of)
   {
     auto &address_of_expr = to_address_of_expr(expr);
-    rename_address(address_of_expr.object(), ns, level);
+    rename_address(address_of_expr.object(), ns, level, manager);
     to_pointer_type(expr.type()).subtype() = address_of_expr.object().type();
   }
   else
   {
     // this could go wrong, but we would have to re-typecheck ...
-    rename(expr.type(), irep_idt(), ns, level);
+    rename(expr.type(), irep_idt(), ns, manager, level);
 
     // do this recursively
     Forall_operands(it, expr)
-      rename(*it, ns, level);
+      rename(*it, ns, manager, level);
 
     // some fixes
     if(expr.id()==ID_with)
@@ -368,7 +369,8 @@ void goto_symex_statet::rename(
 /// thread encoding
 bool goto_symex_statet::l2_thread_read_encoding(
   ssa_exprt &expr,
-  const namespacet &ns)
+  const namespacet &ns,
+  guard_managert &manager)
 {
   // do we have threads?
   if(threads.size()<=1)
@@ -389,7 +391,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
   // see whether we are within an atomic section
   if(atomic_section_id!=0)
   {
-    guardt write_guard{false_exprt{}};
+    guardt write_guard{false_exprt{}, manager};
 
     const auto a_s_writes = written_in_atomic_section.find(ssa_l1);
     if(a_s_writes!=written_in_atomic_section.end())
@@ -413,7 +415,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
     // we cannot determine for sure that there has been a write already
     // so generate a read even if l1_identifier has been written on
     // all branches flowing into this read
-    guardt read_guard{false_exprt{}};
+    guardt read_guard{false_exprt{}, manager};
 
     a_s_r_entryt &a_s_read=read_in_atomic_section[ssa_l1];
     for(const auto &a_s_read_guard : a_s_read.second)
@@ -431,7 +433,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
 
     guardt cond = read_guard;
     if(!no_write.op().is_false())
-      cond |= guardt{no_write.op()};
+      cond |= guardt{no_write.op(), guard_manager};
 
     if_exprt tmp(cond.as_expr(), ssa_l1, ssa_l1);
     set_l2_indices(to_ssa_expr(tmp.true_case()), ns);
@@ -455,7 +457,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
 
     const bool record_events_bak=record_events;
     record_events=false;
-    assignment(ssa_l1, tmp, ns, true, true);
+    assignment(ssa_l1, tmp, ns, true, true, false, manager);
     record_events=record_events_bak;
 
     symex_target->assignment(
@@ -541,7 +543,8 @@ bool goto_symex_statet::l2_thread_write_encoding(
 void goto_symex_statet::rename_address(
   exprt &expr,
   const namespacet &ns,
-  levelt level)
+  levelt level,
+  guard_managert &manager)
 {
   if(expr.id()==ID_symbol &&
      expr.get_bool(ID_C_SSA_symbol))
@@ -551,13 +554,13 @@ void goto_symex_statet::rename_address(
     // only do L1!
     set_l1_indices(ssa, ns);
 
-    rename(expr.type(), ssa.get_identifier(), ns, level);
+    rename(expr.type(), ssa.get_identifier(), ns, manager, level);
     ssa.update_type();
   }
   else if(expr.id()==ID_symbol)
   {
     expr=ssa_exprt(expr);
-    rename_address(expr, ns, level);
+    rename_address(expr, ns, level, manager);
   }
   else
   {
@@ -565,20 +568,20 @@ void goto_symex_statet::rename_address(
     {
       index_exprt &index_expr=to_index_expr(expr);
 
-      rename_address(index_expr.array(), ns, level);
+      rename_address(index_expr.array(), ns, level, manager);
       PRECONDITION(index_expr.array().type().id() == ID_array);
       expr.type() = to_array_type(index_expr.array().type()).subtype();
 
       // the index is not an address
-      rename(index_expr.index(), ns, level);
+      rename(index_expr.index(), ns, manager, level);
     }
     else if(expr.id()==ID_if)
     {
       // the condition is not an address
       if_exprt &if_expr=to_if_expr(expr);
-      rename(if_expr.cond(), ns, level);
-      rename_address(if_expr.true_case(), ns, level);
-      rename_address(if_expr.false_case(), ns, level);
+      rename(if_expr.cond(), ns, manager, level);
+      rename_address(if_expr.true_case(), ns, level, manager);
+      rename_address(if_expr.false_case(), ns, level, manager);
 
       if_expr.type()=if_expr.true_case().type();
     }
@@ -586,7 +589,7 @@ void goto_symex_statet::rename_address(
     {
       member_exprt &member_expr=to_member_expr(expr);
 
-      rename_address(member_expr.struct_op(), ns, level);
+      rename_address(member_expr.struct_op(), ns, level, manager);
 
       // type might not have been renamed in case of nesting of
       // structs and pointers/arrays
@@ -603,17 +606,17 @@ void goto_symex_statet::rename_address(
         expr.type()=comp.type();
       }
       else
-        rename(expr.type(), irep_idt(), ns, level);
+        rename(expr.type(), irep_idt(), ns, manager, level);
     }
     else
     {
       // this could go wrong, but we would have to re-typecheck ...
-      rename(expr.type(), irep_idt(), ns, level);
+      rename(expr.type(), irep_idt(), ns, manager, level);
 
       // do this recursively; we assume here
       // that all the operands are addresses
       Forall_operands(it, expr)
-        rename_address(*it, ns, level);
+        rename_address(*it, ns, level, manager);
     }
   }
 }
@@ -622,6 +625,7 @@ void goto_symex_statet::rename(
   typet &type,
   const irep_idt &l1_identifier,
   const namespacet &ns,
+  guard_managert &manager,
   levelt level)
 {
   // rename all the symbols with their last known value
@@ -653,8 +657,8 @@ void goto_symex_statet::rename(
   if(type.id()==ID_array)
   {
     auto &array_type = to_array_type(type);
-    rename(array_type.subtype(), irep_idt(), ns, level);
-    rename(array_type.size(), ns, level);
+    rename(array_type.subtype(), irep_idt(), ns, manager, level);
+    rename(array_type.size(), ns, manager, level);
   }
   else if(type.id() == ID_struct || type.id() == ID_union)
   {
@@ -665,32 +669,32 @@ void goto_symex_statet::rename(
     {
       // be careful, or it might get cyclic
       if(component.type().id() == ID_array)
-        rename(to_array_type(component.type()).size(), ns, level);
+        rename(to_array_type(component.type()).size(), ns, manager, level);
       else if(component.type().id() != ID_pointer)
-        rename(component.type(), irep_idt(), ns, level);
+        rename(component.type(), irep_idt(), ns, manager, level);
     }
   }
   else if(type.id()==ID_pointer)
   {
-    rename(to_pointer_type(type).subtype(), irep_idt(), ns, level);
+    rename(to_pointer_type(type).subtype(), irep_idt(), ns, manager, level);
   }
   else if(type.id() == ID_symbol_type)
   {
     const symbolt &symbol = ns.lookup(to_symbol_type(type));
     type = symbol.type;
-    rename(type, l1_identifier, ns, level);
+    rename(type, l1_identifier, ns, manager, level);
   }
   else if(type.id() == ID_union_tag)
   {
     const symbolt &symbol = ns.lookup(to_union_tag_type(type));
     type = symbol.type;
-    rename(type, l1_identifier, ns, level);
+    rename(type, l1_identifier, ns, manager, level);
   }
   else if(type.id() == ID_struct_tag)
   {
     const symbolt &symbol = ns.lookup(to_struct_tag_type(type));
     type=symbol.type;
-    rename(type, l1_identifier, ns, level);
+    rename(type, l1_identifier, ns, manager, level);
   }
 
   if(level==L2 &&

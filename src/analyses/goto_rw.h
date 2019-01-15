@@ -121,8 +121,8 @@ public:
 
   virtual ~rw_range_sett();
 
-  explicit rw_range_sett(const namespacet &_ns):
-    ns(_ns)
+  explicit rw_range_sett(const namespacet &_ns, guard_managert &guard_manager)
+    : ns(_ns), guard_manager(guard_manager)
   {
   }
 
@@ -165,6 +165,7 @@ public:
 
 protected:
   const namespacet &ns;
+  guard_managert &guard_manager;
 
   objectst r_range_set, w_range_set;
 
@@ -198,7 +199,8 @@ protected:
     get_modet mode,
     const dereference_exprt &deref,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    guard_managert &guard_manager);
 
   virtual void get_objects_byte_extract(
     get_modet mode,
@@ -248,7 +250,8 @@ protected:
     get_modet mode,
     const exprt &expr,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    guard_managert &guard_manager);
 
   virtual void add(
     get_modet mode,
@@ -272,9 +275,9 @@ class rw_range_set_value_sett:public rw_range_sett
 public:
   rw_range_set_value_sett(
     const namespacet &_ns,
-    value_setst &_value_sets):
-    rw_range_sett(_ns),
-    value_sets(_value_sets)
+    value_setst &_value_sets,
+    guard_managert &guard_manager)
+    : rw_range_sett(_ns, guard_manager), value_sets(_value_sets)
   {
   }
 
@@ -312,7 +315,8 @@ protected:
     get_modet mode,
     const dereference_exprt &deref,
     const range_spect &range_start,
-    const range_spect &size) override;
+    const range_spect &size,
+    guard_managert &guard_manager) override;
 };
 
 class guarded_range_domaint:public range_domain_baset
@@ -352,8 +356,11 @@ class rw_guarded_range_set_value_sett:public rw_range_set_value_sett
 public:
   rw_guarded_range_set_value_sett(
     const namespacet &_ns,
-    value_setst &_value_sets):
-    rw_range_set_value_sett(_ns, _value_sets)
+    value_setst &_value_sets,
+    guard_managert &guard_manager)
+    : rw_range_set_value_sett(_ns, _value_sets, guard_manager),
+      guard_manager(guard_manager),
+      guard(true_exprt(), guard_manager)
   {
   }
 
@@ -370,7 +377,7 @@ public:
     get_modet mode,
     const exprt &expr) override
   {
-    guard = guardt(true_exprt());
+    guard = guardt(true_exprt(), guard_manager);
 
     rw_range_set_value_sett::get_objects_rec(_function, _target, mode, expr);
   }
@@ -384,7 +391,8 @@ public:
   }
 
 protected:
-  guardt guard = guardt(true_exprt());
+  guard_managert &guard_manager;
+  guardt guard;
 
   using rw_range_sett::get_objects_rec;
 

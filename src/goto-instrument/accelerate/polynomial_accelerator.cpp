@@ -44,7 +44,8 @@ Author: Matt Lewis
 
 bool polynomial_acceleratort::accelerate(
   patht &loop,
-  path_acceleratort &accelerator)
+  path_acceleratort &accelerator,
+  guard_managert &guard_manager)
 {
   goto_programt::instructionst body;
   accelerator.clear();
@@ -58,7 +59,7 @@ bool polynomial_acceleratort::accelerate(
 
   expr_sett targets;
   std::map<exprt, polynomialt> polynomials;
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
   goto_programt::instructionst assigns;
 
   utils.find_modified(body, targets);
@@ -136,12 +137,14 @@ bool polynomial_acceleratort::accelerate(
       continue;
     }
 
-    if(fit_polynomial_sliced(sliced_assigns, target, influence, poly))
+    if(
+      fit_polynomial_sliced(
+        sliced_assigns, target, influence, poly, guard_manager))
     {
       std::map<exprt, polynomialt> this_poly;
       this_poly[target]=poly;
 
-      if(check_inductive(this_poly, assigns))
+      if(check_inductive(this_poly, assigns, guard_manager))
       {
         polynomials.insert(std::make_pair(target, poly));
       }
@@ -178,7 +181,8 @@ bool polynomial_acceleratort::accelerate(
 
   try
   {
-    path_is_monotone=utils.do_assumptions(polynomials, loop, guard);
+    path_is_monotone =
+      utils.do_assumptions(polynomials, loop, guard, guard_manager);
   }
   catch(const std::string &s)
   {
@@ -278,13 +282,14 @@ bool polynomial_acceleratort::fit_polynomial_sliced(
   goto_programt::instructionst &body,
   exprt &var,
   expr_sett &influence,
-  polynomialt &polynomial)
+  polynomialt &polynomial,
+  guard_managert &guard_manager)
 {
   // These are the variables that var depends on with respect to the body.
   std::vector<expr_listt> parameters;
   std::set<std::pair<expr_listt, exprt> > coefficients;
   expr_listt exprs;
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
   exprt overflow_var =
     utils.fresh_symbol("polynomial::overflow", bool_typet()).symbol_expr();
   overflow_instrumentert overflow(program, overflow_var, symbol_table);
@@ -416,7 +421,8 @@ bool polynomial_acceleratort::fit_polynomial_sliced(
   {
     if(program.check_sat())
     {
-      utils.extract_polynomial(program, coefficients, polynomial);
+      utils.extract_polynomial(
+        program, coefficients, polynomial, guard_manager);
       return true;
     }
   }
@@ -435,14 +441,16 @@ bool polynomial_acceleratort::fit_polynomial_sliced(
 bool polynomial_acceleratort::fit_polynomial(
   goto_programt::instructionst &body,
   exprt &target,
-  polynomialt &polynomial)
+  polynomialt &polynomial,
+  guard_managert &guard_manager)
 {
   goto_programt::instructionst sliced;
   expr_sett influence;
 
   cone_of_influence(body, target, sliced, influence);
 
-  return fit_polynomial_sliced(sliced, target, influence, polynomial);
+  return fit_polynomial_sliced(
+    sliced, target, influence, polynomial, guard_manager);
 }
 
 bool polynomial_acceleratort::fit_const(
@@ -655,7 +663,8 @@ void polynomial_acceleratort::cone_of_influence(
 
 bool polynomial_acceleratort::check_inductive(
   std::map<exprt, polynomialt> polynomials,
-  goto_programt::instructionst &body)
+  goto_programt::instructionst &body,
+  guard_managert &guard_manager)
 {
   // Checking that our polynomial is inductive with respect to the loop body is
   // equivalent to checking safety of the following program:
@@ -668,7 +677,7 @@ bool polynomial_acceleratort::check_inductive(
   // assert (target1==polynomial1);
   // assert (target2==polynomial2);
   // ...
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
   std::vector<exprt> polynomials_hold;
   substitutiont substitution;
 

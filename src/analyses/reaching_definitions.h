@@ -260,6 +260,9 @@ private:
   /// `this` is passed to `set_bitvector_container` for all instances.
   sparse_bitvector_analysist<reaching_definitiont> *bv_container;
 
+  /// Used to create new guards
+  guard_managert guard_manager;
+
   typedef std::set<std::size_t> values_innert;
   #ifdef USE_DSTRING
   typedef std::map<irep_idt, values_innert> valuest;

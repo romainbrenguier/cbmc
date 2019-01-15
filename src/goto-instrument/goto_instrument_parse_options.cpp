@@ -103,7 +103,6 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "unwind.h"
 #include "wmm/weak_memory.h"
 
-/// invoke main modules
 int goto_instrument_parse_optionst::doit()
 {
   if(cmdline.isset("version"))
@@ -476,9 +475,9 @@ int goto_instrument_parse_optionst::doit()
 
       const symbolt &symbol=ns.lookup(ID_main);
       symbol_exprt main(symbol.name, symbol.type);
-
-      std::cout <<
-        rw_set_functiont(value_set_analysis, goto_model, main);
+      guard_managert guard_manager;
+      std::cout << rw_set_functiont(
+        value_set_analysis, goto_model, main, guard_manager);
       return CPROVER_EXIT_SUCCESS;
     }
 
@@ -760,8 +759,9 @@ int goto_instrument_parse_optionst::doit()
       remove_calls_no_body(goto_model.goto_functions);
 
       status() << "Accelerating" << eom;
+      guard_managert guard_manager;
       accelerate_functions(
-        goto_model, get_message_handler(), cmdline.isset("z3"));
+        goto_model, get_message_handler(), cmdline.isset("z3"), guard_manager);
       remove_skip(goto_model);
     }
 
@@ -1240,18 +1240,19 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     status() << "Pointer Analysis" << eom;
     value_set_analysist value_set_analysis(ns);
     value_set_analysis(goto_model.goto_functions);
+    guard_managert guard_manager;
 
     if(cmdline.isset("remove-pointers"))
     {
       // removing pointers
       status() << "Removing Pointers" << eom;
-      remove_pointers(goto_model, value_set_analysis);
+      remove_pointers(goto_model, value_set_analysis, guard_manager);
     }
 
     if(cmdline.isset("race-check"))
     {
       status() << "Adding Race Checks" << eom;
-      race_check(value_set_analysis, goto_model);
+      race_check(value_set_analysis, goto_model, guard_manager);
     }
 
     if(cmdline.isset("mm"))
@@ -1333,7 +1334,8 @@ void goto_instrument_parse_optionst::instrument_goto_program()
           cmdline.isset("cav11"),
           cmdline.isset("hide-internals"),
           get_message_handler(),
-          cmdline.isset("ignore-arrays"));
+          cmdline.isset("ignore-arrays"),
+          guard_manager);
     }
 
     // Interrupt handler
@@ -1343,14 +1345,15 @@ void goto_instrument_parse_optionst::instrument_goto_program()
       interrupt(
         value_set_analysis,
         goto_model,
-        cmdline.get_value("isr"));
+        cmdline.get_value("isr"),
+        guard_manager);
     }
 
     // Memory-mapped I/O
     if(cmdline.isset("mmio"))
     {
       status() << "Instrumenting memory-mapped I/O" << eom;
-      mmio(value_set_analysis, goto_model);
+      mmio(value_set_analysis, goto_model, guard_manager);
     }
 
     if(cmdline.isset("concurrency"))

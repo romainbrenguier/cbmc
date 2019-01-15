@@ -45,9 +45,9 @@ Author: Matt Lewis
 #include "util.h"
 #include "overflow_instrumenter.h"
 
-bool sat_path_enumeratort::next(patht &path)
+bool sat_path_enumeratort::next(patht &path, guard_managert &guard_manager)
 {
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
 
   program.append(fixed);
   program.append(fixed);
@@ -88,8 +88,8 @@ bool sat_path_enumeratort::next(patht &path)
 #ifdef DEBUG
       std::cout << "Found a path\n";
 #endif
-      build_path(program, path);
-      record_path(program);
+      build_path(program, path, guard_manager);
+      record_path(program, guard_manager);
 
       return true;
     }
@@ -133,7 +133,8 @@ void sat_path_enumeratort::find_distinguishing_points()
 
 void sat_path_enumeratort::build_path(
   scratch_programt &scratch_program,
-  patht &path)
+  patht &path,
+  guard_managert &guard_manager)
 {
   goto_programt::targett t=loop_header;
 
@@ -161,7 +162,7 @@ void sat_path_enumeratort::build_path(
     for(const auto &succ : succs)
     {
       exprt &distinguisher=distinguishing_points[succ];
-      bool taken=scratch_program.eval(distinguisher).is_true();
+      bool taken = scratch_program.eval(distinguisher, guard_manager).is_true();
 
       if(taken)
       {
@@ -210,9 +211,9 @@ void sat_path_enumeratort::build_path(
  * version of that body, suitable for use in the fixed-path acceleration we
  * will be doing later.
  */
-void sat_path_enumeratort::build_fixed()
+void sat_path_enumeratort::build_fixed(guard_managert &guard_manager)
 {
-  scratch_programt scratch(symbol_table, message_handler);
+  scratch_programt scratch(symbol_table, message_handler, guard_manager);
   std::map<exprt, exprt> shadow_distinguishers;
 
   fixed.copy_from(goto_program);
@@ -355,12 +356,14 @@ void sat_path_enumeratort::build_fixed()
   remove_skip(fixed);
 }
 
-void sat_path_enumeratort::record_path(scratch_programt &program)
+void sat_path_enumeratort::record_path(
+  scratch_programt &program,
+  guard_managert &guard_manager)
 {
   distinguish_valuest path_val;
 
   for(const auto &expr : distinguishers)
-    path_val[expr]=program.eval(expr).is_true();
+    path_val[expr] = program.eval(expr, guard_manager).is_true();
 
   accelerated_paths.push_back(path_val);
 }

@@ -197,6 +197,9 @@ private:
   // location has a data dependency on
   depst data_deps;
 
+  // Used for
+  guard_managert guard_manager;
+
   friend const depst &
     dependence_graph_test_get_control_deps(const dep_graph_domaint &);
   friend const depst &
@@ -213,7 +216,8 @@ private:
     const irep_idt &function_to,
     goto_programt::const_targett to,
     dependence_grapht &dep_graph,
-    const namespacet &ns);
+    const namespacet &ns,
+    guard_managert &guard_manager);
 };
 
 class dependence_grapht:

@@ -60,11 +60,11 @@ bool scratch_programt::check_sat(bool do_slice)
   return (checker->dec_solve()==decision_proceduret::resultt::D_SATISFIABLE);
 }
 
-exprt scratch_programt::eval(const exprt &e)
+exprt scratch_programt::eval(const exprt &e, guard_managert &guard_manager)
 {
   exprt ssa=e;
 
-  symex_state.rename(ssa, ns);
+  symex_state.rename(ssa, ns, guard_manager);
 
   return checker->get(ssa);
 }

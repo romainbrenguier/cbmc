@@ -88,15 +88,21 @@ unsigned instrumentert::goto2graph_cfg(
   value_setst &value_sets,
   memory_modelt model,
   bool no_dependencies,
-  loop_strategyt duplicate_body)
+  loop_strategyt duplicate_body,
+  guard_managert &guard_manager)
 {
   if(!no_dependencies)
     message.status() << "Dependencies analysis enabled" << messaget::eom;
 
   /* builds the graph following the CFG */
   cfg_visitort visitor(ns, *this);
-  visitor.visit_cfg(value_sets, model, no_dependencies, duplicate_body,
-    goto_functions.entry_point());
+  visitor.visit_cfg(
+    value_sets,
+    model,
+    no_dependencies,
+    duplicate_body,
+    goto_functions.entry_point(),
+    guard_manager);
 
   std::vector<std::size_t> subgraph_index;
   num_sccs=egraph_alt.SCCs(subgraph_index);
@@ -150,7 +156,8 @@ void instrumentert::cfg_visitort::visit_cfg_function(
   bool no_dependencies,
   loop_strategyt replicate_body,
   const irep_idt &function_id,
-  std::set<instrumentert::cfg_visitort::nodet> &ending_vertex)
+  std::set<instrumentert::cfg_visitort::nodet> &ending_vertex,
+  guard_managert &guard_manager)
 {
   /* flow: egraph */
 
@@ -212,12 +219,13 @@ void instrumentert::cfg_visitort::visit_cfg_function(
         value_sets,
         function_id,
         i_it,
-        no_dependencies
+        no_dependencies,
+        guard_manager
 #ifdef LOCAL_MAY
         ,
         local_may
 #endif
-      ); // NOLINT(whitespace/parens)
+        ); // NOLINT(whitespace/parens)
     }
     else if(is_fence(instruction, instrumenter.ns))
     {
@@ -240,8 +248,13 @@ void instrumentert::cfg_visitort::visit_cfg_function(
     }
     else if(instruction.is_function_call())
     {
-      visit_cfg_function_call(value_sets, i_it, model,
-        no_dependencies, replicate_body);
+      visit_cfg_function_call(
+        value_sets,
+        i_it,
+        model,
+        no_dependencies,
+        replicate_body,
+        guard_manager);
     }
     else if(instruction.is_goto())
     {
@@ -250,12 +263,13 @@ void instrumentert::cfg_visitort::visit_cfg_function(
         goto_program,
         i_it,
         replicate_body,
-        value_sets
+        value_sets,
+        guard_manager
 #ifdef LOCAL_MAY
         ,
         local_may
 #endif
-      ); // NOLINT(whitespace/parens)
+        ); // NOLINT(whitespace/parens)
     }
 #ifdef CONTEXT_INSENSITIVE
     else if(instruction.is_return())
@@ -408,7 +422,8 @@ bool instrumentert::cfg_visitort::contains_shared_array(
   const irep_idt &function_id,
   goto_programt::const_targett targ,
   goto_programt::const_targett i_it,
-  value_setst &value_sets
+  value_setst &value_sets,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   ,
   local_may_aliast local_may
@@ -431,7 +446,8 @@ bool instrumentert::cfg_visitort::contains_shared_array(
       ,
       local_may
 #endif
-    ); // NOLINT(whitespace/parens)
+      ,
+      guard_manager); // NOLINT(whitespace/parens)
     instrumenter.message.debug() << "Writes: "<<rw_set.w_entries.size()
       <<"; Reads:"<<rw_set.r_entries.size() << messaget::eom;
 
@@ -465,12 +481,13 @@ void inline instrumentert::cfg_visitort::visit_cfg_body(
   const goto_programt &goto_program,
   goto_programt::const_targett i_it,
   loop_strategyt replicate_body,
-  value_setst &value_sets
+  value_setst &value_sets,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   ,
   local_may_aliast &local_may
 #endif
-)
+  )
 {
   /* for each target of the goto */
   for(const auto &target : i_it->targets)
@@ -490,7 +507,8 @@ void inline instrumentert::cfg_visitort::visit_cfg_body(
             function_id,
             target,
             i_it,
-            value_sets
+            value_sets,
+            guard_manager
 #ifdef LOCAL_MAY
             ,
             local_may
@@ -646,12 +664,13 @@ void instrumentert::cfg_visitort::visit_cfg_goto(
   const goto_programt &goto_program,
   goto_programt::instructionst::iterator i_it,
   loop_strategyt replicate_body,
-  value_setst &value_sets
+  value_setst &value_sets,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   ,
   local_may_aliast &local_may
 #endif
-)
+  )
 {
   const goto_programt::instructiont &instruction=*i_it;
 
@@ -670,12 +689,13 @@ void instrumentert::cfg_visitort::visit_cfg_goto(
       goto_program,
       i_it,
       replicate_body,
-      value_sets
+      value_sets,
+      guard_manager
 #ifdef LOCAL_MAY
       ,
       local_may
 #endif
-    ); // NOLINT(whitespace/parens)
+      ); // NOLINT(whitespace/parens)
   }
 }
 
@@ -684,7 +704,8 @@ void instrumentert::cfg_visitort::visit_cfg_function_call(
   goto_programt::instructionst::iterator i_it,
   memory_modelt model,
   bool no_dependencies,
-  loop_strategyt replicate_body)
+  loop_strategyt replicate_body,
+  guard_managert &guard_manager)
 {
   const goto_programt::instructiont &instruction=*i_it;
 
@@ -723,8 +744,14 @@ void instrumentert::cfg_visitort::visit_cfg_function_call(
     #endif
     {
       /* normal inlining strategy */
-      visit_cfg_function(value_sets, model, no_dependencies, replicate_body,
-        fun_id, in_pos[i_it]);
+      visit_cfg_function(
+        value_sets,
+        model,
+        no_dependencies,
+        replicate_body,
+        fun_id,
+        in_pos[i_it],
+        guard_manager);
       updated.insert(i_it);
     }
 
@@ -817,7 +844,8 @@ void instrumentert::cfg_visitort::visit_cfg_assign(
   value_setst &value_sets,
   const irep_idt &function_id,
   goto_programt::instructionst::iterator &i_it,
-  bool no_dependencies
+  bool no_dependencies,
+  guard_managert &guard_manager
 #ifdef LOCAL_MAY
   ,
   local_may_aliast &local_may
@@ -836,7 +864,8 @@ void instrumentert::cfg_visitort::visit_cfg_assign(
     ,
     local_may
 #endif
-  ); // NOLINT(whitespace/parens)
+    ,
+    guard_manager); // NOLINT(whitespace/parens)
 
   event_idt previous=std::numeric_limits<event_idt>::max();
   event_idt previous_gnode=std::numeric_limits<event_idt>::max();

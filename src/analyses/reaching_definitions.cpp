@@ -313,7 +313,7 @@ void rd_range_domaint::transform_assign(
   locationt to,
   reaching_definitions_analysist &rd)
 {
-  rw_range_set_value_sett rw_set(ns, rd.get_value_sets());
+  rw_range_set_value_sett rw_set(ns, rd.get_value_sets(), guard_manager);
   goto_rw(function_to, to, rw_set);
   const bool is_must_alias=rw_set.get_w_set().size()==1;
 

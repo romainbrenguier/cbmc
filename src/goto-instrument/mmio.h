@@ -16,9 +16,8 @@ Date: September 2011
 
 class value_setst;
 class goto_modelt;
+class guard_managert;
 
-void mmio(
-  value_setst &,
-  goto_modelt &);
+void mmio(value_setst &, goto_modelt &, guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_INSTRUMENT_MMIO_H

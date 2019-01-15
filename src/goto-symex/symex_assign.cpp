@@ -93,7 +93,7 @@ void goto_symext::symex_assign(
     if(state.source.pc->source_location.get_hide())
       assignment_type=symex_targett::assignment_typet::HIDDEN;
 
-    guardt guard{true_exprt{}}; // NOT the state guard!
+    guardt guard{true_exprt{}, guard_manager}; // NOT the state guard!
     symex_assign_rec(state, lhs, nil_exprt(), rhs, guard, assignment_type);
   }
 }
@@ -231,7 +231,7 @@ void goto_symext::symex_assign_symbol(
     tmp_ssa_rhs.swap(ssa_rhs);
   }
 
-  state.rename(ssa_rhs, ns);
+  state.rename(ssa_rhs, ns, guard_manager);
   do_simplify(ssa_rhs);
 
   ssa_exprt ssa_lhs=lhs;
@@ -241,13 +241,14 @@ void goto_symext::symex_assign_symbol(
     ns,
     symex_config.simplify_opt,
     symex_config.constant_propagation,
-    symex_config.allow_pointer_unsoundness);
+    symex_config.allow_pointer_unsoundness,
+    guard_manager);
 
   exprt ssa_full_lhs=full_lhs;
   ssa_full_lhs=add_to_lhs(ssa_full_lhs, ssa_lhs);
   const bool record_events=state.record_events;
   state.record_events=false;
-  state.rename(ssa_full_lhs, ns);
+  state.rename(ssa_full_lhs, ns, guard_manager);
   state.record_events=record_events;
 
   guardt tmp_guard(state.guard);
@@ -427,7 +428,7 @@ void goto_symext::symex_assign_if(
   guardt old_guard=guard;
 
   exprt renamed_guard=lhs.cond();
-  state.rename(renamed_guard, ns);
+  state.rename(renamed_guard, ns, guard_manager);
   do_simplify(renamed_guard);
 
   if(!renamed_guard.is_false())

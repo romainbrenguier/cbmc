@@ -13,7 +13,9 @@ Author: Daniel Kroening, kroening@kroening.com
 #define CPROVER_GOTO_SYMEX_PRECONDITION_H
 
 #include <pointer-analysis/value_sets.h>
+#include <util/guard.h>
 
+#include "goto_symex_state.h"
 #include "symex_target_equation.h"
 
 void precondition(
@@ -21,7 +23,8 @@ void precondition(
   value_setst &value_sets,
   const goto_programt::const_targett target,
   const symex_target_equationt &equation,
-  const class goto_symex_statet &s,
-  exprt &dest);
+  const goto_symex_statet &s,
+  exprt &dest,
+  guard_managert &guard_manager);
 
 #endif // CPROVER_GOTO_SYMEX_PRECONDITION_H

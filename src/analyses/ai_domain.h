@@ -18,6 +18,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/xml.h>
 
 #include <goto-programs/goto_model.h>
+#include <util/guard.h>
 
 // forward reference the abstract interpreter interface
 class ai_baset;

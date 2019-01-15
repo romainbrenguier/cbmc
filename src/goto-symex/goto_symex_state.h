@@ -34,14 +34,15 @@ Author: Daniel Kroening, kroening@kroening.com
 class goto_symex_statet final
 {
 public:
-  goto_symex_statet();
+  explicit goto_symex_statet(guard_managert &manager);
   ~goto_symex_statet();
 
   /// \brief Fake "copy constructor" that initializes the `symex_target` member
   explicit goto_symex_statet(
     const goto_symex_statet &other,
-    symex_target_equationt *const target)
-    : goto_symex_statet(other) // NOLINT
+    symex_target_equationt *const target,
+    guard_managert &manager)
+    : goto_symex_statet(other)
   {
     symex_target = target;
   }
@@ -54,7 +55,9 @@ public:
   /// distance from entry
   unsigned depth;
 
-  guardt guard{true_exprt{}};
+  // Manager is requiered to be able to resize the thread vector
+  guard_managert guard_manager;
+  guardt guard;
   symex_targett::sourcet source;
   symex_target_equationt *symex_target;
 
@@ -72,26 +75,36 @@ public:
   enum levelt { L0=0, L1=1, L2=2 };
 
   // performs renaming _up to_ the given level
-  void rename(exprt &expr, const namespacet &ns, levelt level=L2);
+  void rename(
+    exprt &expr,
+    const namespacet &ns,
+    guard_managert &manager,
+    levelt level = L2);
   void rename(
     typet &type,
     const irep_idt &l1_identifier,
     const namespacet &ns,
-    levelt level=L2);
+    guard_managert &manager,
+    levelt level = L2);
 
   void assignment(
-    ssa_exprt &lhs, // L0/L1
-    const exprt &rhs,  // L2
+    ssa_exprt &lhs,   // L0/L1
+    const exprt &rhs, // L2
     const namespacet &ns,
     bool rhs_is_simplified,
     bool record_value,
-    bool allow_pointer_unsoundness=false);
+    bool allow_pointer_unsoundness,
+    guard_managert &guard_manager);
 
   // undoes all levels of renaming
   void get_original_name(exprt &expr) const;
   void get_original_name(typet &type) const;
 protected:
-  void rename_address(exprt &expr, const namespacet &ns, levelt level);
+  void rename_address(
+    exprt &expr,
+    const namespacet &ns,
+    levelt level,
+    guard_managert &manager);
 
   void set_l0_indices(ssa_exprt &expr, const namespacet &ns);
   void set_l1_indices(ssa_exprt &expr, const namespacet &ns);
@@ -254,15 +267,22 @@ public:
   struct threadt
   {
     goto_programt::const_targett pc;
-    guardt guard{true_exprt{}};
+    guardt guard;
     call_stackt call_stack;
     std::map<irep_idt, unsigned> function_frame;
     unsigned atomic_section_id = 0;
+    explicit threadt(guard_managert &guard_manager)
+      : guard(true_exprt(), guard_manager)
+    {
+    }
   };
 
   std::vector<threadt> threads;
 
-  bool l2_thread_read_encoding(ssa_exprt &expr, const namespacet &ns);
+  bool l2_thread_read_encoding(
+    ssa_exprt &expr,
+    const namespacet &ns,
+    guard_managert &manager);
   bool l2_thread_write_encoding(const ssa_exprt &expr, const namespacet &ns);
 
   bool record_events;

@@ -15,6 +15,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/namespace.h>
 
 #include <goto-programs/goto_model.h>
+#include <util/guard.h>
 
 #include "value_sets.h"
 #include "value_set_dereference.h"
@@ -42,18 +43,21 @@ public:
 
   void dereference_program(
     goto_programt &goto_program,
-    bool checks_only=false);
+    bool checks_only,
+    guard_managert &manager);
 
   void dereference_program(
     goto_functionst &goto_functions,
-    bool checks_only=false);
+    bool checks_only,
+    guard_managert &manager);
 
-  void pointer_checks(goto_programt &goto_program);
-  void pointer_checks(goto_functionst &goto_functions);
+  void pointer_checks(goto_programt &goto_program, guard_managert &manager);
+  void pointer_checks(goto_functionst &goto_functions, guard_managert &manager);
 
   void dereference_expression(
     goto_programt::const_targett target,
-    exprt &expr);
+    exprt &expr,
+    guard_managert &manager);
 
   virtual ~goto_program_dereferencet()
   {
@@ -68,7 +72,10 @@ protected:
   DEPRECATED("Unused")
   virtual bool is_valid_object(const irep_idt &identifier);
 
-  bool has_failed_symbol(const exprt &expr, const symbolt *&symbol) override;
+  bool has_failed_symbol(
+    const exprt &expr,
+    const symbolt *&symbol,
+    guard_managert &guard_manager) override;
 
   DEPRECATED("Unused")
   virtual void dereference_failure(
@@ -80,15 +87,20 @@ protected:
 
   void dereference_instruction(
     goto_programt::targett target,
-    bool checks_only=false);
+    bool checks_only,
+    guard_managert &manager);
 
 protected:
   void dereference_rec(
-    exprt &expr, guardt &guard, const value_set_dereferencet::modet mode);
+    exprt &expr,
+    guardt &guard,
+    const value_set_dereferencet::modet mode,
+    guard_managert &guard_manager);
   void dereference_expr(
     exprt &expr,
     const bool checks_only,
-    const value_set_dereferencet::modet mode);
+    const value_set_dereferencet::modet mode,
+    class guard_managert &guard_manager);
 
 #if 0
   const std::set<irep_idt> *valid_local_variables;
@@ -109,17 +121,17 @@ void dereference(
   goto_programt::const_targett target,
   exprt &expr,
   const namespacet &,
-  value_setst &);
+  value_setst &,
+  guard_managert &manager);
 
-void remove_pointers(
-  goto_modelt &,
-  value_setst &);
+void remove_pointers(goto_modelt &, value_setst &, guard_managert &);
 
 DEPRECATED("Unused")
 void remove_pointers(
   goto_functionst &,
   symbol_tablet &,
-  value_setst &);
+  value_setst &,
+  guard_managert &);
 
 DEPRECATED("Unused")
 void pointer_checks(

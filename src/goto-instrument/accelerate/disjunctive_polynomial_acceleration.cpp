@@ -47,10 +47,11 @@ Author: Matt Lewis
 #include "overflow_instrumenter.h"
 
 bool disjunctive_polynomial_accelerationt::accelerate(
-  path_acceleratort &accelerator)
+  path_acceleratort &accelerator,
+  guard_managert &guard_manager)
 {
   std::map<exprt, polynomialt> polynomials;
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
 
   accelerator.clear();
 
@@ -88,7 +89,7 @@ bool disjunctive_polynomial_accelerationt::accelerate(
   patht &path=accelerator.path;
   path.clear();
 
-  if(!find_path(path))
+  if(!find_path(path, guard_manager))
   {
     // No more paths!
     return false;
@@ -207,12 +208,12 @@ bool disjunctive_polynomial_accelerationt::accelerate(
     polynomialt poly;
     exprt target(*it);
 
-    if(path_acceleration.fit_polynomial(assigns, target, poly))
+    if(path_acceleration.fit_polynomial(assigns, target, poly, guard_manager))
     {
       std::map<exprt, polynomialt> this_poly;
       this_poly[target]=poly;
 
-      if(utils.check_inductive(this_poly, accelerator.path))
+      if(utils.check_inductive(this_poly, accelerator.path, guard_manager))
       {
         polynomials[target]=poly;
         accelerator.changed_vars.insert(target);
@@ -245,7 +246,8 @@ bool disjunctive_polynomial_accelerationt::accelerate(
 
   try
   {
-    path_is_monotone=utils.do_assumptions(polynomials, path, guard);
+    path_is_monotone =
+      utils.do_assumptions(polynomials, path, guard, guard_manager);
   }
   catch(const std::string &s)
   {
@@ -335,9 +337,11 @@ bool disjunctive_polynomial_accelerationt::accelerate(
   return true;
 }
 
-bool disjunctive_polynomial_accelerationt::find_path(patht &path)
+bool disjunctive_polynomial_accelerationt::find_path(
+  patht &path,
+  guard_managert &guard_manager)
 {
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
 
   program.append(fixed);
   program.append(fixed);
@@ -378,8 +382,8 @@ bool disjunctive_polynomial_accelerationt::find_path(patht &path)
 #ifdef DEBUG
       std::cout << "Found a path\n";
 #endif
-      build_path(program, path);
-      record_path(program);
+      build_path(program, path, guard_manager);
+      record_path(program, guard_manager);
 
       return true;
     }
@@ -399,13 +403,14 @@ bool disjunctive_polynomial_accelerationt::find_path(patht &path)
 bool disjunctive_polynomial_accelerationt::fit_polynomial(
   exprt &var,
   polynomialt &polynomial,
-  patht &path)
+  patht &path,
+  guard_managert &guard_manager)
 {
   // These are the variables that var depends on with respect to the body.
   std::vector<expr_listt> parameters;
   std::set<std::pair<expr_listt, exprt> > coefficients;
   expr_listt exprs;
-  scratch_programt program(symbol_table, message_handler);
+  scratch_programt program(symbol_table, message_handler, guard_manager);
   expr_sett influence;
 
   cone_of_influence(var, influence);
@@ -625,9 +630,10 @@ bool disjunctive_polynomial_accelerationt::fit_polynomial(
       std::cout << "Found a polynomial\n";
 #endif
 
-      utils.extract_polynomial(program, coefficients, polynomial);
-      build_path(program, path);
-      record_path(program);
+      utils.extract_polynomial(
+        program, coefficients, polynomial, guard_manager);
+      build_path(program, path, guard_manager);
+      record_path(program, guard_manager);
 
       return true;
     }
@@ -776,7 +782,9 @@ void disjunctive_polynomial_accelerationt::find_distinguishing_points()
 }
 
 void disjunctive_polynomial_accelerationt::build_path(
-  scratch_programt &scratch_program, patht &path)
+  scratch_programt &scratch_program,
+  patht &path,
+  guard_managert &guard_manager)
 {
   goto_programt::targett t=loop_header;
 
@@ -805,7 +813,7 @@ void disjunctive_polynomial_accelerationt::build_path(
     for(const auto &succ : succs)
     {
       exprt &distinguisher=distinguishing_points[succ];
-      bool taken=scratch_program.eval(distinguisher).is_true();
+      bool taken = scratch_program.eval(distinguisher, guard_manager).is_true();
 
       if(taken)
       {
@@ -854,9 +862,10 @@ void disjunctive_polynomial_accelerationt::build_path(
  * version of that body, suitable for use in the fixed-path acceleration we
  * will be doing later.
  */
-void disjunctive_polynomial_accelerationt::build_fixed()
+void disjunctive_polynomial_accelerationt::build_fixed(
+  guard_managert &guard_manager)
 {
-  scratch_programt scratch(symbol_table, message_handler);
+  scratch_programt scratch(symbol_table, message_handler, guard_manager);
   std::map<exprt, exprt> shadow_distinguishers;
 
   fixed.copy_from(goto_program);
@@ -1002,7 +1011,8 @@ void disjunctive_polynomial_accelerationt::build_fixed()
 }
 
 void disjunctive_polynomial_accelerationt::record_path(
-  scratch_programt &program)
+  scratch_programt &program,
+  guard_managert &guard_manager)
 {
   distinguish_valuest path_val;
 
@@ -1010,7 +1020,7 @@ void disjunctive_polynomial_accelerationt::record_path(
       it != distinguishers.end();
       ++it)
   {
-    path_val[*it]=program.eval(*it).is_true();
+    path_val[*it] = program.eval(*it, guard_manager).is_true();
   }
 
   accelerated_paths.push_back(path_val);

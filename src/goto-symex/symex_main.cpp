@@ -85,7 +85,7 @@ void goto_symext::vcc(
   rewrite_quantifiers(expr, state);
 
   // now rename, enables propagation
-  state.rename(expr, ns);
+  state.rename(expr, ns, guard_manager);
 
   // now try simplifier on it
   do_simplify(expr);
@@ -283,7 +283,7 @@ void goto_symext::resume_symex_from_saved_state(
   // new path now, so the old bmct and the equation that it owned have now
   // been deallocated. So, construct a new state from the old one, and make
   // its equation member point to the (valid) equation passed as an argument.
-  statet state(saved_state, saved_equation);
+  statet state(saved_state, saved_equation, guard_manager);
 
   // Do NOT do the same initialization that `symex_with_state` does for a
   // fresh state, as that would clobber the saved state's program counter
@@ -307,7 +307,7 @@ void goto_symext::symex_from_entry_point_of(
     throw unsupported_operation_exceptiont("the program has no entry point");
   }
 
-  statet state;
+  statet state(guard_manager);
 
   state.run_validation_checks = symex_config.run_validation_checks;
 
@@ -378,7 +378,7 @@ void goto_symext::symex_step(
     {
       exprt tmp=instruction.guard;
       clean_expr(tmp, state, false);
-      state.rename(tmp, ns);
+      state.rename(tmp, ns, guard_manager);
       symex_assume(state, tmp);
     }
 
