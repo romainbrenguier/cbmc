@@ -106,7 +106,10 @@ void goto_symext::symex_goto(statet &state)
   }
 
   exprt simpl_state_guard = state.guard.as_expr();
+
+#ifndef HAS_CUDD
   do_simplify(simpl_state_guard);
+#endif
 
   // No point executing both branches of an unconditional goto.
   if(
