@@ -42,7 +42,6 @@ public:
   guard_bddt &operator=(guard_bddt &&other) noexcept;
   guard_bddt &add(const exprt &expr);
   guard_bddt &append(const guard_bddt &guard);
-  guard_bddt &from_expr(const exprt &expr);
   exprt as_expr() const;
 
   /// Assign dest to `guard => dest` unless guard or dest are trivial.

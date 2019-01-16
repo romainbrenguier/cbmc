@@ -113,13 +113,6 @@ static bddt bdd_from_expr(const exprt &expr, guard_bdd_managert &manager)
   return manager.bdd_manager.bdd_variable(var_of_expr(manager, expr));
 }
 
-guard_bddt &guard_bddt::from_expr(const exprt &expr)
-{
-  PRECONDITION(expr.type().id() == ID_bool);
-  bdd = bdd_from_expr(expr, manager);
-  return *this;
-}
-
 guard_bddt::guard_bddt(const exprt &e, guard_bdd_managert &manager)
   : manager(manager), bdd(bdd_from_expr(e, manager))
 {
