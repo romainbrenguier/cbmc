@@ -15,20 +15,29 @@ static optionalt<std::vector<mp_integer>> eval_string(
   const array_string_exprt &a,
   const std::function<exprt(const exprt &)> &get_value);
 
-/// For a \p refined_string of the form `{length; data;}`, look in
-/// \p array_pool for the entry corresponding to \c data and \c length.
+/// For a \p refined_string of refined string type, look in \p array_pool for
+/// the entry corresponding to \c refined_string.data and
+/// \c refined_string.length.
 static array_string_exprt find_string_struct(
   array_poolt &array_pool,
   const exprt &refined_string)
 {
   PRECONDITION(is_refined_string_type(refined_string.type()));
   PRECONDITION(refined_string.operands().size() == 2);
-  const auto as_struct = expr_checked_cast<struct_exprt>(refined_string);
-  const exprt &pointer = as_struct.op1();
-  INVARIANT(
-    pointer.type().id() == ID_pointer,
-    "second field of string struct should have pointer type");
-  const exprt &length = as_struct.op0();
+  if(const auto as_struct = expr_try_dynamic_cast<struct_exprt>(refined_string))
+  {
+    const exprt &pointer = as_struct->op1();
+    INVARIANT(
+      pointer.type().id() == ID_pointer,
+      "second field of string struct should have pointer type");
+    const exprt &length = as_struct->op0();
+    return array_pool.find(pointer, length);
+  }
+  auto string_type = to_refined_string_type(refined_string.type());
+  const member_exprt pointer{
+    refined_string, "data", string_type.get_content_type()};
+  const member_exprt length{
+    refined_string, "length", string_type.get_index_type()};
   return array_pool.find(pointer, length);
 }
 
