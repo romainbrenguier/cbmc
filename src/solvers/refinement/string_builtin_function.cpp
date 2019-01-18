@@ -15,8 +15,8 @@ static optionalt<std::vector<mp_integer>> eval_string(
   const array_string_exprt &a,
   const std::function<exprt(const exprt &)> &get_value);
 
-/// For a \p refined_string of the form `{length; pointer;}`, look in
-/// \p array_pool for the entry corresponding to \c pointer and \c length.
+/// For a \p refined_string of the form `{length; data;}`, look in
+/// \p array_pool for the entry corresponding to \c data and \c length.
 static array_string_exprt find_string_struct(
   array_poolt &array_pool,
   const exprt &refined_string)
