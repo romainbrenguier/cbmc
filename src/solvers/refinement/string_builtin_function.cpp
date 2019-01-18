@@ -629,14 +629,8 @@ string_builtin_function_with_no_evalt::string_builtin_function_with_no_evalt(
 
   for(; i < fun_args.size(); ++i)
   {
-    const auto arg = expr_try_dynamic_cast<struct_exprt>(fun_args[i]);
-    // TODO: use is_refined_string_type ?
-    if(
-      arg && arg->operands().size() == 2 &&
-      arg->op1().type().id() == ID_pointer)
-    {
-      string_args.push_back(find_string_struct(array_pool, *arg));
-    }
+    if(is_refined_string_type(fun_args[i].type()))
+      string_args.push_back(find_string_struct(array_pool, fun_args[i]));
     else
       args.push_back(fun_args[i]);
   }
