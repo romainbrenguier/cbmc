@@ -178,7 +178,6 @@ exprt string_constraint_generatort::associate_array_to_pointer(
 
   const exprt &pointer_expr = f.arguments()[1];
   array_pool.insert(pointer_expr, array_expr);
-  // created_strings.emplace(to_array_string_expr(array_expr));
   return from_integer(0, f.type());
 }
 
