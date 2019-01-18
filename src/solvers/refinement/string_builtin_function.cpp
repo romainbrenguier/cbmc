@@ -18,7 +18,7 @@ static optionalt<std::vector<mp_integer>> eval_string(
 /// For a \p refined_string of refined string type, look in \p array_pool for
 /// the entry corresponding to \c refined_string.data and
 /// \c refined_string.length.
-static array_string_exprt find_string_struct(
+array_string_exprt find_string_struct(
   array_poolt &array_pool,
   const exprt &refined_string)
 {

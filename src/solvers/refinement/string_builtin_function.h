@@ -15,6 +15,10 @@ class string_constraint_generatort;
 
 #define CHARACTER_FOR_UNKNOWN '?'
 
+array_string_exprt find_string_struct(
+  array_poolt &array_pool,
+  const exprt &refined_string);
+
 /// Base class for string functions that are built in the solver
 class string_builtin_functiont
 {
