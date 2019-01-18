@@ -48,11 +48,13 @@ public:
   {
   }
 
+#ifdef DEBUG
   const std::unordered_map<exprt, array_string_exprt, irep_hash> &
   get_arrays_of_pointers() const
   {
     return arrays_of_pointers;
   }
+#endif // DEBUG
 
   exprt get_length(const array_string_exprt &s) const;
 

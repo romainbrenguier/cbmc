@@ -951,6 +951,7 @@ static optionalt<exprt> get_array(
   return {};
 }
 
+#ifdef DEBUG
 /// convert the content of a string to a more readable representation. This
 /// should only be used for debugging.
 /// \param arr: a constant array expression
@@ -1045,6 +1046,7 @@ void debug_model(
   }
   stream << messaget::eom;
 }
+#endif // DEBUG
 
 /// Create a new expression where 'with' expressions on arrays are replaced by
 /// 'if' expressions. e.g. for an array access arr[index], where: `arr :=
