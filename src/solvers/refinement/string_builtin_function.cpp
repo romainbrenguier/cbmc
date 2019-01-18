@@ -23,9 +23,11 @@ static array_string_exprt find_string_struct(
   const exprt &refined_string)
 {
   PRECONDITION(is_refined_string_type(refined_string.type()));
-  PRECONDITION(refined_string.operands().size() == 2);
   if(const auto as_struct = expr_try_dynamic_cast<struct_exprt>(refined_string))
   {
+    INVARIANT(
+      refined_string.operands().size() == 2,
+      "string struct should have two members");
     const exprt &pointer = as_struct->op1();
     INVARIANT(
       pointer.type().id() == ID_pointer,
@@ -33,11 +35,16 @@ static array_string_exprt find_string_struct(
     const exprt &length = as_struct->op0();
     return array_pool.find(pointer, length);
   }
-  auto string_type = to_refined_string_type(refined_string.type());
+  auto string_type = to_struct_type(refined_string.type());
+  INVARIANT(string_type.components().size() == 2, "string struct type should have two members");
+  INVARIANT(string_type.components()[0].get_name() == "length",
+            "first member should be length");
+  INVARIANT(string_type.components()[1].get_name() == "content",
+            "second member should be content");
   const member_exprt pointer{
-    refined_string, "data", string_type.get_content_type()};
+    refined_string, "data", string_type.components()[1].type()};
   const member_exprt length{
-    refined_string, "length", string_type.get_index_type()};
+    refined_string, "length", string_type.components()[0].type()};
   return array_pool.find(pointer, length);
 }
 
