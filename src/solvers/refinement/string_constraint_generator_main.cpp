@@ -307,6 +307,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_constrain_characters(
 
 /// Creates a new array if the pointer is not pointing to an array
 /// \todo This should be replaced by make_char_array_for_char_pointer
+/// Length is only used if the pointer is not found.
 const array_string_exprt &
 array_poolt::find(const exprt &pointer, const exprt &length)
 {
