@@ -132,7 +132,7 @@ array_string_exprt array_poolt::make_char_array_for_char_pointer(
     to_array_string_expr(fresh_symbol(symbol_name, char_array_type));
   const auto insert_result =
     arrays_of_pointers.insert({char_pointer, array_sym});
-  return  to_array_string_expr(insert_result.first->second);
+  return to_array_string_expr(insert_result.first->second);
 }
 
 void array_poolt::insert(
