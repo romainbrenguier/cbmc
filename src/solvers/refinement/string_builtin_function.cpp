@@ -15,6 +15,18 @@ static optionalt<std::vector<mp_integer>> eval_string(
   const array_string_exprt &a,
   const std::function<exprt(const exprt &)> &get_value);
 
+/// For a \p refined_string of the form `{length; pointer;}`, look in
+/// \p array_pool for the entry corresponding to \c pointer and \c length.
+static array_string_exprt find_string_struct(
+  array_poolt &array_pool,
+  const exprt &refined_string)
+{
+  const auto as_struct = expr_checked_cast<struct_exprt>(refined_string);
+  const exprt &pointer = as_struct.op1();
+  const exprt &length = as_struct.op0();
+  return array_pool.find(pointer, length);
+}
+
 /// Make a string from a constant array
 static array_string_exprt make_string(
   const std::vector<mp_integer> &array,
@@ -28,8 +40,7 @@ string_transformation_builtin_functiont::
   : string_builtin_functiont(return_code)
 {
   PRECONDITION(fun_args.size() > 2);
-  const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
-  input = array_pool.find(arg1.op1(), arg1.op0());
+  input = find_string_struct(array_pool, fun_args[2]);
   result = array_pool.find(fun_args[1], fun_args[0]);
 }
 
@@ -40,10 +51,8 @@ string_insertion_builtin_functiont::string_insertion_builtin_functiont(
   : string_builtin_functiont(return_code)
 {
   PRECONDITION(fun_args.size() > 4);
-  const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
-  input1 = array_pool.find(arg1.op1(), arg1.op0());
-  const auto arg2 = expr_checked_cast<struct_exprt>(fun_args[4]);
-  input2 = array_pool.find(arg2.op1(), arg2.op0());
+  input1 = find_string_struct(array_pool, fun_args[2]);
+  input2 = find_string_struct(array_pool, fun_args[4]);
   result = array_pool.find(fun_args[1], fun_args[0]);
   args.push_back(fun_args[3]);
   args.insert(args.end(), fun_args.begin() + 5, fun_args.end());
@@ -56,10 +65,8 @@ string_concatenation_builtin_functiont::string_concatenation_builtin_functiont(
   : string_insertion_builtin_functiont(return_code)
 {
   PRECONDITION(fun_args.size() >= 4 && fun_args.size() <= 6);
-  const auto arg1 = expr_checked_cast<struct_exprt>(fun_args[2]);
-  input1 = array_pool.find(arg1.op1(), arg1.op0());
-  const auto arg2 = expr_checked_cast<struct_exprt>(fun_args[3]);
-  input2 = array_pool.find(arg2.op1(), arg2.op0());
+  input1 = find_string_struct(array_pool, fun_args[2]);
+  input2 = find_string_struct(array_pool, fun_args[3]);
   result = array_pool.find(fun_args[1], fun_args[0]);
   args.insert(args.end(), fun_args.begin() + 4, fun_args.end());
 }
