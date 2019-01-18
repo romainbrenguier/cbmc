@@ -381,7 +381,8 @@ string_constraint_generatort::add_axioms_for_function_application(
     return add_axioms_for_equals_ignore_case(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_is_empty_func)
     return add_axioms_for_is_empty(fresh_symbol, expr, array_pool);
-  else if(id==ID_cprover_string_char_at_func)
+  else if(id==ID_cprover_string_char_at_func ||
+          id == "__CPROVER_uninterpreted_string_char_at_func")
     return add_axioms_for_char_at(fresh_symbol, expr, array_pool);
   else if(id==ID_cprover_string_is_prefix_func)
     return add_axioms_for_is_prefix(fresh_symbol, expr, false, array_pool);

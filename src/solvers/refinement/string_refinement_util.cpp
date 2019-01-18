@@ -216,7 +216,8 @@ static std::unique_ptr<string_builtin_functiont> to_string_builtin_function(
     return util_make_unique<string_insertion_builtin_functiont>(
       return_code, fun_app.arguments(), array_pool);
 
-  if(id == ID_cprover_string_concat_func)
+  if(id == ID_cprover_string_concat_func ||
+     id == "__CPROVER_uninterpreted_string_concat_func")
     return util_make_unique<string_concatenation_builtin_functiont>(
       return_code, fun_app.arguments(), array_pool);
 
