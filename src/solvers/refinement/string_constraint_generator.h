@@ -37,12 +37,6 @@ public:
 
 private:
   unsigned symbol_count = 0;
-
-#ifdef DEBUG
-public:
-  /// Keep track of created symbols, for debugging purposes.
-  std::vector<symbol_exprt> created_symbols;
-#endif
 };
 
 /// Correspondance between arrays and pointers string representations

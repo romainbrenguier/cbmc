@@ -45,9 +45,6 @@ operator()(const irep_idt &prefix, const typet &type)
   buf << "string_refinement#" << prefix << "#" << ++symbol_count;
   irep_idt name(buf.str());
   symbol_exprt result(name, type);
-#ifdef DEBUG
-  created_symbols.push_back(result);
-#endif
   return result;
 }
 
