@@ -79,6 +79,7 @@ private:
   symbol_generatort &fresh_symbol;
 
   // Strings created in the pool
+  // TODO: this should be unecessary
   std::set<array_string_exprt> created_strings_value;
 
   array_string_exprt make_char_array_for_char_pointer(
