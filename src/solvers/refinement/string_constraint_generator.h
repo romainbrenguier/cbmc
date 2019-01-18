@@ -62,7 +62,7 @@ public:
 
   const array_string_exprt &find(const exprt &pointer, const exprt &length);
 
-  const std::set<array_string_exprt> &created_strings() const;
+  bool has(const array_string_exprt &) const;
 
   array_string_exprt
   fresh_string(const typet &index_type, const typet &char_type);

@@ -154,9 +154,9 @@ void array_poolt::insert(
     it_bool.second, "should not associate two arrays to the same pointer");
 }
 
-const std::set<array_string_exprt> &array_poolt::created_strings() const
+bool array_poolt::has(const array_string_exprt &string) const
 {
-  return created_strings_value;
+  return created_strings_value.count(string) != 0;
 }
 
 /// Associate a char array to a char pointer.
