@@ -635,8 +635,7 @@ string_builtin_function_with_no_evalt::string_builtin_function_with_no_evalt(
       arg && arg->operands().size() == 2 &&
       arg->op1().type().id() == ID_pointer)
     {
-      INVARIANT(is_refined_string_type(arg->type()), "should be a string");
-      string_args.push_back(array_pool.find(arg->op1(), arg->op0()));
+      string_args.push_back(find_string_struct(array_pool, *arg));
     }
     else
       args.push_back(fun_args[i]);
