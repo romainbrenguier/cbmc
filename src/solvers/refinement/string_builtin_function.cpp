@@ -21,8 +21,13 @@ static array_string_exprt find_string_struct(
   array_poolt &array_pool,
   const exprt &refined_string)
 {
+  PRECONDITION(is_refined_string_type(refined_string.type()));
+  PRECONDITION(refined_string.operands().size() == 2);
   const auto as_struct = expr_checked_cast<struct_exprt>(refined_string);
   const exprt &pointer = as_struct.op1();
+  INVARIANT(
+    pointer.type().id() == ID_pointer,
+    "second field of string struct should have pointer type");
   const exprt &length = as_struct.op0();
   return array_pool.find(pointer, length);
 }
