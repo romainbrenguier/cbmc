@@ -382,14 +382,9 @@ void goto_symex_statet::rename_level1(exprt &expr, const namespacet &ns)
   }
 }
 
-void goto_symex_statet::rename(
-  exprt &expr,
-  const namespacet &ns,
-  levelt level)
+void goto_symex_statet::rename_level2(exprt &expr, const namespacet &ns)
 {
   // rename all the symbols with their last known value
-  PRECONDITION(level == L2);
-
   if(expr.id()==ID_symbol &&
      expr.get_bool(ID_C_SSA_symbol))
   {
@@ -429,7 +424,7 @@ void goto_symex_statet::rename(
     }
 
     expr=ssa_exprt(expr);
-    rename(expr, ns);
+    rename_level2(expr, ns);
   }
   else if(expr.id()==ID_address_of)
   {
@@ -444,7 +439,7 @@ void goto_symex_statet::rename(
 
     // do this recursively
     Forall_operands(it, expr)
-      rename(*it, ns);
+      rename_level2(*it, ns);
 
     fix_type(expr);
   }
@@ -635,7 +630,7 @@ void goto_symex_statet::rename_address(
     else if(level == L1)
       rename_level1(e, ns);
     else
-      rename(e, ns);
+      rename_level2(e, ns);
   };
 
   if(expr.id()==ID_symbol &&
@@ -739,7 +734,7 @@ void goto_symex_statet::rename(
     else if(level == L1)
       rename_level1(e, ns);
     else
-      rename(e, ns);
+      rename_level2(e, ns);
   };
 
   // rename all the symbols with their last known value

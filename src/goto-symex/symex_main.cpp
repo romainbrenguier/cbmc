@@ -95,7 +95,7 @@ void goto_symext::vcc(
   }
 
   // now rename, enables propagation
-  state.rename(expr, ns);
+  state.rename_level2(expr, ns);
 
   // now try simplifier on it
   do_simplify(expr);
@@ -391,7 +391,7 @@ void goto_symext::symex_step(
     {
       exprt tmp=instruction.guard;
       clean_expr(tmp, state, false);
-      state.rename(tmp, ns);
+      state.rename_level2(tmp, ns);
       symex_assume(state, tmp);
     }
 
