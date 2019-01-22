@@ -27,6 +27,14 @@ Author: Daniel Kroening, kroening@kroening.com
 
 static void get_l1_name(exprt &expr);
 
+static void set_l2_indices(
+  symex_level0t level0,
+  symex_level1t level1,
+  symex_level2t level2,
+  ssa_exprt &ssa_expr,
+  unsigned int thread_nr,
+  const namespacet &ns);
+
 goto_symex_statet::goto_symex_statet()
   : depth(0),
     symex_target(nullptr),
@@ -190,7 +198,7 @@ void goto_symex_statet::assignment(
   const auto level2_it =
     level2.current_names.emplace(l1_identifier, std::make_pair(lhs, 0)).first;
   symex_renaming_levelt::increase_counter(level2_it);
-  set_l2_indices(lhs, ns);
+  set_l2_indices(level0, level1, level2, lhs, source.thread_nr, ns);
 
   // in case we happen to be multi-threaded, record the memory access
   bool is_shared=l2_thread_write_encoding(lhs, ns);
@@ -261,13 +269,17 @@ static void set_l1_indices(
   level1(ssa_expr);
 }
 
-void goto_symex_statet::set_l2_indices(
+static void set_l2_indices(
+  symex_level0t level0,
+  symex_level1t level1,
+  symex_level2t level2,
   ssa_exprt &ssa_expr,
+  unsigned int thread_nr,
   const namespacet &ns)
 {
   if(!ssa_expr.get_level_2().empty())
     return;
-  level0(ssa_expr, ns, source.thread_nr);
+  level0(ssa_expr, ns, thread_nr);
   level1(ssa_expr);
   ssa_expr.set_level_2(level2.current_count(ssa_expr.get_identifier()));
 }
@@ -319,7 +331,7 @@ void goto_symex_statet::rename(
         if(p_it != propagation.end())
           expr=p_it->second; // already L2
         else
-          set_l2_indices(ssa, ns);
+          set_l2_indices(level0, level1, level2, ssa, source.thread_nr, ns);
       }
     }
   }
@@ -439,7 +451,8 @@ bool goto_symex_statet::l2_thread_read_encoding(
       cond |= guardt{no_write.op()};
 
     if_exprt tmp(cond.as_expr(), ssa_l1, ssa_l1);
-    set_l2_indices(to_ssa_expr(tmp.true_case()), ns);
+    auto &ssa_true = to_ssa_expr(tmp.true_case());
+    set_l2_indices(level0, level1, level2, ssa_true, source.thread_nr, ns);
 
     if(a_s_read.second.empty())
     {
@@ -472,7 +485,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
       source,
       symex_targett::assignment_typet::PHI);
 
-    set_l2_indices(ssa_l1, ns);
+    set_l2_indices(level0, level1, level2, ssa_l1, source.thread_nr, ns);
     expr=ssa_l1;
 
     a_s_read.second.push_back(guard);
@@ -489,14 +502,14 @@ bool goto_symex_statet::l2_thread_read_encoding(
   // No event and no fresh index, but avoid constant propagation
   if(!record_events)
   {
-    set_l2_indices(ssa_l1, ns);
+    set_l2_indices(level0, level1, level2, ssa_l1, source.thread_nr, ns);
     expr=ssa_l1;
     return true;
   }
 
   // produce a fresh L2 name
   symex_renaming_levelt::increase_counter(level2_it);
-  set_l2_indices(ssa_l1, ns);
+  set_l2_indices(level0, level1, level2, ssa_l1, source.thread_nr, ns);
   expr=ssa_l1;
 
   // and record that
