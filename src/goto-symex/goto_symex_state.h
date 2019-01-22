@@ -93,7 +93,6 @@ public:
 protected:
   void rename_address(exprt &expr, const namespacet &ns, levelt level);
 
-  void set_l1_indices(ssa_exprt &expr, const namespacet &ns);
   void set_l2_indices(ssa_exprt &expr, const namespacet &ns);
 
   // this maps L1 names to (L2) types

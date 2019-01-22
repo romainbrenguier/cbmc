@@ -246,15 +246,18 @@ static void set_l0_indices(
   level0(ssa_expr, ns, thread_nr);
 }
 
-void goto_symex_statet::set_l1_indices(
+static void set_l1_indices(
+  symex_level0t level0,
+  symex_level1t level1,
   ssa_exprt &ssa_expr,
+  unsigned int thread_nr,
   const namespacet &ns)
 {
   if(!ssa_expr.get_level_2().empty())
     return;
   if(!ssa_expr.get_level_1().empty())
     return;
-  level0(ssa_expr, ns, source.thread_nr);
+  level0(ssa_expr, ns, thread_nr);
   level1(ssa_expr);
 }
 
@@ -289,13 +292,13 @@ void goto_symex_statet::rename(
     }
     else if(level == L1)
     {
-      set_l1_indices(ssa, ns);
+      set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
       rename(expr.type(), ssa.get_identifier(), ns, level);
       ssa.update_type();
     }
     else if(level==L2)
     {
-      set_l1_indices(ssa, ns);
+      set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
       rename(expr.type(), ssa.get_identifier(), ns, level);
       ssa.update_type();
 
@@ -551,7 +554,7 @@ void goto_symex_statet::rename_address(
     ssa_exprt &ssa=to_ssa_expr(expr);
 
     // only do L1!
-    set_l1_indices(ssa, ns);
+    set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
 
     rename(expr.type(), ssa.get_identifier(), ns, level);
     ssa.update_type();
