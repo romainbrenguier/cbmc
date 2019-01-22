@@ -644,6 +644,20 @@ void goto_symex_statet::rename_address(
   }
 }
 
+/// Return the type corresponding to a symbol or tag. Empty optional if \p type
+/// is neither a symbol or a tag.
+static optionalt<typet>
+type_of_symbol_or_tag(const typet &type, const namespacet &ns)
+{
+  if(type.id() == ID_symbol_type)
+    return ns.lookup(to_symbol_type(type)).type;
+  if(type.id() == ID_union_tag)
+    return ns.lookup(to_union_tag_type(type)).type;
+  if(type.id() == ID_struct_tag)
+    return ns.lookup(to_struct_tag_type(type)).type;
+  return {};
+}
+
 void goto_symex_statet::rename(
   typet &type,
   const irep_idt &l1_identifier,
@@ -700,22 +714,9 @@ void goto_symex_statet::rename(
   {
     rename(to_pointer_type(type).subtype(), irep_idt(), ns, level);
   }
-  else if(type.id() == ID_symbol_type)
+  else if(const auto &followed_type = type_of_symbol_or_tag(type, ns))
   {
-    const symbolt &symbol = ns.lookup(to_symbol_type(type));
-    type = symbol.type;
-    rename(type, l1_identifier, ns, level);
-  }
-  else if(type.id() == ID_union_tag)
-  {
-    const symbolt &symbol = ns.lookup(to_union_tag_type(type));
-    type = symbol.type;
-    rename(type, l1_identifier, ns, level);
-  }
-  else if(type.id() == ID_struct_tag)
-  {
-    const symbolt &symbol = ns.lookup(to_struct_tag_type(type));
-    type=symbol.type;
+    type = *followed_type;
     rename(type, l1_identifier, ns, level);
   }
 
