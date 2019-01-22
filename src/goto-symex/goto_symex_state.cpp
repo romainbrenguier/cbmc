@@ -303,6 +303,46 @@ static void fix_type(exprt &expr)
   }
 }
 
+void goto_symex_statet::rename_level0(exprt &expr, const namespacet &ns)
+{
+  // rename all the symbols with their last known value
+  if(auto ssa = expr_try_dynamic_cast<ssa_exprt>(expr))
+  {
+    set_l0_indices(level0, *ssa, source.thread_nr, ns);
+    rename(expr.type(), ssa->get_identifier(), ns, L0);
+    ssa->update_type();
+  }
+  else if(expr.id() == ID_symbol)
+  {
+    // we never rename function symbols
+    if(expr.type().id() == ID_code)
+    {
+      rename(expr.type(), to_symbol_expr(expr).get_identifier(), ns, L0);
+
+      return;
+    }
+
+    expr = ssa_exprt(expr);
+    rename_level0(expr, ns);
+  }
+  else if(auto address_of_expr = expr_try_dynamic_cast<address_of_exprt>(expr))
+  {
+    rename_address(address_of_expr->object(), ns, L0);
+    to_pointer_type(expr.type()).subtype() = address_of_expr->object().type();
+  }
+  else
+  {
+    // this could go wrong, but we would have to re-typecheck ...
+    rename(expr.type(), irep_idt(), ns, L0);
+
+    // do this recursively
+    for(auto &op : expr.operands())
+      rename_level0(op, ns);
+
+    fix_type(expr);
+  }
+}
+
 void goto_symex_statet::rename(
   exprt &expr,
   const namespacet &ns,
