@@ -690,18 +690,15 @@ void goto_symex_statet::rename(
     }
   }
 
-  if(type.id()==ID_array)
+  if(const auto &array_type = type_try_dynamic_cast<array_typet>(type))
   {
-    auto &array_type = to_array_type(type);
-    rename(array_type.subtype(), irep_idt(), ns, level);
-    rename(array_type.size(), ns, level);
+    rename(array_type->subtype(), irep_idt(), ns, level);
+    rename(array_type->size(), ns, level);
   }
-  else if(type.id() == ID_struct || type.id() == ID_union)
+  else if(
+    const auto &s_u_type = type_try_dynamic_cast<struct_union_typet>(type))
   {
-    struct_union_typet &s_u_type=to_struct_union_type(type);
-    struct_union_typet::componentst &components=s_u_type.components();
-
-    for(auto &component : components)
+    for(auto &component : s_u_type->components())
     {
       // be careful, or it might get cyclic
       if(component.type().id() == ID_array)
