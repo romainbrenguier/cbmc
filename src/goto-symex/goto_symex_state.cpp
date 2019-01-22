@@ -175,7 +175,7 @@ void goto_symex_statet::assignment(
   bool allow_pointer_unsoundness)
 {
   // identifier should be l0 or l1, make sure it's l1
-  rename(lhs, ns, L1);
+  rename_level1(lhs, ns);
   irep_idt l1_identifier=lhs.get_identifier();
 
   // the type might need renaming
@@ -647,8 +647,10 @@ void goto_symex_statet::rename_address(
   auto rename_expr = [&](exprt &e) {
     if(level == L0)
       rename_level0(e, ns);
+    else if(level == L1)
+      rename_level1(e, ns);
     else
-      rename(e, ns, level);
+      rename(e, ns);
   };
 
   if(expr.id()==ID_symbol &&
@@ -749,8 +751,10 @@ void goto_symex_statet::rename(
   auto rename_expr = [&](exprt &e) {
     if(level == L0)
       rename_level0(e, ns);
+    else if(level == L1)
+      rename_level1(e, ns);
     else
-      rename(e, ns, level);
+      rename(e, ns);
   };
 
   // rename all the symbols with their last known value

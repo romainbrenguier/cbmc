@@ -71,7 +71,7 @@ void goto_symext::symex_start_thread(statet &state)
     auto emplace_result = state.level1.current_names.emplace(
       lhs.get_l1_object_identifier(), std::make_pair(lhs, 0));
     CHECK_RETURN(emplace_result.second);
-    state.rename(lhs, ns, goto_symex_statet::L1);
+    state.rename_level1(lhs, ns);
     const irep_idt l1_name=lhs.get_l1_object_identifier();
     // store it
     state.l1_history.insert(l1_name);

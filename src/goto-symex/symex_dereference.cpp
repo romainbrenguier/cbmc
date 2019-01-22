@@ -381,12 +381,12 @@ void goto_symext::dereference(
   // from different frames. Would be enough to rename
   // symbols whose address is taken.
   PRECONDITION(!state.call_stack().empty());
-  state.rename(expr, ns, goto_symex_statet::L1);
+  state.rename_level1(expr, ns);
 
   // start the recursion!
   guardt guard{true_exprt{}};
   dereference_rec(expr, state, guard, write);
   // dereferencing may introduce new symbol_exprt
   // (like __CPROVER_memory)
-  state.rename(expr, ns, goto_symex_statet::L1);
+  state.rename_level1(expr, ns);
 }

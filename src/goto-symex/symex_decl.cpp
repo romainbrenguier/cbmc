@@ -38,7 +38,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // We also prevent propagation of old values.
 
   ssa_exprt ssa(expr);
-  state.rename(ssa, ns, goto_symex_statet::L1);
+  state.rename_level1(ssa, ns);
   const irep_idt &l1_identifier=ssa.get_identifier();
 
   // rename type to L2
@@ -54,7 +54,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
       return exprt(ID_invalid);
     }();
 
-    state.rename(rhs, ns, goto_symex_statet::L1);
+    state.rename_level1(rhs, ns);
     state.value_set.assign(ssa, rhs, ns, true, false);
   }
 
