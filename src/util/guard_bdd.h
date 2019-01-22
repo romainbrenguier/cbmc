@@ -16,7 +16,13 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <iosfwd>
 #include <memory>
 
+// #ifdef HAS_CUDD
+#if 0
 #include "bdd.h"
+#else
+#include "bdd_mini.h"
+#endif
+
 #include "make_unique.h"
 #include "std_expr.h"
 
