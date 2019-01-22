@@ -284,6 +284,25 @@ static void set_l2_indices(
   ssa_expr.set_level_2(level2.current_count(ssa_expr.get_identifier()));
 }
 
+/// Fixes the type of `with_exprt`s and `if_exprt`s according to their operands.
+/// When the type of the operands of a `with_exprt` or `if_exprt` have been
+/// renamed they could end up being different from that of the expression. We
+/// fix that by propagating the type of its operands to \p expr.
+static void fix_type(exprt &expr)
+{
+  if(expr.id() == ID_with)
+    expr.type() = to_with_expr(expr).old().type();
+  else if(expr.id() == ID_if)
+  {
+    DATA_INVARIANT(
+      to_if_expr(expr).true_case().type() ==
+        to_if_expr(expr).false_case().type(),
+      "true case of to_if_expr should be of same type "
+      "as false case");
+    expr.type() = to_if_expr(expr).true_case().type();
+  }
+}
+
 void goto_symex_statet::rename(
   exprt &expr,
   const namespacet &ns,
@@ -367,18 +386,7 @@ void goto_symex_statet::rename(
     Forall_operands(it, expr)
       rename(*it, ns, level);
 
-    // some fixes
-    if(expr.id()==ID_with)
-      expr.type()=to_with_expr(expr).old().type();
-    else if(expr.id()==ID_if)
-    {
-      DATA_INVARIANT(
-        to_if_expr(expr).true_case().type() ==
-          to_if_expr(expr).false_case().type(),
-        "true case of to_if_expr should be of same type "
-        "as false case");
-      expr.type()=to_if_expr(expr).true_case().type();
-    }
+    fix_type(expr);
   }
 }
 
