@@ -609,6 +609,13 @@ void goto_symex_statet::rename_address(
   const namespacet &ns,
   levelt level)
 {
+  auto rename_expr = [&](exprt &e) {
+    if(level == L0)
+      rename_level0(e, ns);
+    else
+      rename(e, ns, level);
+  };
+
   if(expr.id()==ID_symbol &&
      expr.get_bool(ID_C_SSA_symbol))
   {
@@ -636,13 +643,13 @@ void goto_symex_statet::rename_address(
       expr.type() = to_array_type(index_expr.array().type()).subtype();
 
       // the index is not an address
-      rename(index_expr.index(), ns, level);
+      rename_expr(index_expr.index());
     }
     else if(expr.id()==ID_if)
     {
       // the condition is not an address
       if_exprt &if_expr=to_if_expr(expr);
-      rename(if_expr.cond(), ns, level);
+      rename_expr(if_expr.cond());
       rename_address(if_expr.true_case(), ns, level);
       rename_address(if_expr.false_case(), ns, level);
 
@@ -704,6 +711,13 @@ void goto_symex_statet::rename(
   const namespacet &ns,
   levelt level)
 {
+  auto rename_expr = [&](exprt &e) {
+    if(level == L0)
+      rename_level0(e, ns);
+    else
+      rename(e, ns, level);
+  };
+
   // rename all the symbols with their last known value
   // to the given level
 
@@ -733,7 +747,7 @@ void goto_symex_statet::rename(
   if(const auto &array_type = type_try_dynamic_cast<array_typet>(type))
   {
     rename(array_type->subtype(), irep_idt(), ns, level);
-    rename(array_type->size(), ns, level);
+    rename_expr(array_type->size());
   }
   else if(
     const auto &s_u_type = type_try_dynamic_cast<struct_union_typet>(type))
@@ -742,7 +756,7 @@ void goto_symex_statet::rename(
     {
       // be careful, or it might get cyclic
       if(component.type().id() == ID_array)
-        rename(to_array_type(component.type()).size(), ns, level);
+        rename_expr(to_array_type(component.type()).size());
       else if(component.type().id() != ID_pointer)
         rename(component.type(), irep_idt(), ns, level);
     }

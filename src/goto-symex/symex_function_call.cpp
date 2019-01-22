@@ -400,7 +400,7 @@ void goto_symext::locality(
   {
     // get L0 name
     ssa_exprt ssa(ns.lookup(*it).symbol_expr());
-    state.rename(ssa, ns, goto_symex_statet::L0);
+    state.rename_level0(ssa, ns);
     const irep_idt l0_name=ssa.get_identifier();
 
     // save old L1 name for popping the frame
