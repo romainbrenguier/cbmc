@@ -237,11 +237,13 @@ void goto_symex_statet::assignment(
   #endif
 }
 
-void goto_symex_statet::set_l0_indices(
+static void set_l0_indices(
+  symex_level0t level0,
   ssa_exprt &ssa_expr,
+  unsigned int thread_nr,
   const namespacet &ns)
 {
-  level0(ssa_expr, ns, source.thread_nr);
+  level0(ssa_expr, ns, thread_nr);
 }
 
 void goto_symex_statet::set_l1_indices(
@@ -281,7 +283,7 @@ void goto_symex_statet::rename(
 
     if(level == L0)
     {
-      set_l0_indices(ssa, ns);
+      set_l0_indices(level0, ssa, source.thread_nr, ns);
       rename(expr.type(), ssa.get_identifier(), ns, level);
       ssa.update_type();
     }
