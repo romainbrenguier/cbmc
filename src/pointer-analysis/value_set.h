@@ -379,7 +379,7 @@ public:
     apply_code_rec(code, ns);
   }
 
-  /// Transforms this value-set by executing executing the assignment
+  /// Transforms this value-set by executing the assignment
   /// `lhs := rhs` against it.
   /// \param lhs: written expression
   /// \param rhs: read expression
@@ -393,7 +393,7 @@ public:
   ///   prevent a strong assignment, as in `x == y ? z : w := a`, where either
   ///   `y` or `z` MAY, but not MUST, be overwritten.
   void assign(
-    const exprt &lhs,
+    const level1t<ssa_exprt> &lhs,
     const exprt &rhs,
     const namespacet &ns,
     bool is_simplified,
@@ -502,6 +502,13 @@ protected:
     const std::string &suffix,
     const typet &original_type,
     const namespacet &ns) const;
+
+  void assign(
+    const exprt &lhs,
+    const exprt &rhs,
+    const namespacet &ns,
+    bool is_simplified,
+    bool add_to_sets);
 
   /// Subclass customisation point for recursion over LHS expression:
   virtual void assign_rec(

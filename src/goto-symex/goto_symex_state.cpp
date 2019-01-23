@@ -234,8 +234,7 @@ void goto_symex_statet::assignment(
         !check_renaming_l1(l1_rhs.expr), "rhs renaming failed on l1");
     }
 
-    value_set.assign(
-      l1_lhs.expr, l1_rhs.expr, ns, rhs_is_simplified, is_shared);
+    value_set.assign(l1_lhs, l1_rhs, ns, rhs_is_simplified, is_shared);
   }
 
   #if 0
