@@ -412,7 +412,7 @@ goto_symex_statet::rename_level1(exprt expr, const namespacet &ns)
   }
 }
 
-ssa_exprt
+level2t<ssa_exprt>
 goto_symex_statet::rename_level2_ssa(ssa_exprt ssa, const namespacet &ns)
 {
   set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
@@ -438,10 +438,11 @@ goto_symex_statet::rename_level2_ssa(ssa_exprt ssa, const namespacet &ns)
     else
       set_l2_indices(level0, level1, level2, ssa, source.thread_nr, ns);
   }
-  return ssa;
+  return level2t<ssa_exprt>{ssa};
 }
 
-exprt goto_symex_statet::rename_level2(exprt expr, const namespacet &ns)
+level2t<exprt>
+goto_symex_statet::rename_level2(exprt expr, const namespacet &ns)
 {
   // rename all the symbols with their last known value
   if(expr.id()==ID_symbol &&
@@ -497,11 +498,11 @@ exprt goto_symex_statet::rename_level2(exprt expr, const namespacet &ns)
 
     // do this recursively
     Forall_operands(it, expr)
-      *it = rename_level2(std::move(*it), ns);
+      *it = rename_level2(std::move(*it), ns).expr;
 
     fix_type(expr);
   }
-  return expr;
+  return level2t<exprt>{expr};
 }
 
 /// thread encoding
@@ -792,7 +793,7 @@ void goto_symex_statet::rename(
     if(level == L1)
       e = rename_level1(e, ns).expr;
     else
-      rename_level2(e, ns);
+      e = rename_level2(e, ns).expr;
   };
 
   // rename all the symbols with their last known value

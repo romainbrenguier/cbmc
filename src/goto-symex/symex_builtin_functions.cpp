@@ -70,36 +70,36 @@ void goto_symext::symex_allocate(
   else
   {
     // to allow constant propagation
-    exprt tmp_size = state.rename_level2(size, ns);
-    simplify(tmp_size, ns);
+    level2t<exprt> tmp_size = state.rename_level2(size, ns);
+    simplify(tmp_size.expr, ns);
 
     // special treatment for sizeof(T)*x
     {
-      const auto tmp_type = c_sizeof_type_rec(tmp_size);
+      const auto tmp_type = c_sizeof_type_rec(tmp_size.expr);
 
       if(tmp_type.has_value())
       {
         // Did the size get multiplied?
         auto elem_size = pointer_offset_size(*tmp_type, ns);
-        const auto alloc_size = numeric_cast<mp_integer>(tmp_size);
+        const auto alloc_size = numeric_cast<mp_integer>(tmp_size.expr);
 
         if(!elem_size.has_value() || *elem_size==0)
         {
         }
         else if(
-          !alloc_size.has_value() && tmp_size.id() == ID_mult &&
-          tmp_size.operands().size() == 2 &&
-          (tmp_size.op0().is_constant() ||
-           tmp_size.op1().is_constant()))
+          !alloc_size.has_value() && tmp_size.expr.id() == ID_mult &&
+          tmp_size.expr.operands().size() == 2 &&
+          (tmp_size.expr.op0().is_constant() ||
+           tmp_size.expr.op1().is_constant()))
         {
-          exprt s = tmp_size.op0();
+          exprt s = tmp_size.expr.op0();
           if(s.is_constant())
           {
-            s = tmp_size.op1();
-            PRECONDITION(*c_sizeof_type_rec(tmp_size.op0()) == *tmp_type);
+            s = tmp_size.expr.op1();
+            PRECONDITION(*c_sizeof_type_rec(tmp_size.expr.op0()) == *tmp_type);
           }
           else
-            PRECONDITION(*c_sizeof_type_rec(tmp_size.op1()) == *tmp_type);
+            PRECONDITION(*c_sizeof_type_rec(tmp_size.expr.op1()) == *tmp_type);
 
           object_type = array_typet(*tmp_type, s);
         }
@@ -112,15 +112,15 @@ void goto_symext::symex_allocate(
             mp_integer elements = *alloc_size / (*elem_size);
 
             if(elements * (*elem_size) == *alloc_size)
-              object_type =
-                array_typet(*tmp_type, from_integer(elements, tmp_size.type()));
+              object_type = array_typet(
+                *tmp_type, from_integer(elements, tmp_size.expr.type()));
           }
         }
       }
     }
 
     if(!object_type.has_value())
-      object_type=array_typet(unsigned_char_type(), tmp_size);
+      object_type = array_typet(unsigned_char_type(), tmp_size.expr);
 
     // we introduce a fresh symbol for the size
     // to prevent any issues of the size getting ever changed
@@ -136,7 +136,7 @@ void goto_symext::symex_allocate(
       size_symbol.base_name=
         "dynamic_object_size"+std::to_string(dynamic_counter);
       size_symbol.name="symex_dynamic::"+id2string(size_symbol.base_name);
-      size_symbol.type = tmp_size.type();
+      size_symbol.type = tmp_size.expr.type();
       size_symbol.mode = mode;
       size_symbol.type.set(ID_C_constant, true);
       size_symbol.value = array_size;
@@ -163,14 +163,14 @@ void goto_symext::symex_allocate(
   state.symbol_table.add(value_symbol);
 
   // to allow constant propagation
-  exprt zero_init = state.rename_level2(code.op1(), ns);
-  simplify(zero_init, ns);
+  level2t<exprt> zero_init = state.rename_level2(code.op1(), ns);
+  simplify(zero_init.expr, ns);
 
   INVARIANT(
-    zero_init.is_constant(),
+    zero_init.expr.is_constant(),
     "allocate expects constant as second argument");
 
-  if(!zero_init.is_zero() && !zero_init.is_false())
+  if(!zero_init.expr.is_zero() && !zero_init.expr.is_false())
   {
     const auto zero_value =
       zero_initializer(*object_type, code.source_location(), ns);
@@ -234,9 +234,9 @@ void goto_symext::symex_gcc_builtin_va_arg_next(
     return; // ignore
 
   // to allow constant propagation
-  exprt tmp = state.rename_level2(code.op0(), ns);
-  do_simplify(tmp);
-  irep_idt id = get_symbol(tmp);
+  level2t<exprt> tmp = state.rename_level2(code.op0(), ns);
+  do_simplify(tmp.expr);
+  irep_idt id = get_symbol(tmp.expr);
 
   const auto zero = zero_initializer(lhs.type(), code.source_location(), ns);
   CHECK_RETURN(zero.has_value());
@@ -311,10 +311,10 @@ void goto_symext::symex_printf(
 {
   PRECONDITION(!rhs.operands().empty());
 
-  exprt tmp_rhs = state.rename_level2(rhs, ns);
-  do_simplify(tmp_rhs);
+  level2t<exprt> tmp_rhs = state.rename_level2(rhs, ns);
+  do_simplify(tmp_rhs.expr);
 
-  const exprt::operandst &operands = tmp_rhs.operands();
+  const exprt::operandst &operands = tmp_rhs.expr.operands();
   std::list<exprt> args;
 
   for(std::size_t i=1; i<operands.size(); i++)
@@ -335,19 +335,19 @@ void goto_symext::symex_input(
 {
   PRECONDITION(code.operands().size() >= 2);
 
-  exprt id_arg = state.rename_level2(code.op0(), ns);
+  level2t<exprt> id_arg = state.rename_level2(code.op0(), ns);
 
   std::list<exprt> args;
 
   for(std::size_t i=1; i<code.operands().size(); i++)
   {
     args.push_back(code.operands()[i]);
-    exprt l2_arg = state.rename_level2(args.back(), ns);
-    do_simplify(l2_arg);
-    args.back() = std::move(l2_arg);
+    level2t<exprt> l2_arg = state.rename_level2(args.back(), ns);
+    do_simplify(l2_arg.expr);
+    args.back() = std::move(l2_arg.expr);
   }
 
-  const irep_idt input_id = get_string_argument(id_arg, ns);
+  const irep_idt input_id = get_string_argument(id_arg.expr, ns);
 
   target.input(state.guard.as_expr(), state.source, input_id, args);
 }
@@ -357,19 +357,19 @@ void goto_symext::symex_output(
   const codet &code)
 {
   PRECONDITION(code.operands().size() >= 2);
-  exprt id_arg = state.rename_level2(code.op0(), ns);
+  level2t<exprt> id_arg = state.rename_level2(code.op0(), ns);
 
   std::list<exprt> args;
 
   for(std::size_t i=1; i<code.operands().size(); i++)
   {
     args.push_back(code.operands()[i]);
-    exprt l2_arg = state.rename_level2(args.back(), ns);
-    do_simplify(l2_arg);
-    args.back() = std::move(l2_arg);
+    level2t<exprt> l2_arg = state.rename_level2(args.back(), ns);
+    do_simplify(l2_arg.expr);
+    args.back() = std::move(l2_arg.expr);
   }
 
-  const irep_idt output_id=get_string_argument(id_arg, ns);
+  const irep_idt output_id = get_string_argument(id_arg.expr, ns);
 
   target.output(state.guard.as_expr(), state.source, output_id, args);
 }
@@ -477,7 +477,7 @@ void goto_symext::symex_trace(
     irep_idt event = to_string_constant(code.arguments()[1].op0()).get_value();
 
     for(std::size_t j=2; j<code.arguments().size(); j++)
-      vars.push_back(state.rename_level2(code.arguments()[j], ns));
+      vars.push_back(state.rename_level2(code.arguments()[j], ns).expr);
 
     target.output(state.guard.as_expr(), state.source, event, vars);
   }

@@ -95,18 +95,19 @@ void goto_symext::vcc(
   }
 
   // now rename, enables propagation
-  exprt l2_expr = state.rename_level2(std::move(expr), ns);
+  level2t<exprt> l2_expr = state.rename_level2(std::move(expr), ns);
 
   // now try simplifier on it
-  do_simplify(l2_expr);
+  do_simplify(l2_expr.expr);
 
-  if(l2_expr.is_true())
+  if(l2_expr.expr.is_true())
     return;
 
-  state.guard.guard_expr(l2_expr);
+  state.guard.guard_expr(l2_expr.expr);
 
   state.remaining_vccs++;
-  target.assertion(state.guard.as_expr(), l2_expr, msg, state.source);
+  // TODO: make assertion take a level2 exprt
+  target.assertion(state.guard.as_expr(), l2_expr.expr, msg, state.source);
 }
 
 void goto_symext::symex_assume(statet &state, const exprt &cond)
@@ -391,7 +392,7 @@ void goto_symext::symex_step(
     {
       exprt tmp=instruction.guard;
       clean_expr(tmp, state, false);
-      symex_assume(state, state.rename_level2(std::move(tmp), ns));
+      symex_assume(state, state.rename_level2(std::move(tmp), ns).expr);
     }
 
     symex_transition(state);

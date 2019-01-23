@@ -69,7 +69,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   symex_renaming_levelt::increase_counter(level2_it);
   const bool record_events=state.record_events;
   state.record_events=false;
-  state.rename_level2(ssa.expr, ns);
+  level2t<ssa_exprt> l2_expr = state.rename_level2(ssa.expr, ns);
   state.record_events=record_events;
 
   // we hide the declaration of auxiliary variables
@@ -81,12 +81,17 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
 
   target.decl(
     state.guard.as_expr(),
-    ssa.expr,
+    l2_expr.expr,
     state.source,
     hidden ? symex_targett::assignment_typet::HIDDEN
            : symex_targett::assignment_typet::STATE);
 
-  if(state.dirty(ssa.expr.get_object_name()) && state.atomic_section_id == 0)
+  if(
+    state.dirty(l2_expr.expr.get_object_name()) && state.atomic_section_id == 0)
+    // TODO: make shared write take a level2 exprt
     target.shared_write(
-      state.guard.as_expr(), ssa.expr, state.atomic_section_id, state.source);
+      state.guard.as_expr(),
+      l2_expr.expr,
+      state.atomic_section_id,
+      state.source);
 }

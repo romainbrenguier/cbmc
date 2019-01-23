@@ -62,7 +62,7 @@ bool scratch_programt::check_sat(bool do_slice)
 
 exprt scratch_programt::eval(const exprt &e)
 {
-  return checker->get(symex_state.rename_level2(e, ns));
+  return checker->get(symex_state.rename_level2(e, ns).expr);
 }
 
 void scratch_programt::append(goto_programt::instructionst &new_instructions)
