@@ -37,12 +37,12 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // We increase the L2 renaming to make these non-deterministic.
   // We also prevent propagation of old values.
 
-  ssa_exprt ssa = state.rename_level1_ssa(ssa_exprt{expr}, ns);
-  const irep_idt &l1_identifier = ssa.get_identifier();
+  level1t<ssa_exprt> ssa = state.rename_level1_ssa(ssa_exprt{expr}, ns);
+  const irep_idt &l1_identifier = ssa.expr.get_identifier();
 
   // rename type to L2
-  state.rename(ssa.type(), l1_identifier, ns);
-  ssa.update_type();
+  state.rename(ssa.expr.type(), l1_identifier, ns);
+  ssa.expr.update_type();
 
   // in case of pointers, put something into the value set
   if(expr.type().id() == ID_pointer)
@@ -53,8 +53,8 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
       return exprt(ID_invalid);
     }();
 
-    exprt l1_rhs = state.rename_level1(std::move(rhs), ns);
-    state.value_set.assign(ssa, l1_rhs, ns, true, false);
+    level1t<exprt> l1_rhs = state.rename_level1(std::move(rhs), ns);
+    state.value_set.assign(ssa.expr, l1_rhs.expr, ns, true, false);
   }
 
   // prevent propagation
@@ -64,12 +64,12 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // inlining may yield multiple declarations of the same identifier
   // within the same L1 context
   const auto level2_it = state.level2.current_names
-                           .emplace(l1_identifier, std::make_pair(ssa, 0))
+                           .emplace(l1_identifier, std::make_pair(ssa.expr, 0))
                            .first;
   symex_renaming_levelt::increase_counter(level2_it);
   const bool record_events=state.record_events;
   state.record_events=false;
-  state.rename_level2_ssa(ssa, ns);
+  state.rename_level2(ssa.expr, ns);
   state.record_events=record_events;
 
   // we hide the declaration of auxiliary variables
@@ -81,12 +81,12 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
 
   target.decl(
     state.guard.as_expr(),
-    ssa,
+    ssa.expr,
     state.source,
     hidden ? symex_targett::assignment_typet::HIDDEN
            : symex_targett::assignment_typet::STATE);
 
-  if(state.dirty(ssa.get_object_name()) && state.atomic_section_id == 0)
+  if(state.dirty(ssa.expr.get_object_name()) && state.atomic_section_id == 0)
     target.shared_write(
-      state.guard.as_expr(), ssa, state.atomic_section_id, state.source);
+      state.guard.as_expr(), ssa.expr, state.atomic_section_id, state.source);
 }

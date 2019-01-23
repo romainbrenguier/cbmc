@@ -70,8 +70,8 @@ void goto_symext::symex_start_thread(statet &state)
     auto emplace_result = state.level1.current_names.emplace(
       lhs.get_l1_object_identifier(), std::make_pair(l0_lhs.expr, 0));
     CHECK_RETURN(emplace_result.second);
-    state.rename_level1(l0_lhs.expr, ns);
-    const irep_idt l1_name = l0_lhs.expr.get_l1_object_identifier();
+    const level1t<ssa_exprt> l1_lhs = state.rename_level1(l0_lhs, ns);
+    const irep_idt l1_name = l1_lhs.expr.get_l1_object_identifier();
     // store it
     state.l1_history.insert(l1_name);
     new_thread.call_stack.back().local_objects.insert(l1_name);
@@ -84,7 +84,7 @@ void goto_symext::symex_start_thread(statet &state)
     state.record_events=false;
     symex_assign_symbol(
       state,
-      l0_lhs.expr,
+      l1_lhs.expr,
       nil_exprt(),
       rhs,
       guard,
