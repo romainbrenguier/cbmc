@@ -175,7 +175,7 @@ void goto_symex_statet::assignment(
   bool allow_pointer_unsoundness)
 {
   // identifier should be l0 or l1, make sure it's l1
-  rename_level1(lhs, ns);
+  lhs = rename_level1_ssa(std::move(lhs), ns).expr;
   irep_idt l1_identifier=lhs.get_identifier();
 
   // the type might need renaming
@@ -353,31 +353,50 @@ goto_symex_statet::rename_level0(const symbol_exprt &expr, const namespacet &ns)
   return level0t<ssa_exprt>{ssa};
 }
 
-void goto_symex_statet::rename_level1(exprt &expr, const namespacet &ns)
+level1t<ssa_exprt> goto_symex_statet::rename_level1(
+  level0t<ssa_exprt> l0_expr,
+  const namespacet &ns)
+{
+  set_l1_indices(level0, level1, l0_expr.expr, source.thread_nr, ns);
+  rename(l0_expr.expr.type(), l0_expr.expr.get_identifier(), ns, L1);
+  l0_expr.expr.update_type();
+  return level1t<ssa_exprt>{l0_expr.expr};
+}
+
+level1t<ssa_exprt>
+goto_symex_statet::rename_level1_ssa(ssa_exprt ssa, const namespacet &ns)
+{
+  set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
+  rename(ssa.type(), ssa.get_identifier(), ns, L1);
+  ssa.update_type();
+  return level1t<ssa_exprt>{ssa};
+}
+
+level1t<exprt>
+goto_symex_statet::rename_level1(exprt expr, const namespacet &ns)
 {
   // rename all the symbols with their last known value
   if(auto ssa = expr_try_dynamic_cast<ssa_exprt>(expr))
   {
-    set_l1_indices(level0, level1, *ssa, source.thread_nr, ns);
-    rename(expr.type(), ssa->get_identifier(), ns, L1);
-    ssa->update_type();
+    expr = rename_level1_ssa(std::move(*ssa), ns).expr;
+    return level1t<exprt>{expr};
   }
-  else if(expr.id() == ID_symbol)
+  else if(auto symbol = expr_try_dynamic_cast<symbol_exprt>(expr))
   {
     // we never rename function symbols
-    if(expr.type().id() == ID_code)
+    if(symbol->type().id() == ID_code)
     {
-      rename(expr.type(), to_symbol_expr(expr).get_identifier(), ns, L1);
-      return;
+      rename(symbol->type(), symbol->get_identifier(), ns, L1);
+      return level1t<exprt>{std::move(*symbol)};
     }
 
-    expr = ssa_exprt(expr);
-    rename_level1(expr, ns);
+    return level1t<exprt>{rename_level1_ssa(ssa_exprt{*symbol}, ns).expr};
   }
   else if(auto address_of_expr = expr_try_dynamic_cast<address_of_exprt>(expr))
   {
     rename_address(address_of_expr->object(), ns, L1);
     to_pointer_type(expr.type()).subtype() = address_of_expr->object().type();
+    return level1t<exprt>{expr};
   }
   else
   {
@@ -386,9 +405,10 @@ void goto_symex_statet::rename_level1(exprt &expr, const namespacet &ns)
 
     // do this recursively
     for(auto &op : expr.operands())
-      rename_level1(op, ns);
+      op = rename_level1(std::move(op), ns).expr;
 
     fix_type(expr);
+    return level1t<exprt>{expr};
   }
 }
 
@@ -637,7 +657,7 @@ void goto_symex_statet::rename_address(
   PRECONDITION(level != L0);
   auto rename_expr = [&](exprt &e) {
     if(level == L1)
-      rename_level1(e, ns);
+      e = rename_level1(e, ns).expr;
     else
       rename_level2(e, ns);
   };
@@ -741,7 +761,7 @@ void goto_symex_statet::rename(
     if(level == L0)
       e = rename_level0(std::move(e), ns);
     if(level == L1)
-      rename_level1(e, ns);
+      e = rename_level1(e, ns).expr;
     else
       rename_level2(e, ns);
   };

@@ -247,23 +247,25 @@ void goto_symext::symex_goto(statet &state)
         symbol_exprt(guard_identifier, bool_typet());
       exprt new_rhs = boolean_negate(new_guard);
 
-      ssa_exprt new_lhs(guard_symbol_expr);
-      state.rename_level1(new_lhs, ns);
-      state.assignment(new_lhs, new_rhs, ns, true, false);
+      level1t<ssa_exprt> new_lhs =
+        state.rename_level1_ssa(ssa_exprt{guard_symbol_expr}, ns);
+      // TODO: make assignment take a level1 ssa_exprt
+      state.assignment(new_lhs.expr, new_rhs, ns, true, false);
 
       guardt guard{true_exprt{}};
 
       log.conditional_output(
-        log.debug(),
-        [this, &new_lhs](messaget::mstreamt &mstream) {
-          mstream << "Assignment to " << new_lhs.get_identifier()
-                  << " [" << pointer_offset_bits(new_lhs.type(), ns).value_or(0) << " bits]"
-                  << messaget::eom;
+        log.debug(), [this, &new_lhs](messaget::mstreamt &mstream) {
+          mstream << "Assignment to " << new_lhs.expr.get_identifier() << " ["
+                  << pointer_offset_bits(new_lhs.expr.type(), ns).value_or(0)
+                  << " bits]" << messaget::eom;
         });
 
       target.assignment(
         guard.as_expr(),
-        new_lhs, new_lhs, guard_symbol_expr,
+        new_lhs.expr,
+        new_lhs.expr,
+        guard_symbol_expr,
         new_rhs,
         original_source,
         symex_targett::assignment_typet::GUARD);
