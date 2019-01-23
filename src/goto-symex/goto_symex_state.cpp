@@ -225,17 +225,16 @@ void goto_symex_statet::assignment(
     // update value sets
     exprt l1_rhs(rhs);
     get_l1_name(l1_rhs);
-
-    ssa_exprt l1_lhs(lhs);
-    l1_lhs.remove_level_2();
+    level1t<ssa_exprt> l1_lhs = remove_level2(lhs);
 
     if(run_validation_checks)
     {
-      DATA_INVARIANT(!check_renaming_l1(l1_lhs), "lhs renaming failed on l1");
+      DATA_INVARIANT(
+        !check_renaming_l1(l1_lhs.expr), "lhs renaming failed on l1");
       DATA_INVARIANT(!check_renaming_l1(l1_rhs), "rhs renaming failed on l1");
     }
 
-    value_set.assign(l1_lhs, l1_rhs, ns, rhs_is_simplified, is_shared);
+    value_set.assign(l1_lhs.expr, l1_rhs, ns, rhs_is_simplified, is_shared);
   }
 
   #if 0
