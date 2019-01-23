@@ -129,7 +129,7 @@ public:
   ///  assignments (some may be hidden for the further analysis)
   virtual void decl(
     const exprt &guard,
-    const level1t<ssa_exprt> &ssa_lhs,
+    const level2t<ssa_exprt> &ssa_lhs,
     const sourcet &source,
     assignment_typet assignment_type) = 0;
 

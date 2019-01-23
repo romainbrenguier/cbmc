@@ -141,7 +141,7 @@ void symex_target_equationt::assignment(
 
 void symex_target_equationt::decl(
   const exprt &guard,
-  const level1t<ssa_exprt> &ssa_lhs,
+  const level2t<ssa_exprt> &ssa_lhs,
   const sourcet &source,
   assignment_typet assignment_type)
 {
