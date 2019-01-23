@@ -1117,12 +1117,12 @@ void value_sett::get_reference_set_rec(
 
 void value_sett::assign(
   const level1t<ssa_exprt> &lhs,
-  const exprt &rhs,
+  const level1t<exprt> &rhs,
   const namespacet &ns,
   bool is_simplified,
   bool add_to_sets)
 {
-  assign(lhs.expr, rhs, ns, is_simplified, add_to_sets);
+  assign(lhs.expr, rhs.expr, ns, is_simplified, add_to_sets);
 }
 
 void value_sett::assign(

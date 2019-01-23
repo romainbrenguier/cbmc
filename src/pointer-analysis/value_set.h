@@ -394,7 +394,7 @@ public:
   ///   `y` or `z` MAY, but not MUST, be overwritten.
   void assign(
     const level1t<ssa_exprt> &lhs,
-    const exprt &rhs,
+    const level1t<exprt> &rhs,
     const namespacet &ns,
     bool is_simplified,
     bool add_to_sets);

@@ -54,7 +54,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
     }();
 
     level1t<exprt> l1_rhs = state.rename_level1(std::move(rhs), ns);
-    state.value_set.assign(ssa, l1_rhs.expr, ns, true, false);
+    state.value_set.assign(ssa, l1_rhs, ns, true, false);
   }
 
   // prevent propagation
