@@ -303,14 +303,12 @@ static void fix_type(exprt &expr)
   }
 }
 
-void goto_symex_statet::rename_level0(exprt &expr, const namespacet &ns)
+exprt goto_symex_statet::rename_level0(exprt expr, const namespacet &ns)
 {
   // rename all the symbols with their last known value
   if(auto ssa = expr_try_dynamic_cast<ssa_exprt>(expr))
   {
-    set_l0_indices(level0, *ssa, source.thread_nr, ns);
-    rename(expr.type(), ssa->get_identifier(), ns, L0);
-    ssa->update_type();
+    return rename_level0(*ssa, ns);
   }
   else if(expr.id() == ID_symbol)
   {
@@ -319,16 +317,17 @@ void goto_symex_statet::rename_level0(exprt &expr, const namespacet &ns)
     {
       rename(expr.type(), to_symbol_expr(expr).get_identifier(), ns, L0);
 
-      return;
+      return expr;
     }
 
     expr = ssa_exprt(expr);
-    rename_level0(expr, ns);
+    return rename_level0(expr, ns);
   }
   else if(auto address_of_expr = expr_try_dynamic_cast<address_of_exprt>(expr))
   {
     rename_address(address_of_expr->object(), ns, L0);
     to_pointer_type(expr.type()).subtype() = address_of_expr->object().type();
+    return expr;
   }
   else
   {
@@ -340,7 +339,18 @@ void goto_symex_statet::rename_level0(exprt &expr, const namespacet &ns)
       rename_level0(op, ns);
 
     fix_type(expr);
+    return expr;
   }
+}
+
+ssa_exprt
+goto_symex_statet::rename_level0(const symbol_exprt &expr, const namespacet &ns)
+{
+  ssa_exprt ssa{expr};
+  set_l0_indices(level0, ssa, source.thread_nr, ns);
+  rename(ssa.type(), ssa.get_identifier(), ns, L0);
+  ssa.update_type();
+  return ssa;
 }
 
 void goto_symex_statet::rename_level1(exprt &expr, const namespacet &ns)
@@ -624,10 +634,9 @@ void goto_symex_statet::rename_address(
   const namespacet &ns,
   levelt level)
 {
+  PRECONDITION(level != L0);
   auto rename_expr = [&](exprt &e) {
-    if(level == L0)
-      rename_level0(e, ns);
-    else if(level == L1)
+    if(level == L1)
       rename_level1(e, ns);
     else
       rename_level2(e, ns);
@@ -730,8 +739,8 @@ void goto_symex_statet::rename(
 {
   auto rename_expr = [&](exprt &e) {
     if(level == L0)
-      rename_level0(e, ns);
-    else if(level == L1)
+      e = rename_level0(std::move(e), ns);
+    if(level == L1)
       rename_level1(e, ns);
     else
       rename_level2(e, ns);

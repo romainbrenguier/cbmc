@@ -72,7 +72,7 @@ public:
   enum levelt { L0=0, L1=1, L2=2 };
 
   // performs renaming _up to_ the given level
-  void rename_level0(exprt &expr, const namespacet &ns);
+  ssa_exprt rename_level0(const symbol_exprt &expr, const namespacet &ns);
   void rename_level1(exprt &expr, const namespacet &ns);
   void rename_level2(exprt &expr, const namespacet &ns);
   void rename(
@@ -93,6 +93,7 @@ public:
   void get_original_name(exprt &expr) const;
   void get_original_name(typet &type) const;
 protected:
+  exprt rename_level0(exprt expr, const namespacet &ns);
   void rename_address(exprt &expr, const namespacet &ns, levelt level);
 
   // this maps L1 names to (L2) types
