@@ -25,7 +25,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <analyses/dirty.h>
 
-static void get_l1_name(exprt &expr);
+static level1t<exprt> get_l1_name(exprt expr);
 
 static void set_l2_indices(
   symex_level0t level0,
@@ -223,18 +223,19 @@ void goto_symex_statet::assignment(
 
   {
     // update value sets
-    exprt l1_rhs(rhs);
-    get_l1_name(l1_rhs);
+    level1t<exprt> l1_rhs = get_l1_name(rhs);
     level1t<ssa_exprt> l1_lhs = remove_level2(lhs);
 
     if(run_validation_checks)
     {
       DATA_INVARIANT(
         !check_renaming_l1(l1_lhs.expr), "lhs renaming failed on l1");
-      DATA_INVARIANT(!check_renaming_l1(l1_rhs), "rhs renaming failed on l1");
+      DATA_INVARIANT(
+        !check_renaming_l1(l1_rhs.expr), "rhs renaming failed on l1");
     }
 
-    value_set.assign(l1_lhs.expr, l1_rhs, ns, rhs_is_simplified, is_shared);
+    value_set.assign(
+      l1_lhs.expr, l1_rhs.expr, ns, rhs_is_simplified, is_shared);
   }
 
   #if 0
@@ -888,16 +889,14 @@ void goto_symex_statet::get_original_name(typet &type) const
   }
 }
 
-static void get_l1_name(exprt &expr)
+static level1t<exprt> get_l1_name(exprt expr)
 {
   // do not reset the type !
-
-  if(expr.id()==ID_symbol &&
-     expr.get_bool(ID_C_SSA_symbol))
-    to_ssa_expr(expr).remove_level_2();
-  else
-    Forall_operands(it, expr)
-      get_l1_name(*it);
+  if(auto ssa = expr_try_dynamic_cast<ssa_exprt>(expr))
+    return level1t<exprt>{remove_level2(std::move(*ssa)).expr};
+  Forall_operands(it, expr)
+    *it = get_l1_name(std::move(*it)).expr;
+  return level1t<exprt>{expr};
 }
 
 /// Dumps the current state of symex, printing the function name and location
