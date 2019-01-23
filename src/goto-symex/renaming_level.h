@@ -71,6 +71,12 @@ struct level1t
   underlyingt expr;
 };
 
+inline level1t<ssa_exprt> remove_level2(ssa_exprt ssa)
+{
+  ssa.remove_level_2();
+  return level1t<ssa_exprt>{ssa};
+}
+
 /// Functor to set the level 0 renaming of SSA expressions.
 /// Level 0 corresponds to threads.
 /// The renaming is built for one particular interleaving.
