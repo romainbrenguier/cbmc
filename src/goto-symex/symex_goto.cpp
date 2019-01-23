@@ -37,11 +37,10 @@ void goto_symext::symex_goto(statet &state)
   exprt old_guard=instruction.guard;
   clean_expr(old_guard, state, false);
 
-  exprt new_guard=old_guard;
-  state.rename_level2(new_guard, ns);
-  do_simplify(new_guard);
+  level2t<exprt> new_guard = state.rename_level2(old_guard, ns);
+  do_simplify(new_guard.expr);
 
-  if(new_guard.is_false())
+  if(new_guard.expr.is_false())
   {
     target.location(state.guard.as_expr(), state.source);
 
@@ -50,7 +49,8 @@ void goto_symext::symex_goto(statet &state)
     return; // nothing to do
   }
 
-  target.goto_instruction(state.guard.as_expr(), new_guard, state.source);
+  // TODO: make goto instruction take a level2 exprt
+  target.goto_instruction(state.guard.as_expr(), new_guard.expr, state.source);
 
   DATA_INVARIANT(
     !instruction.targets.empty(), "goto should have at least one target");
@@ -75,10 +75,10 @@ void goto_symext::symex_goto(statet &state)
     {
       // generate assume(false) or a suitable negation if this
       // instruction is a conditional goto
-      if(new_guard.is_true())
+      if(new_guard.expr.is_true())
         symex_assume(state, false_exprt());
       else
-        symex_assume(state, not_exprt(new_guard));
+        symex_assume(state, not_exprt(new_guard.expr));
 
       // next instruction
       symex_transition(state);
@@ -93,14 +93,14 @@ void goto_symext::symex_goto(statet &state)
 
     if(should_stop_unwind(state.source, state.call_stack(), unwind))
     {
-      loop_bound_exceeded(state, new_guard);
+      loop_bound_exceeded(state, new_guard.expr);
 
       // next instruction
       symex_transition(state);
       return;
     }
 
-    if(new_guard.is_true())
+    if(new_guard.expr.is_true())
     {
       symex_transition(state, goto_target, true);
       return; // nothing else to do
@@ -112,7 +112,7 @@ void goto_symext::symex_goto(statet &state)
 
   // No point executing both branches of an unconditional goto.
   if(
-    new_guard.is_true() && // We have an unconditional goto, AND
+    new_guard.expr.is_true() && // We have an unconditional goto, AND
     // either there are no blocks between us and the target in the
     // surrounding scope
     (simpl_state_guard.is_true() ||
@@ -138,7 +138,7 @@ void goto_symext::symex_goto(statet &state)
     state_pc++;
 
     // skip dead instructions
-    if(new_guard.is_true())
+    if(new_guard.expr.is_true())
       while(state_pc!=goto_target && !state_pc->is_target())
         ++state_pc;
 
@@ -225,7 +225,7 @@ void goto_symext::symex_goto(statet &state)
   symex_transition(state, state_pc, backward);
 
   // adjust guards
-  if(new_guard.is_true())
+  if(new_guard.expr.is_true())
   {
     state.guard = guardt(false_exprt());
   }
@@ -235,17 +235,17 @@ void goto_symext::symex_goto(statet &state)
     exprt guard_expr;
 
     if(
-      new_guard.id() == ID_symbol ||
-      (new_guard.id() == ID_not &&
-       to_not_expr(new_guard).op().id() == ID_symbol))
+      new_guard.expr.id() == ID_symbol ||
+      (new_guard.expr.id() == ID_not &&
+       to_not_expr(new_guard.expr).op().id() == ID_symbol))
     {
-      guard_expr=new_guard;
+      guard_expr = new_guard.expr;
     }
     else
     {
       symbol_exprt guard_symbol_expr=
         symbol_exprt(guard_identifier, bool_typet());
-      exprt new_rhs = boolean_negate(new_guard);
+      exprt new_rhs = boolean_negate(new_guard.expr);
 
       level1t<ssa_exprt> new_lhs =
         state.rename_level1_ssa(ssa_exprt{guard_symbol_expr}, ns);
@@ -270,8 +270,8 @@ void goto_symext::symex_goto(statet &state)
         original_source,
         symex_targett::assignment_typet::GUARD);
 
-      guard_expr = boolean_negate(guard_symbol_expr);
-      state.rename_level2(guard_expr, ns);
+      guard_expr =
+        state.rename_level2(boolean_negate(guard_symbol_expr), ns).expr;
     }
 
     if(state.has_saved_jump_target)

@@ -71,6 +71,16 @@ struct level1t
   underlyingt expr;
 };
 
+/// Wrapper for expressions that have been renamed at level2
+template <typename underlyingt>
+struct level2t
+{
+  static_assert(
+    std::is_base_of<exprt, underlyingt>::value,
+    "underlyingt should inherit from exprt");
+  underlyingt expr;
+};
+
 inline level1t<ssa_exprt> remove_level2(ssa_exprt ssa)
 {
   ssa.remove_level_2();

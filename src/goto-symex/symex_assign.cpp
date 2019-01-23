@@ -212,13 +212,13 @@ void goto_symext::symex_assign_symbol(
     tmp_ssa_rhs.swap(ssa_rhs);
   }
 
-  state.rename_level2(ssa_rhs, ns);
-  do_simplify(ssa_rhs);
+  level2t<exprt> l2_rhs = state.rename_level2(ssa_rhs, ns);
+  do_simplify(l2_rhs.expr);
 
   ssa_exprt ssa_lhs=lhs;
   state.assignment(
     ssa_lhs,
-    ssa_rhs,
+    l2_rhs.expr,
     ns,
     symex_config.simplify_opt,
     symex_config.constant_propagation,
@@ -228,7 +228,7 @@ void goto_symext::symex_assign_symbol(
   ssa_full_lhs=add_to_lhs(ssa_full_lhs, ssa_lhs);
   const bool record_events=state.record_events;
   state.record_events=false;
-  state.rename_level2(ssa_full_lhs, ns);
+  level2t<exprt> l2_full_lhs = state.rename_level2(ssa_full_lhs, ns);
   state.record_events=record_events;
 
   guardt tmp_guard(state.guard);
@@ -254,8 +254,9 @@ void goto_symext::symex_assign_symbol(
   target.assignment(
     tmp_guard.as_expr(),
     ssa_lhs,
-    ssa_full_lhs, add_to_lhs(full_lhs, ssa_lhs.get_original_expr()),
-    ssa_rhs,
+    l2_full_lhs.expr,
+    add_to_lhs(full_lhs, ssa_lhs.get_original_expr()),
+    l2_rhs.expr,
     state.source,
     assignment_type);
 }
@@ -407,21 +408,20 @@ void goto_symext::symex_assign_if(
 
   guardt old_guard=guard;
 
-  exprt renamed_guard=lhs.cond();
-  state.rename_level2(renamed_guard, ns);
-  do_simplify(renamed_guard);
+  level2t<exprt> renamed_guard = state.rename_level2(lhs.cond(), ns);
+  do_simplify(renamed_guard.expr);
 
-  if(!renamed_guard.is_false())
+  if(!renamed_guard.expr.is_false())
   {
-    guard.add(renamed_guard);
+    guard.add(renamed_guard.expr);
     symex_assign_rec(
       state, lhs.true_case(), full_lhs, rhs, guard, assignment_type);
     guard = std::move(old_guard);
   }
 
-  if(!renamed_guard.is_true())
+  if(!renamed_guard.expr.is_true())
   {
-    guard.add(not_exprt(renamed_guard));
+    guard.add(not_exprt(renamed_guard.expr));
     symex_assign_rec(
       state, lhs.false_case(), full_lhs, rhs, guard, assignment_type);
     guard = std::move(old_guard);

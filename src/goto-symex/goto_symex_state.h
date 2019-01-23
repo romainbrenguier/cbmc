@@ -78,7 +78,8 @@ public:
   level1t<exprt> rename_level1(exprt expr, const namespacet &ns);
   level1t<ssa_exprt>
   rename_level1(level0t<ssa_exprt> l0_expr, const namespacet &ns);
-  void rename_level2(exprt &expr, const namespacet &ns);
+  level2t<exprt> rename_level2(exprt expr, const namespacet &ns);
+  level2t<ssa_exprt> rename_level2(ssa_exprt ssa, const namespacet &ns);
   void rename(
     typet &type,
     const irep_idt &l1_identifier,
