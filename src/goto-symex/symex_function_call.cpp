@@ -399,8 +399,9 @@ void goto_symext::locality(
       it++)
   {
     // get L0 name
-    ssa_exprt ssa = state.rename_level0(ns.lookup(*it).symbol_expr(), ns);
-    const irep_idt l0_name=ssa.get_identifier();
+    level0t<ssa_exprt> l0 =
+      state.rename_level0(ns.lookup(*it).symbol_expr(), ns);
+    const irep_idt l0_name = l0.expr.get_identifier();
 
     // save old L1 name for popping the frame
     auto c_it = state.level1.current_names.find(l0_name);
@@ -408,12 +409,12 @@ void goto_symext::locality(
     if(c_it != state.level1.current_names.end())
     {
       frame.old_level1[l0_name]=c_it->second;
-      c_it->second = std::make_pair(ssa, frame_nr);
+      c_it->second = std::make_pair(l0.expr, frame_nr);
     }
     else
     {
       c_it = state.level1.current_names
-               .emplace(l0_name, std::make_pair(ssa, frame_nr))
+               .emplace(l0_name, std::make_pair(l0.expr, frame_nr))
                .first;
     }
 
@@ -421,17 +422,17 @@ void goto_symext::locality(
     // identifiers may be shared among functions
     // (e.g., due to inlining or other code restructuring)
 
-    state.rename_level1(ssa, ns);
+    state.rename_level1(l0.expr, ns);
 
-    irep_idt l1_name=ssa.get_identifier();
+    irep_idt l1_name = l0.expr.get_identifier();
     unsigned offset=0;
 
     while(state.l1_history.find(l1_name)!=state.l1_history.end())
     {
       symex_renaming_levelt::increase_counter(c_it);
       ++offset;
-      ssa.set_level_1(frame_nr+offset);
-      l1_name=ssa.get_identifier();
+      l0.expr.set_level_1(frame_nr + offset);
+      l1_name = l0.expr.get_identifier();
     }
 
     // now unique -- store

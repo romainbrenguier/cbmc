@@ -308,7 +308,7 @@ exprt goto_symex_statet::rename_level0(exprt expr, const namespacet &ns)
   // rename all the symbols with their last known value
   if(auto ssa = expr_try_dynamic_cast<ssa_exprt>(expr))
   {
-    return rename_level0(*ssa, ns);
+    return rename_level0(*ssa, ns).expr;
   }
   else if(expr.id() == ID_symbol)
   {
@@ -343,14 +343,14 @@ exprt goto_symex_statet::rename_level0(exprt expr, const namespacet &ns)
   }
 }
 
-ssa_exprt
+level0t<ssa_exprt>
 goto_symex_statet::rename_level0(const symbol_exprt &expr, const namespacet &ns)
 {
   ssa_exprt ssa{expr};
   set_l0_indices(level0, ssa, source.thread_nr, ns);
   rename(ssa.type(), ssa.get_identifier(), ns, L0);
   ssa.update_type();
-  return ssa;
+  return level0t<ssa_exprt>{ssa};
 }
 
 ssa_exprt goto_symex_statet::rename_level1_ssa(
