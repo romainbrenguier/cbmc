@@ -51,6 +51,16 @@ struct symex_renaming_levelt
   }
 };
 
+/// Wrapper for expressions that have been renamed at level0
+template <typename underlyingt>
+struct level0t
+{
+  static_assert(
+    std::is_base_of<exprt, underlyingt>::value,
+    "underlyingt should inherit from exprt");
+  underlyingt expr;
+};
+
 /// Functor to set the level 0 renaming of SSA expressions.
 /// Level 0 corresponds to threads.
 /// The renaming is built for one particular interleaving.

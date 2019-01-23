@@ -72,7 +72,8 @@ public:
   enum levelt { L0=0, L1=1, L2=2 };
 
   // performs renaming _up to_ the given level
-  ssa_exprt rename_level0(const symbol_exprt &expr, const namespacet &ns);
+  level0t<ssa_exprt>
+  rename_level0(const symbol_exprt &expr, const namespacet &ns);
   void rename_level1(exprt &expr, const namespacet &ns);
   void rename_level2(exprt &expr, const namespacet &ns);
   void rename(
