@@ -32,14 +32,11 @@ void goto_symext::symex_dead(statet &state)
   // in case of pointers, put something into the value set
   if(code.symbol().type().id() == ID_pointer)
   {
-    exprt failed = get_failed_symbol(to_symbol_expr(code.symbol()), ns);
-
-    exprt rhs;
-
-    if(failed.is_not_nil())
-      rhs = address_of_exprt(failed, to_pointer_type(code.symbol().type()));
-    else
-      rhs=exprt(ID_invalid);
+    exprt rhs = [&]() -> exprt {
+      if(auto failed = get_failed_symbol(to_symbol_expr(code.symbol()), ns))
+        return address_of_exprt(*failed, to_pointer_type(code.symbol().type()));
+      return exprt(ID_invalid);
+    }();
 
     state.rename(rhs, ns, goto_symex_statet::L1);
     state.value_set.assign(ssa, rhs, ns, true, false);
