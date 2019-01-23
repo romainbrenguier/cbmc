@@ -36,7 +36,6 @@ void goto_symext::symex_start_thread(statet &state)
     instruction.get_target();
 
   // put into thread vector
-  std::size_t t=state.threads.size();
   state.threads.push_back(statet::threadt());
   // statet::threadt &cur_thread=state.threads[state.source.thread_nr];
   statet::threadt &new_thread=state.threads.back();
@@ -105,11 +104,9 @@ void goto_symext::symex_start_thread(statet &state)
        (symbol.is_extern && symbol.value.is_nil()))
       continue;
 
-    // get original name
-    ssa_exprt lhs(symbol.symbol_expr());
-
     // get L0 name for current thread
-    lhs.set_level_0(t);
+    const level0t<ssa_exprt> l0_lhs =
+      state.rename_level0(symbol.symbol_expr(), ns);
 
     exprt rhs=symbol.value;
     if(rhs.is_nil())
@@ -122,7 +119,7 @@ void goto_symext::symex_start_thread(statet &state)
     guardt guard{true_exprt{}};
     symex_assign_symbol(
       state,
-      lhs,
+      l0_lhs.expr,
       nil_exprt(),
       rhs,
       guard,
