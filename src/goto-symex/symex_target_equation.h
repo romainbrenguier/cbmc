@@ -25,6 +25,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <solvers/prop/literal.h>
 
+#include "renaming_level.h"
 #include "symex_target.h"
 
 class decision_proceduret;
@@ -66,7 +67,7 @@ public:
   /// \copydoc symex_targett::decl()
   virtual void decl(
     const exprt &guard,
-    const ssa_exprt &ssa_lhs,
+    const level1t<ssa_exprt> &ssa_lhs,
     const sourcet &source,
     assignment_typet assignment_type);
 

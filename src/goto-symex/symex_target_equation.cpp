@@ -141,19 +141,19 @@ void symex_target_equationt::assignment(
 
 void symex_target_equationt::decl(
   const exprt &guard,
-  const ssa_exprt &ssa_lhs,
+  const level1t<ssa_exprt> &ssa_lhs,
   const sourcet &source,
   assignment_typet assignment_type)
 {
-  PRECONDITION(ssa_lhs.is_not_nil());
+  PRECONDITION(ssa_lhs.expr.is_not_nil());
 
   SSA_steps.emplace_back(source, goto_trace_stept::typet::DECL);
   SSA_stept &SSA_step=SSA_steps.back();
 
   SSA_step.guard=guard;
-  SSA_step.ssa_lhs=ssa_lhs;
-  SSA_step.ssa_full_lhs=ssa_lhs;
-  SSA_step.original_full_lhs=ssa_lhs.get_original_expr();
+  SSA_step.ssa_lhs = ssa_lhs.expr;
+  SSA_step.ssa_full_lhs = ssa_lhs.expr;
+  SSA_step.original_full_lhs = ssa_lhs.expr.get_original_expr();
   SSA_step.hidden=(assignment_type!=assignment_typet::STATE);
 
   // the condition is trivially true, and only

@@ -12,6 +12,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #ifndef CPROVER_GOTO_SYMEX_SYMEX_TARGET_H
 #define CPROVER_GOTO_SYMEX_SYMEX_TARGET_H
 
+#include "renaming_level.h"
 #include <goto-programs/goto_program.h>
 
 class ssa_exprt;
@@ -128,9 +129,9 @@ public:
   ///  assignments (some may be hidden for the further analysis)
   virtual void decl(
     const exprt &guard,
-    const ssa_exprt &ssa_lhs,
+    const level1t<ssa_exprt> &ssa_lhs,
     const sourcet &source,
-    assignment_typet assignment_type)=0;
+    assignment_typet assignment_type) = 0;
 
   /// Remove a variable from the scope.
   /// \param guard: Precondition for removal of this variable

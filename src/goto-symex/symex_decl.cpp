@@ -81,10 +81,11 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
 
   target.decl(
     state.guard.as_expr(),
-    l2_expr.expr,
+    ssa,
     state.source,
-    hidden ? symex_targett::assignment_typet::HIDDEN
-           : symex_targett::assignment_typet::STATE);
+    hidden?
+      symex_targett::assignment_typet::HIDDEN:
+      symex_targett::assignment_typet::STATE);
 
   if(
     state.dirty(l2_expr.expr.get_object_name()) && state.atomic_section_id == 0)
