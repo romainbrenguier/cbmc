@@ -119,7 +119,7 @@ public:
   bddt constrain(const bddt &other)
   {
     // This is correct, though not very useful
-    return bddt(*this);
+    return bddt(mini_bddt::constrain(other));
   }
 
   bddt &operator=(const bddt &other)

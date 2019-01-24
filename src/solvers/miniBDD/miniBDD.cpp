@@ -246,6 +246,64 @@ mini_bddt mini_bdd_applyt::APP_rec(const mini_bddt &x, const mini_bddt &y)
   return u;
 }
 
+static mini_bddt constrain_rec(
+  std::map<std::pair<unsigned, unsigned>, mini_bddt> &cache,
+  const mini_bddt &x,
+  const mini_bddt &y)
+{
+  PRECONDITION_WITH_DIAGNOSTICS(
+    x.is_initialized() && y.is_initialized(),
+    "apply can only be called on initialized BDDs");
+  PRECONDITION_WITH_DIAGNOSTICS(
+    x.node->mgr == y.node->mgr,
+    "apply can only be called on BDDs with the same manager");
+
+  // dynamic programming
+  std::pair<unsigned, unsigned> key(x.node_number(), y.node_number());
+  auto it=cache.find(key);
+  if(it!=cache.end())
+    return it->second;
+
+  mini_bdd_mgrt *mgr=x.node->mgr;
+
+  mini_bddt u;
+
+  if(y.is_false())
+    u = mgr->False();
+  else if(y.is_true())
+    u = x;
+  else if(x.is_false())
+    u = mgr->False();
+  else if(x.is_true())
+    u = mgr->True();
+  else if(x.node_number() == y.node_number())
+    u = mgr->True();
+  else if(x.node_number() == (!y).node_number())
+    u = mgr->False();
+  else if(x.var()==y.var())
+    u=mgr->mk(x.var(),
+              constrain_rec(cache, x.low(), y.low()),
+              constrain_rec(cache, x.high(), y.high()));
+  else if(x.var()<y.var())
+    u=mgr->mk(x.var(),
+              constrain_rec(cache, x.low(), y),
+              constrain_rec(cache, x.high(), y));
+  else /* x.var() > y.var() */
+    u=mgr->mk(y.var(),
+              constrain_rec(cache, x, y.low()),
+              constrain_rec(cache, x, y.high()));
+
+  cache[key]=u;
+
+  return u;
+}
+
+mini_bddt mini_bddt::constrain(const mini_bddt &other) const
+{
+  std::map<std::pair<unsigned, unsigned>, mini_bddt> cache;
+  return constrain_rec(cache, *this, other);
+}
+
 mini_bddt mini_bdd_applyt::APP_non_rec(
   const mini_bddt &_x,
   const mini_bddt &_y)

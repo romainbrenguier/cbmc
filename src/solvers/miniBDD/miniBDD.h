@@ -41,6 +41,7 @@ public:
   mini_bddt operator==(const mini_bddt &) const;
   mini_bddt operator&(const mini_bddt &) const;
   mini_bddt operator|(const mini_bddt &) const;
+  mini_bddt constrain(const mini_bddt &) const;
 
   // copy operator
   mini_bddt &operator=(const mini_bddt &);
