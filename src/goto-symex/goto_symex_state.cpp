@@ -355,13 +355,7 @@ void goto_symex_statet::rename(
   {
     ssa_exprt &ssa=to_ssa_expr(expr);
 
-    if(level == L0)
-    {
-      set_l0_indices(level0, ssa, source.thread_nr, ns);
-      rename(expr.type(), ssa.get_identifier(), ns, level);
-      ssa.update_type();
-    }
-    else if(level == L1)
+    if(level == L1)
     {
       set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
       rename(expr.type(), ssa.get_identifier(), ns, level);
@@ -393,6 +387,8 @@ void goto_symex_statet::rename(
           set_l2_indices(level0, level1, level2, ssa, source.thread_nr, ns);
       }
     }
+    else
+      UNREACHABLE;
   }
   else if(expr.id()==ID_symbol)
   {
