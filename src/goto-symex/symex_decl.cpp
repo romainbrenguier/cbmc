@@ -37,9 +37,8 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // We increase the L2 renaming to make these non-deterministic.
   // We also prevent propagation of old values.
 
-  ssa_exprt ssa(expr);
-  state.rename_level1(ssa, ns);
-  const irep_idt &l1_identifier=ssa.get_identifier();
+  ssa_exprt ssa = state.rename_level1_ssa(ssa_exprt{expr}, ns);
+  const irep_idt &l1_identifier = ssa.get_identifier();
 
   // rename type to L2
   state.rename(ssa.type(), l1_identifier, ns);
@@ -54,8 +53,8 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
       return exprt(ID_invalid);
     }();
 
-    state.rename_level1(rhs, ns);
-    state.value_set.assign(ssa, rhs, ns, true, false);
+    exprt l1_rhs = state.rename_level1(std::move(rhs), ns);
+    state.value_set.assign(ssa, l1_rhs, ns, true, false);
   }
 
   // prevent propagation
@@ -64,9 +63,9 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // L2 renaming
   // inlining may yield multiple declarations of the same identifier
   // within the same L1 context
-  const auto level2_it =
-    state.level2.current_names.emplace(l1_identifier, std::make_pair(ssa, 0))
-      .first;
+  const auto level2_it = state.level2.current_names
+                           .emplace(l1_identifier, std::make_pair(ssa, 0))
+                           .first;
   symex_renaming_levelt::increase_counter(level2_it);
   const bool record_events=state.record_events;
   state.record_events=false;
@@ -84,14 +83,10 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
     state.guard.as_expr(),
     ssa,
     state.source,
-    hidden?
-      symex_targett::assignment_typet::HIDDEN:
-      symex_targett::assignment_typet::STATE);
+    hidden ? symex_targett::assignment_typet::HIDDEN
+           : symex_targett::assignment_typet::STATE);
 
   if(state.dirty(ssa.get_object_name()) && state.atomic_section_id == 0)
     target.shared_write(
-      state.guard.as_expr(),
-      ssa,
-      state.atomic_section_id,
-      state.source);
+      state.guard.as_expr(), ssa, state.atomic_section_id, state.source);
 }

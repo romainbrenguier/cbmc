@@ -36,9 +36,9 @@ bool symex_dereference_statet::has_failed_symbol(
     {
       symbolt sym=*symbol;
       symbolt *sym_ptr=nullptr;
-      symbol_exprt sym_expr=sym.symbol_expr();
-      state.rename_level1(sym_expr, ns);
-      sym.name=to_ssa_expr(sym_expr).get_identifier();
+      const ssa_exprt sym_expr =
+        state.rename_level1_ssa(ssa_exprt{sym.symbol_expr()}, ns);
+      sym.name = sym_expr.get_identifier();
       state.symbol_table.move(sym, sym_ptr);
       symbol=sym_ptr;
       return true;
@@ -56,9 +56,9 @@ bool symex_dereference_statet::has_failed_symbol(
     {
       symbolt sym=*symbol;
       symbolt *sym_ptr=nullptr;
-      symbol_exprt sym_expr=sym.symbol_expr();
-      state.rename_level1(sym_expr, ns);
-      sym.name=to_ssa_expr(sym_expr).get_identifier();
+      const ssa_exprt sym_expr =
+        state.rename_level1_ssa(ssa_exprt{sym.symbol_expr()}, ns);
+      sym.name = sym_expr.get_identifier();
       state.symbol_table.move(sym, sym_ptr);
       symbol=sym_ptr;
       return true;
