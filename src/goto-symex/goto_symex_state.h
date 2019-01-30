@@ -75,7 +75,8 @@ public:
   ssa_exprt rename_level0(const symbol_exprt &expr, const namespacet &ns);
   ssa_exprt rename_level1_ssa(ssa_exprt expr, const namespacet &ns);
   exprt rename_level1(exprt expr, const namespacet &ns);
-  void rename_level2(exprt &expr, const namespacet &ns);
+  ssa_exprt rename_level2_ssa(ssa_exprt expr, const namespacet &ns);
+  exprt rename_level2(exprt expr, const namespacet &ns);
   void rename(
     typet &type,
     const irep_idt &l1_identifier,

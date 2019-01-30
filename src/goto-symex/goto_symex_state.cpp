@@ -400,7 +400,36 @@ exprt goto_symex_statet::rename_level1(exprt expr, const namespacet &ns)
   }
 }
 
-void goto_symex_statet::rename_level2(exprt &expr, const namespacet &ns)
+ssa_exprt
+goto_symex_statet::rename_level2_ssa(ssa_exprt ssa, const namespacet &ns)
+{
+  set_l1_indices(level0, level1, ssa, source.thread_nr, ns);
+  rename(ssa.type(), ssa.get_identifier(), ns);
+  ssa.update_type();
+
+  if(l2_thread_read_encoding(ssa, ns))
+  {
+    // renaming taken care of by l2_thread_encoding
+  }
+  else if(!ssa.get_level_2().empty())
+  {
+    // already at L2
+  }
+  else
+  {
+    // We also consider propagation if we go up to L2.
+    // L1 identifiers are used for propagation!
+    auto p_it = propagation.find(ssa.get_identifier());
+
+    if(p_it != propagation.end())
+      ssa = to_ssa_expr(p_it->second); // already L2
+    else
+      set_l2_indices(level0, level1, level2, ssa, source.thread_nr, ns);
+  }
+  return ssa;
+}
+
+exprt goto_symex_statet::rename_level2(exprt expr, const namespacet &ns)
 {
   // rename all the symbols with their last known value
   if(expr.id()==ID_symbol &&
@@ -437,12 +466,11 @@ void goto_symex_statet::rename_level2(exprt &expr, const namespacet &ns)
     if(expr.type().id() == ID_code)
     {
       rename(expr.type(), to_symbol_expr(expr).get_identifier(), ns, L2);
-
-      return;
     }
-
-    expr=ssa_exprt(expr);
-    rename_level2(expr, ns);
+    else
+    {
+      return rename_level2_ssa(ssa_exprt{expr}, ns);
+    }
   }
   else if(expr.id()==ID_address_of)
   {
@@ -457,10 +485,11 @@ void goto_symex_statet::rename_level2(exprt &expr, const namespacet &ns)
 
     // do this recursively
     Forall_operands(it, expr)
-      rename_level2(*it, ns);
+      *it = rename_level2(std::move(*it), ns);
 
     fix_type(expr);
   }
+  return expr;
 }
 
 /// thread encoding

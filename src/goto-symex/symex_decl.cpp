@@ -69,7 +69,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   symex_renaming_levelt::increase_counter(level2_it);
   const bool record_events=state.record_events;
   state.record_events=false;
-  state.rename_level2(ssa, ns);
+  state.rename_level2_ssa(ssa, ns);
   state.record_events=record_events;
 
   // we hide the declaration of auxiliary variables
