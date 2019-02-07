@@ -47,10 +47,10 @@ program
                 for (let [key, value] of Object.entries(map)) {
                     for (let [newKey, time] of Object.entries(value)) {
                         const color = ""; // (time > 1) ? "color=red," : "";
-                        const width = "penwidth=" + (5 * (time / total) + 0.1).toFixed(3) + ",";
-                        const percentage = (100 * time / total).toFixed(2);
+                        const width = "penwidth=" + (5 * (time / (total+0.1)) + 0.1).toFixed(3) + ",";
+                        const percentage = (100 * time / (total+0.1)).toFixed(6);
                         console.log("  \"" + key + "\" -> \"" + newKey + "\" ["
-                            + width + color + "label=\"" + time.toFixed(2) + "s " 
+                            + width + color + "label=\"" + time.toFixed(6) + "s " 
                             + percentage + "%\"];");
                     }
                 }
