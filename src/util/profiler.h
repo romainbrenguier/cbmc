@@ -18,6 +18,7 @@
 #define PROFILER_BREAKPOINT
 #else
 #define PROFILER_BREAKPOINT profiler_breakpoint(__FILE__, __LINE__)
+#define PROFILER_BREAKPOINT_NOBACKTRACE profiler_breakpoint(__FILE__, __LINE__, true)
 #endif
 
 #define BACKTRACE_SIZE 1
@@ -27,11 +28,11 @@ inline std::string get_backtrace_string()
   std::ostringstream out;
   void * stack[BACKTRACE_SIZE + 2] = {};
 
-  std::size_t entries=backtrace(stack, sizeof(stack) / sizeof(void *));
+  int entries=backtrace(stack, sizeof(stack) / sizeof(void *));
   std::unique_ptr<char*, freert> description(
     backtrace_symbols(stack, entries));
 
-  for(std::size_t i=2; i<entries; i++)
+  for(int i=2; i<entries; i++)
   {
     out << '<' << std::flush;
     std::string working = description.get()[i];
@@ -60,16 +61,23 @@ inline std::string get_backtrace_string()
 static std::chrono::time_point<std::chrono::steady_clock>
   profiler_last_time_point = std::chrono::steady_clock::now();
 
-inline void profiler_breakpoint(const std::string &file, unsigned line)
+inline void reset_profiler_time()
+{
+  profiler_last_time_point = std::chrono::steady_clock::now();
+}
+
+inline void profiler_breakpoint(
+  const std::string &file, unsigned line, bool no_backtrace = false)
 {
   auto now = std::chrono::steady_clock::now();
   auto diff = std::chrono::duration<double>(now - profiler_last_time_point);
   auto start = file.find_last_of('/');
 
+  const std::string backtrace = no_backtrace ? "" : get_backtrace_string();
   std::string id =
     start != std::string::npos
-    ? file.substr(start+1) + ":" + std::to_string(line) + get_backtrace_string()
-    : file + ":" + std::to_string(line) + get_backtrace_string();
+    ? file.substr(start+1) + ":" + std::to_string(line) + backtrace
+    : file + ":" + std::to_string(line) + backtrace;
   if(id.length() < 120)
     std::cout << id;
   else
