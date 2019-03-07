@@ -45,12 +45,24 @@ struct symex_renaming_levelt
     return it == current_names.end() ? 0 : it->second.second;
   }
 
+  /// Create a entry for \p indentifier, with initial value at zero, unless
+  /// it already exists.
+  /// \return a pair of an iterator positioned at this entry and a Boolean which
+  ///   is true if the entry did not exist before.
+  std::pair<current_namest::iterator, bool> initialize_count(
+    const irep_idt &identifier, ssa_exprt ssa)
+  {
+    return current_names.emplace(
+      std::piecewise_construct,
+      std::forward_as_tuple(identifier),
+      std::forward_as_tuple(std::move(ssa), 0));
+  }
+
   /// Increase or create the counter corresponding to an identifier and return
   /// its value.
   unsigned increase_count(const irep_idt &identifier, ssa_exprt ssa)
   {
-    const auto it = current_names.emplace(
-      identifier, std::make_pair(std::move(ssa), 0)).first;
+    const auto it = initialize_count(identifier, std::move(ssa)).;
     increase_counter(it);
     return it->second.second;
   }
