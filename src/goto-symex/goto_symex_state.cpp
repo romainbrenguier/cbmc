@@ -206,9 +206,7 @@ void goto_symex_statet::assignment(
 #endif
 
   // do the l2 renaming
-  const auto level2_it =
-    level2.current_names.emplace(l1_identifier, std::make_pair(lhs, 0)).first;
-  symex_renaming_levelt::increase_counter(level2_it);
+  (void) level2.increase_count(l1_identifier, lhs);
   lhs = set_indices<L2>(std::move(lhs), ns).get();
 
   // in case we happen to be multi-threaded, record the memory access
@@ -432,13 +430,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
     const renamedt<ssa_exprt, L2> l2_true_case = set_indices<L2>(ssa_l1, ns);
 
     if(a_s_read.second.empty())
-    {
-      auto level2_it =
-        level2.current_names.emplace(l1_identifier, std::make_pair(ssa_l1, 0))
-          .first;
-      symex_renaming_levelt::increase_counter(level2_it);
-      a_s_read.first=level2.current_count(l1_identifier);
-    }
+      a_s_read.first = level2.increase_count(l1_identifier, ssa_l1);
     const renamedt<ssa_exprt, L2> l2_false_case = set_indices<L2>(ssa_l1, ns);
 
     exprt tmp;
@@ -470,10 +462,6 @@ bool goto_symex_statet::l2_thread_read_encoding(
     return true;
   }
 
-  const auto level2_it =
-    level2.current_names.emplace(l1_identifier, std::make_pair(ssa_l1, 0))
-      .first;
-
   // No event and no fresh index, but avoid constant propagation
   if(!record_events)
   {
@@ -482,7 +470,7 @@ bool goto_symex_statet::l2_thread_read_encoding(
   }
 
   // produce a fresh L2 name
-  symex_renaming_levelt::increase_counter(level2_it);
+  (void) level2.increase_count(l1_identifier, ssa_l1);
   expr = set_indices<L2>(std::move(ssa_l1), ns).get();
 
   // and record that

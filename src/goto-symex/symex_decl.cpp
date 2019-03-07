@@ -63,10 +63,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // L2 renaming
   // inlining may yield multiple declarations of the same identifier
   // within the same L1 context
-  const auto level2_it =
-    state.level2.current_names.emplace(l1_identifier, std::make_pair(ssa, 0))
-      .first;
-  symex_renaming_levelt::increase_counter(level2_it);
+  (void) state.level2.increase_count(l1_identifier, ssa);
   const bool record_events=state.record_events;
   state.record_events=false;
   exprt expr_l2 = state.rename(std::move(ssa), ns);

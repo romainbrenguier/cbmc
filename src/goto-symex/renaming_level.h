@@ -45,6 +45,16 @@ struct symex_renaming_levelt
     return it == current_names.end() ? 0 : it->second.second;
   }
 
+  /// Increase or create the counter corresponding to an identifier and return
+  /// its value.
+  unsigned increase_count(const irep_idt &identifier, ssa_exprt ssa)
+  {
+    const auto it = current_names.emplace(
+      identifier, std::make_pair(std::move(ssa), 0)).first;
+    increase_counter(it);
+    return it->second.second;
+  }
+
   /// Increase the counter corresponding to an identifier
   static void increase_counter(const current_namest::iterator &it)
   {
