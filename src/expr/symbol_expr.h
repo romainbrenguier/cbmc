@@ -5,6 +5,8 @@
 #ifndef TEST_GEN_SUPERBUILD_SYMBOL_EXPR_H
 #define TEST_GEN_SUPERBUILD_SYMBOL_EXPR_H
 
+#include "nullary_expr.h"
+
 /// Expression to hold a symbol (variable)
 class symbol_exprt : public nullary_exprt
 {
