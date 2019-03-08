@@ -5,6 +5,8 @@
 #ifndef TEST_GEN_SUPERBUILD_DECORATED_SYMBOL_EXPR_H
 #define TEST_GEN_SUPERBUILD_DECORATED_SYMBOL_EXPR_H
 
+#include "symbol_expr.h"
+
 /// Expression to hold a symbol (variable) with extra accessors to
 /// ID_c_static_lifetime and ID_C_thread_local
 class decorated_symbol_exprt:public symbol_exprt
