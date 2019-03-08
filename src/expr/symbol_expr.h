@@ -54,4 +54,38 @@ public:
   }
 };
 
+template <>
+inline bool can_cast_expr<symbol_exprt>(const exprt &base)
+{
+  return base.id() == ID_symbol;
+}
+
+inline void validate_expr(const symbol_exprt &value)
+{
+  validate_operands(value, 0, "Symbols must not have operands");
+}
+
+/// \brief Cast an exprt to a \ref symbol_exprt
+///
+/// \a expr must be known to be \ref symbol_exprt.
+///
+/// \param expr: Source expression
+/// \return Object of type \ref symbol_exprt
+inline const symbol_exprt &to_symbol_expr(const exprt &expr)
+{
+  PRECONDITION(expr.id()==ID_symbol);
+  const symbol_exprt &ret = static_cast<const symbol_exprt &>(expr);
+  validate_expr(ret);
+  return ret;
+}
+
+/// \copydoc to_symbol_expr(const exprt &)
+inline symbol_exprt &to_symbol_expr(exprt &expr)
+{
+  PRECONDITION(expr.id()==ID_symbol);
+  symbol_exprt &ret = static_cast<symbol_exprt &>(expr);
+  validate_expr(ret);
+  return ret;
+}
+
 #endif //TEST_GEN_SUPERBUILD_SYMBOL_EXPR_H
