@@ -171,9 +171,9 @@ public:
   bool converted = false;
 
   SSA_stept(
-    const symex_targett::sourcet &_source,
+    symex_targett::sourcet _source,
     goto_trace_stept::typet _type)
-    : source(_source),
+    : source(std::move(_source)),
       type(_type),
       hidden(false),
       guard(static_cast<const exprt &>(get_nil_irep())),
