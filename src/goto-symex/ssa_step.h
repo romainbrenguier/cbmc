@@ -138,12 +138,6 @@ public:
   exprt guard;
   literalt guard_literal;
 
-  // for ASSIGNMENT and DECL
-  ssa_exprt ssa_lhs;
-  exprt ssa_full_lhs, original_full_lhs;
-  exprt ssa_rhs;
-  symex_targett::assignment_typet assignment_type;
-
   // for ASSUME/ASSERT/GOTO/CONSTRAINT
   exprt cond_expr;
   literalt cond_literal;
@@ -178,11 +172,6 @@ public:
       hidden(false),
       guard(static_cast<const exprt &>(get_nil_irep())),
       guard_literal(const_literal(false)),
-      ssa_lhs(static_cast<const ssa_exprt &>(get_nil_irep())),
-      ssa_full_lhs(static_cast<const exprt &>(get_nil_irep())),
-      original_full_lhs(static_cast<const exprt &>(get_nil_irep())),
-      ssa_rhs(static_cast<const exprt &>(get_nil_irep())),
-      assignment_type(symex_targett::assignment_typet::STATE),
       cond_expr(static_cast<const exprt &>(get_nil_irep())),
       cond_literal(const_literal(false)),
       formatted(false),
@@ -198,5 +187,35 @@ public:
 
   void validate(const namespacet &ns, const validation_modet vm) const;
 };
+
+// for ASSIGNMENT and DECL
+class assignment_SSA_stept : public SSA_stept
+{
+public:
+  ssa_exprt ssa_lhs;
+  exprt ssa_full_lhs, original_full_lhs;
+  exprt ssa_rhs;
+  symex_targett::assignment_typet assignment_type;
+
+  assignment_SSA_stept(
+    symex_targett::sourcet _source,
+    goto_trace_stept::typet _type)
+    : SSA_stept(std::move(_source), std::move(_type)),
+      ssa_lhs(static_cast<const ssa_exprt &>(get_nil_irep())),
+      ssa_full_lhs(static_cast<const exprt &>(get_nil_irep())),
+      original_full_lhs(static_cast<const exprt &>(get_nil_irep())),
+      ssa_rhs(static_cast<const exprt &>(get_nil_irep())),
+      assignment_type(symex_targett::assignment_typet::STATE)
+  {
+  }
+};
+
+inline const assignment_SSA_stept* to_assignement_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_assignment() || step.is_decl())
+    return &static_cast<const assignment_SSA_stept &>(step);
+  return nullptr;
+}
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H

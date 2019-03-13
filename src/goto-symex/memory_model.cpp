@@ -93,13 +93,16 @@ symbol_exprt memory_model_baset::register_read_from_choice_symbol(
   bool is_rfi = w->source.thread_nr == r->source.thread_nr;
   // Uses only the write's guard as precondition, read's guard
   // follows from rf_some
-  add_constraint(
-    equation,
-    // We rely on the fact that there is at least
-    // one write event that has guard 'true'.
-    implies_exprt{s, and_exprt{w->guard, equal_exprt{r->ssa_lhs, w->ssa_lhs}}},
-    is_rfi ? "rfi" : "rf",
-    r->source);
+  if(auto assign = to_assignment_SSA_step(*r))
+  {
+    add_constraint(
+      equation,
+      // We rely on the fact that there is at least
+      // one write event that has guard 'true'.
+      implies_exprt{s, and_exprt{w->guard, equal_exprt{assign->ssa_lhs, assign->ssa_lhs}}},
+      is_rfi ? "rfi" : "rf",
+      r->source);
+  }
 
   if(!is_rfi)
   {

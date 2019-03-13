@@ -84,7 +84,9 @@ protected:
   /// \return identifier
   static inline irep_idt id(event_it event)
   {
-    return event->ssa_lhs.get_identifier();
+    if(event->is_assignment() || event->is_decl())
+      return static_cast<const assignment_SSA_stept&>(*event).ssa_lhs.get_identifier();
+    return irep_idt{};
   }
 
   /// Produce an address ID for an event
@@ -92,9 +94,13 @@ protected:
   /// \return L1-renamed identifier
   irep_idt address(event_it event) const
   {
-    ssa_exprt tmp=event->ssa_lhs;
-    tmp.remove_level_2();
-    return tmp.get_identifier();
+    if(auto assign_step = to_assignement_SSA_step(*event))
+    {
+      ssa_exprt tmp = assign_step->ssa_lhs;
+      tmp.remove_level_2();
+      return tmp.get_identifier();
+    }
+    return irep_idt{};
   }
 
   typet clock_type;

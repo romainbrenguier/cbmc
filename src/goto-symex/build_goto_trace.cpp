@@ -325,24 +325,25 @@ void build_goto_trace(
       // update internal field for specific variables in the counterexample
       update_internal_field(SSA_step, goto_trace_step, ns);
 
-      goto_trace_step.assignment_type =
-        (SSA_step.is_assignment() &&
-         (SSA_step.assignment_type ==
-            symex_targett::assignment_typet::VISIBLE_ACTUAL_PARAMETER ||
-          SSA_step.assignment_type ==
-            symex_targett::assignment_typet::HIDDEN_ACTUAL_PARAMETER))
-          ? goto_trace_stept::assignment_typet::ACTUAL_PARAMETER
-          : goto_trace_stept::assignment_typet::STATE;
+      goto_trace_step.assignment_type = [&]{
+        if(auto assign = to_assignment_SSA_step(SSA_step))
+        {
+          if(assign->assignment_type ==
+             symex_targett::assignment_typet::VISIBLE_ACTUAL_PARAMETER ||
+             assign->assignment_type ==
+             symex_targett::assignment_typet::HIDDEN_ACTUAL_PARAMETER)
+          {
+            return goto_trace_stept::assignment_typet::ACTUAL_PARAMETER;
+          }
+        }
+        return goto_trace_stept::assignment_typet::STATE;
+      }();
 
-      if(SSA_step.original_full_lhs.is_not_nil())
+      if(auto assign = to_assignment_SSA_step(SSA_step))
       {
         goto_trace_step.full_lhs = build_full_lhs_rec(
-          prop_conv, ns, SSA_step.original_full_lhs, SSA_step.ssa_full_lhs);
-      }
-
-      if(SSA_step.ssa_full_lhs.is_not_nil())
-      {
-        goto_trace_step.full_lhs_value = prop_conv.get(SSA_step.ssa_full_lhs);
+          prop_conv, ns, assign->original_full_lhs, assign->ssa_full_lhs);
+        goto_trace_step.full_lhs_value = prop_conv.get(assign->ssa_full_lhs);
         simplify(goto_trace_step.full_lhs_value, ns);
       }
 

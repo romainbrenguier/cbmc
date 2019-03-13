@@ -393,7 +393,8 @@ void graphml_witnesst::operator()(const symex_target_equationt &equation)
     ++next;
     if(next!=equation.SSA_steps.end() &&
        next->is_assignment() &&
-       it->ssa_full_lhs==next->ssa_full_lhs &&
+      static_cast<const assignment_SSA_stept&>(*it).ssa_full_lhs==
+      static_cast<const assignment_SSA_stept&>(*next).ssa_full_lhs &&
        it->source.pc->source_location==next->source.pc->source_location)
     {
       step_to_node[step_nr]=sink;
@@ -465,15 +466,15 @@ void graphml_witnesst::operator()(const symex_target_equationt &equation)
           data_l.data=id2string(graphml[from].line);
         }
 
-        if((it->is_assignment() ||
-            it->is_decl()) &&
-           it->ssa_rhs.is_not_nil() &&
-           it->ssa_full_lhs.is_not_nil())
+        auto assign_step = to_assignement_SSA_step(*it))
+        if(assign_step &&
+           assign_step->ssa_rhs.is_not_nil() &&
+           assign_step->ssa_full_lhs.is_not_nil())
         {
-          irep_idt identifier=it->ssa_lhs.get_object_name();
+          irep_idt identifier=assign_step->ssa_lhs.get_object_name();
 
           graphml[to].has_invariant=true;
-          code_assignt assign(it->ssa_full_lhs, it->ssa_rhs);
+          code_assignt assign(assign_step->ssa_full_lhs, assign_step->ssa_rhs);
           graphml[to].invariant=convert_assign_rec(identifier, assign);
           graphml[to].invariant_scope = id2string(it->source.function_id);
         }
