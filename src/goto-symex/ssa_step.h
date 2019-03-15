@@ -138,12 +138,6 @@ public:
   exprt guard;
   literalt guard_literal;
 
-  // for INPUT/OUTPUT
-  irep_idt format_string, io_id;
-  bool formatted = false;
-  std::list<exprt> io_args;
-  std::list<exprt> converted_io_args;
-
   // for function calls: the function that is called
   irep_idt called_function;
 
@@ -167,7 +161,6 @@ public:
       hidden(false),
       guard(static_cast<const exprt &>(get_nil_irep())),
       guard_literal(const_literal(false)),
-      formatted(false),
       atomic_section_id(0),
       ignore(false)
   {
@@ -227,5 +220,24 @@ inline const assume_SSA_stept* to_assume_SSA_step(
     return &static_cast<const assume_SSA_stept &>(step);
   return nullptr;
 }
+
+// for INPUT/OUTPUT
+class output_SSA_stept : public SSA_stept
+{
+public:
+  irep_idt format_string, io_id;
+  bool formatted = false;
+  std::list<exprt> io_args;
+  std::list<exprt> converted_io_args;
+};
+
+inline const output_SSA_stept* to_output_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_output())
+    return &static_cast<const output_SSA_stept &>(step);
+  return nullptr;
+}
+};
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
