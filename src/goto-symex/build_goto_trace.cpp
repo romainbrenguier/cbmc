@@ -139,8 +139,11 @@ static void update_internal_field(
   const namespacet &ns)
 {
   // set internal for dynamic_object in both lhs and rhs expressions
-  set_internal_dynamic_object(SSA_step.ssa_lhs, goto_trace_step, ns);
-  set_internal_dynamic_object(SSA_step.ssa_rhs, goto_trace_step, ns);
+  if(auto step = to_assignment_SSA_step(SSA_step))
+  {
+    set_internal_dynamic_object(step->ssa_lhs, goto_trace_step, ns);
+    set_internal_dynamic_object(step->ssa_rhs, goto_trace_step, ns);
+  }
 
   // set internal field to CPROVER functions (e.g., __CPROVER_initialize)
   if(SSA_step.is_function_call())
@@ -266,10 +269,11 @@ void build_goto_trace(
     }
 
     // drop PHI and GUARD assignments altogether
-    if(it->is_assignment() &&
-       (SSA_step.assignment_type==
+    auto assign = to_assignment_SSA_step(*it);
+    if(assign &&
+       (assign->assignment_type==
           symex_target_equationt::assignment_typet::PHI ||
-        SSA_step.assignment_type==
+        assign->assignment_type==
           symex_target_equationt::assignment_typet::GUARD))
     {
       continue;
@@ -306,9 +310,9 @@ void build_goto_trace(
       goto_trace_step.thread_nr = SSA_step.source.thread_nr;
       goto_trace_step.pc = SSA_step.source.pc;
       goto_trace_step.function_id = SSA_step.source.function_id;
-      if(SSA_step.is_assert())
+      if(auto assert = to_assert_SSA_step(SSA_step))
       {
-        goto_trace_step.comment = SSA_step.comment;
+        goto_trace_step.comment = assert->comment;
         goto_trace_step.property_id = SSA_step.get_property_id();
       }
       goto_trace_step.type = SSA_step.type;
@@ -369,12 +373,12 @@ void build_goto_trace(
         }
       }
 
-      if(SSA_step.is_assert() || SSA_step.is_assume() || SSA_step.is_goto())
+      if(auto assume = to_assume_SSA_step(SSA_step))
       {
-        goto_trace_step.cond_expr = SSA_step.cond_expr;
+        goto_trace_step.cond_expr = assume->cond_expr;
 
         goto_trace_step.cond_value =
-          prop_conv.l_get(SSA_step.cond_literal).is_true();
+          prop_conv.l_get(assume->cond_literal).is_true();
       }
 
       if(ssa_step_it == last_step_to_keep)
@@ -403,7 +407,8 @@ static bool is_failed_assertion_step(
   symex_target_equationt::SSA_stepst::const_iterator step,
   const prop_convt &prop_conv)
 {
-  return step->is_assert() && prop_conv.l_get(step->cond_literal).is_false();
+  auto assert = to_assert_SSA_step(*step);
+  return assert && prop_conv.l_get(assert->cond_literal).is_false();
 }
 
 void build_goto_trace(

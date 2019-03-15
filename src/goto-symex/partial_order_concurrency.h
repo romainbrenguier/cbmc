@@ -94,7 +94,7 @@ protected:
   /// \return L1-renamed identifier
   irep_idt address(event_it event) const
   {
-    if(auto assign_step = to_assignement_SSA_step(*event))
+    if(auto assign_step = to_assignment_SSA_step(*event))
     {
       ssa_exprt tmp = assign_step->ssa_lhs;
       tmp.remove_level_2();

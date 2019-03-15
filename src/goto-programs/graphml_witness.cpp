@@ -466,7 +466,7 @@ void graphml_witnesst::operator()(const symex_target_equationt &equation)
           data_l.data=id2string(graphml[from].line);
         }
 
-        auto assign_step = to_assignement_SSA_step(*it))
+        auto assign_step = to_assignment_SSA_step(*it);
         if(assign_step &&
            assign_step->ssa_rhs.is_not_nil() &&
            assign_step->ssa_full_lhs.is_not_nil())
@@ -478,14 +478,17 @@ void graphml_witnesst::operator()(const symex_target_equationt &equation)
           graphml[to].invariant=convert_assign_rec(identifier, assign);
           graphml[to].invariant_scope = id2string(it->source.function_id);
         }
-        else if(it->is_goto() &&
-                it->source.pc->is_goto())
+        else
         {
-          xmlt &val=edge.new_element("data");
-          val.set_attribute("key", "sourcecode");
-          const std::string cond =
-            from_expr(ns, it->source.function_id, it->cond_expr);
-          val.data="["+cond+"]";
+          auto goto_step = to_goto_SSA_step(*it);
+          if(goto_step && goto_step->source.pc->is_goto())
+          {
+            xmlt &val=edge.new_element("data");
+            val.set_attribute("key", "sourcecode");
+            const std::string cond =
+              from_expr(ns, it->source.function_id, goto_step->cond_expr);
+            val.data="["+cond+"]";
+          }
         }
 
         graphml[to].in[from].xml_node=edge;

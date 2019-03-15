@@ -211,6 +211,30 @@ inline const assume_SSA_stept* to_assume_SSA_step(
   return nullptr;
 }
 
+class goto_SSA_stept : public assume_SSA_stept
+{
+};
+
+inline const goto_SSA_stept* to_goto_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_goto())
+    return &static_cast<const goto_SSA_stept &>(step);
+  return nullptr;
+}
+
+class assert_SSA_stept : public SSA_stept
+{
+};
+
+inline const goto_SSA_stept* to_assert_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_goto())
+    return &static_cast<const goto_SSA_stept &>(step);
+  return nullptr;
+}
+
 // for INPUT/OUTPUT
 class output_SSA_stept : public SSA_stept
 {
