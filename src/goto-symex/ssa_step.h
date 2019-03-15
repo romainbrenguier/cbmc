@@ -138,9 +138,6 @@ public:
   exprt guard;
   literalt guard_literal;
 
-  // for SHARED_READ/SHARED_WRITE and ATOMIC_BEGIN/ATOMIC_END
-  unsigned atomic_section_id = 0;
-
   // for slicing
   bool ignore = false;
 
@@ -155,7 +152,6 @@ public:
       hidden(false),
       guard(static_cast<const exprt &>(get_nil_irep())),
       guard_literal(const_literal(false)),
-      atomic_section_id(0),
       ignore(false)
   {
   }
@@ -244,6 +240,29 @@ public:
   std::vector<exprt> ssa_function_arguments, converted_function_arguments;
 };
 
+// for SHARED_READ/SHARED_WRITE and ATOMIC_BEGIN/ATOMIC_END
+class atomic_SSA_stept : public SSA_stept
+{
+public:
+  unsigned atomic_section_id = 0;
+
+protected:
+  /// type should be on of SHARED_WRITE, SHARED_READ, ATOMIC_BEGIN, ATOMIC_END
+  atomic_SSA_stept(symex_targett::sourcet source, goto_trace_stept::typet type)
+    : SSA_stept(std::move(source), type)
+  {
+  }
+};
+
+inline const atomic_SSA_stept* to_atomic_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_shared_read() || step.is_shared_write() || step.is_atomic_begin()
+     || step.is_atomic_end())
+    return &static_cast<const atomic_SSA_stept &>(step);
+  return nullptr;
+}
+
 inline const function_call_SSA_stept* to_function_call_SSA_step(
   const SSA_stept &step)
 {
@@ -251,5 +270,47 @@ inline const function_call_SSA_stept* to_function_call_SSA_step(
     return &static_cast<const function_call_SSA_stept &>(step);
   return nullptr;
 }
+
+class shared_read_write_SSA_stept : public atomic_SSA_stept
+{
+public:
+  ssa_exprt ssa_lhs;
+
+protected:
+  /// type should be on of SHARED_WRITE or SHARED_READ
+  shared_read_write_SSA_stept(
+    ssa_exprt lhs, symex_targett::sourcet source, goto_trace_stept::typet type)
+    : atomic_SSA_stept(std::move(source), type), ssa_lhs(std::move(lhs))
+  {
+  }
+};
+
+class shared_write_SSA_stept : public shared_read_write_SSA_stept
+{
+public:
+  shared_write_SSA_stept(ssa_exprt lhs, symex_targett::sourcet source)
+    : shared_read_write_SSA_stept(
+      std::move(lhs), std::move(source), goto_trace_stept::typet::SHARED_WRITE)
+  {
+  }
+};
+
+inline const shared_read_write_SSA_stept* to_shared_read_write_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_shared_read() || step.is_shared_write())
+    return &static_cast<const shared_read_write_SSA_stept &>(step);
+  return nullptr;
+}
+
+class shared_read_SSA_stept : public shared_read_write_SSA_stept
+{
+public:
+  shared_read_SSA_stept(ssa_exprt lhs, symex_targett::sourcet source)
+    : shared_read_write_SSA_stept(
+    std::move(lhs), std::move(source), goto_trace_stept::typet::SHARED_READ)
+  {
+  }
+};
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H

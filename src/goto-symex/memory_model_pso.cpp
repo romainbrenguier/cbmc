@@ -34,8 +34,10 @@ bool memory_model_psot::program_order_is_relaxed(
   PRECONDITION(e2->is_shared_read() || e2->is_shared_write());
 
   // no po relaxation within atomic sections
-  if(e1->atomic_section_id!=0 &&
-     e1->atomic_section_id==e2->atomic_section_id)
+  const atomic_SSA_stept * atomic1 = to_atomic_SSA_step(*e1);
+  const atomic_SSA_stept * atomic2 = to_atomic_SSA_step(*e2);
+  if(atomic1 && atomic2 && atomic1->atomic_section_id &&
+     atomic1->atomic_section_id == atomic2->atomic_section_id)
     return false;
 
   // no relaxation if induced wsi

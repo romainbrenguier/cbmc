@@ -56,15 +56,13 @@ void partial_order_concurrencyt::add_init_writes(
        e_it->is_shared_read() ||
        !e_it->guard.is_true())
     {
-      init_steps.emplace_back(
-        e_it->source, goto_trace_stept::typet::SHARED_WRITE);
-      SSA_stept &SSA_step = init_steps.back();
+      shared_write_SSA_stept SSA_step{to_shared_read_write_SSA_step(*e_it)->ssa_lhs, e_it->source};
 
       SSA_step.guard=true_exprt();
       // no SSA L2 index, thus nondet value
-      SSA_step.ssa_lhs=e_it->ssa_lhs;
       SSA_step.ssa_lhs.remove_level_2();
       SSA_step.atomic_section_id=0;
+      init_steps.push_back(SSA_step);
     }
 
     init_done.insert(a);
@@ -182,6 +180,8 @@ exprt partial_order_concurrencyt::before(
   exprt::operandst ops;
   ops.reserve(sizeof(axiom_bits)/sizeof(axiomt));
 
+  auto atomic1 = to_atomic_SSA_step(*e1);
+  auto atomic2 = to_atomic_SSA_step(*e2);
   for(int i=0; i<int(sizeof(axiom_bits)/sizeof(axiomt)); ++i)
   {
     const axiomt ax=axiom_bits[i];
@@ -189,8 +189,8 @@ exprt partial_order_concurrencyt::before(
     if((axioms &ax)==0)
       continue;
 
-    if(e1->atomic_section_id!=0 &&
-       e1->atomic_section_id==e2->atomic_section_id)
+    if(atomic1 && atomic2 && atomic1->atomic_section_id!=0 &&
+       atomic1->atomic_section_id == atomic2->atomic_section_id)
       ops.push_back(equal_exprt(clock(e1, ax), clock(e2, ax)));
     else
       ops.push_back(

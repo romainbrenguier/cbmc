@@ -110,8 +110,11 @@ void postconditiont::weaken(exprt &dest)
 
   // we are lazy:
   // if lhs is mentioned in dest, we use "true".
-
-  const irep_idt &lhs_identifier=SSA_step.ssa_lhs.get_object_name();
+  irep_idt lhs_identifier;
+  if(auto as_assign = to_assignment_SSA_step(SSA_step))
+    lhs_identifier = as_assign->ssa_lhs.get_object_name();
+  else if(auto as_atomic = to_shared_read_write_SSA_step(SSA_step))
+    lhs_identifier = as_atomic->ssa_lhs.get_object_name();
 
   if(is_used(dest, lhs_identifier))
     dest=true_exprt();
