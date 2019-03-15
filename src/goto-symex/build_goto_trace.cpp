@@ -319,8 +319,11 @@ void build_goto_trace(
         goto_trace_step.io_id = output->io_id;
         goto_trace_step.formatted = output->formatted;
       }
-      goto_trace_step.called_function = SSA_step.called_function;
-      goto_trace_step.function_arguments = SSA_step.converted_function_arguments;
+      if(auto call = to_function_call_SSA_step(SSA_step))
+      {
+        goto_trace_step.called_function = call->called_function;
+        goto_trace_step.function_arguments = call->converted_function_arguments;
+      }
 
       for(auto &arg : goto_trace_step.function_arguments)
         arg = prop_conv.get(arg);

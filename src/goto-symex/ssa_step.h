@@ -138,12 +138,6 @@ public:
   exprt guard;
   literalt guard_literal;
 
-  // for function calls: the function that is called
-  irep_idt called_function;
-
-  // for function calls
-  std::vector<exprt> ssa_function_arguments, converted_function_arguments;
-
   // for SHARED_READ/SHARED_WRITE and ATOMIC_BEGIN/ATOMIC_END
   unsigned atomic_section_id = 0;
 
@@ -239,5 +233,23 @@ inline const output_SSA_stept* to_output_SSA_step(
   return nullptr;
 }
 };
+
+/// For function calls
+class function_call_SSA_stept : public SSA_stept
+{
+public:
+  /// the function that is called
+  irep_idt called_function;
+
+  std::vector<exprt> ssa_function_arguments, converted_function_arguments;
+};
+
+inline const function_call_SSA_stept* to_function_call_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_function_call())
+    return &static_cast<const function_call_SSA_stept &>(step);
+  return nullptr;
+}
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
