@@ -138,11 +138,6 @@ public:
   exprt guard;
   literalt guard_literal;
 
-  // for ASSUME/ASSERT/GOTO/CONSTRAINT
-  exprt cond_expr;
-  literalt cond_literal;
-  std::string comment;
-
   // for INPUT/OUTPUT
   irep_idt format_string, io_id;
   bool formatted = false;
@@ -172,8 +167,6 @@ public:
       hidden(false),
       guard(static_cast<const exprt &>(get_nil_irep())),
       guard_literal(const_literal(false)),
-      cond_expr(static_cast<const exprt &>(get_nil_irep())),
-      cond_literal(const_literal(false)),
       formatted(false),
       atomic_section_id(0),
       ignore(false)
@@ -210,11 +203,28 @@ public:
   }
 };
 
-inline const assignment_SSA_stept* to_assignement_SSA_step(
+inline const assignment_SSA_stept* to_assignment_SSA_step(
   const SSA_stept &step)
 {
   if(step.is_assignment() || step.is_decl())
     return &static_cast<const assignment_SSA_stept &>(step);
+  return nullptr;
+}
+
+// for ASSUME/ASSERT/GOTO/CONSTRAINT
+class assume_SSA_stept : public SSA_stept
+{
+public:
+  exprt cond_expr = nil_exprt{};
+  literalt cond_literal = const_literal(false);
+  std::string comment;
+};
+
+inline const assume_SSA_stept* to_assume_SSA_step(
+  const SSA_stept &step)
+{
+  if(step.is_assume() || step.is_assert() || step.is_goto() || step.is_constraint())
+    return &static_cast<const assume_SSA_stept &>(step);
   return nullptr;
 }
 
