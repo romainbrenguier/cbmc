@@ -664,7 +664,9 @@ void symex_target_equationt::convert_io(
 /// \param SSA_step The step you want to have shared values.
 void symex_target_equationt::merge_ireps(SSA_stept &SSA_step)
 {
-  merge_irep(SSA_step.guard);
+  // Skip merging guards if they are merged by construction
+  if(!guardt::is_always_simplified)
+    merge_irep(SSA_step.guard);
 
   merge_irep(SSA_step.ssa_lhs);
   merge_irep(SSA_step.ssa_full_lhs);
