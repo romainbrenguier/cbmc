@@ -208,3 +208,9 @@ exprt bdd_exprt::as_expr(const bddt &root) const
   bdd_nodet node = bdd_mgr.bdd_node(root);
   return as_expr(node, node.is_complement(), cache);
 }
+
+exprt bdd_expr_with_cachet::as_expr_with_cache(const bddt &root)
+{
+  bdd_nodet node = bdd_mgr.bdd_node(root);
+  return as_expr(node, node.is_complement(), as_expr_cache);
+}

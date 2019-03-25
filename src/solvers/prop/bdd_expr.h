@@ -54,4 +54,25 @@ protected:
     std::unordered_map<bdd_nodet::idt, exprt> &cache) const;
 };
 
+/// Version of \ref bdd_exprt in which the cache of as_expr is kept between
+/// calls. The cache as to be explicitely cleared when a BDD operation that
+/// can change the BDD manager state has been called.
+class bdd_expr_with_cachet : public bdd_exprt
+{
+public:
+  /// Version of `as_expr` with a cache. The cache has to be cleared each time
+  /// a BDD operation that can change the BDD manager state has been called
+  /// since the last `as_expr` call.
+  exprt as_expr_with_cache(const bddt &root);
+
+  void clear_cache()
+  {
+    as_expr_cache.clear();
+  }
+
+private:
+  /// Cache for the \ref bdd_exprt::as_expr function.
+  std::unordered_map<bdd_nodet::idt, exprt> as_expr_cache;
+};
+
 #endif // CPROVER_SOLVERS_PROP_BDD_EXPR_H
