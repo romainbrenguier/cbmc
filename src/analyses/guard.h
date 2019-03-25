@@ -16,7 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "guard_bdd.h"
 
-using guard_managert = bdd_exprt;
+using guard_managert = bdd_expr_with_cachet;
 using guardt = guard_bddt;
 
 #else

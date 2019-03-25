@@ -25,7 +25,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 #include <util/std_expr.h>
 #include <util/symbol_table.h>
 
-guard_bddt::guard_bddt(const exprt &e, bdd_exprt &manager)
+guard_bddt::guard_bddt(const exprt &e, bdd_expr_with_cachet &manager)
   : manager(manager), bdd(manager.from_expr(e))
 {
 }
@@ -66,29 +66,33 @@ exprt guard_bddt::guard_expr(exprt expr) const
 
 guard_bddt &guard_bddt::append(const guard_bddt &guard)
 {
+  manager.clear_cache();
   bdd = bdd.bdd_and(guard.bdd);
   return *this;
 }
 
 guard_bddt &guard_bddt::add(const exprt &expr)
 {
+  manager.clear_cache();
   bdd = bdd.bdd_and(manager.from_expr(expr));
   return *this;
 }
 
 guard_bddt &operator-=(guard_bddt &g1, const guard_bddt &g2)
 {
+  g1.manager.clear_cache();
   g1.bdd = g1.bdd.constrain(g2.bdd.bdd_or(g1.bdd));
   return g1;
 }
 
 guard_bddt &operator|=(guard_bddt &g1, const guard_bddt &g2)
 {
+  g1.manager.clear_cache();
   g1.bdd = g1.bdd.bdd_or(g2.bdd);
   return g1;
 }
 
 exprt guard_bddt::as_expr() const
 {
-  return manager.as_expr(bdd);
+  return manager.as_expr_with_cache(bdd);
 }

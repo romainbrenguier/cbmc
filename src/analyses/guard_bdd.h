@@ -24,7 +24,7 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 class guard_bddt
 {
 public:
-  guard_bddt(const exprt &e, bdd_exprt &manager);
+  guard_bddt(const exprt &e, bdd_expr_with_cachet &manager);
   guard_bddt(const guard_bddt &other) : manager(other.manager), bdd(other.bdd)
   {
   }
@@ -66,10 +66,11 @@ public:
   }
 
 private:
-  bdd_exprt &manager;
+  bdd_expr_with_cachet &manager;
+
   bddt bdd;
 
-  guard_bddt(bdd_exprt &manager, bddt bdd)
+  guard_bddt(bdd_expr_with_cachet &manager, bddt bdd)
     : manager(manager), bdd(std::move(bdd))
   {
   }
