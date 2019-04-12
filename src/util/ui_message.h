@@ -23,7 +23,7 @@ public:
 
   ui_message_handlert(const class cmdlinet &, const std::string &program);
 
-  explicit ui_message_handlert(message_handlert &);
+  explicit ui_message_handlert(std::unique_ptr<message_handlert>);
   ui_message_handlert(ui_message_handlert &&) = default;
 
   virtual ~ui_message_handlert();
@@ -42,8 +42,7 @@ public:
   }
 
 protected:
-  std::unique_ptr<console_message_handlert> console_message_handler;
-  message_handlert *message_handler;
+  std::unique_ptr<message_handlert> message_handler;
   uit _ui;
   const bool always_flush;
   std::unique_ptr<const timestampert> time;
@@ -51,7 +50,7 @@ protected:
   std::unique_ptr<json_stream_arrayt> json_stream;
 
   ui_message_handlert(
-    message_handlert *,
+    std::unique_ptr<message_handlert>,
     uit,
     const std::string &program,
     const bool always_flush,
