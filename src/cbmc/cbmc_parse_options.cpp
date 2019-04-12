@@ -83,9 +83,12 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "xml_interface.h"
 
 cbmc_parse_optionst::cbmc_parse_optionst(int argc, const char **argv)
-  : parse_options_baset(CBMC_OPTIONS, argc, argv, ui_message_handler),
-    xml_interfacet(cmdline),
-    ui_message_handler(cmdline, std::string("CBMC ") + CBMC_VERSION)
+  : parse_options_baset(
+      CBMC_OPTIONS,
+      argc,
+      argv,
+      std::string("CBMC ") + CBMC_VERSION),
+    xml_interfacet(cmdline)
 {
 }
 
@@ -97,9 +100,8 @@ cbmc_parse_optionst::cbmc_parse_optionst(int argc, const char **argv)
       CBMC_OPTIONS + extra_options,
       argc,
       argv,
-      ui_message_handler),
-    xml_interfacet(cmdline),
-    ui_message_handler(cmdline, std::string("CBMC ") + CBMC_VERSION)
+      std::string("CBMC ") + CBMC_VERSION),
+    xml_interfacet(cmdline)
 {
 }
 
@@ -168,7 +170,7 @@ void cbmc_parse_optionst::get_command_line_options(optionst &options)
     exit(CPROVER_EXIT_SUCCESS);
   }
 
-  parse_path_strategy_options(cmdline, options, ui_message_handler);
+  parse_path_strategy_options(cmdline, options, *message_handler);
 
   if(cmdline.isset("program-only"))
     options.set_option("program-only", true);
@@ -229,7 +231,7 @@ void cbmc_parse_optionst::get_command_line_options(optionst &options)
   if(
     cmdline.isset("trace") || cmdline.isset("compact-trace") ||
     cmdline.isset("stack-trace") || cmdline.isset("stop-on-fail") ||
-    (ui_message_handler.get_ui() != ui_message_handlert::uit::PLAIN &&
+    (message_handler->get_ui() != ui_message_handlert::uit::PLAIN &&
      !cmdline.isset("cover")))
   {
     options.set_option("trace", true);
@@ -459,7 +461,7 @@ int cbmc_parse_optionst::doit()
   get_command_line_options(options);
 
   messaget::eval_verbosity(
-    cmdline.get_value("verbosity"), messaget::M_STATISTICS, ui_message_handler);
+    cmdline.get_value("verbosity"), messaget::M_STATISTICS, *message_handler);
 
   //
   // Print a banner
@@ -498,7 +500,7 @@ int cbmc_parse_optionst::doit()
   {
     if(
       cmdline.args.size() != 1 ||
-      is_goto_binary(cmdline.args[0], ui_message_handler))
+      is_goto_binary(cmdline.args[0], *message_handler))
     {
       log.error() << "Please give exactly one source file" << messaget::eom;
       return CPROVER_EXIT_INCORRECT_TASK;
@@ -545,7 +547,7 @@ int cbmc_parse_optionst::doit()
   }
 
   int get_goto_program_ret =
-    get_goto_program(goto_model, options, cmdline, log, ui_message_handler);
+    get_goto_program(goto_model, options, cmdline, log, *message_handler);
 
   if(get_goto_program_ret!=-1)
     return get_goto_program_ret;
@@ -554,7 +556,7 @@ int cbmc_parse_optionst::doit()
      cmdline.isset("show-properties")) // use this one
   {
     show_properties(
-      goto_model, log.get_message_handler(), ui_message_handler.get_ui());
+      goto_model, log.get_message_handler(), message_handler->get_ui());
     return CPROVER_EXIT_SUCCESS;
   }
 
@@ -568,13 +570,13 @@ int cbmc_parse_optionst::doit()
     if(options.get_bool_option("paths"))
     {
       all_properties_verifiert<single_path_symex_only_checkert> verifier(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
       (void)verifier();
     }
     else
     {
       all_properties_verifiert<multi_path_symex_only_checkert> verifier(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
       (void)verifier();
     }
 
@@ -587,13 +589,13 @@ int cbmc_parse_optionst::doit()
     if(options.get_bool_option("paths"))
     {
       stop_on_fail_verifiert<single_path_symex_checkert> verifier(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
       (void)verifier();
     }
     else
     {
       stop_on_fail_verifiert<multi_path_symex_checkert> verifier(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
       (void)verifier();
     }
 
@@ -603,11 +605,11 @@ int cbmc_parse_optionst::doit()
   if(options.is_set("cover"))
   {
     cover_goals_verifier_with_trace_storaget<multi_path_symex_checkert>
-      verifier(options, ui_message_handler, goto_model);
+      verifier(options, *message_handler, goto_model);
     (void)verifier();
     verifier.report();
 
-    c_test_input_generatort test_generator(ui_message_handler, options);
+    c_test_input_generatort test_generator(*message_handler, options);
     test_generator(verifier.get_traces());
 
     return CPROVER_EXIT_SUCCESS;
@@ -620,7 +622,7 @@ int cbmc_parse_optionst::doit()
   {
     verifier =
       util_make_unique<stop_on_fail_verifiert<single_path_symex_checkert>>(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
   }
   else if(
     options.get_bool_option("stop-on-fail") &&
@@ -630,13 +632,13 @@ int cbmc_parse_optionst::doit()
     {
       verifier =
         util_make_unique<stop_on_fail_verifier_with_fault_localizationt<
-          multi_path_symex_checkert>>(options, ui_message_handler, goto_model);
+          multi_path_symex_checkert>>(options, *message_handler, goto_model);
     }
     else
     {
       verifier =
         util_make_unique<stop_on_fail_verifiert<multi_path_symex_checkert>>(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
     }
   }
   else if(
@@ -645,7 +647,7 @@ int cbmc_parse_optionst::doit()
   {
     verifier = util_make_unique<
       all_properties_verifier_with_trace_storaget<single_path_symex_checkert>>(
-      options, ui_message_handler, goto_model);
+      options, *message_handler, goto_model);
   }
   else if(
     !options.get_bool_option("stop-on-fail") &&
@@ -655,13 +657,13 @@ int cbmc_parse_optionst::doit()
     {
       verifier =
         util_make_unique<all_properties_verifier_with_fault_localizationt<
-          multi_path_symex_checkert>>(options, ui_message_handler, goto_model);
+          multi_path_symex_checkert>>(options, *message_handler, goto_model);
     }
     else
     {
       verifier = util_make_unique<
         all_properties_verifier_with_trace_storaget<multi_path_symex_checkert>>(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
     }
   }
   else

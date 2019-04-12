@@ -123,7 +123,7 @@ int goto_instrument_parse_optionst::doit()
   }
 
   messaget::eval_verbosity(
-    cmdline.get_value("verbosity"), messaget::M_STATISTICS, ui_message_handler);
+    cmdline.get_value("verbosity"), messaget::M_STATISTICS, *message_handler);
 
   {
     register_languages();
@@ -488,7 +488,7 @@ int goto_instrument_parse_optionst::doit()
 
     if(cmdline.isset("show-symbol-table"))
     {
-      ::show_symbol_table(goto_model, ui_message_handler);
+      ::show_symbol_table(goto_model, *message_handler);
       return CPROVER_EXIT_SUCCESS;
     }
 
@@ -543,7 +543,7 @@ int goto_instrument_parse_optionst::doit()
 
     if(cmdline.isset("list-symbols"))
     {
-      show_symbol_table_brief(goto_model, ui_message_handler);
+      show_symbol_table_brief(goto_model, *message_handler);
       return CPROVER_EXIT_SUCCESS;
     }
 
@@ -617,7 +617,7 @@ int goto_instrument_parse_optionst::doit()
       show_goto_functions(
         goto_model,
         log.get_message_handler(),
-        ui_message_handler.get_ui(),
+        message_handler->get_ui(),
         cmdline.isset("list-goto-functions"));
       return CPROVER_EXIT_SUCCESS;
     }
@@ -723,7 +723,7 @@ int goto_instrument_parse_optionst::doit()
       if(cmdline.isset("dot"))
         hierarchy.output_dot(std::cout);
       else
-        show_class_hierarchy(hierarchy, ui_message_handler);
+        show_class_hierarchy(hierarchy, *message_handler);
 
       return CPROVER_EXIT_SUCCESS;
     }
@@ -894,7 +894,7 @@ void goto_instrument_parse_optionst::do_partial_inlining()
   if(!cmdline.isset("inline"))
   {
     log.status() << "Partial Inlining" << messaget::eom;
-    goto_partial_inline(goto_model, ui_message_handler);
+    goto_partial_inline(goto_model, *message_handler);
   }
 }
 
@@ -1108,24 +1108,15 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     if(!cmdline.isset("log"))
     {
       goto_function_inline(
-        goto_model,
-        function,
-        ui_message_handler,
-        true,
-        caching);
+        goto_model, function, *message_handler, true, caching);
     }
     else
     {
       std::string filename=cmdline.get_value("log");
       bool have_file=!filename.empty() && filename!="-";
 
-      jsont result=
-        goto_function_inline_and_log(
-          goto_model,
-          function,
-          ui_message_handler,
-          true,
-          caching);
+      jsont result = goto_function_inline_and_log(
+        goto_model, function, *message_handler, true, caching);
 
       if(have_file)
       {
@@ -1155,7 +1146,7 @@ void goto_instrument_parse_optionst::instrument_goto_program()
     do_indirect_call_and_rtti_removal();
 
     log.status() << "Partial inlining" << messaget::eom;
-    goto_partial_inline(goto_model, ui_message_handler, 0, true);
+    goto_partial_inline(goto_model, *message_handler, 0, true);
 
     goto_model.goto_functions.update();
     goto_model.goto_functions.compute_loop_numbers();

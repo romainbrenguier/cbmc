@@ -77,8 +77,11 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <java_bytecode/simple_method_stubbing.h>
 
 jbmc_parse_optionst::jbmc_parse_optionst(int argc, const char **argv)
-  : parse_options_baset(JBMC_OPTIONS, argc, argv, ui_message_handler),
-    ui_message_handler(cmdline, std::string("JBMC ") + CBMC_VERSION)
+  : parse_options_baset(
+      JBMC_OPTIONS,
+      argc,
+      argv,
+      std::string("JBMC ") + CBMC_VERSION)
 {
 }
 
@@ -90,8 +93,7 @@ jbmc_parse_optionst::jbmc_parse_optionst(int argc, const char **argv)
       JBMC_OPTIONS + extra_options,
       argc,
       argv,
-      ui_message_handler),
-    ui_message_handler(cmdline, std::string("JBMC ") + CBMC_VERSION)
+      std::string("JBMC ") + CBMC_VERSION)
 {
 }
 
@@ -158,7 +160,7 @@ void jbmc_parse_optionst::get_command_line_options(optionst &options)
   if(
     cmdline.isset("trace") || cmdline.isset("compact-trace") ||
     cmdline.isset("stack-trace") || cmdline.isset("stop-on-fail") ||
-    (ui_message_handler.get_ui() != ui_message_handlert::uit::PLAIN &&
+    (message_handler->get_ui() != ui_message_handlert::uit::PLAIN &&
      !cmdline.isset("cover")))
   {
     options.set_option("trace", true);
@@ -442,7 +444,7 @@ int jbmc_parse_optionst::doit()
                << config.this_operating_system() << messaget::eom;
 
   // output the options
-  switch(ui_message_handler.get_ui())
+  switch(message_handler->get_ui())
   {
     case ui_message_handlert::uit::PLAIN:
       log.conditional_output(
@@ -564,7 +566,7 @@ int jbmc_parse_optionst::doit()
     if(cmdline.isset("show-properties"))
     {
       show_properties(
-        goto_model, log.get_message_handler(), ui_message_handler.get_ui());
+        goto_model, log.get_message_handler(), message_handler->get_ui());
       return 0; // should contemplate EX_OK from sysexits.h
     }
 
@@ -578,13 +580,13 @@ int jbmc_parse_optionst::doit()
       if(options.get_bool_option("paths"))
       {
         all_properties_verifiert<java_single_path_symex_only_checkert> verifier(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
         (void)verifier();
       }
       else
       {
         all_properties_verifiert<java_multi_path_symex_only_checkert> verifier(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
         (void)verifier();
       }
 
@@ -598,13 +600,13 @@ int jbmc_parse_optionst::doit()
       if(options.get_bool_option("paths"))
       {
         stop_on_fail_verifiert<java_single_path_symex_checkert> verifier(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
         (void)verifier();
       }
       else
       {
         stop_on_fail_verifiert<java_multi_path_symex_checkert> verifier(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
         (void)verifier();
       }
 
@@ -619,7 +621,7 @@ int jbmc_parse_optionst::doit()
     {
       verifier = util_make_unique<
         stop_on_fail_verifiert<java_single_path_symex_checkert>>(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
     }
     else if(
       options.get_bool_option("stop-on-fail") &&
@@ -630,13 +632,13 @@ int jbmc_parse_optionst::doit()
         verifier =
           util_make_unique<stop_on_fail_verifier_with_fault_localizationt<
             java_multi_path_symex_checkert>>(
-            options, ui_message_handler, goto_model);
+            options, *message_handler, goto_model);
       }
       else
       {
         verifier = util_make_unique<
           stop_on_fail_verifiert<java_multi_path_symex_checkert>>(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
       }
     }
     else if(
@@ -645,7 +647,7 @@ int jbmc_parse_optionst::doit()
     {
       verifier = util_make_unique<all_properties_verifier_with_trace_storaget<
         java_single_path_symex_checkert>>(
-        options, ui_message_handler, goto_model);
+        options, *message_handler, goto_model);
     }
     else if(
       !options.get_bool_option("stop-on-fail") &&
@@ -656,13 +658,13 @@ int jbmc_parse_optionst::doit()
         verifier =
           util_make_unique<all_properties_verifier_with_fault_localizationt<
             java_multi_path_symex_checkert>>(
-            options, ui_message_handler, goto_model);
+            options, *message_handler, goto_model);
       }
       else
       {
         verifier = util_make_unique<all_properties_verifier_with_trace_storaget<
           java_multi_path_symex_checkert>>(
-          options, ui_message_handler, goto_model);
+          options, *message_handler, goto_model);
       }
     }
     else
@@ -672,7 +674,7 @@ int jbmc_parse_optionst::doit()
       // The `configure_bmc` callback passed will enable enum-unwind-static if
       // applicable.
       return bmct::do_language_agnostic_bmc(
-        options, goto_model, ui_message_handler, configure_bmc);
+        options, goto_model, *message_handler, configure_bmc);
     }
 
     const resultt result = (*verifier)();
@@ -683,7 +685,7 @@ int jbmc_parse_optionst::doit()
   {
     // Use symex-driven lazy loading:
     lazy_goto_modelt lazy_goto_model =
-      lazy_goto_modelt::from_handler_object(*this, options, ui_message_handler);
+      lazy_goto_modelt::from_handler_object(*this, options, *message_handler);
     lazy_goto_model.initialize(cmdline.args, options);
 
     class_hierarchy =
@@ -720,7 +722,7 @@ int jbmc_parse_optionst::doit()
     return bmct::do_language_agnostic_bmc(
       options,
       lazy_goto_model,
-      ui_message_handler,
+      *message_handler,
       configure_bmc,
       callback_after_symex);
   }
@@ -740,7 +742,7 @@ int jbmc_parse_optionst::get_goto_program(
 {
   {
     lazy_goto_modelt lazy_goto_model =
-      lazy_goto_modelt::from_handler_object(*this, options, ui_message_handler);
+      lazy_goto_modelt::from_handler_object(*this, options, *message_handler);
     lazy_goto_model.initialize(cmdline.args, options);
 
     class_hierarchy =
@@ -749,7 +751,7 @@ int jbmc_parse_optionst::get_goto_program(
     // Show the class hierarchy
     if(cmdline.isset("show-class-hierarchy"))
     {
-      show_class_hierarchy(*class_hierarchy, ui_message_handler);
+      show_class_hierarchy(*class_hierarchy, *message_handler);
       return CPROVER_EXIT_SUCCESS;
     }
 
@@ -764,12 +766,12 @@ int jbmc_parse_optionst::get_goto_program(
     // values, etc
     if(cmdline.isset("show-symbol-table"))
     {
-      show_symbol_table(lazy_goto_model.symbol_table, ui_message_handler);
+      show_symbol_table(lazy_goto_model.symbol_table, *message_handler);
       return 0;
     }
     else if(cmdline.isset("list-symbols"))
     {
-      show_symbol_table_brief(lazy_goto_model.symbol_table, ui_message_handler);
+      show_symbol_table_brief(lazy_goto_model.symbol_table, *message_handler);
       return 0;
     }
 
@@ -788,7 +790,7 @@ int jbmc_parse_optionst::get_goto_program(
     // show it?
     if(cmdline.isset("show-loops"))
     {
-      show_loop_ids(ui_message_handler.get_ui(), *goto_model);
+      show_loop_ids(message_handler->get_ui(), *goto_model);
       return 0;
     }
 
@@ -800,7 +802,7 @@ int jbmc_parse_optionst::get_goto_program(
       show_goto_functions(
         *goto_model,
         log.get_message_handler(),
-        ui_message_handler.get_ui(),
+        message_handler->get_ui(),
         cmdline.isset("list-goto-functions"));
       return 0;
     }
@@ -844,8 +846,7 @@ void jbmc_parse_optionst::process_goto_function(
     replace_java_nondet(function);
 
     // Similar removal of java nondet statements:
-    convert_nondet(
-      function, ui_message_handler, object_factory_params, ID_java);
+    convert_nondet(function, *message_handler, object_factory_params, ID_java);
 
     if(using_symex_driven_loading)
     {
@@ -859,7 +860,7 @@ void jbmc_parse_optionst::process_goto_function(
         goto_function.body,
         symbol_table,
         *class_hierarchy.get(),
-        ui_message_handler);
+        *message_handler);
     }
 
     // add generic checks
@@ -871,7 +872,7 @@ void jbmc_parse_optionst::process_goto_function(
       function.get_function_id(),
       goto_function,
       symbol_table,
-      ui_message_handler);
+      *message_handler);
 
     // checks don't know about adjusted float expressions
     adjust_float_expressions(goto_function, ns);
@@ -908,18 +909,18 @@ bool jbmc_parse_optionst::show_loaded_functions(
 {
   if(cmdline.isset("show-symbol-table"))
   {
-    show_symbol_table(goto_model.get_symbol_table(), ui_message_handler);
+    show_symbol_table(goto_model.get_symbol_table(), *message_handler);
     return true;
   }
   else if(cmdline.isset("list-symbols"))
   {
-    show_symbol_table_brief(goto_model.get_symbol_table(), ui_message_handler);
+    show_symbol_table_brief(goto_model.get_symbol_table(), *message_handler);
     return true;
   }
 
   if(cmdline.isset("show-loops"))
   {
-    show_loop_ids(ui_message_handler.get_ui(), goto_model.get_goto_functions());
+    show_loop_ids(message_handler->get_ui(), goto_model.get_goto_functions());
     return true;
   }
 
@@ -930,8 +931,8 @@ bool jbmc_parse_optionst::show_loaded_functions(
     namespacet ns(goto_model.get_symbol_table());
     show_goto_functions(
       ns,
-      ui_message_handler,
-      ui_message_handler.get_ui(),
+      *message_handler,
+      message_handler->get_ui(),
       goto_model.get_goto_functions(),
       cmdline.isset("list-goto-functions"));
     return true;
@@ -943,7 +944,7 @@ bool jbmc_parse_optionst::show_loaded_functions(
     show_properties(
       ns,
       log.get_message_handler(),
-      ui_message_handler.get_ui(),
+      message_handler->get_ui(),
       goto_model.get_goto_functions());
     return true;
   }
@@ -1077,9 +1078,9 @@ bool jbmc_parse_optionst::generate_function_body(
       symbol_table,
       stub_objects_are_not_null,
       object_factory_params,
-      ui_message_handler);
+      *message_handler);
 
-    goto_convert_functionst converter(symbol_table, ui_message_handler);
+    goto_convert_functionst converter(symbol_table, *message_handler);
     converter.convert_function(function_name, function);
 
     return true;

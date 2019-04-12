@@ -126,8 +126,10 @@ void goto_harness_parse_optionst::help()
 goto_harness_parse_optionst::goto_harness_parse_optionst(
   int argc,
   const char *argv[])
-  : parse_options_baset{GOTO_HARNESS_OPTIONS, argc, argv, ui_message_handler},
-    ui_message_handler(cmdline, std::string("GOTO-HARNESS ") + CBMC_VERSION)
+  : parse_options_baset{GOTO_HARNESS_OPTIONS,
+                        argc,
+                        argv,
+                        std::string("GOTO-HARNESS ") + CBMC_VERSION}
 {
 }
 
@@ -176,12 +178,12 @@ goto_harness_generator_factoryt goto_harness_parse_optionst::make_factory()
   auto factory = goto_harness_generator_factoryt{};
   factory.register_generator("call-function", [this]() {
     return util_make_unique<function_call_harness_generatort>(
-      ui_message_handler);
+      *message_handler.get());
   });
 
   factory.register_generator("initialise-with-memory-snapshot", [this]() {
     return util_make_unique<memory_snapshot_harness_generatort>(
-      ui_message_handler);
+      *message_handler.get());
   });
 
   return factory;

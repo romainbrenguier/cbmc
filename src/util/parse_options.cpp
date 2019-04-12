@@ -28,11 +28,12 @@ parse_options_baset::parse_options_baset(
   const std::string &_optstring,
   int argc,
   const char **argv,
-  message_handlert &mh)
-  : log(mh)
+  const std::string &program)
 {
   std::string optstring=std::string("?h(help)")+_optstring;
   parse_result=cmdline.parse(argc, argv, optstring.c_str());
+  message_handler = util_make_unique<ui_message_handlert>(cmdline, program);
+  log = messaget{*message_handler};
 
   // DO NOT USE log HERE!
   //

@@ -10,10 +10,12 @@ Author: Daniel Kroening, kroening@kroening.com
 #ifndef CPROVER_UTIL_PARSE_OPTIONS_H
 #define CPROVER_UTIL_PARSE_OPTIONS_H
 
+#include <memory>
 #include <string>
 
 #include "cmdline.h"
 #include "message.h"
+#include "ui_message.h"
 
 class parse_options_baset
 {
@@ -22,7 +24,7 @@ public:
     const std::string &optstring,
     int argc,
     const char **argv,
-    message_handlert &mh);
+    const std::string &program);
 
   cmdlinet cmdline;
 
@@ -35,6 +37,7 @@ public:
   virtual ~parse_options_baset() { }
 
 protected:
+  std::unique_ptr<ui_message_handlert> message_handler;
   messaget log;
 
 private:

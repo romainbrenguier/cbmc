@@ -62,8 +62,11 @@ Author: Peter Schrammel
 #include <goto-diff/unified_diff.h>
 
 jdiff_parse_optionst::jdiff_parse_optionst(int argc, const char **argv)
-  : parse_options_baset(JDIFF_OPTIONS, argc, argv, ui_message_handler),
-    ui_message_handler(cmdline, std::string("JDIFF ") + CBMC_VERSION)
+  : parse_options_baset(
+      JDIFF_OPTIONS,
+      argc,
+      argv,
+      std::string("JDIFF ") + CBMC_VERSION)
 {
 }
 
@@ -186,7 +189,7 @@ int jdiff_parse_optionst::doit()
   optionst options;
   get_command_line_options(options);
   messaget::eval_verbosity(
-    cmdline.get_value("verbosity"), messaget::M_STATISTICS, ui_message_handler);
+    cmdline.get_value("verbosity"), messaget::M_STATISTICS, *message_handler);
 
   //
   // Print a banner
@@ -204,18 +207,18 @@ int jdiff_parse_optionst::doit()
   register_languages();
 
   goto_modelt goto_model1 =
-    initialize_goto_model({cmdline.args[0]}, ui_message_handler, options);
+    initialize_goto_model({cmdline.args[0]}, *message_handler, options);
   if(process_goto_program(options, goto_model1))
     return CPROVER_EXIT_INTERNAL_ERROR;
   goto_modelt goto_model2 =
-    initialize_goto_model({cmdline.args[1]}, ui_message_handler, options);
+    initialize_goto_model({cmdline.args[1]}, *message_handler, options);
   if(process_goto_program(options, goto_model2))
     return CPROVER_EXIT_INTERNAL_ERROR;
 
   if(cmdline.isset("show-loops"))
   {
-    show_loop_ids(ui_message_handler.get_ui(), goto_model1);
-    show_loop_ids(ui_message_handler.get_ui(), goto_model2);
+    show_loop_ids(message_handler->get_ui(), goto_model1);
+    show_loop_ids(message_handler->get_ui(), goto_model2);
     return CPROVER_EXIT_SUCCESS;
   }
 
@@ -226,12 +229,12 @@ int jdiff_parse_optionst::doit()
     show_goto_functions(
       goto_model1,
       log.get_message_handler(),
-      ui_message_handler.get_ui(),
+      message_handler->get_ui(),
       cmdline.isset("list-goto-functions"));
     show_goto_functions(
       goto_model2,
       log.get_message_handler(),
-      ui_message_handler.get_ui(),
+      message_handler->get_ui(),
       cmdline.isset("list-goto-functions"));
     return CPROVER_EXIT_SUCCESS;
   }
@@ -260,8 +263,7 @@ int jdiff_parse_optionst::doit()
     return CPROVER_EXIT_SUCCESS;
   }
 
-  java_syntactic_difft sd(
-    goto_model1, goto_model2, options, ui_message_handler);
+  java_syntactic_difft sd(goto_model1, goto_model2, options, *message_handler);
   sd();
   sd.output_functions();
 

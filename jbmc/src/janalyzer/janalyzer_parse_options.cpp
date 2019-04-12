@@ -58,8 +58,11 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <goto-analyzer/unreachable_instructions.h>
 
 janalyzer_parse_optionst::janalyzer_parse_optionst(int argc, const char **argv)
-  : parse_options_baset(JANALYZER_OPTIONS, argc, argv, ui_message_handler),
-    ui_message_handler(cmdline, std::string("JANALYZER ") + CBMC_VERSION)
+  : parse_options_baset(
+      JANALYZER_OPTIONS,
+      argc,
+      argv,
+      std::string("JANALYZER ") + CBMC_VERSION)
 {
 }
 
@@ -344,7 +347,7 @@ int janalyzer_parse_optionst::doit()
   optionst options;
   get_command_line_options(options);
   messaget::eval_verbosity(
-    cmdline.get_value("verbosity"), messaget::M_STATISTICS, ui_message_handler);
+    cmdline.get_value("verbosity"), messaget::M_STATISTICS, *message_handler);
 
   //
   // Print a banner
@@ -377,7 +380,7 @@ int janalyzer_parse_optionst::doit()
   // show it?
   if(cmdline.isset("show-symbol-table"))
   {
-    ::show_symbol_table(goto_model.symbol_table, ui_message_handler);
+    ::show_symbol_table(goto_model.symbol_table, *message_handler);
     return CPROVER_EXIT_SUCCESS;
   }
 
@@ -631,7 +634,7 @@ bool janalyzer_parse_optionst::process_goto_program(const optionst &options)
 
     // do partial inlining
     log.status() << "Partial Inlining" << messaget::eom;
-    goto_partial_inline(goto_model, ui_message_handler);
+    goto_partial_inline(goto_model, *message_handler);
 
     // remove returns, gcc vectors, complex
     remove_returns(goto_model);
