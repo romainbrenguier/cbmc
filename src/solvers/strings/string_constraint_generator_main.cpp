@@ -342,12 +342,12 @@ std::pair<exprt, string_constraintst> add_axioms_for_copy(
   PRECONDITION(args.size() == 3 || args.size() == 5);
   const array_string_exprt res =
     array_pool.find( args[1], args[0]);
-  const array_string_exprt str = get_string_expr(array_pool, args[2]);
+  const auto str = get_string_expr(array_pool, args[2]);
   const typet &index_type = str.length().type();
   const exprt offset = args.size() == 3 ? from_integer(0, index_type) : args[3];
   const exprt count = args.size() == 3 ? str.length() : args[4];
   return add_axioms_for_substring(
-    fresh_symbol, res, str, offset, plus_exprt(offset, count));
+    fresh_symbol, res, str.array, offset, plus_exprt(offset, count));
 }
 
 /// Length of a string
@@ -361,7 +361,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_length(
   array_poolt &array_pool)
 {
   PRECONDITION(f.arguments().size() == 1);
-  const array_string_exprt str = get_string_expr(array_pool, f.arguments()[0]);
+  const auto str = get_string_expr(array_pool, f.arguments()[0]);
   return {str.length(), {}};
 }
 
@@ -416,8 +416,8 @@ std::pair<exprt, string_constraintst> add_axioms_for_char_at(
   array_poolt &array_pool)
 {
   PRECONDITION(f.arguments().size() == 2);
-  array_string_exprt str = get_string_expr(array_pool, f.arguments()[0]);
-  symbol_exprt char_sym = fresh_symbol("char", str.type().subtype());
+  const auto str = get_string_expr(array_pool, f.arguments()[0]);
+  symbol_exprt char_sym = fresh_symbol("char", str.array.type().subtype());
   string_constraintst constraints;
   constraints.existential = {equal_exprt(char_sym, str[f.arguments()[1]])};
   return {std::move(char_sym), std::move(constraints)};

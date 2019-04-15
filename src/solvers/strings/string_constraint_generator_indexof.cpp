@@ -293,10 +293,10 @@ std::pair<exprt, string_constraintst> add_axioms_for_index_of(
 {
   const function_application_exprt::argumentst &args = f.arguments();
   PRECONDITION(args.size() == 2 || args.size() == 3);
-  const array_string_exprt str = get_string_expr(array_pool, args[0]);
+  const auto str = get_string_expr(array_pool, args[0]);
   const exprt &c = args[1];
   const typet &index_type = str.length().type();
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.array.type().subtype();
   PRECONDITION(f.type() == index_type);
   const exprt from_index =
     args.size() == 2 ? from_integer(0, index_type) : args[2];
@@ -304,7 +304,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_index_of(
   if(c.type().id() == ID_unsignedbv || c.type().id() == ID_signedbv)
   {
     return add_axioms_for_index_of(
-      fresh_symbol, str, typecast_exprt(c, char_type), from_index);
+      fresh_symbol, str.array, typecast_exprt(c, char_type), from_index);
   }
   else
   {
@@ -313,8 +313,9 @@ std::pair<exprt, string_constraintst> add_axioms_for_index_of(
       string_refinement_invariantt(
         "c can only be a (un)signedbv or a refined "
         "string and the (un)signedbv case is already handled"));
-    array_string_exprt sub = get_string_expr(array_pool, c);
-    return add_axioms_for_index_of_string(fresh_symbol, str, sub, from_index);
+    const auto sub = get_string_expr(array_pool, c);
+    return add_axioms_for_index_of_string(
+      fresh_symbol, str.array, sub.array, from_index);
   }
 }
 
@@ -418,10 +419,10 @@ std::pair<exprt, string_constraintst> add_axioms_for_last_index_of(
 {
   const function_application_exprt::argumentst &args = f.arguments();
   PRECONDITION(args.size() == 2 || args.size() == 3);
-  const array_string_exprt str = get_string_expr(array_pool, args[0]);
+  const auto str = get_string_expr(array_pool, args[0]);
   const exprt c = args[1];
   const typet &index_type = str.length().type();
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.array.type().subtype();
   PRECONDITION(f.type() == index_type);
 
   const exprt from_index = args.size() == 2 ? str.length() : args[2];
@@ -429,12 +430,12 @@ std::pair<exprt, string_constraintst> add_axioms_for_last_index_of(
   if(c.type().id() == ID_unsignedbv || c.type().id() == ID_signedbv)
   {
     return add_axioms_for_last_index_of(
-      fresh_symbol, str, typecast_exprt(c, char_type), from_index);
+      fresh_symbol, str.array, typecast_exprt(c, char_type), from_index);
   }
   else
   {
-    const array_string_exprt sub = get_string_expr(array_pool, c);
+    const auto sub = get_string_expr(array_pool, c);
     return add_axioms_for_last_index_of_string(
-      fresh_symbol, str, sub, from_index);
+      fresh_symbol, str.array, sub.array, from_index);
   }
 }

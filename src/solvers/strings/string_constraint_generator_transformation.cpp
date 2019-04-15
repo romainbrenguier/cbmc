@@ -44,10 +44,10 @@ std::pair<exprt, string_constraintst> add_axioms_for_set_length(
   string_constraintst constraints;
   const array_string_exprt res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(array_pool, f.arguments()[2]);
+  const auto s1 = get_string_expr(array_pool, f.arguments()[2]);
   const exprt &k = f.arguments()[3];
   const typet &index_type = s1.length().type();
-  const typet &char_type = s1.content().type().subtype();
+  const typet &char_type = s1.array.type().subtype();
 
   // We add axioms:
   // a1 : |res|=k
@@ -99,12 +99,12 @@ std::pair<exprt, string_constraintst> add_axioms_for_substring(
 {
   const function_application_exprt::argumentst &args = f.arguments();
   PRECONDITION(args.size() == 4 || args.size() == 5);
-  const array_string_exprt str = get_string_expr(array_pool, args[2]);
+  const auto str = get_string_expr(array_pool, args[2]);
   const array_string_exprt res =
     array_pool.find( args[1], args[0]);
   const exprt &i = args[3];
   const exprt j = args.size() == 5 ? args[4] : str.length();
-  return add_axioms_for_substring(fresh_symbol, res, str, i, j);
+  return add_axioms_for_substring(fresh_symbol, res, str.array, i, j);
 }
 
 /// Add axioms ensuring that `res` corresponds to the substring of `str`
@@ -188,11 +188,11 @@ std::pair<exprt, string_constraintst> add_axioms_for_trim(
 {
   PRECONDITION(f.arguments().size() == 3);
   string_constraintst constraints;
-  const array_string_exprt &str = get_string_expr(array_pool, f.arguments()[2]);
+  const auto &str = get_string_expr(array_pool, f.arguments()[2]);
   const array_string_exprt &res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
   const typet &index_type = str.length().type();
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.array.type().subtype();
   const symbol_exprt idx = fresh_symbol("index_trim", index_type);
   const exprt space_char = from_integer(' ', char_type);
 
@@ -301,13 +301,13 @@ std::pair<exprt, string_constraintst> add_axioms_for_replace(
 {
   PRECONDITION(f.arguments().size() == 5);
   string_constraintst constraints;
-  array_string_exprt str = get_string_expr(array_pool, f.arguments()[2]);
+  const auto str = get_string_expr(array_pool, f.arguments()[2]);
   array_string_exprt res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
   if(
     const auto maybe_chars =
       to_char_pair(f.arguments()[3], f.arguments()[4], [&](const exprt &e) {
-        return get_string_expr(array_pool, e);
+        return get_string_expr(array_pool, e).array;
       }))
   {
     const auto old_char = maybe_chars->first;
@@ -343,12 +343,12 @@ std::pair<exprt, string_constraintst> add_axioms_for_delete_char_at(
   PRECONDITION(f.arguments().size() == 4);
   const array_string_exprt res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt str = get_string_expr(array_pool, f.arguments()[2]);
+  const auto str = get_string_expr(array_pool, f.arguments()[2]);
   exprt index_one = from_integer(1, str.length().type());
   return add_axioms_for_delete(
     fresh_symbol,
     res,
-    str,
+    str.array,
     f.arguments()[3],
     plus_exprt(f.arguments()[3], index_one),
     array_pool);
@@ -415,7 +415,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_delete(
   PRECONDITION(f.arguments().size() == 5);
   const array_string_exprt res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt arg = get_string_expr(array_pool, f.arguments()[2]);
+  const auto arg = get_string_expr(array_pool, f.arguments()[2]);
   return add_axioms_for_delete(
-    fresh_symbol, res, arg, f.arguments()[3], f.arguments()[4], array_pool);
+    fresh_symbol, res, arg.array, f.arguments()[3], f.arguments()[4], array_pool);
 }

@@ -127,7 +127,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_code_point_at(
   const typet &return_type = f.type();
   PRECONDITION(return_type.id() == ID_signedbv);
   PRECONDITION(f.arguments().size() == 2);
-  const array_string_exprt str = get_string_expr(array_pool, f.arguments()[0]);
+  const auto str = get_string_expr(array_pool, f.arguments()[0]);
   const exprt &pos = f.arguments()[1];
 
   const symbol_exprt result = fresh_symbol("char", return_type);
@@ -161,7 +161,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_code_point_before(
   typet return_type = f.type();
   PRECONDITION(return_type.id() == ID_signedbv);
   symbol_exprt result = fresh_symbol("char", return_type);
-  array_string_exprt str = get_string_expr(array_pool, args[0]);
+  const auto str = get_string_expr(array_pool, args[0]);
   string_constraintst constraints;
 
   const exprt &char1 =

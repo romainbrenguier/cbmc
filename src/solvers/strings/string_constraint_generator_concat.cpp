@@ -148,12 +148,12 @@ std::pair<exprt, string_constraintst> add_axioms_for_concat_code_point(
   PRECONDITION(f.arguments().size() == 4);
   const array_string_exprt res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(array_pool, f.arguments()[2]);
-  const typet &char_type = s1.content().type().subtype();
+  const auto s1 = get_string_expr(array_pool, f.arguments()[2]);
+  const typet &char_type = s1.array.type().subtype();
   const typet &index_type = s1.length().type();
   const array_string_exprt code_point =
     array_pool.fresh_string(index_type, char_type);
   return combine_results(
     add_axioms_for_code_point(code_point, f.arguments()[3]),
-    add_axioms_for_concat(fresh_symbol, res, s1, code_point));
+    add_axioms_for_concat(fresh_symbol, res, s1.array, code_point));
 }

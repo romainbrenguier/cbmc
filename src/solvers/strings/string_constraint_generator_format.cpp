@@ -494,9 +494,9 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
         INVARIANT(
           is_refined_string_type(arg.type()),
           "arguments of format should be strings");
-        const array_string_exprt string_arg = get_string_expr(array_pool, arg);
+        const auto string_arg = get_string_expr(array_pool, arg);
         get_arg = [string_arg](const irep_idt &id) {
-          return format_arg_from_string(string_arg, id);
+          return format_arg_from_string(string_arg.array, id);
         };
       }
 
@@ -604,14 +604,14 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
   PRECONDITION(f.arguments().size() >= 3);
   const array_string_exprt res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(array_pool, f.arguments()[2]);
+  const auto s1 = get_string_expr(array_pool, f.arguments()[2]);
 
-  if(s1.length().id() == ID_constant && s1.content().id() == ID_array)
+  if(s1.length().id() == ID_constant && s1.array.id() == ID_array)
   {
     const auto length =
       numeric_cast_v<std::size_t>(to_constant_expr(s1.length()));
     std::string s =
-      utf16_constant_array_to_java(to_array_expr(s1.content()), length);
+      utf16_constant_array_to_java(to_array_expr(s1.array), length);
     // List of arguments after s
     std::vector<exprt> args(f.arguments().begin() + 3, f.arguments().end());
     return add_axioms_for_format(

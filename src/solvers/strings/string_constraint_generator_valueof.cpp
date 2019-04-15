@@ -511,7 +511,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_parse_int(
   const namespacet &ns)
 {
   PRECONDITION(f.arguments().size() == 1 || f.arguments().size() == 2);
-  const array_string_exprt str = get_string_expr(array_pool, f.arguments()[0]);
+  const auto str = get_string_expr(array_pool, f.arguments()[0]);
   const typet &type = f.type();
   PRECONDITION(type.id() == ID_signedbv);
   const exprt radix =
@@ -524,7 +524,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_parse_int(
   PRECONDITION((radix_ul >= 2 && radix_ul <= 36) || radix_ul == 0);
 
   const symbol_exprt input_int = fresh_symbol("parsed_int", type);
-  const typet &char_type = str.content().type().subtype();
+  const typet &char_type = str.array.type().subtype();
   const typecast_exprt radix_as_char(radix, char_type);
   const bool strict_formatting = false;
 
@@ -536,13 +536,13 @@ std::pair<exprt, string_constraintst> add_axioms_for_parse_int(
   /// \note the only thing stopping us from taking longer strings with many
   /// leading zeros is the axioms for correct number format
   auto constraints1 = add_axioms_for_correct_number_format(
-    str, radix_as_char, radix_ul, max_string_length, strict_formatting);
+    str.array, radix_as_char, radix_ul, max_string_length, strict_formatting);
 
   auto constraints2 = add_axioms_for_characters_in_integer_string(
     input_int,
     type,
     strict_formatting,
-    str,
+    str.array,
     max_string_length,
     radix,
     radix_ul);

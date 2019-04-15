@@ -38,6 +38,27 @@ public:
 #endif
 };
 
+struct array_length_pairt
+{
+  array_string_exprt array;
+  exprt length_value;
+
+  exprt operator[](exprt index) const
+  {
+    return index_exprt{array, std::move(index)};
+  }
+
+  exprt operator[](const mp_integer &index) const
+  {
+    return array[from_integer(index, length_value.type())];
+  }
+
+  const exprt &length() const
+  {
+    return length_value;
+  }
+};
+
 /// Correspondance between arrays and pointers string representations
 class array_poolt final
 {
@@ -103,6 +124,28 @@ DEPRECATED("use pool.find(pointer, length) instead")
 /// \param pool: pool of arrays representing strings
 /// \param expr: an expression of refined string type
 /// \return a string expression
-array_string_exprt get_string_expr(array_poolt &pool, const exprt &expr);
+struct array_length_pairt
+{
+  array_string_exprt array;
+  exprt length_value;
+
+  exprt operator[](exprt index) const
+  {
+    return index_exprt{array, std::move(index)};
+  }
+
+  const exprt &length() const
+  {
+    return length_value;
+  }
+};
+
+/// casts an expression to a string expression, or fetches the actual
+/// string_exprt in the case of a symbol.
+/// \param pool: pool of arrays representing strings
+/// \param expr: an expression of refined string type
+/// \return a pair of expressions, the first represents the length of the string
+///   and the second is an array representing its content
+array_length_pairt get_string_expr(array_poolt &pool, const exprt &expr);
 
 #endif // CPROVER_SOLVERS_STRINGS_ARRAY_POOL_H

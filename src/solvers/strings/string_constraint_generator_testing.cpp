@@ -106,13 +106,13 @@ std::pair<exprt, string_constraintst> add_axioms_for_is_prefix(
   const function_application_exprt::argumentst &args = f.arguments();
   PRECONDITION(f.type() == bool_typet() || f.type().id() == ID_c_bool);
   PRECONDITION(args.size() == 2 || args.size() == 3);
-  const array_string_exprt &s0 =
+  const auto &s0 =
     get_string_expr(array_pool, args[swap_arguments ? 1u : 0u]);
-  const array_string_exprt &s1 =
+  const auto &s1 =
     get_string_expr(array_pool, args[swap_arguments ? 0u : 1u]);
   const exprt offset =
     args.size() == 2 ? from_integer(0, s0.length().type()) : args[2];
-  auto pair = add_axioms_for_is_prefix(fresh_symbol, s0, s1, offset);
+  auto pair = add_axioms_for_is_prefix(fresh_symbol, s0.array, s1.array, offset);
   return {typecast_exprt(pair.first, f.type()), std::move(pair.second)};
 }
 
@@ -136,7 +136,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_is_empty(
   // a2 : s0 => is_empty
 
   symbol_exprt is_empty = fresh_symbol("is_empty");
-  array_string_exprt s0 = get_string_expr(array_pool, f.arguments()[0]);
+  const auto s0 = get_string_expr(array_pool, f.arguments()[0]);
   string_constraintst constraints;
   constraints.existential = {implies_exprt(is_empty, length_eq(s0, 0)),
                              implies_exprt(length_eq(s0, 0), is_empty)};
@@ -180,9 +180,9 @@ std::pair<exprt, string_constraintst> add_axioms_for_is_suffix(
   string_constraintst constraints;
   symbol_exprt issuffix = fresh_symbol("issuffix");
   typecast_exprt tc_issuffix(issuffix, f.type());
-  const array_string_exprt &s0 =
+  const auto &s0 =
     get_string_expr(array_pool, args[swap_arguments ? 1u : 0u]);
-  const array_string_exprt &s1 =
+  const auto &s1 =
     get_string_expr(array_pool, args[swap_arguments ? 0u : 1u]);
   const typet &index_type = s0.length().type();
 
@@ -240,8 +240,8 @@ std::pair<exprt, string_constraintst> add_axioms_for_contains(
   PRECONDITION(f.arguments().size() == 2);
   PRECONDITION(f.type() == bool_typet() || f.type().id() == ID_c_bool);
   string_constraintst constraints;
-  const array_string_exprt s0 = get_string_expr(array_pool, f.arguments()[0]);
-  const array_string_exprt s1 = get_string_expr(array_pool, f.arguments()[1]);
+  const auto s0 = get_string_expr(array_pool, f.arguments()[0]);
+  const auto s1 = get_string_expr(array_pool, f.arguments()[1]);
   const typet &index_type = s0.length().type();
   const symbol_exprt contains = fresh_symbol("contains");
   const symbol_exprt startpos = fresh_symbol("startpos_contains", index_type);
@@ -273,8 +273,8 @@ std::pair<exprt, string_constraintst> add_axioms_for_contains(
     and_exprt(not_exprt(contains), length_ge(s0, s1.length())),
     from_integer(0, index_type),
     s1.length(),
-    s0,
-    s1};
+    s0.array,
+    s1.array};
   constraints.not_contains.push_back(a5);
 
   return {typecast_exprt(contains, f.type()), std::move(constraints)};
