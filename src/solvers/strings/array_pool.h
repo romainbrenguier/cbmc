@@ -116,6 +116,7 @@ private:
 /// This allows to get a string expression from arguments of a string
 /// builtion function, because string arguments in these function calls
 /// are given as a struct containing a length and pointer to an array.
+DEPRECATED("use array_pool.find(arg.op1(), arg.op0()) instead")
 array_string_exprt of_argument(array_poolt &array_pool, const exprt &arg);
 
 /// Return the array associated to the given pointer or creates a new one
