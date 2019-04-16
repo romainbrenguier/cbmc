@@ -32,7 +32,7 @@ exprt array_poolt::get_length(const array_string_exprt &s) const
   return s.length();
 }
 
-array_string_exprt
+array_length_pairt
 array_poolt::fresh_string(const typet &index_type, const typet &char_type)
 {
   symbol_exprt length = fresh_symbol("string_length", index_type);
@@ -40,7 +40,7 @@ array_poolt::fresh_string(const typet &index_type, const typet &char_type)
   symbol_exprt content = fresh_symbol("string_content", array_type);
   array_string_exprt str = to_array_string_expr(content);
   created_strings_value.insert(str);
-  return str;
+  return array_length_pairt{str, length};
 }
 
 /// Helper function for \ref find.

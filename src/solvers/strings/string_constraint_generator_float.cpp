@@ -221,10 +221,10 @@ std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
   const exprt max_non_exponent_notation = from_integer(100000, shifted.type());
   // fractional_part is floor(f * 100000) % 100000
   const mod_exprt fractional_part(shifted, max_non_exponent_notation);
-  const array_string_exprt fractional_part_str =
+  const auto fractional_part_str =
     array_pool.fresh_string(index_type, char_type);
-  auto result1 =
-    add_axioms_for_fractional_part(fractional_part_str, fractional_part, 6);
+  auto result1 = add_axioms_for_fractional_part(
+    fractional_part_str.array, fractional_part, 6);
 
   // The axiom added to convert to integer should always be satisfiable even
   // when the preconditions are not satisfied.
@@ -232,10 +232,9 @@ std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
     round_expr_to_zero(f), max_non_exponent_notation);
   // We should not need more than 8 characters to represent the integer
   // part of the float.
-  const array_string_exprt integer_part_str =
-    array_pool.fresh_string(index_type, char_type);
+  const auto integer_part_str = array_pool.fresh_string(index_type, char_type);
   auto result2 =
-    add_axioms_for_string_of_int(integer_part_str, integer_part, 8, ns);
+    add_axioms_for_string_of_int(integer_part_str.array, integer_part, 8, ns);
 
   auto result3 = add_axioms_for_concat(
     fresh_symbol, res, integer_part_str, fractional_part_str);
@@ -458,10 +457,10 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
     floatbv_mult(dec_significand, constant_float(0.1, float_spec)),
     dec_significand);
   dec_significand_int = round_expr_to_zero(dec_significand);
-  array_string_exprt string_expr_integer_part =
+  const auto string_expr_integer_part =
     array_pool.fresh_string(index_type, char_type);
   auto result1 = add_axioms_for_string_of_int(
-    string_expr_integer_part, dec_significand_int, 3, ns);
+    string_expr_integer_part.array, dec_significand_int, 3, ns);
   minus_exprt fractional_part(
     dec_significand, floatbv_of_int_expr(dec_significand_int, float_spec));
 
@@ -478,14 +477,14 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
   const mod_exprt fractional_part_shifted(
     shifted_float, max_non_exponent_notation);
 
-  array_string_exprt string_fractional_part =
+  const auto string_fractional_part =
     array_pool.fresh_string(index_type, char_type);
   auto result2 = add_axioms_for_fractional_part(
     string_fractional_part, fractional_part_shifted, 6);
 
   // string_expr_with_fractional_part =
   //   concat(string_with_do, string_fractional_part)
-  const array_string_exprt string_expr_with_fractional_part =
+  const auto string_expr_with_fractional_part =
     array_pool.fresh_string(index_type, char_type);
   auto result3 = add_axioms_for_concat(
     fresh_symbol,
@@ -494,10 +493,10 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
     string_fractional_part);
 
   // string_expr_with_E = concat(string_fraction, string_lit_E)
-  const array_string_exprt stringE =
+  const auto stringE =
     array_pool.fresh_string(index_type, char_type);
   auto result4 = add_axioms_for_constant(stringE, "E");
-  const array_string_exprt string_expr_with_E =
+  const auto string_expr_with_E =
     array_pool.fresh_string(index_type, char_type);
   auto result5 = add_axioms_for_concat(
     fresh_symbol,
@@ -506,7 +505,7 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
     stringE);
 
   // exponent_string = string_of_int(decimal_exponent)
-  const array_string_exprt exponent_string =
+  const auto exponent_string =
     array_pool.fresh_string(index_type, char_type);
   auto result6 =
     add_axioms_for_string_of_int(exponent_string, decimal_exponent, 3, ns);

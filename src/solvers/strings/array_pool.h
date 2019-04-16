@@ -90,7 +90,7 @@ public:
   /// \param index_type: type used to index characters of the strings
   /// \param char_type: type of characters
   /// \return a string expression
-  array_string_exprt
+  array_length_pairt
   fresh_string(const typet &index_type, const typet &char_type);
 
 private:
