@@ -124,8 +124,8 @@ std::pair<exprt, string_constraintst> add_axioms_for_substring(
 /// \return integer expression equal to zero
 std::pair<exprt, string_constraintst> add_axioms_for_substring(
   symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
-  const array_string_exprt &str,
+  const array_length_pairt &res,
+  const array_length_pairt &str,
   const exprt &start,
   const exprt &end)
 {

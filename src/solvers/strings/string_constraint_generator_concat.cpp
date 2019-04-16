@@ -37,9 +37,9 @@ Author: Romain Brenguier, romain.brenguier@diffblue.com
 /// \return integer expression `0`
 std::pair<exprt, string_constraintst> add_axioms_for_concat_substr(
   symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
-  const array_string_exprt &s1,
-  const array_string_exprt &s2,
+  const array_length_pairt &res,
+  const array_length_pairt &s1,
+  const array_length_pairt &s2,
   const exprt &start_index,
   const exprt &end_index)
 {
@@ -79,9 +79,9 @@ std::pair<exprt, string_constraintst> add_axioms_for_concat_substr(
 /// Where start_index' is max(0, start) and end' is
 /// max(min(end, s2.length), start')
 exprt length_constraint_for_concat_substr(
-  const array_string_exprt &res,
-  const array_string_exprt &s1,
-  const array_string_exprt &s2,
+  const array_length_pairt &res,
+  const array_length_pairt &s1,
+  const array_length_pairt &s2,
   const exprt &start,
   const exprt &end)
 {
@@ -125,9 +125,9 @@ exprt length_constraint_for_concat_char(
 /// \return an integer expression
 std::pair<exprt, string_constraintst> add_axioms_for_concat(
   symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
-  const array_string_exprt &s1,
-  const array_string_exprt &s2)
+  const array_length_pairt &res,
+  const array_length_pairt &s1,
+  const array_length_pairt &s2)
 {
   exprt index_zero = from_integer(0, s2.length().type());
   return add_axioms_for_concat_substr(
@@ -152,6 +152,6 @@ std::pair<exprt, string_constraintst> add_axioms_for_concat_code_point(
   const typet &index_type = s1.length().type();
   const auto code_point = array_pool.fresh_string(index_type, char_type);
   return combine_results(
-    add_axioms_for_code_point(code_point.array, f.arguments()[3]),
-    add_axioms_for_concat(fresh_symbol, res, s1.array, code_point));
+    add_axioms_for_code_point(code_point, f.arguments()[3]),
+    add_axioms_for_concat(fresh_symbol, res, s1, code_point));
 }

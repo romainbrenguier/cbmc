@@ -266,7 +266,7 @@ static exprt is_null(const array_string_exprt &string)
 /// \param message: message handler for warnings
 /// \param ns: namespace
 /// \return String expression representing the output of String.format.
-static std::pair<array_string_exprt, string_constraintst>
+static std::pair<array_length_pairt, string_constraintst>
 add_axioms_for_format_specifier(
   symbol_generatort &fresh_symbol,
   const format_specifiert &fs,
@@ -278,7 +278,7 @@ add_axioms_for_format_specifier(
   const namespacet &ns)
 {
   string_constraintst constraints;
-  const array_string_exprt res = array_pool.fresh_string(index_type, char_type);
+  const auto res = array_pool.fresh_string(index_type, char_type);
   std::pair<exprt, string_constraintst> return_code;
   switch(fs.conversion)
   {
@@ -329,7 +329,7 @@ add_axioms_for_format_specifier(
   {
     const exprt arg_string = get_arg("string_expr");
     const array_string_exprt string_expr = to_array_string_expr(arg_string);
-    return {std::move(string_expr), {}};
+    return {array_length_pairt{string_expr, string_expr.length()}, {}};
   }
   case format_specifiert::HASHCODE:
     return_code = add_axioms_for_string_of_int(res, get_arg("hashcode"), 0, ns);
@@ -455,7 +455,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
 {
   string_constraintst constraints;
   const std::vector<format_elementt> format_strings = parse_format_string(s);
-  std::vector<array_string_exprt> intermediary_strings;
+  std::vector<array_length_pairt> intermediary_strings;
   std::size_t arg_count = 0;
   const typet &char_type = res.content().type().subtype();
   const typet &index_type = res.length().type();
@@ -514,8 +514,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
     }
     else
     {
-      const array_string_exprt str =
-        array_pool.fresh_string(index_type, char_type);
+      const auto str = array_pool.fresh_string(index_type, char_type);
       auto result =
         add_axioms_for_constant(str, fe.get_format_text().get_content());
       merge(constraints, result.second);
@@ -532,7 +531,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
     return {return_code, constraints};
   }
 
-  array_string_exprt str = intermediary_strings[0];
+  const auto &str = intermediary_strings[0];
 
   if(intermediary_strings.size() == 1)
   {
@@ -547,8 +546,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_format(
   for(std::size_t i = 1; i < intermediary_strings.size() - 1; ++i)
   {
     const array_string_exprt &intermediary = intermediary_strings[i];
-    const array_string_exprt fresh =
-      array_pool.fresh_string(index_type, char_type);
+    const auto fresh = array_pool.fresh_string(index_type, char_type);
     auto result = add_axioms_for_concat(fresh_symbol, fresh, str, intermediary);
     return_code = maximum(return_code, result.first);
     merge(constraints, std::move(result.second));

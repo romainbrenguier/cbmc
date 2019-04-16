@@ -160,12 +160,13 @@ exprt string_concatenation_builtin_functiont::length_constraint() const
 {
   if(args.size() == 0)
   {
-    return length_constraint_for_concat(
-      result.array, input1.array, input2.array);
+    return length_constraint_for_concat(result, input1, input2);
   }
   if(args.size() == 2)
+  {
     return length_constraint_for_concat_substr(
       result, input1, input2, args[0], args[1]);
+  }
   UNREACHABLE;
 }
 
@@ -217,7 +218,7 @@ string_constraintst string_concat_char_builtin_functiont::constraints(
 
 exprt string_concat_char_builtin_functiont::length_constraint() const
 {
-  return length_constraint_for_concat_char(result.array, input.array);
+  return length_constraint_for_concat_char(result, input);
 }
 
 optionalt<exprt> string_set_char_builtin_functiont::eval(
@@ -494,7 +495,7 @@ string_constraintst string_insertion_builtin_functiont::constraints(
   if(args.size() == 1)
   {
     auto pair = add_axioms_for_insert(
-      generator.fresh_symbol, result.array, input1.array, input2.array, args[0]);
+      generator.fresh_symbol, result, input1, input2, args[0]);
     pair.second.existential.push_back(equal_exprt(pair.first, return_code));
     return pair.second;
   }
@@ -507,7 +508,7 @@ exprt string_insertion_builtin_functiont::length_constraint() const
 {
   if(args.size() == 1)
     return length_constraint_for_insert(
-      result.array, input1.array, input2.array);
+      result, input1, input2);
   if(args.size() == 3)
     UNIMPLEMENTED;
   UNREACHABLE;
@@ -566,7 +567,7 @@ string_constraintst string_of_int_builtin_functiont::constraints(
   string_constraint_generatort &generator) const
 {
   auto pair = add_axioms_for_string_of_int_with_radix(
-    result.array, arg, radix, 0, generator.ns);
+    result, arg, radix, 0, generator.ns);
   pair.second.existential.push_back(equal_exprt(pair.first, return_code));
   return pair.second;
 }

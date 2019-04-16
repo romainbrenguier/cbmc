@@ -22,12 +22,12 @@ public:
   string_builtin_functiont(const string_builtin_functiont &) = delete;
   virtual ~string_builtin_functiont() = default;
 
-  virtual optionalt<array_string_exprt> string_result() const
+  virtual optionalt<array_length_pairt> string_result() const
   {
     return {};
   }
 
-  virtual std::vector<array_string_exprt> string_arguments() const
+  virtual std::vector<array_length_pairt> string_arguments() const
   {
     return {};
   }
@@ -97,13 +97,13 @@ public:
     const std::vector<exprt> &fun_args,
     array_poolt &array_pool);
 
-  optionalt<array_string_exprt> string_result() const override
+  optionalt<array_length_pairt> string_result() const override
   {
-    return result.array;
+    return result;
   }
-  std::vector<array_string_exprt> string_arguments() const override
+  std::vector<array_length_pairt> string_arguments() const override
   {
-    return {input.array};
+    return {input};
   }
   bool maybe_testing_function() const override
   {
@@ -287,13 +287,13 @@ public:
     const std::vector<exprt> &fun_args,
     array_poolt &array_pool);
 
-  optionalt<array_string_exprt> string_result() const override
+  optionalt<array_length_pairt> string_result() const override
   {
-    return result.array;
+    return result;
   }
-  std::vector<array_string_exprt> string_arguments() const override
+  std::vector<array_length_pairt> string_arguments() const override
   {
-    return {input1.array, input2.array};
+    return {input1, input2};
   }
 
   /// Evaluate the result from a concrete valuation of the arguments
@@ -370,9 +370,9 @@ public:
     const std::vector<exprt> &fun_args,
     array_poolt &array_pool);
 
-  optionalt<array_string_exprt> string_result() const override
+  optionalt<array_length_pairt> string_result() const override
   {
-    return result.array;
+    return result;
   }
 
   bool maybe_testing_function() const override
@@ -420,9 +420,9 @@ class string_test_builtin_functiont : public string_builtin_functiont
 {
 public:
   exprt result;
-  std::vector<array_string_exprt> under_test;
+  std::vector<array_length_pairt> under_test;
   std::vector<exprt> args;
-  std::vector<array_string_exprt> string_arguments() const override
+  std::vector<array_length_pairt> string_arguments() const override
   {
     return under_test;
   }
@@ -437,7 +437,7 @@ class string_builtin_function_with_no_evalt : public string_builtin_functiont
 public:
   function_application_exprt function_application;
   optionalt<array_length_pairt> string_res;
-  std::vector<array_string_exprt> string_args;
+  std::vector<array_length_pairt> string_args;
   std::vector<exprt> args;
 
   string_builtin_function_with_no_evalt(
@@ -449,15 +449,13 @@ public:
   {
     return id2string(function_application.function().get_identifier());
   }
-  std::vector<array_string_exprt> string_arguments() const override
+  std::vector<array_length_pairt> string_arguments() const override
   {
-    return std::vector<array_string_exprt>(string_args);
+    return std::vector<array_length_pairt>(string_args);
   }
-  optionalt<array_string_exprt> string_result() const override
+  optionalt<array_length_pairt> string_result() const override
   {
-    if(string_res.has_value())
-      return string_res->array;
-    return {};
+    return string_res;
   }
 
   optionalt<exprt>

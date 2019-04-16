@@ -167,7 +167,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
   PRECONDITION(f.arguments().size() == 3);
   const auto res = array_pool.find( f.arguments()[1], f.arguments()[0]);
   return add_axioms_for_string_of_float(
-    fresh_symbol, res.array, f.arguments()[2], array_pool, ns);
+    fresh_symbol, res, f.arguments()[2], array_pool, ns);
 }
 
 /// Add axioms corresponding to the String.valueOf(D) java function
@@ -202,14 +202,14 @@ std::pair<exprt, string_constraintst> add_axioms_from_double(
 ///   raised
 std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
   symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
+  const array_length_pairt &res,
   const exprt &f,
   array_poolt &array_pool,
   const namespacet &ns)
 {
   const floatbv_typet &type = to_floatbv_type(f.type());
   const ieee_float_spect float_spec(type);
-  const typet &char_type = res.content().type().subtype();
+  const typet &char_type = res.array.type().subtype();
   const typet &index_type = res.length().type();
 
   // We will look at the first 5 digits of the fractional part.
@@ -224,7 +224,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
   const auto fractional_part_str =
     array_pool.fresh_string(index_type, char_type);
   auto result1 = add_axioms_for_fractional_part(
-    fractional_part_str.array, fractional_part, 6);
+    fractional_part_str, fractional_part, 6);
 
   // The axiom added to convert to integer should always be satisfiable even
   // when the preconditions are not satisfied.
@@ -234,7 +234,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
   // part of the float.
   const auto integer_part_str = array_pool.fresh_string(index_type, char_type);
   auto result2 =
-    add_axioms_for_string_of_int(integer_part_str.array, integer_part, 8, ns);
+    add_axioms_for_string_of_int(integer_part_str, integer_part, 8, ns);
 
   auto result3 = add_axioms_for_concat(
     fresh_symbol, res, integer_part_str, fractional_part_str);
@@ -344,7 +344,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_fractional_part(
 /// \return a integer expression different from 0 to signal an exception
 std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
   symbol_generatort &fresh_symbol,
-  const array_string_exprt &res,
+  const array_length_pairt &res,
   const exprt &float_expr,
   array_poolt &array_pool,
   const namespacet &ns)
@@ -354,7 +354,7 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
   const typet float_type = float_spec.to_type();
   const signedbv_typet int_type(32);
   const typet &index_type = res.length().type();
-  const typet &char_type = res.content().type().subtype();
+  const typet &char_type = res.array.type().subtype();
 
   // This is used for rounding float to integers.
   exprt round_to_zero_expr = from_integer(ieee_floatt::ROUND_TO_ZERO, int_type);
@@ -460,7 +460,7 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
   const auto string_expr_integer_part =
     array_pool.fresh_string(index_type, char_type);
   auto result1 = add_axioms_for_string_of_int(
-    string_expr_integer_part.array, dec_significand_int, 3, ns);
+    string_expr_integer_part, dec_significand_int, 3, ns);
   minus_exprt fractional_part(
     dec_significand, floatbv_of_int_expr(dec_significand_int, float_spec));
 
