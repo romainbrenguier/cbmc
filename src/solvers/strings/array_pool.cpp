@@ -114,19 +114,19 @@ const std::set<array_string_exprt> &array_poolt::created_strings() const
   return created_strings_value;
 }
 
-const array_string_exprt &
-array_poolt::find(const exprt &pointer, const exprt &length)
+array_length_pairt array_poolt::find(const exprt &pointer, const exprt &length)
 {
   const array_typet array_type(pointer.type().subtype(), length);
-  const array_string_exprt array =
+  array_string_exprt array =
     make_char_array_for_char_pointer(pointer, array_type);
-  return *created_strings_value.insert(array).first;
+  created_strings_value.insert(array);
+  return array_length_pairt{std::move(array), get_length(array)};
 }
 
 array_string_exprt of_argument(array_poolt &array_pool, const exprt &arg)
 {
   const auto string_argument = expr_checked_cast<struct_exprt>(arg);
-  return array_pool.find(string_argument.op1(), string_argument.op0());
+  return array_pool.find(string_argument.op1(), string_argument.op0()).array;
 }
 
 array_string_exprt get_string_expr(array_poolt &pool, const exprt &expr)

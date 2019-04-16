@@ -74,13 +74,13 @@ protected:
 class string_transformation_builtin_functiont : public string_builtin_functiont
 {
 public:
-  array_string_exprt result;
-  array_string_exprt input;
+  array_length_pairt result;
+  array_length_pairt input;
 
   string_transformation_builtin_functiont(
     exprt return_code,
-    array_string_exprt result,
-    array_string_exprt input)
+    array_length_pairt result,
+    array_length_pairt input)
     : string_builtin_functiont(std::move(return_code)),
       result(std::move(result)),
       input(std::move(input))
@@ -99,11 +99,11 @@ public:
 
   optionalt<array_string_exprt> string_result() const override
   {
-    return result;
+    return result.array;
   }
   std::vector<array_string_exprt> string_arguments() const override
   {
-    return {input};
+    return {input.array};
   }
   bool maybe_testing_function() const override
   {
@@ -234,8 +234,8 @@ public:
 
   string_to_upper_case_builtin_functiont(
     exprt return_code,
-    array_string_exprt result,
-    array_string_exprt input)
+    array_length_pairt result,
+    array_length_pairt input)
     : string_transformation_builtin_functiont(
         std::move(return_code),
         std::move(result),
@@ -271,9 +271,9 @@ public:
 class string_insertion_builtin_functiont : public string_builtin_functiont
 {
 public:
-  array_string_exprt result;
-  array_string_exprt input1;
-  array_string_exprt input2;
+  array_length_pairt result;
+  array_length_pairt input1;
+  array_length_pairt input2;
   std::vector<exprt> args;
 
   /// Constructor from arguments of a function application.
@@ -289,11 +289,11 @@ public:
 
   optionalt<array_string_exprt> string_result() const override
   {
-    return result;
+    return result.array;
   }
   std::vector<array_string_exprt> string_arguments() const override
   {
-    return {input1, input2};
+    return {input1.array, input2.array};
   }
 
   /// Evaluate the result from a concrete valuation of the arguments
@@ -362,7 +362,7 @@ public:
 class string_creation_builtin_functiont : public string_builtin_functiont
 {
 public:
-  array_string_exprt result;
+  array_length_pairt result;
   exprt arg;
 
   string_creation_builtin_functiont(
@@ -372,7 +372,7 @@ public:
 
   optionalt<array_string_exprt> string_result() const override
   {
-    return result;
+    return result.array;
   }
 
   bool maybe_testing_function() const override
@@ -436,7 +436,7 @@ class string_builtin_function_with_no_evalt : public string_builtin_functiont
 {
 public:
   function_application_exprt function_application;
-  optionalt<array_string_exprt> string_res;
+  optionalt<array_length_pairt> string_res;
   std::vector<array_string_exprt> string_args;
   std::vector<exprt> args;
 
@@ -455,7 +455,9 @@ public:
   }
   optionalt<array_string_exprt> string_result() const override
   {
-    return string_res;
+    if(string_res.has_value())
+      return string_res->array;
+    return {};
   }
 
   optionalt<exprt>

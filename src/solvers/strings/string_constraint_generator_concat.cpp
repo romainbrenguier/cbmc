@@ -146,8 +146,7 @@ std::pair<exprt, string_constraintst> add_axioms_for_concat_code_point(
   array_poolt &array_pool)
 {
   PRECONDITION(f.arguments().size() == 4);
-  const array_string_exprt res =
-    array_pool.find( f.arguments()[1], f.arguments()[0]);
+  const auto res = array_pool.find( f.arguments()[1], f.arguments()[0]);
   const auto s1 = get_string_expr(array_pool, f.arguments()[2]);
   const typet &char_type = s1.array.type().subtype();
   const typet &index_type = s1.length().type();

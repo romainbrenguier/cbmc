@@ -165,10 +165,9 @@ std::pair<exprt, string_constraintst> add_axioms_for_string_of_float(
   const namespacet &ns)
 {
   PRECONDITION(f.arguments().size() == 3);
-  array_string_exprt res =
-    array_pool.find( f.arguments()[1], f.arguments()[0]);
+  const auto res = array_pool.find( f.arguments()[1], f.arguments()[0]);
   return add_axioms_for_string_of_float(
-    fresh_symbol, res, f.arguments()[2], array_pool, ns);
+    fresh_symbol, res.array, f.arguments()[2], array_pool, ns);
 }
 
 /// Add axioms corresponding to the String.valueOf(D) java function
@@ -550,7 +549,7 @@ std::pair<exprt, string_constraintst> add_axioms_from_float_scientific_notation(
   const namespacet &ns)
 {
   PRECONDITION(f.arguments().size() == 3);
-  const array_string_exprt res =
+  const auto res =
     array_pool.find( f.arguments()[1], f.arguments()[0]);
   const exprt &arg = f.arguments()[2];
   return add_axioms_from_float_scientific_notation(

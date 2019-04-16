@@ -82,7 +82,7 @@ public:
   void insert(const exprt &pointer_expr, array_string_exprt &array);
 
   /// Creates a new array if the pointer is not pointing to an array
-  const array_string_exprt &find(const exprt &pointer, const exprt &length);
+  array_length_pairt find(const exprt &pointer, const exprt &length);
 
   const std::set<array_string_exprt> &created_strings() const;
 
@@ -118,28 +118,6 @@ private:
 /// are given as a struct containing a length and pointer to an array.
 DEPRECATED("use array_pool.find(arg.op1(), arg.op0()) instead")
 array_string_exprt of_argument(array_poolt &array_pool, const exprt &arg);
-
-/// Return the array associated to the given pointer or creates a new one
-DEPRECATED("use pool.find(pointer, length) instead")
-/// Fetch the string_exprt corresponding to the given refined_string_exprt
-/// \param pool: pool of arrays representing strings
-/// \param expr: an expression of refined string type
-/// \return a string expression
-struct array_length_pairt
-{
-  array_string_exprt array;
-  exprt length_value;
-
-  exprt operator[](exprt index) const
-  {
-    return index_exprt{array, std::move(index)};
-  }
-
-  const exprt &length() const
-  {
-    return length_value;
-  }
-};
 
 /// casts an expression to a string expression, or fetches the actual
 /// string_exprt in the case of a symbol.

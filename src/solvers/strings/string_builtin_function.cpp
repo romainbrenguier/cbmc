@@ -159,7 +159,10 @@ string_constraintst string_concatenation_builtin_functiont::constraints(
 exprt string_concatenation_builtin_functiont::length_constraint() const
 {
   if(args.size() == 0)
-    return length_constraint_for_concat(result, input1, input2);
+  {
+    return length_constraint_for_concat(
+      result.array, input1.array, input2.array);
+  }
   if(args.size() == 2)
     return length_constraint_for_concat_substr(
       result, input1, input2, args[0], args[1]);
@@ -169,7 +172,7 @@ exprt string_concatenation_builtin_functiont::length_constraint() const
 optionalt<exprt> string_concat_char_builtin_functiont::eval(
   const std::function<exprt(const exprt &)> &get_value) const
 {
-  auto input_opt = eval_string(input, get_value);
+  auto input_opt = eval_string(input.array, get_value);
   if(!input_opt.has_value())
     return {};
   const mp_integer char_val = [&] {
@@ -183,7 +186,7 @@ optionalt<exprt> string_concat_char_builtin_functiont::eval(
   input_opt.value().push_back(char_val);
   const auto length =
     from_integer(input_opt.value().size(), result.length().type());
-  const array_typet type(result.type().subtype(), length);
+  const array_typet type(result.array.type().subtype(), length);
   return make_string(input_opt.value(), type);
 }
 
@@ -214,13 +217,13 @@ string_constraintst string_concat_char_builtin_functiont::constraints(
 
 exprt string_concat_char_builtin_functiont::length_constraint() const
 {
-  return length_constraint_for_concat_char(result, input);
+  return length_constraint_for_concat_char(result.array, input.array);
 }
 
 optionalt<exprt> string_set_char_builtin_functiont::eval(
   const std::function<exprt(const exprt &)> &get_value) const
 {
-  auto input_opt = eval_string(input, get_value);
+  auto input_opt = eval_string(input.array, get_value);
   const auto char_opt = numeric_cast<mp_integer>(get_value(character));
   const auto position_opt = numeric_cast<mp_integer>(get_value(position));
   if(!input_opt || !char_opt || !position_opt)
@@ -229,7 +232,7 @@ optionalt<exprt> string_set_char_builtin_functiont::eval(
     input_opt.value()[numeric_cast_v<std::size_t>(*position_opt)] = *char_opt;
   const auto length =
     from_integer(input_opt.value().size(), result.length().type());
-  const array_typet type(result.type().subtype(), length);
+  const array_typet type(result.array.type().subtype(), length);
   return make_string(input_opt.value(), type);
 }
 
@@ -299,7 +302,7 @@ static bool eval_is_upper_case(const mp_integer &c)
 optionalt<exprt> string_to_lower_case_builtin_functiont::eval(
   const std::function<exprt(const exprt &)> &get_value) const
 {
-  auto input_opt = eval_string(input, get_value);
+  auto input_opt = eval_string(input.array, get_value);
   if(!input_opt)
     return {};
   for(mp_integer &c : input_opt.value())
@@ -309,7 +312,7 @@ optionalt<exprt> string_to_lower_case_builtin_functiont::eval(
   }
   const auto length =
     from_integer(input_opt.value().size(), result.length().type());
-  const array_typet type(result.type().subtype(), length);
+  const array_typet type(result.array.type().subtype(), length);
   return make_string(input_opt.value(), type);
 }
 
@@ -375,7 +378,7 @@ string_constraintst string_to_lower_case_builtin_functiont::constraints(
     const exprt conditional_convert = [&] {
       // The difference between upper-case and lower-case for the basic
       // latin and latin-1 supplement is 0x20.
-      const typet &char_type = result.type().subtype();
+      const typet &char_type = result.array.type().subtype();
       const exprt diff = from_integer(0x20, char_type);
       const exprt converted =
         equal_exprt(result[idx], plus_exprt(input[idx], diff));
@@ -391,7 +394,7 @@ string_constraintst string_to_lower_case_builtin_functiont::constraints(
 optionalt<exprt> string_to_upper_case_builtin_functiont::eval(
   const std::function<exprt(const exprt &)> &get_value) const
 {
-  auto input_opt = eval_string(input, get_value);
+  auto input_opt = eval_string(input.array, get_value);
   if(!input_opt)
     return {};
   for(mp_integer &c : input_opt.value())
@@ -401,7 +404,7 @@ optionalt<exprt> string_to_upper_case_builtin_functiont::eval(
   }
   const auto length =
     from_integer(input_opt.value().size(), result.length().type());
-  const array_typet type(result.type().subtype(), length);
+  const array_typet type(result.array.type().subtype(), length);
   return make_string(input_opt.value(), type);
 }
 
@@ -422,7 +425,7 @@ string_constraintst string_to_upper_case_builtin_functiont::constraints(
   constraints.universal.push_back([&] {
     const symbol_exprt idx =
       fresh_symbol("QA_upper_case", result.length().type());
-    const typet &char_type = input.content().type().subtype();
+    const typet &char_type = input.array.type().subtype();
     const exprt converted =
       minus_exprt(input[idx], from_integer(0x20, char_type));
     return string_constraintt(
@@ -464,8 +467,8 @@ std::vector<mp_integer> string_insertion_builtin_functiont::eval(
 optionalt<exprt> string_insertion_builtin_functiont::eval(
   const std::function<exprt(const exprt &)> &get_value) const
 {
-  const auto &input1_value = eval_string(input1, get_value);
-  const auto &input2_value = eval_string(input2, get_value);
+  const auto &input1_value = eval_string(input1.array, get_value);
+  const auto &input2_value = eval_string(input2.array, get_value);
   if(!input2_value.has_value() || !input1_value.has_value())
     return {};
 
@@ -481,7 +484,7 @@ optionalt<exprt> string_insertion_builtin_functiont::eval(
 
   const auto result_value = eval(*input1_value, *input2_value, arg_values);
   const auto length = from_integer(result_value.size(), result.length().type());
-  const array_typet type(result.type().subtype(), length);
+  const array_typet type(result.array.type().subtype(), length);
   return make_string(result_value, type);
 }
 
@@ -491,7 +494,7 @@ string_constraintst string_insertion_builtin_functiont::constraints(
   if(args.size() == 1)
   {
     auto pair = add_axioms_for_insert(
-      generator.fresh_symbol, result, input1, input2, args[0]);
+      generator.fresh_symbol, result.array, input1.array, input2.array, args[0]);
     pair.second.existential.push_back(equal_exprt(pair.first, return_code));
     return pair.second;
   }
@@ -503,7 +506,8 @@ string_constraintst string_insertion_builtin_functiont::constraints(
 exprt string_insertion_builtin_functiont::length_constraint() const
 {
   if(args.size() == 1)
-    return length_constraint_for_insert(result, input1, input2);
+    return length_constraint_for_insert(
+      result.array, input1.array, input2.array);
   if(args.size() == 3)
     UNIMPLEMENTED;
   UNREACHABLE;
@@ -553,7 +557,7 @@ optionalt<exprt> string_of_int_builtin_functiont::eval(
 
   const auto length = right_to_left_characters.size();
   const auto length_expr = from_integer(length, result.length().type());
-  const array_typet type(result.type().subtype(), length_expr);
+  const array_typet type(result.array.type().subtype(), length_expr);
   return make_string(
     right_to_left_characters.rbegin(), right_to_left_characters.rend(), type);
 }
@@ -562,7 +566,7 @@ string_constraintst string_of_int_builtin_functiont::constraints(
   string_constraint_generatort &generator) const
 {
   auto pair = add_axioms_for_string_of_int_with_radix(
-    result, arg, radix, 0, generator.ns);
+    result.array, arg, radix, 0, generator.ns);
   pair.second.existential.push_back(equal_exprt(pair.first, return_code));
   return pair.second;
 }
