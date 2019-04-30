@@ -69,6 +69,17 @@ static ui_message_handlert::uit ui_from_cmdline(const cmdlinet &cmdline)
            : ui_message_handlert::uit::PLAIN;
 }
 
+static timestampert::clockt clock_from_cmdline(const cmdlinet &cmdline)
+{
+  return cmdline.isset("timestamp")
+         ? cmdline.get_value("timestamp") == "monotonic"
+           ? timestampert::clockt::MONOTONIC
+           : cmdline.get_value("timestamp") == "wall"
+             ? timestampert::clockt::WALL_CLOCK
+             : timestampert::clockt::NONE
+         : timestampert::clockt::NONE;
+}
+
 ui_message_handlert::ui_message_handlert(
   const class cmdlinet &cmdline,
   const std::string &program)
@@ -77,12 +88,7 @@ ui_message_handlert::ui_message_handlert(
       ui_from_cmdline(cmdline),
       program,
       cmdline.isset("flush"),
-      cmdline.isset("timestamp") ? cmdline.get_value("timestamp") == "monotonic"
-                                     ? timestampert::clockt::MONOTONIC
-                                     : cmdline.get_value("timestamp") == "wall"
-                                         ? timestampert::clockt::WALL_CLOCK
-                                         : timestampert::clockt::NONE
-                                 : timestampert::clockt::NONE)
+      clock_from_cmdline(cmdline))
 {
   if(get_ui() == uit::PLAIN)
   {
