@@ -16,6 +16,66 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "json_stream.h"
 #include "timestamper.h"
 
+/// Wrapper around a message handlert, used to be able to choose whether the
+/// object is not owning the pointer, or owning it.
+/// In the first case it is initialized from a reference to an object which
+/// should outlive this one, in the other case it should be initialized from a
+/// unique pointer.
+class message_handler_pointert
+{
+public:
+  message_handlert *underlying;
+
+  /// Null pointer
+  message_handler_pointert() : underlying(nullptr) {}
+
+  /// Initialization from reference
+  explicit message_handler_pointert(message_handlert &message_handler)
+    : underlying(&message_handler)
+  {}
+
+  message_handlert &operator*()
+  {
+    return *underlying;
+  }
+
+  const message_handlert &operator*() const
+  {
+    return *underlying;
+  }
+
+  message_handlert *operator->()
+  {
+    return underlying;
+  }
+
+  const message_handlert *operator->() const
+  {
+    return underlying;
+  }
+
+  operator bool() const
+  {
+    return underlying != nullptr;
+  }
+};
+
+/// Version of message_handler_pointert which owns the object pointed
+class owning_message_handler_pointert : public  message_handler_pointert
+{
+public:
+  /// Initialization from unique pointer
+  explicit owning_message_handler_pointert(
+    std::unique_ptr<message_handlert> message_handler_ptr)
+  : value(std::move(message_handler_ptr))
+  {
+    underlying = &*value;
+  }
+
+private:
+  std::unique_ptr<message_handlert> value;
+};
+
 class ui_message_handlert : public message_handlert
 {
 public:
@@ -42,8 +102,7 @@ public:
   }
 
 protected:
-  std::unique_ptr<console_message_handlert> console_message_handler;
-  message_handlert *message_handler;
+  message_handler_pointert message_handler;
   uit _ui;
   const bool always_flush;
   std::unique_ptr<const timestampert> time;

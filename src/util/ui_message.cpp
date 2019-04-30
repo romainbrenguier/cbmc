@@ -23,7 +23,7 @@ ui_message_handlert::ui_message_handlert(
   const std::string &program,
   bool always_flush,
   timestampert::clockt clock_type)
-  : message_handler(_message_handler),
+  : message_handler(*_message_handler),
     _ui(__ui),
     always_flush(always_flush),
     time(timestampert::make(clock_type)),
@@ -92,9 +92,8 @@ ui_message_handlert::ui_message_handlert(
 {
   if(get_ui() == uit::PLAIN)
   {
-    console_message_handler =
-      util_make_unique<console_message_handlert>(always_flush);
-    message_handler = &*console_message_handler;
+    message_handler = owning_message_handler_pointert{
+      util_make_unique<console_message_handlert>(always_flush)};
   }
 }
 
