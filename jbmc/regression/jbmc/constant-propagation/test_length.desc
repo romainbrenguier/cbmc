@@ -1,0 +1,11 @@
+CORE
+Test.class
+--function Test.checkPass --cp `../../../../scripts/format_classpath.sh . ../../../lib/java-models-library/target/core-models.jar` --unwind 10 --show-vcc
+^EXIT=0$
+^SIGNAL=0$
+cprover_string_to_lower_case_func
+--
+cprover_string_to_upper_case_func
+--
+Check that to_upper_case calls are not reached by symex, because the length is
+correctly propagated
