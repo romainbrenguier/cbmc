@@ -60,16 +60,21 @@ ui_message_handlert::ui_message_handlert(
   }
 }
 
+static ui_message_handlert::uit ui_from_cmdline(const cmdlinet &cmdline)
+{
+  return cmdline.isset("xml-ui") || cmdline.isset("xml-interface")
+         ? ui_message_handlert::uit::XML_UI
+         : cmdline.isset("json-ui") || cmdline.isset("json-interface")
+           ? ui_message_handlert::uit::JSON_UI
+           : ui_message_handlert::uit::PLAIN;
+}
+
 ui_message_handlert::ui_message_handlert(
   const class cmdlinet &cmdline,
   const std::string &program)
   : ui_message_handlert(
       nullptr,
-      cmdline.isset("xml-ui") || cmdline.isset("xml-interface")
-        ? uit::XML_UI
-        : cmdline.isset("json-ui") || cmdline.isset("json-interface")
-            ? uit::JSON_UI
-            : uit::PLAIN,
+      ui_from_cmdline(cmdline),
       program,
       cmdline.isset("flush"),
       cmdline.isset("timestamp") ? cmdline.get_value("timestamp") == "monotonic"
