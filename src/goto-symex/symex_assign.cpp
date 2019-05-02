@@ -218,15 +218,21 @@ struct assignmentt final
 /// place.
 /// \param [in, out] state: symbolic execution state to perform renaming
 /// \param assignment: an assignment to rewrite
+/// \param full_lhs: expression skeleton corresponding to \p lhs as it should
+///   appear in the result trace
 /// \param ns: namespace
-/// \return the updated assignment
-static assignmentt rewrite_with_to_field_symbols(
+/// \return the updated assignment and the corresponding updated version of
+///   \p full_lhs
+static std::pair<assignmentt, exprt> rewrite_with_to_field_symbols(
   goto_symext::statet &state,
   assignmentt assignment,
+  const exprt &full_lhs,
   const namespacet &ns)
 {
   exprt &ssa_rhs = assignment.rhs;
   ssa_exprt &lhs_mod = assignment.lhs;
+  exprt updated_full_lhs = full_lhs;
+
 #ifdef USE_UPDATE
   while(ssa_rhs.id() == ID_update &&
         to_update_expr(ssa_rhs).designator().size() == 1 &&
@@ -288,9 +294,27 @@ static assignmentt rewrite_with_to_field_symbols(
 
     ssa_rhs = with_expr.new_value();
     lhs_mod = to_ssa_expr(field_sensitive_lhs);
+
+    std::reference_wrapper<const exprt> full_lhs_ref = full_lhs;
+    while(full_lhs_ref.get().id() == ID_typecast)
+      full_lhs_ref = to_typecast_expr(full_lhs_ref.get()).op();
+    const exprt &full_lhs_without_typecast = full_lhs_ref.get();
+    if(full_lhs_without_typecast.id() == ID_index)
+    {
+      updated_full_lhs =
+        to_index_expr(full_lhs_without_typecast).array();
+    }
+    else
+    {
+      INVARIANT(
+        full_lhs_without_typecast.id() == ID_member,
+        "full_lhs in with assignment should be index or member expression");
+      updated_full_lhs =
+        to_member_expr(full_lhs_without_typecast).compound();
+    }
   }
 #endif
-  return assignment;
+  return {assignment, updated_full_lhs};
 }
 
 /// Replace byte-update operations that only affect individual fields of an
@@ -455,7 +479,9 @@ void goto_symext::symex_assign_symbol(
   // in the future these should be omitted.
   auto assignment = shift_indexed_access_to_lhs(
     state, assignmentt{lhs, std::move(l2_rhs)}, ns, symex_config.simplify_opt);
-  assignment = rewrite_with_to_field_symbols(state, std::move(assignment), ns);
+  exprt updated_full_lhs;
+  std::tie(assignment, updated_full_lhs) = rewrite_with_to_field_symbols(
+    state, std::move(assignment), full_lhs, ns);
 
   do_simplify(assignment.rhs);
 
@@ -470,7 +496,7 @@ void goto_symext::symex_assign_symbol(
                          symex_config.allow_pointer_unsoundness)
                        .get();
 
-  exprt ssa_full_lhs = add_to_lhs(full_lhs, l2_lhs);
+  exprt ssa_full_lhs = add_to_lhs(updated_full_lhs, l2_lhs);
   state.record_events.push(false);
   const exprt l2_full_lhs = state.rename(std::move(ssa_full_lhs), ns).get();
   state.record_events.pop();
