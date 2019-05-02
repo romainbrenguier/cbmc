@@ -91,6 +91,7 @@ exprt field_sensitivityt::apply(
       index.array().id() == ID_symbol &&
       index.array().get_bool(ID_C_SSA_symbol) &&
       index.array().type().id() == ID_array &&
+      to_array_type(index.array().type()).size().id() == ID_constant &&
       index.index().id() == ID_constant)
     {
       // place the entire index expression, not just the array operand, in an
