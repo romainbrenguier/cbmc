@@ -55,7 +55,7 @@ static bool check_format_string(std::string s)
 #endif
 
 /// Expression which is true when the string is equal to the literal "null"
-static exprt is_null(const array_string_exprt &string)
+exprt is_null(const array_string_exprt &string)
 {
   return and_exprt{
     equal_exprt{string.length(), from_integer(4, string.length().type())},
@@ -208,7 +208,7 @@ add_axioms_for_format_specifier(
 /// Deserialize an argument for format from \p string.
 /// \p id should be one of: string_expr, int, char, boolean, float.
 /// The primitive values are expected to all be encoded using 4 characters.
-static exprt format_arg_from_string(
+exprt format_arg_from_string(
   const array_string_exprt &string, const irep_idt &id)
 {
   if(id == "string_expr")
