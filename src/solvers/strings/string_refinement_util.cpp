@@ -6,6 +6,7 @@ Author: Diffblue Ltd.
 
 \*******************************************************************/
 
+#include "string_format_builtin_function.h"
 #include "string_refinement_util.h"
 #include <algorithm>
 #include <functional>
@@ -239,6 +240,10 @@ static std::unique_ptr<string_builtin_functiont> to_string_builtin_function(
 
   if(id == ID_cprover_string_to_upper_case_func)
     return util_make_unique<string_to_upper_case_builtin_functiont>(
+      return_code, fun_app.arguments(), array_pool);
+  
+  if(id == ID_cprover_string_format_func)
+    return util_make_unique<string_format_builtin_functiont>(
       return_code, fun_app.arguments(), array_pool);
 
   return util_make_unique<string_builtin_function_with_no_evalt>(
