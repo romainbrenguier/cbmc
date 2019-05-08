@@ -85,27 +85,33 @@ exprt field_sensitivityt::apply(
     // encoding the index access into an array as an individual symbol rather
     // than only the full array
     index_exprt &index = to_index_expr(expr);
-    simplify(index.index(), ns);
 
     if(
       index.array().id() == ID_symbol &&
       index.array().get_bool(ID_C_SSA_symbol) &&
-      index.array().type().id() == ID_array &&
-      to_array_type(index.array().type()).size().id() == ID_constant &&
-      index.index().id() == ID_constant)
+      index.array().type().id() == ID_array)
     {
-      // place the entire index expression, not just the array operand, in an
-      // SSA expression
       ssa_exprt tmp = to_ssa_expr(index.array());
+      auto l2_index = state.rename(index.index(), ns);
+      l2_index.simplify(ns);
+      auto l2_array = state.rename(index.array(), ns);
       bool was_l2 = !tmp.get_level_2().empty();
-
-      tmp.remove_level_2();
-      index.array() = tmp.get_original_expr();
-      tmp.set_expression(index);
-      if(was_l2)
-        return state.rename(std::move(tmp), ns).get();
-      else
-        return std::move(tmp);
+      if(
+        to_array_type(l2_array.get().type()).size().id() == ID_constant &&
+        l2_index.get().id() == ID_constant)
+      {
+        // place the entire index expression, not just the array operand, in an
+        // SSA expression
+        ssa_exprt ssa_array = to_ssa_expr(l2_array.get());
+        ssa_array.remove_level_2();
+        index.array() = ssa_array.get_original_expr();
+        index.index() = l2_index.get();
+        tmp.set_expression(index);
+        if(was_l2)
+          return state.rename(std::move(tmp), ns).get();
+        else
+          return std::move(tmp);
+      }
     }
   }
 #endif // ENABLE_ARRAY_FIELD_SENSITIVITY
