@@ -30,6 +30,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/format_expr.h>
 #include <util/format_type.h>
 #include <util/std_types.h>
+#include <iostream>
 
 symex_configt::symex_configt(const optionst &options)
   : max_depth(options.get_unsigned_int_option("depth")),
@@ -104,7 +105,7 @@ void goto_symext::symex_assert(
 
   // now try simplifier on it
   do_simplify(l2_condition);
-
+  std::cout << "assert l2_condition: " << format(l2_condition) << std::endl;
   std::string msg = id2string(instruction.source_location.get_comment());
   if(msg.empty())
     msg = "assertion";

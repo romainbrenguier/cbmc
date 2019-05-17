@@ -19,6 +19,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <solvers/decision_procedure.h>
 #include <solvers/flattening/bv_conversion_exceptions.h>
+#include <iostream>
 
 #include "equation_conversion_exceptions.h"
 #include "goto_symex_state.h"
@@ -131,6 +132,14 @@ void symex_target_equationt::assignment(
   SSA_step.cond_expr=equal_exprt(SSA_step.ssa_lhs, SSA_step.ssa_rhs);
   SSA_step.hidden=(assignment_type!=assignment_typet::STATE &&
                    assignment_type!=assignment_typet::VISIBLE_ACTUAL_PARAMETER);
+  if(SSA_step.original_full_lhs.id() == ID_index &&
+     to_index_expr(SSA_step.original_full_lhs).array().id() == ID_array)
+  {
+    std::cout << "SSA original lhs: " << format(SSA_step.original_full_lhs)
+              << "\nSSA full lhs: " << format(SSA_step.ssa_full_lhs)
+              << std::endl;
+    std::cout << "INDEX" << std::endl;
+  }
 
   merge_ireps(SSA_step);
 }

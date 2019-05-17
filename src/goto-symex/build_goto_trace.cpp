@@ -21,6 +21,8 @@ Author: Daniel Kroening
 #include <goto-programs/goto_functions.h>
 
 #include <solvers/decision_procedure.h>
+#include <iostream>
+#include <util/format_expr.h>
 
 #include "partial_order_concurrency.h"
 
@@ -376,6 +378,16 @@ void build_goto_trace(
           SSA_step.original_full_lhs,
           SSA_step.ssa_full_lhs);
         replace_nondet_in_type(goto_trace_step.full_lhs, decision_procedure);
+        if(goto_trace_step.full_lhs.id() == ID_index &&
+          to_index_expr(goto_trace_step.full_lhs).array().id() == ID_array)
+        {
+          std::cout << "SSA original lhs: " << format(SSA_step.original_full_lhs)
+                    << "\nSSA full lhs: " << format(SSA_step.ssa_full_lhs)
+                    << std::endl;
+          std::cout << "full lhs: " << format(goto_trace_step.full_lhs)
+                    << std::endl;
+          std::cout << "INDEX" << std::endl;
+        }
       }
 
       if(SSA_step.ssa_full_lhs.is_not_nil())

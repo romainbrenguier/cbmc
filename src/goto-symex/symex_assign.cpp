@@ -17,6 +17,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/exception_utils.h>
 #include <util/pointer_offset_size.h>
 #include <util/simplify_expr.h>
+#include <iostream>
+#include <util/format_expr.h>
 
 #include "goto_symex_state.h"
 
@@ -76,6 +78,10 @@ void goto_symext::symex_assign(statet &state, const code_assignt &code)
       assignment_type=symex_targett::assignment_typet::HIDDEN;
 
     exprt::operandst lhs_if_then_else_conditions;
+    std::cout << "assign : " << format(lhs)
+              << " <- " << format(rhs) << std::endl;
+    if(lhs.id() == ID_byte_extract_little_endian)
+      std::cout << "BYTE EXTRACT" << std::endl;
     symex_assign_rec(
       state,
       lhs,
@@ -450,7 +456,15 @@ void goto_symext::symex_assign_from_struct(
       assignment_type);
   }
 }
-
+/*
+class assignment_lhs
+{
+  // object which gets updated by the assignment
+  const renamedt<ssa_exprt, L1> object;
+  // accessor to the part of \ref object that needs to be updated using the rhs
+  const renamedt<exprt, L2> accessor;
+};
+*/
 void goto_symext::symex_assign_symbol(
   statet &state,
   const ssa_exprt &lhs, // L1
