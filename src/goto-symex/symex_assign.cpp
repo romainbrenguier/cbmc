@@ -304,13 +304,19 @@ static std::pair<assignmentt, exprt> rewrite_with_to_field_symbols(
       updated_full_lhs =
         to_index_expr(full_lhs_without_typecast).array();
     }
+    else if(full_lhs_without_typecast.id() == ID_member)
+    {
+      updated_full_lhs =
+        to_member_expr(full_lhs_without_typecast).compound();
+    }
     else
     {
       INVARIANT(
-        full_lhs_without_typecast.id() == ID_member,
-        "full_lhs in with assignment should be index or member expression");
+        full_lhs_without_typecast.id() == ID_byte_extract_little_endian
+        || full_lhs_without_typecast.id() == ID_byte_extract_big_endian,
+        "full_lhs in with assignment should be index, member or byte_extract");
       updated_full_lhs =
-        to_member_expr(full_lhs_without_typecast).compound();
+        to_byte_extract_expr(full_lhs_without_typecast).operands()[0];
     }
   }
 #endif
