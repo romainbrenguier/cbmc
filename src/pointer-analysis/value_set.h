@@ -44,12 +44,11 @@ class namespacet;
 class value_sett
 {
 public:
-  value_sett():location_number(0)
+  value_sett()
   {
   }
 
-  value_sett(value_sett &&other)
-    : location_number(other.location_number), values(std::move(other.values))
+  value_sett(value_sett &&other) : values(std::move(other.values))
   {
   }
 
@@ -71,6 +70,7 @@ public:
 
   /// Matches the location_number field of the instruction that corresponds
   /// to this value_sett instance in value_set_domaint's state map
+  DEPRECATED(SINCE(2019, 05, 22, "Always zero"))
   unsigned location_number;
 
   /// Global shared object numbering, used to abbreviate expressions stored

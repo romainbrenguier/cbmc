@@ -742,7 +742,8 @@ void value_sett::get_value_set_rec(
         static_cast<const typet &>(expr.find(ID_C_cxx_alloc_type));
 
       dynamic_object_exprt dynamic_object(dynamic_type);
-      dynamic_object.set_instance(location_number);
+      PRECONDITION(location_number == 0);
+      dynamic_object.set_instance(0);
       dynamic_object.valid()=true_exprt();
 
       insert(dest, dynamic_object, 0);
@@ -754,7 +755,8 @@ void value_sett::get_value_set_rec(
       assert(expr_type.id()==ID_pointer);
 
       dynamic_object_exprt dynamic_object(expr_type.subtype());
-      dynamic_object.set_instance(location_number);
+      PRECONDITION(location_number == 0);
+      dynamic_object.set_instance(0);
       dynamic_object.valid()=true_exprt();
 
       insert(dest, dynamic_object, 0);
