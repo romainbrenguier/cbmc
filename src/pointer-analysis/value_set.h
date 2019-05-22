@@ -266,10 +266,19 @@ public:
   /// \param expr: query expression
   /// \param [out] dest: assigned a set of expressions that `expr` may point to
   /// \param ns: global namespace
+  DEPRECATED(
+    SINCE(2019, 05, 22, "Use get_value_set(exprt, const namespacet &) instead"))
   void get_value_set(
     exprt expr,
     value_setst::valuest &dest,
     const namespacet &ns) const;
+
+  /// Gets values pointed to by `expr`, including following dereference
+  /// operators (i.e. this is not a simple lookup in `valuest`).
+  /// \param expr: query expression
+  /// \param ns: global namespace
+  /// \return list of expressions that `expr` may point to
+  std::list<exprt> get_value_set(exprt expr, const namespacet &ns) const;
 
   /// Appears to be unimplemented.
   DEPRECATED(SINCE(2019, 05, 22, "Unimplemented"))
@@ -464,11 +473,22 @@ protected:
   /// \param [out] dest: overwritten by the set of object numbers pointed to
   /// \param ns: global namespace
   /// \param is_simplified: if false, simplify `expr` before reading.
+  DEPRECATED(
+    SINCE(2019, 05, 22, "Use the version returning object_mapt instead"))
   void get_value_set(
     exprt expr,
     object_mapt &dest,
     const namespacet &ns,
     bool is_simplified) const;
+
+  /// Reads the set of objects pointed to by `expr`, including making
+  /// recursive lookups for dereference operations etc.
+  /// \param expr: query expression
+  /// \param ns: global namespace
+  /// \param is_simplified: if false, simplify `expr` before reading.
+  /// \return the set of object numbers pointed to
+  object_mapt
+  get_value_set(exprt expr, const namespacet &ns, bool is_simplified) const;
 
   /// See the other overload of `get_reference_set`. This one returns object
   /// numbers and offsets instead of expressions.
