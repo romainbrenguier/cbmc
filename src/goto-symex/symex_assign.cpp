@@ -18,6 +18,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/pointer_offset_size.h>
 #include <util/simplify_expr.h>
 #include <util/expr_util.h>
+#include <util/format_expr.h>
+#include <iostream>
 
 #include "goto_symex_state.h"
 
@@ -28,8 +30,13 @@ Author: Daniel Kroening, kroening@kroening.com
 
 void goto_symext::symex_assign(statet &state, const code_assignt &code)
 {
+  std::cout << "SYMEX ASSIGN" << std::endl;
+  std::cout << format(code.lhs()) << " <- " << format(code.rhs()) << std::endl;
   exprt lhs = clean_expr(code.lhs(), state, true);
   exprt rhs = clean_expr(code.rhs(), state, false);
+
+  std::cout << "CLEAN ASSIGN" << std::endl;
+  std::cout << format(lhs) << " <- " << format(rhs) << std::endl;
 
   DATA_INVARIANT(
     lhs.type() == rhs.type(), "assignments must be type consistent");
@@ -196,8 +203,11 @@ void goto_symext::symex_assign_rec(
       state, complex_imag_expr.op(), full_lhs, new_rhs, guard, assignment_type);
   }
   else
+  {
+    assert(false);
     throw unsupported_operation_exceptiont(
       "assignment to `" + lhs.id_string() + "' not handled");
+  }
 }
 
 /// Assignment from the rhs value to the lhs variable
