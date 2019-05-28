@@ -111,20 +111,29 @@ exprt field_sensitivityt::apply(
       if(
         array_size_expr.id() == ID_constant &&
         numeric_cast_v<mp_integer>(to_constant_expr(array_size_expr))
-          <= max_field_sensitive_array_size &&
-        l2_index.get().id() == ID_constant)
+          <= max_field_sensitive_array_size )
       {
-        // place the entire index expression, not just the array operand, in an
-        // SSA expression
-        ssa_exprt ssa_array = to_ssa_expr(l2_array.get());
-        ssa_array.remove_level_2();
-        index.array() = ssa_array.get_original_expr();
-        index.index() = l2_index.get();
-        tmp.set_expression(index);
-        if(was_l2)
-          return state.rename(std::move(tmp), ns).get();
+        if(l2_index.get().id() == ID_constant)
+        {
+          // place the entire index expression, not just the array operand, in an
+          // SSA expression
+          ssa_exprt ssa_array = to_ssa_expr(l2_array.get());
+          ssa_array.remove_level_2();
+          index.array() = ssa_array.get_original_expr();
+          index.index() = l2_index.get();
+          tmp.set_expression(index);
+          if(was_l2)
+            return state.rename(std::move(tmp), ns).get();
+          else
+            return std::move(tmp);
+        }
         else
-          return std::move(tmp);
+        {
+          // Expand the array and return `{array[0]; array[1]; ...}[index]`
+          exprt expanded_array =
+            get_fields(ns, state, to_ssa_expr(l2_array.get()));
+          return index_exprt{std::move(expanded_array), l2_index.get()};
+        }
       }
     }
   }
