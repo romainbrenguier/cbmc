@@ -19,6 +19,14 @@ nondet_symbol_exprt symex_nondet_generatort::operator()(const typet &type)
   return nondet_symbol_exprt(identifier, type);
 }
 
+nondet_symbol_exprt symex_nondet_generatort::operator()(
+  typet type, source_locationt location)
+{
+  irep_idt identifier = "symex::nondet" + std::to_string(nondet_count++);
+  return nondet_symbol_exprt{
+    std::move(identifier), std::move(type), std::move(location)};
+}
+
 // _____________________________________________________________________________
 // path_lifot
 

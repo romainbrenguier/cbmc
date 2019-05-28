@@ -203,12 +203,24 @@ inline symbol_exprt &to_symbol_expr(exprt &expr)
 class nondet_symbol_exprt : public nullary_exprt
 {
 public:
-  /// \param identifier: Name of symbol
-  /// \param type: Type of symbol
+  DEPRECATED(SINCE(
+    28, 05, 2019,
+    "Use nondet_symbol_exprt(irep_idt, typet, source_locationt) instead"))
   nondet_symbol_exprt(const irep_idt &identifier, typet type)
     : nullary_exprt(ID_nondet_symbol, std::move(type))
   {
     set_identifier(identifier);
+  }
+
+  /// \param identifier: name of symbol
+  /// \param type: type of symbol
+  /// \param location: location from which the symbol originate
+  nondet_symbol_exprt(
+    irep_idt identifier, typet type, source_locationt location)
+    : nullary_exprt(ID_nondet_symbol, std::move(type))
+  {
+    set_identifier(std::move(identifier));
+    add_source_location() = std::move(location);
   }
 
   void set_identifier(const irep_idt &identifier)

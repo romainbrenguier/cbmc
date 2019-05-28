@@ -22,7 +22,11 @@
 class symex_nondet_generatort
 {
 public:
+  DEPRECATED(SINCE(
+    28, 05, 2019, "Use operator()(typet, source_locationt) instead"))
   nondet_symbol_exprt operator()(const typet &type);
+
+  nondet_symbol_exprt operator()(typet type, source_locationt location);
 
 private:
   std::size_t nondet_count = 0;
