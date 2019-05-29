@@ -529,6 +529,40 @@ void goto_symext::symex_assign_typecast(
     state, lhs.op(), new_full_lhs, rhs_typecasted, guard, assignment_type);
 }
 
+/// Partial assignment from the \c rhs value to the \c lhs variable which is a
+/// subexpression of \c full_lhs. For instance: `s.f = 2` would be represented
+/// by \c full_lhs being `s.f`, \c rhs 2 and \c lhs an \c ssa_exprt for `s..f`.
+struct partial_assignmentt
+{
+  exprt full_lhs;
+  exprt lhs;
+  exprt rhs;
+};
+
+/// Given an assignment `a[i]=e`:
+///   - if \p use_update is true, gives `a'==UPDATE(a, [i], e)`, otherwise
+///   - otherwise `a'==a WITH [i:=e]`
+/// \tparam use_update: whether update_exprt should be used
+template<bool use_update>
+static partial_assignmentt prepare_array_for_assign(
+  index_exprt lhs, exprt rhs, const exprt &full_lhs)
+{
+  exprt new_full_lhs = add_to_lhs(full_lhs, lhs);
+  if(use_update)
+  {
+    update_exprt new_rhs{
+      lhs.array(), index_designatort(as_const(lhs).index()), std::move(rhs)};
+    return partial_assignmentt{
+      std::move(lhs.array()), std::move(new_rhs), std::move(new_full_lhs)};
+  }
+  else
+  {
+    with_exprt new_rhs{lhs.array(), std::move(lhs.index()), std::move(rhs)};
+    return partial_assignmentt{
+      std::move(lhs.array()), std::move(new_rhs), std::move(new_full_lhs)};
+  }
+}
+
 void goto_symext::symex_assign_array(
   statet &state,
   const index_exprt &lhs,
@@ -537,41 +571,17 @@ void goto_symext::symex_assign_array(
   exprt::operandst &guard,
   assignment_typet assignment_type)
 {
-  const exprt &lhs_array=lhs.array();
-  const exprt &lhs_index=lhs.index();
-  const typet &lhs_index_type = lhs_array.type();
+  PRECONDITION(as_const(lhs).array().type().id() == ID_array);
 
-  PRECONDITION(lhs_index_type.id() == ID_array);
-
+  const partial_assignmentt assign =
 #ifdef USE_UPDATE
-
-  // turn
-  //   a[i]=e
-  // into
-  //   a'==UPDATE(a, [i], e)
-
-  update_exprt new_rhs(lhs_index_type);
-  new_rhs.old()=lhs_array;
-  new_rhs.designator().push_back(index_designatort(lhs_index));
-  new_rhs.new_value()=rhs;
-
-  exprt new_full_lhs=add_to_lhs(full_lhs, lhs);
+    prepare_array_for_assign<true>(lhs, rhs, full_lhs);
+#else
+    prepare_array_for_assign<false>(lhs, rhs, full_lhs);
+#endif
 
   symex_assign_rec(
-    state, lhs_array, new_full_lhs, new_rhs, guard, assignment_type);
-
-  #else
-  // turn
-  //   a[i]=e
-  // into
-  //   a'==a WITH [i:=e]
-
-  const with_exprt new_rhs{lhs_array, lhs_index, rhs};
-  const exprt new_full_lhs = add_to_lhs(full_lhs, lhs);
-
-  symex_assign_rec(
-    state, lhs_array, new_full_lhs, new_rhs, guard, assignment_type);
-  #endif
+    state, assign.lhs, assign.full_lhs, assign.rhs, guard, assignment_type);
 }
 
 void goto_symext::symex_assign_struct_member(
