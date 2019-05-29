@@ -489,8 +489,8 @@ void goto_symext::symex_assign_symbol(
 
   do_simplify(assignment.rhs);
 
-  ssa_exprt &l1_lhs = assignment.lhs;
-  ssa_exprt l2_lhs = state
+  const ssa_exprt &l1_lhs = assignment.lhs;
+  const ssa_exprt l2_lhs = state
                        .assignment(
                          assignment.lhs,
                          assignment.rhs,
