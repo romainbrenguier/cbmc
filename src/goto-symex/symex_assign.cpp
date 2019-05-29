@@ -17,6 +17,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/exception_utils.h>
 #include <util/pointer_offset_size.h>
 #include <util/simplify_expr.h>
+#include <util/expr_util.h>
 
 #include "goto_symex_state.h"
 
@@ -421,7 +422,7 @@ void goto_symext::symex_assign_from_struct(
   const ssa_exprt &lhs, // L1
   const exprt &full_lhs,
   const struct_exprt &rhs,
-  exprt::operandst &guard,
+  const exprt::operandst &guard,
   assignment_typet assignment_type)
 {
   const struct_typet &type = to_struct_type(ns.follow(lhs.type()));
@@ -453,7 +454,7 @@ void goto_symext::symex_assign_symbol(
   const ssa_exprt &lhs, // L1
   const exprt &full_lhs,
   const exprt &rhs,
-  exprt::operandst &guard,
+  const exprt::operandst &guard,
   assignment_typet assignment_type)
 {
   // Shortcut the common case of a whole-struct initializer:
@@ -517,12 +518,12 @@ void goto_symext::symex_assign_symbol(
               << messaget::eom;
     });
 
-  // Temporarily add the state guard
-  guard.emplace_back(state.guard.as_expr());
+  const exprt assignment_guard =
+    make_and(state.guard.as_expr(), conjunction(guard));
 
   const exprt original_lhs = get_original_name(l2_full_lhs);
   target.assignment(
-    conjunction(guard),
+    assignment_guard,
     l2_lhs,
     l2_full_lhs,
     original_lhs,
@@ -541,9 +542,6 @@ void goto_symext::symex_assign_symbol(
     state.propagation.erase_if_exists(l1_lhs.get_identifier());
     state.value_set.erase_symbol(l1_lhs, ns);
   }
-
-  // Restore the guard
-  guard.pop_back();
 }
 
 void goto_symext::symex_assign_typecast(
