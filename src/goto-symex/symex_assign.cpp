@@ -18,6 +18,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/expr_util.h>
 #include <util/pointer_offset_size.h>
 #include <util/simplify_expr.h>
+#include <util/expr_util.h>
 
 #include "goto_symex_state.h"
 
