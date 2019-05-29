@@ -96,4 +96,8 @@ protected:
   virtual bool is_constant_address_of(const exprt &) const;
 };
 
+/// Conjunction of two expressions. If the second is already an `and_exprt`
+/// add to its operands instead of creating a new expression.
+exprt make_and(exprt a, exprt b);
+
 #endif // CPROVER_UTIL_EXPR_UTIL_H

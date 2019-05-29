@@ -281,3 +281,13 @@ bool is_constantt::is_constant_address_of(const exprt &expr) const
 
   return false;
 }
+
+exprt make_and(exprt a, exprt b)
+{
+  if(b.id() == ID_and)
+  {
+    b.add_to_operands(std::move(a));
+    return b;
+  }
+  return and_exprt{std::move(a), std::move(b)};
+}
