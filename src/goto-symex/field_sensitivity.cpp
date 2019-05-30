@@ -127,7 +127,7 @@ exprt field_sensitivityt::apply(
           else
             return std::move(tmp);
         }
-        else
+        else if(!write)
         {
           // Expand the array and return `{array[0]; array[1]; ...}[index]`
           exprt expanded_array =
