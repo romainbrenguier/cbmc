@@ -132,7 +132,7 @@ exprt field_sensitivityt::apply(
           // Expand the array and return `{array[0]; array[1]; ...}[index]`
           exprt expanded_array =
             get_fields(ns, state, to_ssa_expr(index.array()));
-          return index_exprt{std::move(expanded_array), l2_index.get()};
+          return index_exprt{std::move(expanded_array), index.index()};
         }
       }
     }
