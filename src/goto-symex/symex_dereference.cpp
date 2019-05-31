@@ -21,6 +21,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/pointer_offset_size.h>
 
 #include <pointer-analysis/value_set_dereference.h>
+#include <iostream>
+#include <util/format_expr.h>
 
 #include "symex_dereference_state.h"
 
@@ -369,6 +371,20 @@ void goto_symext::dereference_rec(exprt &expr, statet &state, bool write)
   }
 }
 
+static exprt apply_to_objects_in_dereference(
+  exprt e, const std::function<exprt(exprt)> &f)
+{
+  if(auto deref = expr_try_dynamic_cast<dereference_exprt>(e))
+  {
+    deref->op() = f(std::move(deref->op()));
+    return *deref;
+  }
+
+  for(auto &sub : e.operands())
+    sub = apply_to_objects_in_dereference(std::move(sub), f);
+  return e;
+}
+
 /// Replace all dereference operations within \p expr with explicit references
 /// to the objects they may refer to. For example, the expression `*p1 + *p2`
 /// might be rewritten to `obj1 + (p2 == &obj2 ? obj2 : obj3)` in the case where
@@ -413,14 +429,20 @@ void goto_symext::dereference(exprt &expr, statet &state, bool write)
   // from different frames. Would be enough to rename
   // symbols whose address is taken.
   PRECONDITION(!state.call_stack().empty());
-  exprt l1_expr = state.field_sensitivity.apply(
-    ns, state, state.rename<L1>(expr, ns).get(), write);
+
+  expr = apply_to_objects_in_dereference(std::move(expr),
+    [&](exprt e) {
+      return state.field_sensitivity.apply(
+        ns, state, state.rename<L1>(std::move(e), ns).get(), false);
+    });
+
+  std::cout << "DEREF expr = " << format(expr) << std::endl;
 
   // start the recursion!
-  dereference_rec(l1_expr, state, write);
+  dereference_rec(expr, state, write);
   // dereferencing may introduce new symbol_exprt
   // (like __CPROVER_memory)
-  expr = state.rename<L1>(std::move(l1_expr), ns).get();
+  expr = state.rename<L1>(std::move(expr), ns).get();
 
   // Dereferencing is likely to introduce new member-of-if constructs --
   // for example, "x->field" may have become "(x == &o1 ? o1 : o2).field."
