@@ -243,6 +243,9 @@ std::ostream &format_rec(std::ostream &os, const exprt &expr)
   else if(id == ID_typecast)
     return os << "cast(" << format(to_typecast_expr(expr).op()) << ", "
               << format(expr.type()) << ')';
+  else if(id == ID_dereference)
+    return os << "dereference(" << format(to_dereference_expr(expr).op())
+              << ", " << format(expr.type()) << ')';
   else if(
     id == ID_byte_extract_little_endian || id == ID_byte_extract_big_endian)
   {
