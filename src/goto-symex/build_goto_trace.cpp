@@ -21,6 +21,7 @@ Author: Daniel Kroening
 #include <goto-programs/goto_functions.h>
 
 #include <solvers/decision_procedure.h>
+#include <goto-programs/java_trace_verification.h>
 
 #include "partial_order_concurrency.h"
 
@@ -409,9 +410,13 @@ void build_goto_trace(
       }
 
       if(ssa_step_it == last_step_to_keep)
+      {
+        check_trace_assumptions(goto_trace);
         return;
+      }
     }
   }
+  check_trace_assumptions(goto_trace);
 }
 
 void build_goto_trace(

@@ -32,6 +32,7 @@ Author: Daniel Kroening, Peter Schrammel
 
 #include "goto_symex_property_decider.h"
 #include "symex_bmc.h"
+#include <goto-programs/java_trace_verification.h>
 
 void message_building_error_trace(messaget &log)
 {
