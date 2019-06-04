@@ -69,6 +69,9 @@ void multi_path_symex_only_checkert::generate_equation()
   symex.symex_from_entry_point_of(
     goto_symext::get_goto_function(goto_model), symex_symbol_table);
   postprocess_equation(symex, equation, options, ns, ui_message_handler);
+
+  if(options.get_bool_option("show-vcc"))
+    show_vcc(options, ui_message_handler, equation);
 }
 
 void multi_path_symex_only_checkert::update_properties(
