@@ -179,7 +179,8 @@ exprt field_sensitivityt::get_fields(
     ssa_expr.type().id() == ID_array &&
     to_array_type(ssa_expr.type()).size().id() == ID_constant &&
     numeric_cast_v<mp_integer>(to_constant_expr(
-      to_array_type(ssa_expr.type()).size())) <= max_field_sensitive_array_size)
+      to_array_type(ssa_expr.type()).size()))
+    <= max_field_sensitive_array_size)
   {
     const array_typet &type = to_array_type(ssa_expr.type());
     const std::size_t array_size =
