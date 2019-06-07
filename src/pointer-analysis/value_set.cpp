@@ -206,7 +206,7 @@ void value_sett::output(
       {
         out << ", ";
         if(width >= 40)
-          out << "\n" << std::string(' ', indent.size()) << "      ";
+          out << "\n" << std::string(indent.size(), ' ') << "      ";
       }
     }
 
