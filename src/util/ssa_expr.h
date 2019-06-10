@@ -42,6 +42,7 @@ public:
 
   irep_idt get_object_name() const;
 
+  /// TODO: this is not correct for array field sensitivity
   const ssa_exprt get_l1_object() const;
 
   const irep_idt get_l1_object_identifier() const;
