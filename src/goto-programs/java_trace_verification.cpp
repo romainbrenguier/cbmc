@@ -95,6 +95,40 @@ static bool valid_rhs_expr_high_level(const exprt &rhs)
          expr_try_dynamic_cast<symbol_exprt>(rhs);
 }
 
+bool valid_lvalue(const exprt &expr)
+{
+  const exprt lhs = skip_typecast(expr);
+  if(!valid_lhs_expr_high_level(lhs))
+    return false;
+  // check member lhs structure
+  if(const auto member = expr_try_dynamic_cast<member_exprt>(lhs))
+  {
+    if(!check_member_structure(*member))
+      return false;
+  }
+  // check symbol lhs structure
+  if(const auto symbol = expr_try_dynamic_cast<symbol_exprt>(lhs))
+  {
+    if(!check_symbol_structure(*symbol))
+      return false;
+  }
+  // check index lhs structure
+  if(const auto index = expr_try_dynamic_cast<index_exprt>(lhs))
+  {
+    if(index->operands().size() != 2)
+      return false;
+    if(!check_symbol_structure(index->op0()))
+    {
+      std::cerr << "Warning: unsupported LHS " << format(*index)
+                << std::endl;
+      return false;
+    }
+    if(!expr_try_dynamic_cast<constant_exprt>(index->op1()))
+      return false;
+  }
+  return true;
+}
+
 void check_trace_assumptions(const goto_tracet &trace)
 {
   for(const auto &step : trace.steps)
@@ -103,32 +137,8 @@ void check_trace_assumptions(const goto_tracet &trace)
       continue;
     const auto &lhs = skip_typecast(step.full_lhs);
     const auto &rhs = skip_typecast(step.full_lhs_value);
-    if(!valid_lhs_expr_high_level(lhs))
+    if(!valid_lvalue(lhs))
       print_error("LHS", lhs);
-    // check member lhs structure
-    if(const auto member = expr_try_dynamic_cast<member_exprt>(lhs))
-    {
-      if(!check_member_structure(*member))
-        print_error("LHS", lhs);
-    }
-    // check symbol lhs structure
-    if(const auto symbol = expr_try_dynamic_cast<symbol_exprt>(lhs))
-    {
-      if(!check_symbol_structure(*symbol))
-        print_error("LHS", lhs);
-    }
-    // check index lhs structure
-    if(const auto index = expr_try_dynamic_cast<index_exprt>(lhs))
-    {
-      if(index->operands().size() != 2)
-        print_error("LHS", lhs);
-      if(!check_symbol_structure(index->op0()))
-        std::cerr << "Warning: unsupported LHS " << format(*index)
-                  << std::endl;
-        // print_error("LHS", lhs);
-      if(!expr_try_dynamic_cast<constant_exprt>(index->op1()))
-        print_error("LHS", lhs);
-    }
 
     if(!valid_rhs_expr_high_level(rhs))
       print_error("RHS", rhs);
