@@ -1,0 +1,7 @@
+CORE
+Test.class
+--function Test.test --trace --validate-trace
+--
+--
+This has been observed to fail the trace validation when field sensitivity is
+activated for arrays, if LHS in assignments were not simplified.
