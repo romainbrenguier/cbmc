@@ -371,15 +371,14 @@ void build_goto_trace(
 
       if(SSA_step.original_full_lhs.is_not_nil())
       {
-        exprt lhs = build_full_lhs_rec(
+        goto_trace_step.full_lhs = build_full_lhs_rec(
           decision_procedure,
           ns,
           SSA_step.original_full_lhs,
           SSA_step.ssa_full_lhs);
-        replace_nondet_in_type(lhs, decision_procedure);
-        goto_trace_step.full_lhs = simplify_expr(std::move(lhs), ns);
         INVARIANT(valid_lvalue(goto_trace_step.full_lhs),
                   "LHS should be a valid lvalue");
+        replace_nondet_in_type(goto_trace_step.full_lhs, decision_procedure);
       }
 
       if(SSA_step.ssa_full_lhs.is_not_nil())
