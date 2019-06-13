@@ -201,5 +201,5 @@ void check_trace_assumptions(const goto_tracet &trace)
         print_error("RHS", *constant_expr);
     }
   }
-  std::cout << "Trace verification successful" << std::endl;
+  // std::cout << "Trace verification successful" << std::endl;
 }
