@@ -123,7 +123,9 @@ void check_trace_assumptions(const goto_tracet &trace)
       if(index->operands().size() != 2)
         print_error("LHS", lhs);
       if(!check_symbol_structure(index->op0()))
-        print_error("LHS", lhs);
+        std::cerr << "Warning: unsupported LHS " << format(*index)
+                  << std::endl;
+        // print_error("LHS", lhs);
       if(!expr_try_dynamic_cast<constant_exprt>(index->op1()))
         print_error("LHS", lhs);
     }
