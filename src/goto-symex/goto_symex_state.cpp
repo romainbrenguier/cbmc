@@ -202,18 +202,19 @@ renamedt<ssa_exprt, L2> goto_symex_statet::assignment(
     throw unsupported_operation_exceptiont(
       "pointer handling for concurrency is unsound");
 
-  // for value propagation -- the RHS is L2
-
-  if(!is_shared && record_value && goto_symex_is_constantt()(rhs))
   {
-    const auto propagation_entry = propagation.find(l1_identifier);
-    if(!propagation_entry.has_value())
-      propagation.insert(l1_identifier, rhs);
-    else if(propagation_entry->get() != rhs)
-      propagation.replace(l1_identifier, rhs);
+    // Update constant propagation map -- the RHS is L2
+    if(!is_shared && record_value && goto_symex_is_constantt()(rhs))
+    {
+      const auto propagation_entry = propagation.find(l1_identifier);
+      if(!propagation_entry.has_value())
+        propagation.insert(l1_identifier, rhs);
+      else if(propagation_entry->get() != rhs)
+        propagation.replace(l1_identifier, rhs);
+    }
+    else if(propagation.has_key(l1_identifier))
+      propagation.erase(l1_identifier);
   }
-  else if(propagation.has_key(l1_identifier))
-    propagation.erase(l1_identifier);
 
   {
     // update value sets
