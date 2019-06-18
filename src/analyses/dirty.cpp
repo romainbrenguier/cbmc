@@ -15,26 +15,36 @@ Date: March 2013
 
 #include <util/std_expr.h>
 
+static void find_dirty_address_of(
+  const exprt &expr,
+  std::unordered_set<irep_idt> &dirty);
+
+static void find_dirty(
+  const exprt &expr,
+  std::unordered_set<irep_idt> &dirty);
+
 void dirtyt::build(const goto_functiont &goto_function)
 {
   for(const auto &i : goto_function.body.instructions)
-    i.apply([this](const exprt &e) { find_dirty(e); });
+    i.apply([this](const exprt &e) { find_dirty(e, dirty); });
 }
 
-void dirtyt::find_dirty(const exprt &expr)
+static void find_dirty(const exprt &expr, std::unordered_set<irep_idt> &dirty)
 {
   if(expr.id()==ID_address_of)
   {
     const address_of_exprt &address_of_expr=to_address_of_expr(expr);
-    find_dirty_address_of(address_of_expr.object());
+    find_dirty_address_of(address_of_expr.object(), dirty);
     return;
   }
 
   forall_operands(it, expr)
-    find_dirty(*it);
+    find_dirty(*it, dirty);
 }
 
-void dirtyt::find_dirty_address_of(const exprt &expr)
+static void find_dirty_address_of(
+  const exprt &expr,
+  std::unordered_set<irep_idt> &dirty)
 {
   if(expr.id()==ID_symbol)
   {
@@ -45,22 +55,22 @@ void dirtyt::find_dirty_address_of(const exprt &expr)
   }
   else if(expr.id()==ID_member)
   {
-    find_dirty_address_of(to_member_expr(expr).struct_op());
+    find_dirty_address_of(to_member_expr(expr).struct_op(), dirty);
   }
   else if(expr.id()==ID_index)
   {
-    find_dirty_address_of(to_index_expr(expr).array());
-    find_dirty(to_index_expr(expr).index());
+    find_dirty_address_of(to_index_expr(expr).array(), dirty);
+    find_dirty(to_index_expr(expr).index(), dirty);
   }
   else if(expr.id()==ID_dereference)
   {
-    find_dirty(to_dereference_expr(expr).pointer());
+    find_dirty(to_dereference_expr(expr).pointer(), dirty);
   }
   else if(expr.id()==ID_if)
   {
-    find_dirty_address_of(to_if_expr(expr).true_case());
-    find_dirty_address_of(to_if_expr(expr).false_case());
-    find_dirty(to_if_expr(expr).cond());
+    find_dirty_address_of(to_if_expr(expr).true_case(), dirty);
+    find_dirty_address_of(to_if_expr(expr).false_case(), dirty);
+    find_dirty(to_if_expr(expr).cond(), dirty);
   }
 }
 

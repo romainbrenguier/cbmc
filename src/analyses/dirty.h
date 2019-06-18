@@ -100,9 +100,6 @@ protected:
   bool initialized;
   // variables whose address is taken
   std::unordered_set<irep_idt> dirty;
-
-  void find_dirty(const exprt &expr);
-  void find_dirty_address_of(const exprt &expr);
 };
 
 inline std::ostream &operator<<(
