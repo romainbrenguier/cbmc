@@ -36,7 +36,6 @@ private:
   }
 
 public:
-  bool initialized;
   typedef goto_functionst::goto_functiont goto_functiont;
 
   /// \post dirtyt objects that are created through this constructor are not
@@ -98,6 +97,7 @@ public:
 protected:
   void build(const goto_functiont &goto_function);
 
+  bool initialized;
   // variables whose address is taken
   std::unordered_set<irep_idt> dirty;
 
