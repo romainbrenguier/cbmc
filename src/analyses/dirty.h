@@ -36,8 +36,6 @@ private:
   }
 
 public:
-  typedef goto_functionst::goto_functiont goto_functiont;
-
   /// \post dirtyt objects that are created through this constructor are not
   /// safe to use. If you copied a dirtyt (for example, by adding an object
   /// that owns a dirtyt to a container and then copying it back out), you will
