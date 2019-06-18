@@ -91,7 +91,8 @@ void goto_symext::symex_start_thread(statet &state)
       nil_exprt(),
       rhs,
       lhs_conditions,
-      symex_targett::assignment_typet::HIDDEN);
+      symex_targett::assignment_typet::HIDDEN,
+      ns, symex_config, target);
     state.record_events.pop();
   }
 
@@ -128,6 +129,7 @@ void goto_symext::symex_start_thread(statet &state)
       nil_exprt(),
       rhs,
       lhs_conditions,
-      symex_targett::assignment_typet::HIDDEN);
+      symex_targett::assignment_typet::HIDDEN,
+      ns, symex_config, target);
   }
 }
