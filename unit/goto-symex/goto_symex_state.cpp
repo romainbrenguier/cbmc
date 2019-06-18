@@ -74,6 +74,10 @@ SCENARIO("Assignment", "[core][goto-symex][goto-symex-state][assignment]")
           numeric_cast_v<mp_integer>(to_constant_expr(foo_propagated->get()));
         REQUIRE(foo_value == 475);
       }
+      THEN("The target equations are unchanged")
+      {
+        REQUIRE(state.symex_target == nullptr);
+      }
       THEN("Symbol `foo` is assigned another integer 1834")
       {
         const exprt rhs2 = from_integer(1834, int_type);
@@ -93,6 +97,10 @@ SCENARIO("Assignment", "[core][goto-symex][goto-symex-state][assignment]")
           const auto foo_value =
             numeric_cast_v<mp_integer>(to_constant_expr(foo_propagated->get()));
           REQUIRE(foo_value == 1834);
+        }
+        THEN("The target equations are unchanged")
+        {
+          REQUIRE(state.symex_target == nullptr);
         }
       }
     }
@@ -129,6 +137,10 @@ SCENARIO("Assignment", "[core][goto-symex][goto-symex-state][assignment]")
         REQUIRE(object_descriptor != nullptr);
         REQUIRE(object_descriptor->object().id() == ID_null_object);
       }
+      THEN("The target equations are unchanged")
+      {
+        REQUIRE(state.symex_target == nullptr);
+      }
       THEN("Symbol `foo` is assigned `&int_value`")
       {
         const symbol_exprt int_value{"int_value", int_type};
@@ -154,6 +166,10 @@ SCENARIO("Assignment", "[core][goto-symex][goto-symex-state][assignment]")
           REQUIRE(
             to_constant_expr(object_descriptor->offset())
               .value_is_zero_string());
+        }
+        THEN("The target equations are unchanged")
+        {
+          REQUIRE(state.symex_target == nullptr);
         }
       }
     }
