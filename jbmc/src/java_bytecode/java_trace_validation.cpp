@@ -129,7 +129,6 @@ bool check_constant_structure(const constant_exprt &constant_expr)
 
 static void check_lhs_assumptions(
   const exprt &lhs,
-  const namespacet &ns,
   const validation_modet vm)
 {
   // check member lhs structure
@@ -276,7 +275,7 @@ static void check_step_assumptions(
 {
   if(!step.is_assignment() && !step.is_decl())
     return;
-  check_lhs_assumptions(skip_typecast(step.full_lhs), ns, vm);
+  check_lhs_assumptions(skip_typecast(step.full_lhs), vm);
   check_rhs_assumptions(skip_typecast(step.full_lhs_value), ns, vm);
 }
 
