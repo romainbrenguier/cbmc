@@ -132,12 +132,6 @@ static void check_lhs_assumptions(
   const namespacet &ns,
   const validation_modet vm)
 {
-  DATA_CHECK_WITH_DIAGNOSTICS(
-    vm,
-    valid_lhs_expr_high_level(lhs),
-    "LHS",
-    lhs.pretty(),
-    "Unsupported expression.");
   // check member lhs structure
   if(const auto member = expr_try_dynamic_cast<member_exprt>(lhs))
   {
