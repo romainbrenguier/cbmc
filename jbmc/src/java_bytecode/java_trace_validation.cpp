@@ -169,17 +169,6 @@ static void check_lhs_assumptions(
       "Expecting an index expression with a symbol array and constant or "
       "symbol index value.");
   }
-  // check byte extract lhs structure
-  else if(const auto byte = expr_try_dynamic_cast<byte_extract_exprt>(lhs))
-  {
-    DATA_CHECK_WITH_DIAGNOSTICS(
-      vm,
-      check_index_structure(*byte),
-      "LHS",
-      lhs.pretty(),
-      "Expecting a byte extract expression with a symbol array and constant or "
-      "symbol index value.");
-  }
   else
   {
     DATA_CHECK_WITH_DIAGNOSTICS(

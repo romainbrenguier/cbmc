@@ -9,6 +9,7 @@ Author: Jeannie Moulton
 #ifndef CPROVER_JAVA_BYTECODE_JAVA_TRACE_VALIDATION_H
 #define CPROVER_JAVA_BYTECODE_JAVA_TRACE_VALIDATION_H
 
+#include <util/deprecate.h>
 #include <util/optional.h>
 #include <util/validation_mode.h>
 
@@ -57,6 +58,7 @@ bool check_member_structure(const member_exprt &expr);
 
 /// \return true iff the left hand side is superficially an expected expression
 /// type
+DEPRECATED(SINCE(2019, 07, 01, "Unused"))
 bool valid_lhs_expr_high_level(const exprt &lhs);
 
 /// \return true iff the right hand side is superficially an expected expression
