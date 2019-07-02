@@ -2868,7 +2868,7 @@ static exprt ensure_array_type(exprt e, char type_char)
 
 exprt java_bytecode_convert_methodt::convert_aload(
   const irep_idt &statement,
-  const exprt::operandst &op) const
+  const exprt::operandst &op)
 {
   const char type_char = statement[0];
   const exprt op_with_right_type = ensure_array_type(op[0], type_char);
