@@ -1340,7 +1340,7 @@ code_blockt java_bytecode_convert_methodt::convert_instructions(
     }
     else if(bytecode == patternt("?aload"))
     {
-      PRECONDITION(op.size() == 2 && results.size() == 1);
+      PRECONDITION(results.size() == 1);
       results[0] = convert_aload(statement, op);
     }
     else if(bytecode == patternt("?load") || bytecode == patternt("?load_?"))
@@ -2870,6 +2870,7 @@ exprt java_bytecode_convert_methodt::convert_aload(
   const irep_idt &statement,
   const exprt::operandst &op)
 {
+  PRECONDITION(op.size() == 2);
   const char type_char = statement[0];
   const exprt op_with_right_type = ensure_array_type(op[0], type_char);
   dereference_exprt deref{op_with_right_type};
