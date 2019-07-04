@@ -2856,16 +2856,17 @@ code_blockt java_bytecode_convert_methodt::convert_ret(
 /// Character 'b' is used both for `byte` and `boolean` arrays, so if \p expr
 /// is a boolean array an and we are using a `b` operation we can skip the
 /// typecast.
-static exprt conditional_array_cast(exprt expr, char type_char)
+static bool array_type_is_compatible(exprt expr, char type_char)
 {
-  const auto ref_type =
-    type_try_dynamic_cast<java_reference_typet>(expr.type());
-  const bool typecast_not_needed =
-    ref_type && ((type_char == 'b' && ref_type->subtype().get_identifier() ==
-                                        "java::array[boolean]") ||
-                 *ref_type == java_array_type(type_char));
-  return typecast_not_needed ? expr
-                             : typecast_exprt(expr, java_array_type(type_char));
+  if(const auto ref_type =
+    type_try_dynamic_cast<java_reference_typet>(expr.type()))
+  {
+    return
+      (type_char == 'b' && 
+      ref_type->subtype().get_identifier() == "java::array[boolean]") ||
+      *ref_type == java_array_type(type_char);
+  }
+  return false;
 }
 
 exprt java_bytecode_convert_methodt::convert_aload(
@@ -2874,8 +2875,8 @@ exprt java_bytecode_convert_methodt::convert_aload(
 {
   PRECONDITION(op.size() == 2);
   const char type_char = statement[0];
-  const exprt op_with_right_type = conditional_array_cast(op[0], type_char);
-  dereference_exprt deref{op_with_right_type};
+  PRECONDITION(array_type_is_compatible(op[0], type_char));
+  dereference_exprt deref{op[0]};
   deref.set(ID_java_member_access, true);
 
   auto java_array_type = type_try_dynamic_cast<struct_tag_typet>(deref.type());
@@ -2922,8 +2923,8 @@ code_blockt java_bytecode_convert_methodt::convert_astore(
 {
   PRECONDITION(op.size() == 3);
   const char type_char = statement[0];
-  const exprt op_with_right_type = conditional_array_cast(op[0], type_char);
-  dereference_exprt deref{op_with_right_type};
+  PRECONDITION(array_type_is_compatible(op[0], type_char));
+  dereference_exprt deref{op[0]};
   deref.set(ID_java_member_access, true);
 
   auto java_array_type = type_try_dynamic_cast<struct_tag_typet>(deref.type());
