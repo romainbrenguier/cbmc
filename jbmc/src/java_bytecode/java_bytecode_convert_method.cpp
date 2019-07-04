@@ -2974,12 +2974,7 @@ optionalt<exprt> java_bytecode_convert_methodt::convert_invoke_dynamic(
     return {};
 
   const auto value = zero_initializer(return_type, location, ns);
-  if(!value.has_value())
-  {
-    error().source_location = location;
-    error() << "failed to zero-initialize return type" << eom;
-    throw 0;
-  }
+  CHECK_RETURN(value.has_value());
   return value;
 }
 
