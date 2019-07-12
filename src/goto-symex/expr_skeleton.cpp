@@ -84,8 +84,10 @@ expr_skeletont::clear_innermost_index_expr(expr_skeletont skeleton)
     return {};
   if(index_exprt *index_expr = expr_try_dynamic_cast<index_exprt>(*to_update))
   {
+    typet new_missing_type = index_expr->type();
     index_expr->make_nil();
-    return expr_skeletont{std::move(skeleton)};
+    return expr_skeletont{std::move(skeleton.skeleton),
+                          std::move(new_missing_type)};
   }
   return {};
 }
@@ -98,8 +100,10 @@ expr_skeletont::clear_innermost_member_expr(expr_skeletont skeleton)
     return {};
   if(member_exprt *member = expr_try_dynamic_cast<member_exprt>(*to_update))
   {
+    typet new_missing_type = member->type();
     member->make_nil();
-    return expr_skeletont{std::move(skeleton)};
+    return expr_skeletont{std::move(skeleton.skeleton),
+                          std::move(new_missing_type)};
   }
   return {};
 }

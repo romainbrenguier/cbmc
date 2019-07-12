@@ -85,7 +85,7 @@ private:
   exprt skeleton;
   typet type_of_missing_part;
 
-  explicit expr_skeletont(exprt e, typet missing)
+  expr_skeletont(exprt e, typet missing)
     : skeleton(std::move(e)), type_of_missing_part(std::move(missing))
   {
   }
