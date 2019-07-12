@@ -253,7 +253,7 @@ static assignmentt shift_indexed_access_to_lhs(
                          .expr;
 
   expr_skeletont new_skeleton = expr_skeletont::revert_byte_extract(
-    std::move(assignment.original_lhs_skeleton),
+    assignment.original_lhs_skeleton,
     byte_update.offset(),
     byte_update.value().type(),
     ns);
