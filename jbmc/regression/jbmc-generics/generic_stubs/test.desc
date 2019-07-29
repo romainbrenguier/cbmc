@@ -1,0 +1,11 @@
+CORE
+Foo.class
+--classpath "../../../../../../lib/models-library/model/target/models.jar:." --function Foo.foo Foo.class --validate-trace --property "java::Foo.foo:(IZ)Ljava/lang/String;.assertion.1" 
+EXIT=0
+SIGNAL=0
+--
+--
+Check that the generated trace is correct.
+Foo.class was compiled using:
+`javac -g -Xlint:unchecked Foo.java ../../../../../../lib/models-library/model/src/main/java/org/cprover/CProver.java`.
+The Bar.class file is deleted on purpose to make Bar.bar opaque.
