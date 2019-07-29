@@ -120,9 +120,10 @@ bool check_constant_structure(const constant_exprt &constant_expr)
   if(constant_expr.has_operands())
   {
     const auto &operand = skip_typecast(constant_expr.operands()[0]);
-    return can_cast_expr<constant_exprt>(operand) ||
-           can_cast_expr<address_of_exprt>(operand) ||
-           can_cast_expr<plus_exprt>(operand);
+    return (can_cast_expr<constant_exprt>(operand)||
+            can_cast_expr<address_of_exprt>(operand) ||
+            (can_cast_expr<plus_exprt>(operand)
+             && to_constant_expr(operand.operands()[0]).get_value() != ID_NULL));
   }
   return !constant_expr.get_value().empty();
 }
