@@ -78,6 +78,6 @@ bool check_struct_structure(const struct_exprt &expr);
 bool check_address_structure(const address_of_exprt &address);
 
 /// \return true iff the constant_exprt has valid operands and value
-bool check_constant_structure(const constant_exprt &constant_expr);
+bool check_constant_structure(const constant_exprt &constant_expr, bool allow_null = true);
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_TRACE_VALIDATION_H

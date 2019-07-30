@@ -16,6 +16,7 @@ Author: Jeannie Moulton
 #include <util/expr_util.h>
 #include <util/simplify_expr.h>
 #include <util/std_expr.h>
+#include <util/prefix.h>
 
 bool check_symbol_structure(const exprt &expr)
 {
@@ -115,17 +116,30 @@ bool check_address_structure(const address_of_exprt &address)
   return symbol_expr && check_symbol_structure(*symbol_expr);
 }
 
-bool check_constant_structure(const constant_exprt &constant_expr)
+bool check_constant_structure(const constant_exprt &constant_expr, bool allow_null)
 {
   if(constant_expr.has_operands())
   {
     const auto &operand = skip_typecast(constant_expr.operands()[0]);
-    return (can_cast_expr<constant_exprt>(operand)||
-            can_cast_expr<address_of_exprt>(operand) ||
-            (can_cast_expr<plus_exprt>(operand)
-             && to_constant_expr(operand.operands()[0]).get_value() != ID_NULL));
+    if(auto constant = expr_try_dynamic_cast<constant_exprt>(operand))
+      return check_constant_structure(*constant, allow_null);
+    if(auto constant = expr_try_dynamic_cast<plus_exprt>(operand))
+    {
+      return std::all_of(
+        constant->operands().begin(),
+        constant->operands().end(),
+        [&](const exprt &op){
+          return can_cast_expr<constant_exprt>(op) &&
+            check_constant_structure(to_constant_expr(op), false);});
+    }
+    return can_cast_expr<address_of_exprt>(operand);
   }
-  return !constant_expr.get_value().empty();
+  const irep_idt value = constant_expr.get_value();
+  if(!allow_null && (value == ID_null || has_prefix(id2string(value), "NULL")))
+    return false;
+  return !value.empty() &&
+         value !="INVALID" &&
+         !has_prefix(id2string(value), "INVALID-");
 }
 
 static void check_lhs_assumptions(
