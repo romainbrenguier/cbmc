@@ -531,7 +531,11 @@ void goto_symext::execute_next_instruction(
 
   const goto_programt::instructiont &instruction=*state.source.pc;
 
-  if(!symex_config.doing_path_exploration)
+  const bool end_function_followed_by_goto =
+    instruction.is_end_function()
+    && std::next(state.call_stack().top().calling_location.pc)->is_goto();
+
+  if(!symex_config.doing_path_exploration && !end_function_followed_by_goto)
     merge_gotos(state);
 
   // depth exceeded?
