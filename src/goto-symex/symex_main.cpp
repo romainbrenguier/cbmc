@@ -11,6 +11,8 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "goto_symex.h"
 
+#include "symex_decl.h"
+
 #include <memory>
 
 #include <pointer-analysis/value_set_dereference.h>
@@ -198,7 +200,7 @@ void goto_symext::rewrite_quantifiers(exprt &expr, statet &state)
     auto &quant_expr = to_quantifier_expr(expr);
     symbol_exprt tmp0 =
       to_symbol_expr(to_ssa_expr(quant_expr.symbol()).get_original_expr());
-    symex_decl(state, tmp0);
+    ::symex_decl(state, tmp0, path_storage, ns, target);
     instruction_local_symbols.push_back(tmp0);
     exprt tmp = quant_expr.where();
     rewrite_quantifiers(tmp, state);

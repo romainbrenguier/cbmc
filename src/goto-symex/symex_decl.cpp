@@ -9,13 +9,18 @@ Author: Daniel Kroening, kroening@kroening.com
 /// \file
 /// Symbolic Execution
 
-#include "goto_symex.h"
-
-#include <cassert>
+#include "symex_decl.h"
 
 #include <util/std_expr.h>
+#include "path_storage.h"
+#include "symex_target_equation.h"
 
-void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
+void symex_decl(
+  goto_symex_statet &state,
+  const symbol_exprt &expr,
+  path_storaget &path_storage,
+  const namespacet &ns,
+  symex_target_equationt &target)
 {
   // each declaration introduces a new object, which we record as a fresh L1
   // index
@@ -25,7 +30,7 @@ void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
   // doing it this way).
   ssa_exprt ssa = state.add_object(
     expr,
-    [this](const irep_idt &l0_name) {
+    [&path_storage](const irep_idt &l0_name) {
       return path_storage.get_unique_l1_index(l0_name, 1);
     },
     ns);

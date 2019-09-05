@@ -344,11 +344,6 @@ protected:
   /// Symbolically execute a DECL instruction
   /// \param state: Symbolic execution state for current instruction
   virtual void symex_decl(statet &state);
-  /// Symbolically execute a DECL instruction for the given symbol or simulate
-  /// such an execution for a synthetic symbol
-  /// \param state: Symbolic execution state for current instruction
-  /// \param expr: The symbol being declared
-  virtual void symex_decl(statet &state, const symbol_exprt &expr);
   /// Symbolically execute a DEAD instruction
   /// \param state: Symbolic execution state for current instruction
   virtual void symex_dead(statet &state);

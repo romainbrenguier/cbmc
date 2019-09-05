@@ -13,6 +13,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "expr_skeleton.h"
 #include "symex_assign.h"
+#include "symex_decl.h"
 
 #include <util/arith_tools.h>
 #include <util/c_types.h>
@@ -250,7 +251,7 @@ void goto_symext::symex_decl(statet &state)
   // we handle the decl with only one operand
   PRECONDITION(code.operands().size() == 1);
 
-  symex_decl(state, code.symbol());
+  ::symex_decl(state, code.symbol(), path_storage, ns, target);
 }
 
 const symbolt &goto_symext::get_new_string_data_symbol(
