@@ -15,17 +15,6 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <util/std_expr.h>
 
-void goto_symext::symex_decl(statet &state)
-{
-  const auto &code = state.source.pc->get_decl();
-
-  // two-operand decl not supported here
-  // we handle the decl with only one operand
-  PRECONDITION(code.operands().size() == 1);
-
-  symex_decl(state, code.symbol());
-}
-
 void goto_symext::symex_decl(statet &state, const symbol_exprt &expr)
 {
   // each declaration introduces a new object, which we record as a fresh L1

@@ -242,6 +242,17 @@ void goto_symext::assign_string_constant(
   }
 }
 
+void goto_symext::symex_decl(statet &state)
+{
+  const auto &code = state.source.pc->get_decl();
+
+  // two-operand decl not supported here
+  // we handle the decl with only one operand
+  PRECONDITION(code.operands().size() == 1);
+
+  symex_decl(state, code.symbol());
+}
+
 const symbolt &goto_symext::get_new_string_data_symbol(
   statet &state,
   symex_assignt &symex_assign,
