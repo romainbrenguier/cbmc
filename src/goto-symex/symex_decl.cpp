@@ -17,9 +17,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 void goto_symext::symex_decl(statet &state)
 {
-  const goto_programt::instructiont &instruction=*state.source.pc;
-
-  const auto &code = instruction.get_decl();
+  const auto &code = state.source.pc->get_decl();
 
   // two-operand decl not supported here
   // we handle the decl with only one operand
