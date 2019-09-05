@@ -77,24 +77,25 @@ void goto_symext::symex_assign(statet &state, const code_assignt &code)
   }
   else
   {
-    assignment_typet assignment_type = symex_targett::assignment_typet::STATE;
+    const bool hide_assignment = [&lhs, &state]{
+      // Let's hide return value assignments.
+      if(
+        lhs.id() == ID_symbol &&
+        id2string(to_symbol_expr(lhs).get_identifier()).find("#return_value!")
+        != std::string::npos)
+      {
+        return true;
+      }
 
-    // Let's hide return value assignments.
-    if(
-      lhs.id() == ID_symbol &&
-      id2string(to_symbol_expr(lhs).get_identifier()).find("#return_value!") !=
-        std::string::npos)
-    {
-      assignment_type = symex_targett::assignment_typet::HIDDEN;
-    }
-
-    // We hide if we are in a hidden function.
-    if(state.call_stack().top().hidden_function)
-      assignment_type = symex_targett::assignment_typet::HIDDEN;
-
-    // We hide if we are executing a hidden instruction.
-    if(state.source.pc->source_location.get_hide())
-      assignment_type = symex_targett::assignment_typet::HIDDEN;
+      // We hide if we are in a hidden function or we are executing a hidden
+      // instruction.
+      return
+        state.call_stack().top().hidden_function ||
+        state.source.pc->source_location.get_hide();
+    }();
+    const assignment_typet assignment_type =
+      hide_assignment ? symex_targett::assignment_typet::HIDDEN
+                      : symex_targett::assignment_typet::STATE;
 
     symex_assignt symex_assign{
       state, assignment_type, ns, symex_config, target};
