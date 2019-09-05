@@ -193,6 +193,7 @@ public:
     const get_goto_functiont &get_goto_functions,
     symbol_tablet &new_symbol_table);
 
+protected:
   /// \brief Set when states are pushed onto the workqueue
   /// If this flag is set at the end of a symbolic execution run, it means that
   /// symbolic execution has been paused because we encountered a GOTO
@@ -202,7 +203,6 @@ public:
   /// symbolic execution from that state.
   bool should_pause_symex;
 
-protected:
   /// The configuration to use for this symbolic execution
   const symex_configt symex_config;
 
