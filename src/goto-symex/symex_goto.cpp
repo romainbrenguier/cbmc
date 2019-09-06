@@ -274,6 +274,7 @@ void goto_symext::symex_goto(statet &state)
 
     if(should_stop_unwind(state.source, state.call_stack(), unwind))
     {
+      // TODO: The name indicates this should be return a boolean
       loop_bound_exceeded(state, new_guard);
 
       // next instruction

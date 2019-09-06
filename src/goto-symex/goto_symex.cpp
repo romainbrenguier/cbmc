@@ -78,6 +78,7 @@ void goto_symext::symex_assign(statet &state, const code_assignt &code)
   }
   else
   {
+    // TODO: split the two parts
     const bool hide_assignment = [&lhs, &state]{
       // Let's hide return value assignments.
       if(
