@@ -372,30 +372,16 @@ static void pop_frame(
       state.guard = frame.guard_at_function_start;
     }
 
-    symex_renaming_levelt::viewt view;
-    state.get_level2().current_names.get_view(view);
-
-    std::vector<irep_idt> keys_to_erase;
-
-    for(const auto &pair : view)
+    for(const auto &local_object : frame.local_objects)
     {
-      const irep_idt l1_o_id = pair.second.first.get_l1_object_identifier();
-
-      // could use iteration over local_objects as l1_o_id is prefix
-      if(
-        frame.local_objects.find(l1_o_id) == frame.local_objects.end() ||
-        (state.threads.size() > 1 &&
-         path_storage.dirty(pair.second.first.get_object_name())))
+      if(auto l1 = state.get_level2().current_names.find(local_object))
       {
-        continue;
+        if(state.threads.size() == 1 ||
+           !path_storage.dirty(l1->get().first.get_object_name()))
+        {
+          state.drop_existing_l1_name(local_object);
+        }
       }
-
-      keys_to_erase.push_back(pair.first);
-    }
-
-    for(const irep_idt &key : keys_to_erase)
-    {
-      state.drop_existing_l1_name(key);
     }
   }
 
