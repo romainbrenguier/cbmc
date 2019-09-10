@@ -320,7 +320,7 @@ protected:
   /// The extra complication to be considered here is that the expression may
   /// have any number of ternary expressions mixed with type casts.
   void process_array_expr(statet &, exprt &);
-  exprt make_auto_object(const typet &, statet &);
+  static exprt make_auto_object(const typet &, statet &, unsigned);
   virtual void dereference(exprt &, statet &, bool write);
 
   void dereference_rec(exprt &, statet &, bool write);

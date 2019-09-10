@@ -16,10 +16,9 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/symbol_table.h>
 #include <util/std_expr.h>
 
-exprt goto_symext::make_auto_object(const typet &type, statet &state)
+exprt goto_symext::make_auto_object(
+  const typet &type, statet &state, unsigned dynamic_counter)
 {
-  dynamic_counter++;
-
   // produce auto-object symbol
   symbolt symbol;
 
@@ -62,7 +61,8 @@ void goto_symext::initialize_auto_object(const exprt &expr, statet &state)
       // could be NULL nondeterministically
 
       address_of_exprt address_of_expr(
-        make_auto_object(pointer_type.subtype(), state), pointer_type);
+        make_auto_object(pointer_type.subtype(), state, ++dynamic_counter),
+        pointer_type);
 
       if_exprt rhs(
         side_effect_expr_nondett(bool_typet(), expr.source_location()),
