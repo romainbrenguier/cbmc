@@ -331,29 +331,29 @@ protected:
 
   /// Symbolically execute a GOTO instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_goto(statet &state);
+  void symex_goto(statet &state);
   /// Symbolically execute a START_THREAD instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_start_thread(statet &state);
+  void symex_start_thread(statet &state);
   /// Symbolically execute an ATOMIC_BEGIN instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_atomic_begin(statet &state);
+  void symex_atomic_begin(statet &state);
   /// Symbolically execute an ATOMIC_END instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_atomic_end(statet &state);
+  void symex_atomic_end(statet &state);
   /// Symbolically execute a DECL instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_decl(statet &state);
+  void symex_decl(statet &state);
   /// Symbolically execute a DEAD instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_dead(statet &state);
+  void symex_dead(statet &state);
   /// Kill a symbol, as if it had been the subject of a DEAD instruction
   /// \param state: Symbolic execution state
   /// \param symbol_expr: Symbol to kill
   void symex_dead(statet &state, const symbol_exprt &symbol_expr);
   /// Symbolically execute an OTHER instruction
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_other(statet &state);
+  void symex_other(statet &state);
 
   void symex_assert(const goto_programt::instructiont &, statet &);
 
@@ -397,7 +397,7 @@ protected:
     value_sett *jump_not_taken_value_set,
     const namespacet &ns);
 
-  virtual void vcc(
+  void vcc(
     const exprt &,
     const std::string &msg,
     statet &);
@@ -406,7 +406,7 @@ protected:
   /// for a synthetic assumption
   /// \param state: Symbolic execution state for current instruction
   /// \param cond: The guard of the assumption
-  virtual void symex_assume(statet &state, const exprt &cond);
+  void symex_assume(statet &state, const exprt &cond);
   void symex_assume_l2(statet &, const exprt &cond);
 
   /// Merge all branches joining at the current program point. Applies
@@ -441,7 +441,7 @@ protected:
     const call_stackt &context,
     unsigned unwind);
 
-  virtual void loop_bound_exceeded(statet &state, const exprt &guard);
+  void loop_bound_exceeded(statet &state, const exprt &guard);
 
   /// Log a warning that a function has no body
   /// \param identifier: The name of the function with no body
@@ -456,14 +456,14 @@ protected:
   ///   \ref get_goto_functiont)
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The function call instruction
-  virtual void symex_function_call(
+  void symex_function_call(
     const get_goto_functiont &get_goto_function,
     statet &state,
     const code_function_callt &code);
 
   /// Symbolically execute a END_FUNCTION instruction.
   /// \param state: Symbolic execution state for current instruction
-  virtual void symex_end_of_function(statet &);
+  void symex_end_of_function(statet &);
 
   /// Symbolic execution of a call to a function call.
   /// For functions \c CBMC_trace and functions starting with \c __CPROVER_fkt
@@ -475,7 +475,7 @@ protected:
   ///   \ref get_goto_functiont)
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The function call instruction
-  virtual void symex_function_call_symbol(
+  void symex_function_call_symbol(
     const get_goto_functiont &get_goto_function,
     statet &state,
     const code_function_callt &code);
@@ -490,7 +490,7 @@ protected:
   ///   \ref get_goto_functiont)
   /// \param state: Symbolic execution state for current instruction
   /// \param call: The function call instruction
-  virtual void symex_function_call_code(
+  void symex_function_call_code(
     const get_goto_functiont &get_goto_function,
     statet &state,
     const code_function_callt &call);
@@ -520,7 +520,7 @@ protected:
   /// \param state: Symbolic execution state for current instruction
   void symex_catch(statet &state);
 
-  virtual void do_simplify(exprt &expr);
+  void do_simplify(exprt &expr);
 
   /// Symbolically execute an ASSIGN instruction or simulate such an execution
   /// for a synthetic assignment
