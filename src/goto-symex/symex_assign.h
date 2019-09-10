@@ -31,10 +31,10 @@ public:
     const namespacet &ns,
     const symex_configt &symex_config,
     symex_targett &target)
-    : state(state),
-      assignment_type(assignment_type),
-      ns(ns),
+    : ns(ns),
       symex_config(symex_config),
+      state(state),
+      assignment_type(assignment_type),
       target(target)
   {
   }
@@ -55,11 +55,12 @@ public:
     const exprt &rhs,
     exprt::operandst &guard);
 
+  const namespacet &ns;
+  const symex_configt &symex_config;
+
 private:
   goto_symex_statet &state;
   symex_targett::assignment_typet assignment_type;
-  const namespacet &ns;
-  const symex_configt &symex_config;
   symex_targett &target;
 
   void assign_from_struct(
