@@ -679,7 +679,7 @@ protected:
   /// meaning it will be killed when \ref symex_step concludes.
   void lift_let(statet &state, const let_exprt &let_expr);
 
-  virtual void
+  void
   symex_va_start(statet &, const exprt &lhs, const side_effect_exprt &);
 
   /// Symbolically execute an assignment instruction that has an `allocate` on
@@ -687,20 +687,20 @@ protected:
   /// \param state: Symbolic execution state for current instruction
   /// \param lhs: The expression to assign to
   /// \param code: The `allocate` expression
-  virtual void symex_allocate(
+  void symex_allocate(
     statet &state,
     const exprt &lhs,
     const side_effect_exprt &code);
   /// Symbolically execute an OTHER instruction that does a CPP `delete`
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The cleaned up CPP `delete` instruction
-  virtual void symex_cpp_delete(statet &state, const codet &code);
+  void symex_cpp_delete(statet &state, const codet &code);
   /// Symbolically execute an assignment instruction that has a CPP `new` or
   /// `new array` or a Java `new array` on the right hand side
   /// \param state: Symbolic execution state for current instruction
   /// \param lhs: The expression to assign to
   /// \param code: The `new` expression
-  virtual void
+  void
   symex_cpp_new(statet &state, const exprt &lhs, const side_effect_exprt &code);
   /// Symbolically execute a FUNCTION_CALL instruction for a function whose
   /// name starts with CPROVER_FKT_PREFIX
@@ -711,24 +711,24 @@ protected:
   /// This should not be called as these functions should already be removed
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The function call instruction
-  virtual void symex_fkt(statet &state, const code_function_callt &code);
+  void symex_fkt(statet &state, const code_function_callt &code);
   /// Symbolically execute a FUNCTION_CALL instruction for the `CBMC_trace`
   /// function
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The function call instruction
-  virtual void symex_trace(statet &state, const code_function_callt &code);
+  void symex_trace(statet &state, const code_function_callt &code);
   /// Symbolically execute an OTHER instruction that does a CPP `printf`
   /// \param state: Symbolic execution state for current instruction
   /// \param rhs: The cleaned up CPP `printf` instruction
-  virtual void symex_printf(statet &state, const exprt &rhs);
+  void symex_printf(statet &state, const exprt &rhs);
   /// Symbolically execute an OTHER instruction that does a CPP input
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The cleaned up input instruction
-  virtual void symex_input(statet &state, const codet &code);
+  void symex_input(statet &state, const codet &code);
   /// Symbolically execute an OTHER instruction that does a CPP output
   /// \param state: Symbolic execution state for current instruction
   /// \param code: The cleaned up output instruction
-  virtual void symex_output(statet &state, const codet &code);
+  void symex_output(statet &state, const codet &code);
 
   /// A monotonically increasing index for each created dynamic object
   static unsigned dynamic_counter;
