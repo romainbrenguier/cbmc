@@ -22,7 +22,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "symex_coverage.h"
 
-class symex_bmct
+class symex_bmct : public goto_symext
 {
 public:
   symex_bmct(
