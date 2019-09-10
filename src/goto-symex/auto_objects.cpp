@@ -10,6 +10,8 @@ Author: Daniel Kroening, kroening@kroening.com
 /// Symbolic Execution of ANSI-C
 
 #include "goto_symex.h"
+#include "expr_skeleton.h"
+#include "symex_assign.h"
 
 #include <util/prefix.h>
 #include <util/cprover_prefix.h>
@@ -33,9 +35,14 @@ exprt goto_symext::make_auto_object(
   return symbol_exprt(symbol.name, symbol.type);
 }
 
-void goto_symext::initialize_auto_object(const exprt &expr, statet &state)
+void goto_symext::initialize_auto_object(
+  const exprt &expr,
+  statet &state,
+  const namespacet &ns,
+  const symex_configt &symex_config,
+  symex_targett &target)
 {
-  const typet &type=ns.follow(expr.type());
+  const typet &type = ns.follow(expr.type());
 
   if(type.id()==ID_struct)
   {
@@ -45,7 +52,7 @@ void goto_symext::initialize_auto_object(const exprt &expr, statet &state)
     {
       member_exprt member_expr(expr, comp.get_name(), comp.type());
 
-      initialize_auto_object(member_expr, state);
+      initialize_auto_object(member_expr, state, ns, symex_config, target);
     }
   }
   else if(type.id()==ID_pointer)
@@ -70,7 +77,11 @@ void goto_symext::initialize_auto_object(const exprt &expr, statet &state)
         address_of_expr);
 
       code_assignt assignment(expr, rhs);
-      symex_assign(state, assignment);
+
+      exprt::operandst lhs_if_then_else_conditions;
+      symex_assignt{
+        state, symex_targett::assignment_typet::STATE, ns, symex_config, target}
+        .assign_rec(expr, expr_skeletont{}, rhs, lhs_if_then_else_conditions);
     }
   }
 }
@@ -93,7 +104,7 @@ void goto_symext::trigger_auto_object(const exprt &expr, statet &state)
           if(!state.get_level2().current_names.has_key(
                ssa_expr.get_identifier()))
           {
-            initialize_auto_object(e, state);
+            initialize_auto_object(e, state, ns, symex_config, target);
           }
         }
       }
