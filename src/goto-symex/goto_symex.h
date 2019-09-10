@@ -188,7 +188,7 @@ public:
   ///   execute
   /// \param new_symbol_table: A symbol table to store the symbols added during
   ///   symbolic execution
-  virtual void symex_with_state(
+  void symex_with_state(
     statet &state,
     const get_goto_functiont &get_goto_functions,
     symbol_tablet &new_symbol_table);
