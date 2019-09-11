@@ -22,6 +22,7 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <pointer-analysis/value_set_dereference.h>
 
+#include "auto_objects.h"
 #include "symex_dereference_state.h"
 
 /// Transforms an lvalue expression by replacing any dereference operations it
@@ -278,7 +279,8 @@ void goto_symext::dereference_rec(exprt &expr, statet &state, bool write)
       state,
       ns,
       symex_config,
-      target);
+      target,
+      dynamic_counter);
   }
   else if(
     expr.id() == ID_index && to_index_expr(expr).array().id() == ID_member &&

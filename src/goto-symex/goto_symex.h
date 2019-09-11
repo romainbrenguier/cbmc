@@ -312,25 +312,11 @@ protected:
   /// \param write
   exprt clean_expr(exprt expr, statet &state, bool write);
 
-  static void trigger_auto_object(
-    const exprt &expr,
-    statet &state,
-    const namespacet &ns,
-    const symex_configt &symex_config,
-    symex_targett &target);
-  static void initialize_auto_object(
-    const exprt &expr,
-    statet &state,
-    const namespacet &ns,
-    const symex_configt &symex_config,
-    symex_targett &target);
-
   /// Given an expression, find the root object and the offset into it.
   ///
   /// The extra complication to be considered here is that the expression may
   /// have any number of ternary expressions mixed with type casts.
   void process_array_expr(statet &, exprt &);
-  static exprt make_auto_object(const typet &, statet &, unsigned);
   virtual void dereference(exprt &, statet &, bool write);
 
   void dereference_rec(exprt &, statet &, bool write);

@@ -18,8 +18,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/symbol_table.h>
 #include <util/std_expr.h>
 
-exprt goto_symext::make_auto_object(
-  const typet &type, statet &state, unsigned dynamic_counter)
+exprt make_auto_object(
+  const typet &type, goto_symex_statet &state, unsigned dynamic_counter)
 {
   // produce auto-object symbol
   symbolt symbol;
@@ -35,12 +35,13 @@ exprt goto_symext::make_auto_object(
   return symbol_exprt(symbol.name, symbol.type);
 }
 
-void goto_symext::initialize_auto_object(
+void initialize_auto_object(
   const exprt &expr,
-  statet &state,
+  goto_symex_statet &state,
   const namespacet &ns,
   const symex_configt &symex_config,
-  symex_targett &target)
+  symex_targett &target,
+  unsigned &dynamic_counter)
 {
   const typet &type = ns.follow(expr.type());
 
@@ -52,7 +53,8 @@ void goto_symext::initialize_auto_object(
     {
       member_exprt member_expr(expr, comp.get_name(), comp.type());
 
-      initialize_auto_object(member_expr, state, ns, symex_config, target);
+      initialize_auto_object(
+        member_expr, state, ns, symex_config, target, dynamic_counter);
     }
   }
   else if(type.id()==ID_pointer)
@@ -86,12 +88,13 @@ void goto_symext::initialize_auto_object(
   }
 }
 
-void goto_symext::trigger_auto_object(
+void trigger_auto_object(
   const exprt &expr,
-  statet &state,
+  goto_symex_statet &state,
   const namespacet &ns,
   const symex_configt &symex_config,
-  symex_targett &target)
+  symex_targett &target,
+  unsigned &dynamic_counter)
 {
   expr.visit_pre([&](const exprt &e) {
     if(e.id() == ID_symbol && e.get_bool(ID_C_SSA_symbol))
@@ -99,7 +102,7 @@ void goto_symext::trigger_auto_object(
       const ssa_exprt &ssa_expr = to_ssa_expr(e);
       const irep_idt &obj_identifier = ssa_expr.get_object_name();
 
-      if(obj_identifier != statet::guard_identifier())
+      if(obj_identifier != goto_symex_statet::guard_identifier())
       {
         const symbolt &symbol = ns.lookup(obj_identifier);
 
@@ -109,7 +112,8 @@ void goto_symext::trigger_auto_object(
           if(!state.get_level2().current_names.has_key(
                ssa_expr.get_identifier()))
           {
-            initialize_auto_object(e, state, ns, symex_config, target);
+            initialize_auto_object(
+              e, state, ns, symex_config, target, dynamic_counter);
           }
         }
       }
