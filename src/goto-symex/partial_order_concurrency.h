@@ -19,6 +19,7 @@ Author: Michael Tautschnig, michael.tautschnig@cs.ox.ac.uk
 /// Base class for implementing memory models via additional constraints for
 /// SSA equations. Provides methods for encoding ordering of shared read/write
 /// events.
+// TODO remove inheritance
 class partial_order_concurrencyt:public messaget
 {
 public:

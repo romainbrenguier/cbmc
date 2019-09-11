@@ -89,6 +89,7 @@ void symex_target_equationt::atomic_begin(
   merge_ireps(SSA_step);
 }
 
+// TODO all these methods should be merged to take a SSA_step as argument
 /// end an atomic section
 void symex_target_equationt::atomic_end(
   const exprt &guard,

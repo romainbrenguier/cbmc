@@ -208,4 +208,6 @@ public:
     symex_targett::assignment_typet assignment_type);
 };
 
+// TODO: we should have a constructor for each kind of SSA_step
+
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
