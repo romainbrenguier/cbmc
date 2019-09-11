@@ -312,7 +312,12 @@ protected:
   /// \param write
   exprt clean_expr(exprt expr, statet &state, bool write);
 
-  void trigger_auto_object(const exprt &, statet &);
+  static void trigger_auto_object(
+    const exprt &expr,
+    statet &state,
+    const namespacet &ns,
+    const symex_configt &symex_config,
+    symex_targett &target);
   static void initialize_auto_object(
     const exprt &expr,
     statet &state,

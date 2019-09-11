@@ -273,7 +273,12 @@ void goto_symext::dereference_rec(exprt &expr, statet &state, bool write)
     expr.swap(tmp2);
 
     // this may yield a new auto-object
-    trigger_auto_object(expr, state);
+    trigger_auto_object(
+      expr,
+      state,
+      ns,
+      symex_config,
+      target);
   }
   else if(
     expr.id() == ID_index && to_index_expr(expr).array().id() == ID_member &&

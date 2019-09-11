@@ -86,9 +86,14 @@ void goto_symext::initialize_auto_object(
   }
 }
 
-void goto_symext::trigger_auto_object(const exprt &expr, statet &state)
+void goto_symext::trigger_auto_object(
+  const exprt &expr,
+  statet &state,
+  const namespacet &ns,
+  const symex_configt &symex_config,
+  symex_targett &target)
 {
-  expr.visit_pre([&state, this](const exprt &e) {
+  expr.visit_pre([&](const exprt &e) {
     if(e.id() == ID_symbol && e.get_bool(ID_C_SSA_symbol))
     {
       const ssa_exprt &ssa_expr = to_ssa_expr(e);
