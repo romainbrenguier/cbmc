@@ -279,3 +279,26 @@ SSA_atomic_end_stept::SSA_atomic_end_stept(
   guard = std::move(_guard);
   atomic_section_id = _atomic_section_id;
 }
+
+SSA_decl_stept::SSA_decl_stept(
+  symex_targett::sourcet source,
+  exprt _guard,
+  ssa_exprt _ssa_lhs,
+  exprt initializer,
+  bool _hidden)
+  : SSA_stept(source, goto_trace_stept::typet::DECL)
+{
+
+  guard = std::move(_guard);
+  ssa_lhs = std::move(_ssa_lhs);
+  ssa_full_lhs = std::move(initializer);
+  original_full_lhs = ssa_lhs.get_original_expr();
+  hidden = _hidden;
+  // the condition is trivially true, and only
+  // there so we see the symbols
+  cond_expr=equal_exprt(ssa_lhs, ssa_lhs);
+}
+
+// the condition is trivially true, and only
+// there so we see the symbols
+SSA_step.cond_expr=equal_exprt(SSA_step.ssa_lhs, SSA_step.ssa_lhs);

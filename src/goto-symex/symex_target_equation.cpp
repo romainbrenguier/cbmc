@@ -113,20 +113,13 @@ void symex_target_equationt::decl(
 {
   PRECONDITION(ssa_lhs.is_not_nil());
 
-  SSA_steps.emplace_back(source, goto_trace_stept::typet::DECL);
-  SSA_stept &SSA_step=SSA_steps.back();
-
-  SSA_step.guard=guard;
-  SSA_step.ssa_lhs=ssa_lhs;
-  SSA_step.ssa_full_lhs = initializer;
-  SSA_step.original_full_lhs=ssa_lhs.get_original_expr();
-  SSA_step.hidden=(assignment_type!=assignment_typet::STATE);
-
-  // the condition is trivially true, and only
-  // there so we see the symbols
-  SSA_step.cond_expr=equal_exprt(SSA_step.ssa_lhs, SSA_step.ssa_lhs);
-
-  merge_ireps(SSA_step);
+  SSA_steps.emplace_back(SSA_decl_stept{
+    source,
+    guard,
+    ssa_lhs,
+    initializer,
+    assignment_type!=assignment_typet::STATE});
+  merge_ireps(SSA_steps.back());
 }
 
 /// declare a fresh variable

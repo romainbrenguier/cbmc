@@ -266,6 +266,17 @@ public:
     unsigned atomic_section_id);
 };
 
+class SSA_decl_stept : public SSA_stept
+{
+public:
+  SSA_decl_stept(
+    symex_targett::sourcet source,
+    exprt guard,
+    ssa_exprt ssa_lhs,
+    exprt initializer,
+    bool hidden);
+};
+
 // TODO: we should have a constructor for each kind of SSA_step
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
