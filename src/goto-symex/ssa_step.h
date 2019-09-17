@@ -228,6 +228,16 @@ public:
     unsigned atomic_section_id);
 };
 
+class SSA_spawn_stept : public SSA_stept
+{
+public:
+  SSA_spawn_stept(symex_targett::sourcet source, exprt _guard)
+    : SSA_stept(source, goto_trace_stept::typet::SPAWN)
+  {
+    guard = std::move(_guard);
+  }
+};
+
 // TODO: we should have a constructor for each kind of SSA_step
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
