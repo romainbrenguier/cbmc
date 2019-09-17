@@ -235,3 +235,15 @@ SSA_assignment_stept::SSA_assignment_stept(
            assignment_type !=
              symex_targett::assignment_typet::VISIBLE_ACTUAL_PARAMETER;
 }
+
+SSA_shared_read_stept::SSA_shared_read_stept(
+  symex_targett::sourcet source,
+  exprt _guard,
+  ssa_exprt ssa_object,
+  unsigned _atomic_section_id)
+  : SSA_stept(source, goto_trace_stept::typet::SHARED_READ)
+{
+  guard = std::move(_guard);
+  ssa_lhs = std::move(ssa_object);
+  atomic_section_id = _atomic_section_id;
+}
