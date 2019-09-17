@@ -218,6 +218,16 @@ public:
     unsigned atomic_section_id);
 };
 
+class SSA_shared_write_stept : public SSA_stept
+{
+public:
+  SSA_shared_write_stept(
+    symex_targett::sourcet source,
+    exprt guard,
+    ssa_exprt ssa_object,
+    unsigned atomic_section_id);
+};
+
 // TODO: we should have a constructor for each kind of SSA_step
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
