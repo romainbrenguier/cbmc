@@ -255,7 +255,15 @@ public:
     symex_targett::sourcet source,
     exprt guard,
     unsigned atomic_section_id);
+};
 
+class SSA_atomic_end_stept : public SSA_stept
+{
+public:
+  SSA_atomic_end_stept(
+    symex_targett::sourcet source,
+    exprt guard,
+    unsigned atomic_section_id);
 };
 
 // TODO: we should have a constructor for each kind of SSA_step

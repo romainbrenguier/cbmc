@@ -77,12 +77,9 @@ void symex_target_equationt::atomic_end(
   unsigned atomic_section_id,
   const sourcet &source)
 {
-  SSA_steps.emplace_back(source, goto_trace_stept::typet::ATOMIC_END);
-  SSA_stept &SSA_step=SSA_steps.back();
-  SSA_step.guard=guard;
-  SSA_step.atomic_section_id=atomic_section_id;
-
-  merge_ireps(SSA_step);
+  SSA_steps.emplace_back(
+    SSA_atomic_end_stept{source, guard, atomic_section_id});
+  merge_ireps(SSA_steps.back());
 }
 
 void symex_target_equationt::assignment(

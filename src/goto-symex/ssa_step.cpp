@@ -269,3 +269,13 @@ SSA_atomic_begin_stept::SSA_atomic_begin_stept(
   guard = std::move(_guard);
   atomic_section_id = _atomic_section_id;
 }
+
+SSA_atomic_end_stept::SSA_atomic_end_stept(
+  symex_targett::sourcet source,
+  exprt _guard,
+  unsigned _atomic_section_id)
+  : SSA_stept(source, goto_trace_stept::typet::ATOMIC_END)
+{
+  guard = std::move(_guard);
+  atomic_section_id = _atomic_section_id;
+}
