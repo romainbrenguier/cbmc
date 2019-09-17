@@ -55,11 +55,8 @@ void symex_target_equationt::memory_barrier(
   const exprt &guard,
   const sourcet &source)
 {
-  SSA_steps.emplace_back(source, goto_trace_stept::typet::MEMORY_BARRIER);
-  SSA_stept &SSA_step=SSA_steps.back();
-  SSA_step.guard=guard;
-
-  merge_ireps(SSA_step);
+  SSA_steps.emplace_back(SSA_memory_barrier_stept{source, guard});
+  merge_ireps(SSA_steps.back());
 }
 
 /// start an atomic section

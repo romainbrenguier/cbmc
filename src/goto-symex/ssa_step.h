@@ -238,6 +238,16 @@ public:
   }
 };
 
+class SSA_memory_barrier_stept: public SSA_stept
+{
+public:
+  SSA_memory_barrier_stept(symex_targett::sourcet source, exprt _guard)
+    : SSA_stept(source, goto_trace_stept::typet::MEMORY_BARRIER)
+  {
+    guard = std::move(_guard);
+  }
+};
+
 // TODO: we should have a constructor for each kind of SSA_step
 
 #endif // CPROVER_GOTO_SYMEX_SSA_STEP_H
