@@ -65,12 +65,9 @@ void symex_target_equationt::atomic_begin(
   unsigned atomic_section_id,
   const sourcet &source)
 {
-  SSA_steps.emplace_back(source, goto_trace_stept::typet::ATOMIC_BEGIN);
-  SSA_stept &SSA_step=SSA_steps.back();
-  SSA_step.guard=guard;
-  SSA_step.atomic_section_id=atomic_section_id;
-
-  merge_ireps(SSA_step);
+  SSA_steps.emplace_back(
+    SSA_atomic_begin_stept{source, guard, atomic_section_id});
+  merge_ireps(SSA_steps.back());
 }
 
 // TODO all these methods should be merged to take a SSA_step as argument

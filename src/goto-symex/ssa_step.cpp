@@ -259,3 +259,13 @@ SSA_shared_write_stept::SSA_shared_write_stept(
   ssa_lhs = std::move(ssa_object);
   atomic_section_id = _atomic_section_id;
 }
+
+SSA_atomic_begin_stept::SSA_atomic_begin_stept(
+  symex_targett::sourcet source,
+  exprt _guard,
+  unsigned _atomic_section_id)
+  : SSA_stept(source, goto_trace_stept::typet::ATOMIC_BEGIN)
+{
+  guard = std::move(_guard);
+  atomic_section_id = _atomic_section_id;
+}
